@@ -1,0 +1,31 @@
+{
+    "name": "Kosmoi Plus",
+    "vision": "To be the #1 Service Hub in the region.",
+    "kpis": {
+        "budget": 10000,
+        "users": 120,
+        "active_projects": 2,
+        "customer_satisfaction": 4.5
+    },
+    "news_feed": [
+        {
+            "id": 1,
+            "timestamp": "2025-12-03T08:00:00Z",
+            "type": "announcement",
+            "content": "Kosmoi Plus autonomous system initialization complete."
+        }
+    ],
+    "active_missions": [
+        {
+            "id": "m1",
+            "title": "Deepen Autonomy",
+            "status": "in_progress",
+            "assignee": "vision-founder-agent"
+        }
+    ],
+    "rules": [
+        "If budget < 1000, trigger 'Emergency Review'.",
+        "If users > 200, trigger 'Scale Up Celebration'.",
+        "Always prioritize user requests over internal tasks."
+    ]
+}

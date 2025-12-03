@@ -1,0 +1,151 @@
+{
+  "name": "ServiceProvider",
+  "type": "object",
+  "properties": {
+    "business_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05e2\u05e1\u05e7 \u05d0\u05d5 \u05e9\u05dd \u05d4\u05e1\u05e4\u05e7"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d0\u05d9\u05e9 \u05d4\u05e7\u05e9\u05e8"
+    },
+    "phone": {
+      "type": "string",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d8\u05dc\u05e4\u05d5\u05df"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d5\u05d5\u05d0\u05d8\u05e1\u05d0\u05e4"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "handyman",
+        "carpenter",
+        "electrician",
+        "plumber",
+        "ac_repair",
+        "cleaning",
+        "locksmith",
+        "painter",
+        "gardener",
+        "pest_control",
+        "appliance_repair",
+        "moving",
+        "pool_maintenance",
+        "internet_tech",
+        "car_mechanic",
+        "motorcycle_mechanic",
+        "tuktuk_driver",
+        "translator",
+        "visa_services",
+        "real_estate_agent",
+        "other"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u05ea\u05d9\u05d0\u05d5\u05e8 \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "thai",
+          "english",
+          "hebrew",
+          "russian",
+          "chinese",
+          "german",
+          "french"
+        ]
+      },
+      "description": "\u05e9\u05e4\u05d5\u05ea"
+    },
+    "location": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05e7\u05d5\u05dd (\u05d0\u05d6\u05d5\u05e8 \u05db\u05dc\u05dc\u05d9)"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "\u05e7\u05d5 \u05e8\u05d5\u05d7\u05d1"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "\u05e7\u05d5 \u05d0\u05d5\u05e8\u05da"
+    },
+    "service_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u05d0\u05d6\u05d5\u05e8\u05d9 \u05e9\u05d9\u05e8\u05d5\u05ea"
+    },
+    "price_range": {
+      "type": "string",
+      "enum": [
+        "budget",
+        "moderate",
+        "premium"
+      ],
+      "default": "moderate",
+      "description": "\u05d8\u05d5\u05d5\u05d7 \u05de\u05d7\u05d9\u05e8\u05d9\u05dd"
+    },
+    "average_rating": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 0,
+      "description": "\u05d3\u05d9\u05e8\u05d5\u05d2 \u05de\u05de\u05d5\u05e6\u05e2"
+    },
+    "total_reviews": {
+      "type": "number",
+      "default": 0,
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d1\u05d9\u05e7\u05d5\u05e8\u05d5\u05ea"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u05ea\u05de\u05d5\u05e0\u05d5\u05ea \u05e2\u05d1\u05d5\u05d3\u05d5\u05ea"
+    },
+    "available_hours": {
+      "type": "string",
+      "description": "\u05e9\u05e2\u05d5\u05ea \u05d6\u05de\u05d9\u05e0\u05d5\u05ea"
+    },
+    "emergency_service": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05e9\u05d9\u05e8\u05d5\u05ea \u05d7\u05d9\u05e8\u05d5\u05dd"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d0\u05d5\u05de\u05ea \u05e2\u05dc \u05d9\u05d3\u05d9 \u05de\u05e0\u05d4\u05dc"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "inactive"
+      ],
+      "default": "pending",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1"
+    }
+  },
+  "required": [
+    "business_name",
+    "phone",
+    "category"
+  ]
+}
