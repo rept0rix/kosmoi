@@ -44,7 +44,7 @@ RULES:
      * @param {Array} history - The conversation history (messages).
      * @returns {Promise<{nextSpeakerId: string, reason: string, instruction: string}>}
      */
-    async getNextSpeaker(goal, history, autonomousMode = false, companyState = {}) {
+    async getNextSpeaker(goal, history, autonomousMode = false, companyState = {}, activeAgentIds = []) {
         // 1. CHECK FOR ACTIVE WORKFLOW (MATRIX)
         // For this MVP, we assume the "documentation_package" workflow if the goal mentions "documentation".
         // In a real app, we'd select the workflow based on intent classification.
@@ -87,7 +87,11 @@ RULES:
 CURRENT GOAL: "${goal}"
 
 COMPANY STATE (NEWS & KPIs):
+COMPANY STATE (NEWS & KPIs):
 ${JSON.stringify(companyState || {}, null, 2)}
+
+PRESENT AGENTS (IN THE ROOM):
+${activeAgentIds.length > 0 ? activeAgentIds.join(', ') : "Everyone is available"}
 
 CONVERSATION HISTORY:
 ${formattedHistory}
@@ -102,9 +106,11 @@ INSTRUCTIONS:
 
 TEAM MANAGEMENT (CHIEF OF STAFF MODE):
 - You are the "Chief of Staff". You decide who is in the room.
-- If the current goal requires a skill that is MISSING from the "Active Agents" list (e.g., need code but Tech Lead is missing), output a "manageTeam" action to "ADD" them.
-- If an agent is present but irrelevant/distracting, output a "manageTeam" action to "REMOVE" them.
-- Only change the team if necessary.
+- **CRITICAL**: The user has selected the current agents (${activeAgentIds.length}). DO NOT add new agents unless:
+  1. The user EXPLICITLY asks for them (e.g., "Where is the Tech Lead?").
+  2. The current goal is IMPOSSIBLE to achieve without them.
+- If you can make do with the current team, DO NOT change it.
+- If you must add someone, provide a very strong reason.
 
 Based on the above, who should speak next?
 Output JSON format:
@@ -146,5 +152,33 @@ Output JSON format:
                 instruction: ""
             };
         }
+    }
+    /**
+     * Forces the CEO to start a Daily Standup meeting.
+     * @param {Object} companyState - The current state of the company (budget, missions, etc).
+     * @returns {Object} A decision object for the CEO to speak next.
+     */
+    startDailyStandup(companyState = {}) {
+        const budget = companyState.budget || 0;
+        const activeMissions = companyState.active_missions ? companyState.active_missions.length : 0;
+
+        return {
+            nextSpeakerId: "ceo-agent",
+            reason: "Initiating Daily Standup Routine",
+            instruction: `
+[DAILY STANDUP PROTOCOL]
+Good morning team.
+Current Status:
+- Budget: $${budget}
+- Active Missions: ${activeMissions}
+
+OBJECTIVE: We need to generate revenue and ship features.
+1. Ask the 'product-founder-agent' for the status of the roadmap.
+2. Ask the 'tech-lead-agent' if the system is stable.
+3. Decide on ONE key objective for today.
+
+Start the meeting now. Be authoritative.
+`
+        };
     }
 }

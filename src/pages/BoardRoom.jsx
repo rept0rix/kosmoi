@@ -48,11 +48,29 @@ export default function BoardRoom() {
     const fileInputRef = useRef(null);
     const [companyState, setCompanyState] = useState(initialCompanyState);
 
-    // Initialize selected agents with all board agents on load
+    // Initialize selected agents from localStorage or default to all board agents
     useEffect(() => {
-        const boardAgents = agents.filter(a => a.layer === 'board');
-        setSelectedAgentIds(boardAgents.map(a => a.id));
+        const saved = localStorage.getItem('board_selected_agents');
+        if (saved) {
+            try {
+                setSelectedAgentIds(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse saved agents", e);
+                const boardAgents = agents.filter(a => a.layer === 'board');
+                setSelectedAgentIds(boardAgents.map(a => a.id));
+            }
+        } else {
+            const boardAgents = agents.filter(a => a.layer === 'board');
+            setSelectedAgentIds(boardAgents.map(a => a.id));
+        }
     }, []);
+
+    // Save to localStorage whenever selection changes
+    useEffect(() => {
+        if (selectedAgentIds.length > 0) {
+            localStorage.setItem('board_selected_agents', JSON.stringify(selectedAgentIds));
+        }
+    }, [selectedAgentIds]);
 
     const isRTL = language === 'he';
 
@@ -159,7 +177,8 @@ export default function BoardRoom() {
                 selectedMeeting.title, // Goal is the meeting title for now
                 history,
                 autoDiscuss, // Use autoDiscuss as "Autonomous Mode" flag
-                companyState
+                companyState,
+                selectedAgentIds // Pass the active agents list
             );
 
             console.log("Orchestrator Decision:", decision);
@@ -361,6 +380,71 @@ export default function BoardRoom() {
             setInput('');
             setSelectedImage(null);
         }
+        if (!error) {
+            setInput('');
+            setSelectedImage(null);
+        }
+    };
+
+    const handleStartDailyStandup = async () => {
+        if (!selectedMeeting) return;
+
+        // 1. Ensure CEO and key agents are in the room
+        const requiredAgents = ['ceo-agent', 'product-founder-agent', 'tech-lead-agent'];
+        const missingAgents = requiredAgents.filter(id => !selectedAgentIds.includes(id));
+
+        if (missingAgents.length > 0) {
+            setSelectedAgentIds(prev => [...new Set([...prev, ...missingAgents])]);
+            toast({
+                title: "Team Assembled",
+                description: "Added CEO, Product, and Tech Lead for the standup.",
+                className: "bg-blue-600 text-white"
+            });
+            // Wait a moment for state to update
+            await new Promise(r => setTimeout(r, 500));
+        }
+
+        // 2. Trigger Orchestrator for Daily Standup
+        const orchestrator = new BoardOrchestrator(agents);
+        const decision = orchestrator.startDailyStandup(companyState);
+
+        // 3. Force CEO to speak
+        const ceoAgent = agents.find(a => a.id === decision.nextSpeakerId);
+        if (ceoAgent) {
+            // We manually trigger the reply with the forced instruction
+            // But getAgentReply expects messages. We need to inject the instruction as a system prompt or similar.
+            // Actually, we can just simulate a "System" message that prompts the CEO.
+
+            const prompt = decision.instruction;
+
+            // Add a system message to the chat to show what's happening
+            await supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'SYSTEM',
+                content: `**SYSTEM**: Initiating Daily Standup Routine...`,
+                type: 'system'
+            }]);
+
+            // Now trigger the CEO with this specific context
+            // We'll use a trick: Send a hidden user message or just call getAgentReply with a modified context
+            // Let's use the triggerAgentReply logic but force the agent and maybe inject a "last message" context?
+            // A better way: Insert a system message that IS the prompt, then let the agent reply to it.
+
+            await supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'SYSTEM', // Or 'Orchestrator'
+                content: `[DIRECTIVE TO CEO]: ${prompt}`,
+                type: 'system_hidden' // We might need to filter this in UI if we don't want to see it, or just show it as "Board Directive"
+            }]);
+
+            // Trigger reply
+            // We need to make sure the agent SEES this message.
+            // The subscription will update 'messages' state, but it might be async.
+            // Let's force it by calling triggerAgentReply after a short delay or passing the message directly.
+
+            setTimeout(() => triggerAgentReply(ceoAgent), 1000);
+            setAutoDiscuss(true); // Enable auto-discuss so the meeting continues
+        }
     };
 
     const boardAgents = agents.filter(a => a.layer === 'board');
@@ -435,6 +519,18 @@ export default function BoardRoom() {
                                     </Badge>
                                 </h1>
                                 <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+
+                                    {/* Daily Standup Button */}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-xs gap-1 bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                        onClick={handleStartDailyStandup}
+                                    >
+                                        <Sparkles className="w-3 h-3" />
+                                        {isRTL ? 'ישיבת בוקר' : 'Daily Standup'}
+                                    </Button>
+                                    <Separator orientation="vertical" className="h-4" />
 
                                     {/* Participants Popover */}
                                     <Popover>
