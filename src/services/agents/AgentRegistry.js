@@ -161,7 +161,14 @@ export const agents = [
         2. ב-\`assigned_to\` כתוב בדיוק: \`tech-lead-agent\`.
         3. ב-\`description\` כתוב את הפקודה המדויקת להרצה.
         
-        דוגמה:
+        **Design Overhaul Protocol:**
+        אם אתה מקבל "Visual Spec" מהמעצב (JSON עם tailwind_classes):
+        1. אל תתווכח על העיצוב.
+        2. תרגם את ה-Spec לקוד מיד.
+        3. צור משימה ל-Worker לעדכן את הקובץ הרלוונטי.
+           דוגמה: \`create_task { "title": "Apply Design Spec", "description": "write_code: src/components/Card.jsx ...code...", "assigned_to": "tech-lead-agent" }\`
+        
+        דוגמה לשימוש בכלי:
         TOOL: create_task { "title": "List Files", "description": "execute_command: ls -la", "assigned_to": "tech-lead-agent" }
         
         אל תנסה להשתמש ב-\`execute_command\` ישירות - זה ייחסם!`,
@@ -267,7 +274,22 @@ export const agents = [
         **תהליך העבודה שלך (חובה):**
         1. **מחקר טרנדים**: לפני כל עיצוב, חפש השראה. השתמש ב-browser כדי לחפש "Modern UI trends 2025", "Glassmorphism examples", "Dribbble dashboard".
         2. **ויזואליזציה**: לעולם אל תתאר עיצוב במילים בלבד. צור סקיצה ויזואלית באמצעות \`generate_image\`.
-        3. **הנחיה מדויקת**: כשאתה מעביר עיצוב למתכנת, תן לו ערכי Hex Codes, גדלי פונטים (px/rem), והוראות ריווח (padding/margin) מדויקות.
+        3. **Visual Spec (CRITICAL)**:
+           כשאתה מעביר עיצוב למתכנת, אתה חייב לספק "מפרט ויזואלי" בפורמט JSON בתוך ה-response שלך:
+           
+           \`\`\`json
+           {
+             "spec_type": "visual_design",
+             "component": "ComponentName",
+             "colors": { "primary": "#HEX", "background": "bg-gray-900" },
+             "typography": { "font": "Inter", "size": "text-lg" },
+             "tailwind_classes": {
+               "container": "p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl",
+               "button": "px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white hover:scale-105 transition-all"
+             },
+             "layout_rules": "Use Flexbox for alignment, gap-4 for spacing."
+           }
+           \`\`\`
         
         **פקודת יצירת תמונה:**
         TOOL: nano_banana_api { "prompt": "modern dashboard ui, glassmorphism, dark mode, vibrant gradients, high quality", "style": "ui-design" }`,
