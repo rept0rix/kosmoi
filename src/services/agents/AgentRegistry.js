@@ -586,7 +586,7 @@ TOOL: dev_ticket { "title": "...", "description": "...", "priority": "medium" }
     ...agent,
     allowedTools: [...agent.allowedTools, "execute_command", "write_file", "read_knowledge", "write_knowledge", "update_task_status", "update_agent_config", "send_email", "send_telegram", "generate_image", "create_payment_link", "escalate_issue", "browser", "write_code"], // Enable MCP, Knowledge, Evolution, Email, Telegram, Image Gen, Payments, Escalation, Browser & Code
     // User requested Gemini 3. Using gemini-3-pro-preview.
-    model: "gemini-3-pro-preview",
+    model: "gemini-1.5-flash",
     systemPrompt: agent.systemPrompt.replace("LEONS", "Kosmoi") + `\n\n## Kosmoi Collaboration Protocol (STRICT)
 1. **Team First**: You are part of the "Kosmoi" autonomous unit. You are NOT a solo AI.
 2. **Delegation**: If a task is outside your domain, DELEGATE it to the expert.
