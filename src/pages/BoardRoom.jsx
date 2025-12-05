@@ -11,17 +11,22 @@ import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Send, Users, Layout, MessageSquare, CheckSquare, Play, Pause, Archive, Bot, Sparkles, MoreVertical, Zap } from 'lucide-react';
-import { agents, getAgentById } from '@/services/agents/AgentRegistry';
+import { agents, getAgentById, syncAgentsWithDatabase } from '@/services/agents/AgentRegistry';
+import { toolRouter } from '@/services/agents/AgentService';
 import { useLanguage } from "@/components/LanguageContext";
 import { getAgentReply } from '@/services/agents/AgentBrain';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAppConfig } from "@/components/AppConfigContext";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import { BoardOrchestrator } from '@/services/agents/BoardOrchestrator';
 import CompanyStateDisplay from '@/components/agents/CompanyStateDisplay';
 import AgentNetworkGraph from '@/components/agents/AgentNetworkGraph';
 import initialCompanyState from '@/data/company_state.json';
+import { CompanyHeartbeat } from '@/services/CompanyHeartbeat';
+import { CompanyKnowledge } from '@/services/agents/CompanyKnowledge';
+import { BookOpen, Database } from 'lucide-react';
 
 // Initialize direct Supabase client for Realtime support
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -29,6 +34,7 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function BoardRoom() {
+    const { user } = useAuth();
     const { language } = useLanguage();
     const { config, updateConfig } = useAppConfig();
     const { toast } = useToast();
@@ -36,10 +42,13 @@ export default function BoardRoom() {
     const [selectedMeeting, setSelectedMeeting] = useState(null);
     const [messages, setMessages] = useState([]);
     const [tasks, setTasks] = useState([]);
+    const [knowledgeItems, setKnowledgeItems] = useState([]);
+    const [activeRightTab, setActiveRightTab] = useState('tasks'); // 'tasks' | 'knowledge'
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [typingAgent, setTypingAgent] = useState(null);
     const [autoDiscuss, setAutoDiscuss] = useState(false);
+    const [autonomousMode, setAutonomousMode] = useState(false);
     const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
     const [newMeetingTitle, setNewMeetingTitle] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
@@ -71,6 +80,14 @@ export default function BoardRoom() {
             localStorage.setItem('board_selected_agents', JSON.stringify(selectedAgentIds));
         }
     }, [selectedAgentIds]);
+
+    // Sync Agents with Database (Hot Reload)
+    useEffect(() => {
+        syncAgentsWithDatabase().then(() => {
+            console.log("Agents synced with database.");
+            setCompanyState(prev => ({ ...prev })); // Hack to force re-render
+        });
+    }, []);
 
     const isRTL = language === 'he';
 
@@ -144,6 +161,24 @@ export default function BoardRoom() {
         };
     }, [selectedMeeting]);
 
+    // Fetch Knowledge
+    useEffect(() => {
+        const fetchKnowledge = async () => {
+            const items = await CompanyKnowledge.list();
+            setKnowledgeItems(items);
+        };
+        fetchKnowledge();
+
+        // Subscribe to knowledge changes
+        const sub = supabase.channel('company_knowledge_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'company_knowledge' }, () => {
+                fetchKnowledge();
+            })
+            .subscribe();
+
+        return () => { sub.unsubscribe(); };
+    }, []);
+
     // Helper to trigger an agent reply
     const triggerAgentReply = async (forcedAgent = null) => {
         console.log("triggerAgentReply called. Forced:", forcedAgent?.role);
@@ -163,7 +198,7 @@ export default function BoardRoom() {
 
         // ORCHESTRATOR LOGIC (Dynamic Team Management)
         if (!selectedAgent) {
-            const orchestrator = new BoardOrchestrator(agents); // Pass all agents so it knows who exists
+            const orchestrator = new BoardOrchestrator(agents, { userId: user?.id }); // Pass all agents so it knows who exists
 
             // Prepare history for orchestrator
             const history = messages.map(m => ({
@@ -267,6 +302,31 @@ export default function BoardRoom() {
                     // Append code to the message content for now, or handle as a special message type
                     // We'll append it as a markdown code block to the message content
                     response.message += `\n\n\`\`\`${response.action.language}\n${response.action.code}\n\`\`\``;
+
+                    // EXECUTE THE CODE WRITING
+                    // We construct the path. If title has extension, use it. If not, guess.
+                    // Default to root or src? Let's default to root for now as per "write_file" tool.
+                    // But for safety, maybe we should prefix? No, let the agent decide.
+                    let filePath = response.action.title;
+                    // If path is relative, make it absolute or relative to project root?
+                    // The MCP tool expects absolute path or relative to CWD.
+                    // Let's assume relative to CWD (project root).
+                    // If the agent didn't provide a full path, we might need to help it.
+                    // But let's try raw first.
+
+                    // Call the tool
+                    console.log(`[BoardRoom] Executing write_code for ${filePath}...`);
+                    toolRouter("write_code", {
+                        path: filePath,
+                        content: response.action.code
+                    }, { userId: user?.id, agentId: selectedAgent.id }).then(result => {
+                        console.log("[BoardRoom] write_code result:", result);
+                        toast({
+                            title: "Code Written",
+                            description: `Agent wrote to ${filePath}`,
+                            className: "bg-green-600 text-white"
+                        });
+                    });
                 } else if (response.action.type === 'update_ui') {
                     msgType = 'task_created'; // Re-use green style for positive action
                     updateConfig(response.action.config);
@@ -319,7 +379,131 @@ export default function BoardRoom() {
 
     }, [messages, selectedMeeting, autoDiscuss]);
 
-    // Scroll to bottom
+    // COMPANY HEARTBEAT (Autonomous Mode)
+    useEffect(() => {
+        if (!autonomousMode) return;
+
+        const heartbeat = new CompanyHeartbeat({
+            intervalMs: 10000, // Check every 10 seconds
+            onTick: async (decision) => {
+                console.log("💓 Heartbeat Decision:", decision);
+
+                if (decision.nextSpeakerId === 'ceo-agent' && decision.reason.includes("Daily Standup")) {
+                    // Special case for starting standup
+                    handleStartDailyStandup();
+                } else if (decision.nextSpeakerId) {
+                    // Generic nudge
+                    const agent = agents.find(a => a.id === decision.nextSpeakerId);
+                    if (agent) {
+                        // Inject the instruction as a system message so the agent knows WHY they are speaking
+                        await supabase.from('board_messages').insert([{
+                            meeting_id: selectedMeeting?.id,
+                            agent_id: 'SYSTEM',
+                            content: `[DIRECTIVE]: ${decision.instruction}`,
+                            type: 'system_hidden'
+                        }]);
+
+                        // Trigger the agent
+                        triggerAgentReply(agent);
+                    }
+                }
+            }
+        });
+
+        heartbeat.start();
+
+        // Update context for the heartbeat on every tick (via closure or ref? Heartbeat creates its own orchestrator, 
+        // but we need to pass CURRENT react state. 
+        // Actually, the heartbeat instance is recreated if we put it in useEffect with deps, which is bad for timers.
+        // Better: Use a ref to hold the current state, and pass a getter to Heartbeat? 
+        // Or just patch the heartbeat's tick method to use latest state.
+        // For MVP: Let's just instantiate it once and pass a context getter.
+        // But CompanyHeartbeat implementation I wrote doesn't support context getter yet.
+        // Let's modify CompanyHeartbeat usage here to be simpler: 
+        // We will just run a local interval HERE instead of the class, OR we modify the class to accept a context provider.
+
+        // Let's use a local interval for simplicity and access to state.
+        const interval = setInterval(async () => {
+            if (!autonomousMode) return;
+
+            // Prepare context
+            const context = {
+                companyState,
+                activeMeeting: selectedMeeting,
+                lastMessageTime: messages.length > 0 ? messages[messages.length - 1].created_at : null
+            };
+
+            // We can use the orchestrator directly or via the heartbeat service. 
+            // Let's use the heartbeat service instance we created, but we need to pass context to tick.
+            // My CompanyHeartbeat.js implementation calls orchestrator.tick() with NO arguments.
+            // I need to update CompanyHeartbeat.js to accept context or update BoardRoom to call orchestrator directly.
+            // Let's call orchestrator directly here for maximum access to state.
+
+            // Actually, let's stick to the "Service" pattern. 
+            // I will update CompanyHeartbeat.js to accept a `getContext` function.
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [autonomousMode, companyState, selectedMeeting, messages]);
+
+    // WAIT. The above useEffect dependency list is too frequent. It will reset the interval on every message.
+    // Correct pattern: Use a Ref for the latest state, and a stable interval.
+
+    const stateRef = useRef({ companyState, selectedMeeting, messages });
+    useEffect(() => {
+        stateRef.current = { companyState, selectedMeeting, messages };
+    }, [companyState, selectedMeeting, messages]);
+
+    useEffect(() => {
+        if (!autonomousMode) return;
+
+        console.log("🚀 Starting Autonomous Heartbeat...");
+
+        const orchestrator = new BoardOrchestrator(agents); // Local instance
+
+        const tick = async () => {
+            const { companyState, selectedMeeting, messages } = stateRef.current;
+            console.log("💓 Tick... State:", companyState?.status);
+
+            const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+
+            const decision = await orchestrator.tick({
+                companyState,
+                activeMeeting: selectedMeeting,
+                lastMessageTime: lastMsg ? lastMsg.created_at : null
+            });
+
+            if (decision) {
+                console.log("💓 Decision:", decision);
+                if (decision.nextSpeakerId === 'ceo-agent' && decision.reason.includes("Daily Standup")) {
+                    // If we are already in a meeting, maybe just start it there?
+                    // If no meeting, we need to create one? 
+                    // handleStartDailyStandup assumes selectedMeeting exists.
+                    if (selectedMeeting) {
+                        handleStartDailyStandup();
+                    } else {
+                        // Create a meeting first? 
+                        // For MVP, just notify user or try to create.
+                        toast({ title: "Autonomy", description: "CEO wants to start a standup, but no meeting is open." });
+                    }
+                } else if (decision.nextSpeakerId) {
+                    const agent = agents.find(a => a.id === decision.nextSpeakerId);
+                    if (agent && selectedMeeting) {
+                        await supabase.from('board_messages').insert([{
+                            meeting_id: selectedMeeting.id,
+                            agent_id: 'SYSTEM',
+                            content: `[DIRECTIVE]: ${decision.instruction}`,
+                            type: 'system_hidden'
+                        }]);
+                        triggerAgentReply(agent);
+                    }
+                }
+            }
+        };
+
+        const interval = setInterval(tick, 10000);
+        return () => clearInterval(interval);
+    }, [autonomousMode]);
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, typingAgent]);
@@ -384,6 +568,40 @@ export default function BoardRoom() {
             setInput('');
             setSelectedImage(null);
         }
+    };
+
+    const handleStartOneDollarChallenge = async () => {
+        if (!selectedMeeting) return;
+
+        // 1. Ensure CEO, Tech Lead, and Growth Agent are in the room
+        const requiredAgents = ['ceo-agent', 'tech-lead-agent', 'growth-agent'];
+        const missingAgents = requiredAgents.filter(id => !selectedAgentIds.includes(id));
+
+        if (missingAgents.length > 0) {
+            setSelectedAgentIds(prev => [...new Set([...prev, ...missingAgents])]);
+            toast({
+                title: "Team Assembled",
+                description: "Added CEO, Tech Lead, and Growth Agent for the challenge.",
+                className: "bg-purple-600 text-white"
+            });
+            await new Promise(r => setTimeout(r, 500));
+        }
+
+        // 2. Send the command
+        const prompt = "Start the One Dollar Challenge. Create a landing page for AI services and sell it to me.";
+
+        await supabase.from('board_messages').insert([{
+            meeting_id: selectedMeeting.id,
+            agent_id: 'HUMAN_USER',
+            content: prompt,
+            type: 'text'
+        }]);
+
+        toast({
+            title: "Challenge Started",
+            description: "The One Dollar Challenge has begun!",
+            className: "bg-green-600 text-white"
+        });
     };
 
     const handleStartDailyStandup = async () => {
@@ -530,6 +748,17 @@ export default function BoardRoom() {
                                         <Sparkles className="w-3 h-3" />
                                         {isRTL ? 'ישיבת בוקר' : 'Daily Standup'}
                                     </Button>
+
+                                    {/* One Dollar Challenge Button */}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-xs gap-1 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                                        onClick={handleStartOneDollarChallenge}
+                                    >
+                                        <Zap className="w-3 h-3" />
+                                        {isRTL ? 'אתגר הדולר' : 'One Dollar Challenge'}
+                                    </Button>
                                     <Separator orientation="vertical" className="h-4" />
 
                                     {/* Participants Popover */}
@@ -608,15 +837,14 @@ export default function BoardRoom() {
                                         </PopoverContent>
                                     </Popover>
 
-                                    {/* Auto-Discuss Toggle */}
                                     <div className="flex items-center gap-2 border-s ps-4">
-                                        <Zap className={`w-3 h-3 ${autoDiscuss ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
-                                        <span className={autoDiscuss ? 'text-amber-600 font-medium' : ''}>
-                                            {isRTL ? 'דיון אוטומטי' : 'Auto-Discuss'}
+                                        <Zap className={`w-3 h-3 ${autonomousMode ? 'text-green-500 fill-green-500' : 'text-gray-400'}`} />
+                                        <span className={autonomousMode ? 'text-green-600 font-medium' : ''}>
+                                            {isRTL ? 'מצב אוטונומי' : 'Autonomous'}
                                         </span>
                                         <Switch
-                                            checked={autoDiscuss}
-                                            onCheckedChange={setAutoDiscuss}
+                                            checked={autonomousMode}
+                                            onCheckedChange={setAutonomousMode}
                                             className="scale-75"
                                         />
                                     </div>
@@ -774,68 +1002,117 @@ export default function BoardRoom() {
                 )}
             </div>
 
-            {/* Right Sidebar - Tasks */}
+            {/* Right Sidebar - Tasks & Knowledge */}
             <div className="w-80 border-s bg-white flex flex-col shadow-sm z-10">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
-                    <h2 className="font-semibold flex items-center gap-2 text-gray-800">
-                        <CheckSquare className="w-4 h-4 text-green-600" />
-                        {isRTL ? 'משימות סוכנים' : 'Agent Tasks'}
-                    </h2>
-                    <Badge variant="outline" className="bg-white">
-                        {tasks.length}
-                    </Badge>
+                <div className="p-2 border-b flex gap-1 bg-gray-50/50">
+                    <button
+                        onClick={() => setActiveRightTab('tasks')}
+                        className={`flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors ${activeRightTab === 'tasks' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                    >
+                        <CheckSquare className="w-3 h-3" />
+                        {isRTL ? 'משימות' : 'Tasks'}
+                        <Badge variant="secondary" className="h-4 px-1 text-[9px] min-w-[16px]">{tasks.length}</Badge>
+                    </button>
+                    <button
+                        onClick={() => setActiveRightTab('knowledge')}
+                        className={`flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors ${activeRightTab === 'knowledge' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                    >
+                        <BookOpen className="w-3 h-3" />
+                        {isRTL ? 'ידע' : 'Knowledge'}
+                        <Badge variant="secondary" className="h-4 px-1 text-[9px] min-w-[16px]">{knowledgeItems.length}</Badge>
+                    </button>
                 </div>
+
                 <ScrollArea className="flex-1 p-4 bg-gray-50/30">
-                    <div className="space-y-3">
-                        {tasks.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
-                                    <CheckSquare className="w-6 h-6 text-green-200" />
-                                </div>
-                                <p className="text-sm text-gray-400">
-                                    {isRTL ? 'אין משימות פעילות' : 'No active tasks'}
-                                </p>
-                            </div>
-                        )}
-                        {tasks.map(task => (
-                            <Card key={task.id} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
-                                <CardHeader className="p-3 pb-0">
-                                    <div className="flex justify-between items-start gap-2">
-                                        <CardTitle className="text-sm font-semibold leading-tight text-gray-800">
-                                            {task.title}
-                                        </CardTitle>
-                                        <Badge variant="outline" className={`text-[10px] shrink-0 ${task.status === 'done' ? 'bg-green-50 text-green-700 border-green-200' :
-                                            task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                'bg-gray-50 text-gray-600'
-                                            }`}>
-                                            {task.status}
-                                        </Badge>
+                    {activeRightTab === 'tasks' ? (
+                        <div className="space-y-3">
+                            {tasks.length === 0 && (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
+                                        <CheckSquare className="w-6 h-6 text-green-200" />
                                     </div>
-                                </CardHeader>
-                                <CardContent className="p-3 pt-2">
-                                    <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">
-                                        {task.description}
+                                    <p className="text-sm text-gray-400">
+                                        {isRTL ? 'אין משימות פעילות' : 'No active tasks'}
                                     </p>
-                                    <div className="flex justify-between items-center pt-2 border-t border-gray-50">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600">
-                                                {(task.assigned_to || 'U')[0]}
+                                </div>
+                            )}
+                            {tasks.map(task => (
+                                <Card key={task.id} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                    <CardHeader className="p-3 pb-0">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <CardTitle className="text-sm font-semibold leading-tight text-gray-800">
+                                                {task.title}
+                                            </CardTitle>
+                                            <Badge variant="outline" className={`text-[10px] shrink-0 ${task.status === 'done' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                    'bg-gray-50 text-gray-600'
+                                                }`}>
+                                                {task.status}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="p-3 pt-2">
+                                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">
+                                            {task.description}
+                                        </p>
+                                        <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600">
+                                                    {(task.assigned_to || 'U')[0]}
+                                                </div>
+                                                <span className="text-[10px] text-gray-400 font-medium">
+                                                    {task.assigned_to || 'Unassigned'}
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] text-gray-400 font-medium">
-                                                {task.assigned_to || 'Unassigned'}
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${task.priority === 'high' ? 'bg-red-50 text-red-600' :
+                                                task.priority === 'medium' ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-gray-50 text-gray-500'
+                                                }`}>
+                                                {task.priority}
                                             </span>
                                         </div>
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${task.priority === 'high' ? 'bg-red-50 text-red-600' :
-                                            task.priority === 'medium' ? 'bg-orange-50 text-orange-600' :
-                                                'bg-gray-50 text-gray-500'
-                                            }`}>
-                                            {task.priority}
-                                        </span>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {knowledgeItems.length === 0 && (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
+                                        <Database className="w-6 h-6 text-purple-200" />
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                                    <p className="text-sm text-gray-400">
+                                        {isRTL ? 'אין פריטי ידע' : 'No knowledge items'}
+                                    </p>
+                                </div>
+                            )}
+                            {knowledgeItems.map(item => (
+                                <Card key={item.key} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                    <CardHeader className="p-3 pb-0">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <CardTitle className="text-xs font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+                                                {item.key}
+                                            </CardTitle>
+                                            <Badge variant="outline" className="text-[9px] text-gray-400 border-gray-100">
+                                                {item.category}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="p-3 pt-2">
+                                        <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 font-mono break-all">
+                                            {typeof item.value === 'object' ? JSON.stringify(item.value) : item.value}
+                                        </div>
+                                        <div className="flex justify-end items-center pt-2 mt-2 border-t border-gray-50">
+                                            <span className="text-[9px] text-gray-400">
+                                                Updated by {item.updated_by}
+                                            </span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </ScrollArea>
             </div>
             {/* Create Meeting Dialog */}

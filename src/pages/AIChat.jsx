@@ -212,7 +212,7 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
 
             const contents = [...history, currentMessage];
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -221,7 +221,8 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
                     systemInstruction: {
                         parts: [{ text: systemInstruction }]
                     },
-                    contents: contents
+                    contents: contents,
+                    tools: [{ googleSearch: {} }]
                 })
             });
 

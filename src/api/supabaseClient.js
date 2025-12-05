@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gzjzeywhqbwppfxqkptf.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6anpleXdocWJ3cHBmeHFrcHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MTg5NTMsImV4cCI6MjA3OTE5NDk1M30.y8xbJ06Mr17O4Y0KZH_MlozxlOma92wjIpH4ers8zeI'
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+const getEnv = (key) => {
+    if (typeof import.meta !== 'undefined' && import.meta.env) return import.meta.env[key];
+    if (typeof process !== 'undefined' && process.env) return process.env[key];
+    return undefined;
+};
+
+const supabaseUrl = getEnv('VITE_SUPABASE_URL') || 'https://gzjzeywhqbwppfxqkptf.supabase.co'
+const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6anpleXdocWJ3cHBmeHFrcHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MTg5NTMsImV4cCI6MjA3OTE5NDk1M30.y8xbJ06Mr17O4Y0KZH_MlozxlOma92wjIpH4ers8zeI'
+const supabaseServiceKey = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY')
 
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 //     auth: {
@@ -313,6 +319,124 @@ export const supabaseHelpers = {
 
             async delete(id) {
                 await fetchSupabase(`service_requests?id=eq.${id}`, {
+                    method: 'DELETE'
+                });
+            }
+        },
+
+        AgentMemory: {
+            async get(agentId, userId) {
+                const result = await fetchSupabase(`agent_memory?agent_id=eq.${agentId}&user_id=eq.${userId}&select=history`);
+                return result[0] || null;
+            },
+            async upsert(data) {
+                // Upsert based on user_id, agent_id
+                const result = await fetchSupabase('agent_memory?on_conflict=user_id,agent_id', {
+                    method: 'POST',
+                    headers: { 'Prefer': 'resolution=merge-duplicates' },
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            }
+        },
+
+        AgentFiles: {
+            async list(userId) {
+                return fetchSupabase(`agent_files?user_id=eq.${userId}&select=path,updated_at,agent_id`);
+            },
+            async get(path, userId) {
+                const result = await fetchSupabase(`agent_files?user_id=eq.${userId}&path=eq.${path}&select=content`);
+                return result[0] || null;
+            },
+            async upsert(data) {
+                const result = await fetchSupabase('agent_files?on_conflict=user_id,path', {
+                    method: 'POST',
+                    headers: { 'Prefer': 'resolution=merge-duplicates' },
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            }
+        },
+
+        AgentTickets: {
+            async create(data) {
+                const result = await fetchSupabase('agent_tickets', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            }
+        },
+
+        AgentTasks: {
+            async list(meetingId) {
+                let url = `agent_tasks?select=*&order=created_at.desc`;
+                if (meetingId) {
+                    url += `&meeting_id=eq.${meetingId}`;
+                }
+                return fetchSupabase(url);
+            },
+            async create(data) {
+                const result = await fetchSupabase('agent_tasks', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            },
+            async update(id, data) {
+                const result = await fetchSupabase(`agent_tasks?id=eq.${id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            }
+        },
+
+        AgentConfigs: {
+            async get(agentId, key) {
+                const result = await fetchSupabase(`agent_configs?agent_id=eq.${agentId}&key=eq.${key}&select=value`);
+                return result[0] ? result[0].value : null;
+            },
+            async list(agentId = null) {
+                let url = `agent_configs?select=agent_id,key,value`;
+                if (agentId) {
+                    url += `&agent_id=eq.${agentId}`;
+                }
+                const result = await fetchSupabase(url);
+                return result || [];
+            },
+            async upsert(agentId, key, value) {
+                const result = await fetchSupabase('agent_configs?on_conflict=agent_id,key', {
+                    method: 'POST',
+                    headers: { 'Prefer': 'resolution=merge-duplicates' },
+                    body: JSON.stringify({ agent_id: agentId, key, value })
+                });
+                return result[0];
+            }
+        },
+
+        CompanyKnowledge: {
+            async get(key) {
+                const result = await fetchSupabase(`company_knowledge?key=eq.${key}&select=*`);
+                return result[0] || null;
+            },
+            async list(category) {
+                let url = `company_knowledge?select=*`;
+                if (category) {
+                    url += `&category=eq.${category}`;
+                }
+                return fetchSupabase(url);
+            },
+            async upsert(data) {
+                const result = await fetchSupabase('company_knowledge?on_conflict=key', {
+                    method: 'POST',
+                    headers: { 'Prefer': 'resolution=merge-duplicates' },
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            },
+            async delete(key) {
+                await fetchSupabase(`company_knowledge?key=eq.${key}`, {
                     method: 'DELETE'
                 });
             }

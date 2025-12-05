@@ -88,7 +88,7 @@ export default function RequestService() {
     }, [user]);
 
     const createRequestMutation = useMutation({
-        mutationFn: async (requestData) => {
+        mutationFn: async (/** @type {any} */ requestData) => {
             return await db.entities.ServiceRequest.create(requestData);
         },
         onSuccess: () => {

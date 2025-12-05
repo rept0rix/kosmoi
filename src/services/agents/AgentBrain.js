@@ -1,4 +1,4 @@
-import { InvokeLLM } from '@/api/integrations';
+import { InvokeLLM } from '../../api/integrations.js';
 
 /**
  * Generates a reply from a specific agent based on the conversation history.

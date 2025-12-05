@@ -12,25 +12,156 @@ const getApiKey = () => {
     return null;
 };
 
-const GEMINI_API_KEY = getApiKey();
-console.log("AgentService Module Loaded. API Key present:", !!GEMINI_API_KEY);
+// const GEMINI_API_KEY = getApiKey(); // Removed top-level call
+console.log("AgentService Module Loaded.");
 
-import { getAgentById } from "./AgentRegistry.js";
+import { getAgentById, syncAgentsWithDatabase } from "./AgentRegistry.js";
+import { CompanyKnowledge } from "./CompanyKnowledge.js";
+import { db } from "../../api/supabaseClient.js";
+import { SendEmail, SendTelegram, GenerateImage, CreatePaymentLink } from "../../api/integrations.js";
+
+// ... (toolRouter code remains same) ...
+
 
 /**
  * Tool Router - Now supports async fetch and delegation
  */
-async function toolRouter(toolName, payload, options = {}) {
-    const { userId } = options;
+export async function toolRouter(toolName, payload, options = {}) {
+    const { userId, agentId } = options;
+
+    // 🛡️ SAFETY MIDDLEWARE: Intercept sensitive tools
+    const SENSITIVE_TOOLS = ['send_email', 'create_payment_link', 'execute_command', 'write_file', 'write_code'];
+
+    if (SENSITIVE_TOOLS.includes(toolName)) {
+        // If explicitly approved (flag passed in options), proceed.
+        if (options.approved) {
+            console.log(`[Safety] Executing approved action: ${toolName}`);
+        } else {
+            console.log(`[Safety] Intercepting sensitive action: ${toolName}`);
+
+            if (userId) {
+                try {
+                    let data;
+                    try {
+                        // Try inserting with reasoning (new schema)
+                        data = await db.entities.AgentApprovals.create({
+                            agent_id: agentId || 'unknown',
+                            tool_name: toolName,
+                            payload: payload,
+                            status: 'pending',
+                            user_id: userId,
+                            reasoning: options.reasoning || "No plan provided."
+                        });
+                    } catch (schemaError) {
+                        console.warn("Failed to insert with reasoning, retrying without...", schemaError);
+                        // Fallback: Try inserting without reasoning (old schema)
+                        data = await db.entities.AgentApprovals.create({
+                            agent_id: agentId || 'unknown',
+                            tool_name: toolName,
+                            payload: payload,
+                            status: 'pending',
+                            user_id: userId
+                        });
+                    }
+
+                    if (!data) throw new Error("Insert returned no data");
+
+                    return `[System] 🛑 Action PAUSED for User Approval.
+The user must approve this action in the "Approval Queue" before it can proceed.
+Approval ID: ${data.id}
+Wait for the user to approve it.`;
+                } catch (e) {
+                    console.error("Failed to create approval request:", e);
+                    return `[Error] Failed to request approval: ${e.message}`;
+                }
+            } else {
+                return `[System] 🛑 Action BLOCKED. Login required for sensitive actions.`;
+            }
+        }
+    }
+
     switch (toolName) {
         case "delegate_task":
             // ... (delegation logic handled in AgentService, but kept here for reference if needed)
             return `[System] Delegation is handled by the AgentService directly.`;
 
-        case "research":
         case "browser":
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return `[Real Tool Placeholder] Research result for: ${payload.query || JSON.stringify(payload)}`;
+            // payload: { url, action }
+            // Simple implementation: Open URL in user's default browser (Human Handoff)
+            try {
+                const url = payload.url || payload.query; // Handle both formats
+                if (!url) return `[Error] No URL provided.`;
+
+                // Use the 'open' command on Mac
+                const { exec } = await import('child_process');
+                // We need to use the MCP proxy for this if we are in the browser, 
+                // but AgentService runs in the browser (React).
+                // So we must use 'execute_command' tool logic internally or delegation.
+
+                // Actually, we can just return a special instruction to the UI to open a tab?
+                // OR, since we have the MCP proxy running locally, we can send a command to it.
+
+                // Let's use the MCP execute_command logic recursively if possible, 
+                // or just duplicate the WebSocket logic for "open".
+
+                // Better: Reuse the execute_command case logic by constructing a payload
+                // But we are inside the switch.
+
+                // Let's just return a special string that the UI (BoardRoom) can intercept?
+                // No, the agent needs a result.
+
+                // Let's use the MCP WebSocket directly here, similar to execute_command.
+                // We will run `open "${url}"`
+
+                const command = `open "${url}"`;
+                console.log(`[Browser] Opening ${url}...`);
+
+                // Re-using the MCP logic from execute_command (copy-paste for now to be safe/isolated)
+                const ws = new WebSocket('ws://localhost:3001');
+                return await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        ws.close();
+                        resolve(`[System] Opened ${url} for you. Please complete the action (e.g. CAPTCHA/Login) and paste the result here.`);
+                    }, 5000); // Short timeout, we just fire and forget the open command
+
+                    ws.onopen = () => {
+                        ws.send(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "browser-tool", version: "1.0" } } }));
+                    };
+
+                    ws.onmessage = (event) => {
+                        const response = JSON.parse(event.data);
+                        if (response.id === 1) {
+                            ws.send(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
+                            // Call execute_command directly
+                            ws.send(JSON.stringify({
+                                jsonrpc: "2.0",
+                                id: 3,
+                                method: "tools/call",
+                                params: {
+                                    name: "execute_command",
+                                    arguments: { command: command }
+                                }
+                            }));
+                        } else if (response.id === 3) {
+                            clearTimeout(timeout);
+                            ws.close();
+                            resolve(`[System] I have opened ${url} in your browser. Please handle the CAPTCHA/Login and provide the API Key or result.`);
+                        }
+                    };
+
+                    ws.onerror = (err) => {
+                        console.error("Browser Tool Error:", err);
+                        // @ts-ignore - WebSocket error event in Node might have message, in browser it's generic Event
+                        const msg = err.message || "Unknown WebSocket Error";
+                        resolve(`[Error] Failed to open browser: ${msg}`);
+                    };
+                });
+
+            } catch (e) {
+                return `[Error] Browser action failed: ${e.message}`;
+            }
+
+        case "research":
 
         case "spreadsheet":
             return "Simulated spreadsheet: Textual table instead of Excel.";
@@ -44,39 +175,41 @@ async function toolRouter(toolName, payload, options = {}) {
             const filename = payload.filename || `note_${Date.now()}.md`;
             const content = payload.content || payload;
 
-            // Store in a virtual "filesystem" in localStorage
-            const fileSystem = JSON.parse(localStorage.getItem('agent_filesystem') || '{}');
-            fileSystem[filename] = content;
-            localStorage.setItem('agent_filesystem', JSON.stringify(fileSystem));
-
-            // PERSIST TO SUPABASE
+            // PERSIST TO SUPABASE (Primary Storage)
             if (userId) {
                 await saveFileToSupabase(filename, content, options.agentId, userId);
                 console.log(`[Agent Tool] Saved file to Supabase: ${filename}`);
+                return `[System] File '${filename}' saved successfully to Server Storage.`;
+            } else {
+                console.warn("[Agent Tool] No user logged in. File not saved persistently.");
+                return `[System] Warning: You are not logged in. File '${filename}' was NOT saved to the server.`;
             }
-
-            console.log(`[Agent Tool] Saved file: ${filename}`);
-            return `[System] File '${filename}' saved successfully. You can tell the user it is available in the System Documents.`;
 
         case "file-explorer":
             let filesList = "";
 
-            // Local
-            const fs = JSON.parse(localStorage.getItem('agent_filesystem') || '{}');
-            const localFiles = Object.keys(fs);
-
-            // Supabase
+            // Supabase Only
             if (userId) {
                 const remoteFiles = await listFilesFromSupabase(userId);
                 const remotePaths = remoteFiles.map(f => f.path);
-                // Merge unique
-                const allFiles = [...new Set([...localFiles, ...remotePaths])];
-                filesList = allFiles.join(', ');
+                filesList = remotePaths.join(', ');
             } else {
-                filesList = localFiles.join(', ');
+                filesList = "(No files - Login required)";
             }
 
-            return `[System] Current files: ${filesList}`;
+            return `[System] Current files (Server): ${filesList}`;
+
+        case "send_telegram":
+            return await SendTelegram({
+                message: payload.message,
+                chatId: payload.chatId
+            });
+
+        case "generate_image":
+            return await GenerateImage({
+                prompt: payload.prompt,
+                aspectRatio: payload.aspectRatio
+            });
 
         case "dev_ticket":
             const ticket = {
@@ -89,11 +222,7 @@ async function toolRouter(toolName, payload, options = {}) {
                 agent_id: options.agentId || 'unknown'
             };
 
-            const tickets = JSON.parse(localStorage.getItem('dev_requests') || '[]');
-            tickets.push(ticket);
-            localStorage.setItem('dev_requests', JSON.stringify(tickets));
-
-            // PERSIST TO SUPABASE
+            // PERSIST TO SUPABASE (Primary Storage)
             if (userId) {
                 await createTicketInSupabase({
                     ticket_id: ticket.id,
@@ -104,10 +233,10 @@ async function toolRouter(toolName, payload, options = {}) {
                     agent_id: ticket.agent_id
                 }, userId);
                 console.log(`[Dev Ticket] Saved to Supabase: ${ticket.title}`);
+                return `[System] Dev Ticket #${ticket.id} created successfully on Server.`;
+            } else {
+                return `[System] Warning: You are not logged in. Ticket '${ticket.title}' was NOT saved.`;
             }
-
-            console.log(`[Dev Ticket] Created: ${ticket.title}`);
-            return `[System] Dev Ticket #${ticket.id} created successfully. The Developer has been notified.`;
 
         case "nano_banana_api":
             const prompt = payload.prompt || "abstract design";
@@ -126,6 +255,174 @@ async function toolRouter(toolName, payload, options = {}) {
 
             return `[Nano Banana Pro] Image generated successfully: ![Generated Image](${imageUrl})
 URL: ${imageUrl}`;
+
+        case "read_knowledge":
+            const key = payload.key;
+            const value = await CompanyKnowledge.get(key);
+            if (value) {
+                return `[Knowledge] ${key}: ${JSON.stringify(value)}`;
+            } else {
+                return `[Knowledge] Key '${key}' not found.`;
+            }
+
+        case "write_knowledge":
+            await CompanyKnowledge.set(payload.key, payload.value, payload.category, options.agentId);
+            return `[Knowledge] Saved '${payload.key}' successfully.`;
+
+        case "update_task_status":
+            // payload: { taskId, status, comment }
+            if (!userId) return `[Error] Login required to update tasks.`;
+
+            try {
+                const { taskId, status, comment } = payload;
+                if (!taskId || !status) return `[Error] Missing taskId or status.`;
+
+                await db.entities.AgentTasks.update(taskId, {
+                    status: status,
+                    // We could also append a comment if the table supports it, or just update description?
+                    // For now, just status.
+                    updated_at: new Date().toISOString()
+                });
+
+                return `[System] Task ${taskId} updated to ${status}.`;
+            } catch (e) {
+                console.error("Failed to update task:", e);
+                return `[Error] Failed to update task: ${e.message}`;
+            }
+
+        case "update_agent_config":
+            // payload: { agentId, key, value }
+            try {
+                const { agentId, key, value } = payload;
+                if (!agentId || !key) return `[Error] Missing agentId or key.`;
+
+                await db.entities.AgentConfigs.upsert(agentId, key, value);
+
+                // Trigger hot-reload
+                await syncAgentsWithDatabase();
+
+                return `[System] Successfully updated configuration for ${agentId}. Key '${key}' is now set.`;
+            } catch (e) {
+                console.error("Failed to update agent config:", e);
+                return `[Error] Failed to update config: ${e.message}`;
+            }
+
+        case "send_email":
+            // payload: { to, subject, html }
+            try {
+                const result = await SendEmail(payload);
+                if (result.error) return `[Error] Failed to send email: ${result.error}`;
+                if (result.simulated) return `[System] Email simulated (No API Key): ${payload.subject}`;
+                return `[System] Email sent successfully! ID: ${result.id}`;
+            } catch (e) {
+                return `[Error] Email failed: ${e.message}`;
+            }
+
+        case "create_payment_link":
+            // payload: { name, amount, currency }
+            try {
+                const result = await CreatePaymentLink(payload);
+                if (result.error) return `[Error] Failed to create payment link: ${result.error}`;
+                if (result.simulated) return `[System] Payment Link Simulated: ${result.url}`;
+                return `[System] Payment Link Created: ${result.url}`;
+            } catch (e) {
+                return `[Error] Payment link creation failed: ${e.message}`;
+            }
+
+        case "escalate_issue":
+            // payload: { title, description, severity }
+            try {
+                const { title, description, severity } = payload;
+                const agentId = options.agentId;
+                const agentConfig = getAgentById(agentId);
+                const managerId = agentConfig?.reportsTo;
+
+                if (!managerId) {
+                    return `[System] You have no manager to escalate to. You are the top of the chain. Resolve it yourself or ask the Board.`;
+                }
+
+                // Create a high-priority task for the manager
+                await db.entities.AgentTasks.create({
+                    title: `[ESCALATION] ${title}`,
+                    description: `Escalated by ${agentId}: ${description}`,
+                    priority: 'high',
+                    status: 'open',
+                    assigned_to: managerId,
+                    created_by: agentId
+                });
+
+                return `[System] Issue escalated to ${managerId}. Task created.`;
+            } catch (e) {
+                return `[Error] Escalation failed: ${e.message}`;
+            }
+
+        case "write_code":
+            // payload: { path, content }
+            // Alias for write_file, but specifically for code generation
+            // We reuse the MCP write_file logic by modifying the payload and falling through
+            // OR we can just implement it directly here if we want specific logging.
+
+            // Let's just map it to write_file logic by changing the toolName locally or constructing the MCP call.
+            // Since we can't easily jump to another case, we'll duplicate the MCP logic or call a helper.
+            // Actually, we can just use the same logic block if we group the cases.
+
+            // But wait, the switch case fall-through is tricky if we need to change payload.
+            // Let's just implement it as a distinct case that calls MCP.
+
+            console.log(`[Write Code] Writing to ${payload.path}...`);
+            // Construct the command for MCP
+            // We need to use the 'write_file' tool on the MCP server.
+
+            try {
+                const ws = new WebSocket('ws://localhost:3001');
+                return await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        ws.close();
+                        resolve("Error: Write code timed out after 10s");
+                    }, 10000);
+
+                    ws.onopen = () => {
+                        ws.send(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "code-writer", version: "1.0" } } }));
+                    };
+
+                    ws.onmessage = (event) => {
+                        const response = JSON.parse(event.data);
+                        if (response.id === 1) {
+                            ws.send(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
+                            // Call write_file directly
+                            ws.send(JSON.stringify({
+                                jsonrpc: "2.0",
+                                id: 3,
+                                method: "tools/call",
+                                params: {
+                                    name: "write_file",
+                                    arguments: {
+                                        path: payload.path,
+                                        content: payload.content
+                                    }
+                                }
+                            }));
+                        } else if (response.id === 3) {
+                            clearTimeout(timeout);
+                            ws.close();
+                            if (response.error) {
+                                resolve(`[Error] Failed to write code: ${response.error.message}`);
+                            } else {
+                                resolve(`[System] Code written successfully to ${payload.path}`);
+                            }
+                        }
+                    };
+
+                    ws.onerror = (err) => {
+                        console.error("Write Code Tool Error:", err);
+                        // @ts-ignore
+                        const msg = err.message || "Unknown WebSocket Error";
+                        resolve(`[Error] Failed to write code: ${msg}`);
+                    };
+                });
+            } catch (e) {
+                return `[Error] Write code failed: ${e.message}`;
+            }
 
         case "execute_command":
         case "write_file":
@@ -276,11 +573,8 @@ export class AgentService {
         if (this.userId) {
             this.history = await loadMemoryFromSupabase(this.config.id, this.userId);
         } else {
-            // Fallback to local storage if no user (or anon)
-            try {
-                const raw = localStorage.getItem(`agent_memory_${this.config.id}`);
-                if (raw) this.history = JSON.parse(raw);
-            } catch { }
+            // Fallback to in-memory (empty) if no user
+            this.history = [];
         }
         this.initialized = true;
     }
@@ -326,9 +620,10 @@ export class AgentService {
         if (this.userId) {
             saveMemoryToSupabase(this.config.id, this.userId, this.history).catch(err => console.warn("Background save failed:", err));
         } else {
-            try {
-                localStorage.setItem(`agent_memory_${this.config.id}`, JSON.stringify(this.history));
-            } catch (e) { console.warn("Local storage save failed", e); }
+            // Anonymous/No-User Mode: Use In-Memory Only.
+            // We do NOT save to localStorage to avoid QuotaExceededError and browser crashes.
+            // History will be lost on refresh, which is expected for anonymous sessions.
+            console.debug(`[AgentService] User not logged in. History kept in memory only for agent ${this.config.id}.`);
         }
 
         // Handle tools
@@ -341,7 +636,11 @@ export class AgentService {
             if (toolName === 'delegate_task') {
                 toolResult = await this.handleDelegation(payload);
             } else {
-                toolResult = await toolRouter(toolName, payload, { userId: this.userId, agentId: this.config.id });
+                toolResult = await toolRouter(toolName, payload, {
+                    userId: this.userId,
+                    agentId: this.config.id,
+                    reasoning: response.plan // Pass the extracted plan/reasoning
+                });
             }
 
             return {
@@ -380,7 +679,7 @@ export class AgentService {
      */
     async callGemini(messages) {
         console.log("AgentService: Calling Gemini...");
-        const apiKey = GEMINI_API_KEY;
+        const apiKey = getApiKey(); // Lazy load
         console.log("AgentService: API Key present:", !!apiKey);
 
         if (!apiKey) {
@@ -393,18 +692,25 @@ export class AgentService {
             parts: [{ text: m.content }],
         }));
 
+        const tools = [];
+        // Enable Google Search if agent has research capabilities
+        if (this.allowedTools.includes('research') || this.allowedTools.includes('browser')) {
+            tools.push({ googleSearch: {} });
+        }
+
         const body = {
             contents: contents,
             systemInstruction: {
                 parts: [{ text: this.systemPrompt }]
-            }
+            },
+            tools: tools.length > 0 ? tools : undefined
         };
 
         let modelName = this.config.model;
-        // Using gemini-2.0-flash as it is available and fast for this user
-        if (modelName === 'gemini-3-pro') modelName = 'gemini-2.0-flash';
+        // User requested Gemini 3. Using gemini-3-pro-preview.
+        if (modelName === 'gemini-3-pro' || modelName === 'gemini-1.5-flash' || modelName === 'gemini-2.0-flash-exp' || modelName === 'gemini-1.5-pro') modelName = 'gemini-3-pro-preview';
 
-        console.log(`AgentService: Using model ${modelName}`);
+        console.log(`AgentService: Using model ${modelName} with tools:`, tools.length > 0 ? 'YES' : 'NO');
 
         try {
             const res = await fetch(
@@ -423,16 +729,38 @@ export class AgentService {
             }
 
             const data = await res.json();
-            const text =
+            let text =
                 data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("\n") || "";
 
-            const toolRequest = this.extractToolRequest(text);
+            // Handle Grounding Metadata (Search Results)
+            const groundingMetadata = data?.candidates?.[0]?.groundingMetadata;
+            if (groundingMetadata && groundingMetadata.searchEntryPoint) {
+                console.log("AgentService: Received Grounding Metadata");
+                const searchHtml = groundingMetadata.searchEntryPoint.renderedContent;
+                // Append a note about sources if available
+                if (searchHtml) {
+                    // We can't easily render HTML in the markdown chat, but we can add a text note
+                    text += `\n\n*(Information verified via Google Search)*`;
+                }
+            }
 
-            return { text, raw: data, toolRequest };
+            const toolRequest = this.extractToolRequest(text);
+            const plan = this.extractPlan(text); // Extract PLAN
+
+            return { text, raw: data, toolRequest, plan };
         } catch (error) {
             console.error("AgentService: Fetch error", error);
             throw error;
         }
+    }
+
+    extractPlan(text) {
+        const planRegex = /PLAN:([\s\S]*?)(?=TOOL:|```|$)/i;
+        const match = planRegex.exec(text);
+        if (match) {
+            return match[1].trim();
+        }
+        return null;
     }
 
     extractToolRequest(text) {
@@ -525,4 +853,49 @@ export class AgentService {
             localStorage.setItem(`agent_memory_${this.config.id}`, JSON.stringify([]));
         }
     }
+}
+
+/**
+ * Execute a pending tool call after user approval
+ */
+export async function approveToolCall(approvalId, userId) {
+    console.log(`[Safety] Approving tool call ${approvalId}...`);
+
+    // 1. Fetch the approval record
+    const approval = await db.entities.AgentApprovals.get(approvalId);
+
+    if (!approval) throw new Error("Approval not found");
+    if (approval.status !== 'pending') throw new Error("Action already processed");
+
+    // 2. Execute the tool
+    try {
+        const result = await toolRouter(approval.tool_name, approval.payload, {
+            userId: userId,
+            agentId: approval.agent_id,
+            approved: true // Bypasses the safety check
+        });
+
+        // 3. Update status to completed
+        await db.entities.AgentApprovals.update(approvalId, {
+            status: 'completed',
+            updated_at: new Date().toISOString()
+        });
+
+        return result;
+    } catch (e) {
+        // Update status to failed
+        await db.entities.AgentApprovals.update(approvalId, {
+            status: 'failed',
+            updated_at: new Date().toISOString()
+        });
+        throw e;
+    }
+}
+
+export async function rejectToolCall(approvalId) {
+    await db.entities.AgentApprovals.update(approvalId, {
+        status: 'rejected',
+        updated_at: new Date().toISOString()
+    });
+    return "Action rejected by user.";
 }

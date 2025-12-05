@@ -1,4 +1,5 @@
-import { AgentService } from './AgentService';
+import { AgentService } from './AgentService.js';
+import { db } from '../../api/supabaseClient.js';
 
 /**
  * The BoardOrchestrator acts as the "Chairman" of the board.
@@ -36,13 +37,23 @@ RULES:
 - If an agent proposes a plan, select an executive to approve it.
 `
         }, options);
+        this.options = options;
     }
 
     /**
      * Decides the next step in the conversation.
      * @param {string} goal - The user's main objective.
      * @param {Array} history - The conversation history (messages).
-     * @returns {Promise<{nextSpeakerId: string, reason: string, instruction: string}>}
+     * @returns {Promise<{
+     *   nextSpeakerId: string, 
+     *   reason: string, 
+     *   instruction: string,
+     *   manageTeam?: {
+     *     action: 'ADD' | 'REMOVE' | null,
+     *     agentId: string,
+     *     reason: string
+     *   }
+     * }>}
      */
     async getNextSpeaker(goal, history, autonomousMode = false, companyState = {}, activeAgentIds = []) {
         // 1. CHECK FOR ACTIVE WORKFLOW (MATRIX)
@@ -54,12 +65,21 @@ RULES:
             const { WORKFLOWS } = await import('./workflows.js');
             const workflow = WORKFLOWS.documentation_package;
 
-            // Check progress
-            const fs = JSON.parse(localStorage.getItem('agent_filesystem') || '{}');
+            // Check progress via Supabase
+            let existingFiles = [];
+            if (this.options.userId) {
+                const { listFilesFromSupabase } = await import('./memorySupabase.js');
+                const remoteFiles = await listFilesFromSupabase(this.options.userId);
+                existingFiles = remoteFiles.map(f => f.path);
+            }
 
             for (const step of workflow.steps) {
                 // If the expected file for this step DOES NOT exist, this is the current step.
-                if (step.expectedFile && !fs[step.expectedFile] && !Object.keys(fs).some(k => k.startsWith(step.expectedFile.replace('/', '')))) {
+                // Check exact match or if any file starts with the expected path (directory check)
+                const fileExists = existingFiles.includes(step.expectedFile) ||
+                    existingFiles.some(f => f.startsWith(step.expectedFile.replace('/', '')));
+
+                if (step.expectedFile && !fileExists) {
                     console.log(`[Orchestrator] Workflow Step Active: ${step.id} (${step.agentId})`);
                     return {
                         nextSpeakerId: step.agentId,
@@ -104,6 +124,12 @@ INSTRUCTIONS:
     - If AUTONOMOUS MODE is ON: Select "vision-founder-agent" and instruct them to "Conduct a Strategic Review based on the COMPANY STATE."
     - If AUTONOMOUS MODE is OFF: Output "TERMINATE".
 
+ANTI-LOOP RULES (CRITICAL):
+- Do not select an agent just to say "Acknowledged", "Understood", "Thank you", or "I'm on it".
+- If the previous message was an acknowledgment, the NEXT agent MUST take a CONCRETE ACTION (e.g., write code, search web, save file).
+- If the conversation is stuck in a loop of agreements, FORCE the next agent to actually DO the work.
+- If an agent says "I will do X", the NEXT turn must be them DOING X (or reporting the result), not another agent saying "Great".
+
 TEAM MANAGEMENT (CHIEF OF STAFF MODE):
 - You are the "Chief of Staff". You decide who is in the room.
 - **CRITICAL**: The user has selected the current agents (${activeAgentIds.length}). DO NOT add new agents unless:
@@ -133,9 +159,24 @@ Output JSON format:
             // Clean up markdown code blocks if present
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                const cleanText = jsonMatch[0].replace(/```json/g, '').replace(/```/g, '').trim();
-                const decision = JSON.parse(cleanText);
-                return decision;
+                try {
+                    const cleanText = jsonMatch[0]
+                        .replace(/```json/g, '')
+                        .replace(/```/g, '')
+                        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+                        .trim();
+                    const decision = JSON.parse(cleanText);
+                    return decision;
+                } catch (e) {
+                    console.error("JSON Parse Error in Orchestrator:", e);
+                    console.log("Raw Text:", text);
+                    // Fallback: Try to repair common JSON errors or just return default
+                    return {
+                        nextSpeakerId: this.availableAgents[0].id,
+                        reason: "Orchestrator JSON was malformed. Defaulting to first agent.",
+                        instruction: "Continue the discussion."
+                    };
+                }
             } else {
                 console.warn("Orchestrator did not return JSON. Fallback to first agent.");
                 return {
@@ -180,5 +221,74 @@ OBJECTIVE: We need to generate revenue and ship features.
 Start the meeting now. Be authoritative.
 `
         };
+    }
+    /**
+     * The Heartbeat Tick.
+     * Called periodically by the CompanyHeartbeat service.
+     * Checks for stalled states or opportunities to work.
+     * 
+     * @param {Object} context - { companyState, activeMeeting, lastMessageTime }
+     * @returns {Promise<Object|null>} Decision object or null if no action needed.
+     */
+    async tick(context = {}) {
+        const { companyState, activeMeeting, lastMessageTime } = context;
+        const now = Date.now();
+        const silenceThreshold = 45000; // 45 seconds of silence = stalled
+
+        console.log("[Orchestrator] Tick...", context);
+
+        // 1. If NO meeting is active, should we start one OR assign work?
+        if (!activeMeeting) {
+            // Check for OPEN tasks
+            try {
+                const tasks = await db.AgentTasks.list(); // Fetch all tasks (ordered by created_at desc)
+                const openTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
+
+                if (openTasks.length > 0) {
+                    // Find a task that needs attention
+                    const urgentTask = openTasks.find(t => t.priority === 'high') || openTasks[0];
+
+                    // If it's unassigned, assign it
+                    if (urgentTask.assigned_to === 'Unassigned') {
+                        // For MVP, assign to Tech Lead or Product based on title?
+                        // Let's just pick Tech Lead for now or ask CEO to assign.
+                        return {
+                            nextSpeakerId: "ceo-agent",
+                            reason: "There are unassigned tasks.",
+                            instruction: `Task '${urgentTask.title}' is unassigned. Assign it to a relevant agent.`
+                        };
+                    }
+
+                    // If it's assigned, nudge the assignee if they haven't updated it recently?
+                    // (Skip for MVP complexity, just focus on unassigned or starting work)
+                }
+            } catch (e) {
+                console.warn("[Orchestrator] Failed to fetch tasks:", e);
+            }
+
+            // If it's "Morning" (mocked) or we are IDLE, start a standup.
+            // For MVP, if we are completely idle, suggest a standup.
+            if (companyState?.status === 'IDLE') {
+                return this.startDailyStandup(companyState);
+            }
+            return null;
+        }
+
+        // 2. If meeting IS active, is it stalled?
+        if (activeMeeting && lastMessageTime) {
+            const timeSinceLastMsg = now - new Date(lastMessageTime).getTime();
+            if (timeSinceLastMsg > silenceThreshold) {
+                console.log(`[Orchestrator] Meeting stalled for ${timeSinceLastMsg}ms. Nudging...`);
+
+                // Force a nudge
+                return {
+                    nextSpeakerId: "ceo-agent", // CEO breaks the silence
+                    reason: "The room has been silent for too long.",
+                    instruction: "Ask the team for a status update or propose the next step. Don't let the momentum die."
+                };
+            }
+        }
+
+        return null;
     }
 }

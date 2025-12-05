@@ -1,6 +1,7 @@
 // src/services/agents/AgentRegistry.js
 
 import { KOSMOI_MANIFESTO } from "./Kosmoi_Manifesto.js";
+import { db } from "../../api/supabaseClient.js";
 
 export const agents = [
     // ---------------------------
@@ -19,7 +20,8 @@ export const agents = [
         - You manage the team (add/remove agents).
         - You ensure the "Company State" is respected.
         `,
-        allowedTools: [] // Prevent crash on spread
+        allowedTools: [], // Prevent crash on spread
+        reportsTo: null // Top of the pyramid
     },
     {
         id: "vision-founder-agent",
@@ -29,7 +31,8 @@ export const agents = [
         systemPrompt: "אתה הVision Founder של LEONS. אתה רואה את קוסמוי כקהילה דיגיטלית יעילה. אתה מזהה איך טכנולוגיה יכולה לפתור בעיות אמיתיות של תושבים ותיירים - מהמזגן שהתקלקל ועד מציאת גנן אמין. אתה לא מחפש 'יוקרה', אתה מחפש 'פתרון'. החזון שלך הוא אי יעיל, מחובר ופונקציונלי.",
         allowedTools: ["research", "browser", "notepad", "delegate_task"],
         memory: { type: "longterm", ttlDays: 365 },
-        maxRuntimeSeconds: 3600
+        maxRuntimeSeconds: 3600,
+        reportsTo: "board-chairman"
     },
     {
         id: "business-founder-agent",
@@ -39,7 +42,8 @@ export const agents = [
         systemPrompt: "אתה הBusiness Founder של LEONS. אתה מבין שהכסף הגדול נמצא בנפח (Volume) ובשירותים יומיומיים. המודל העסקי שלך מבוסס על חיבור יעיל בין אלפי ספקי שירות קטנים (אינסטלטורים, מנקים, טכנאים) לבין הלקוחות. אתה בונה מערכת אמינה שגובה עמלות הוגנות או דמי מנוי על ערך אמיתי. לא יוקרה - אלא יעילות.",
         allowedTools: ["spreadsheet", "browser", "crm", "delegate_task"],
         memory: { type: "longterm", ttlDays: 365 },
-        maxRuntimeSeconds: 3600
+        maxRuntimeSeconds: 3600,
+        reportsTo: "board-chairman"
     },
     {
         id: "product-founder-agent",
@@ -49,7 +53,8 @@ export const agents = [
         systemPrompt: "אתה הProduct Founder של LEONS. אתה בנית את האפליקציה הזו (samui-service-hub) במו ידיך. אתה מכיר כל שורה בקוד: React, Vite, Tailwind, Supabase. אתה פרגמטי, טכני, וממוקד במוצר שעובד עכשיו. אתה שונא פיצ'רים מיותרים ('Bloat'). התפקיד שלך הוא לוודא שהאפליקציה פותרת בעיות: הזמנת שירות מהירה, צ'אט אמין, מפה מדויקת. בלי קישוטים מיותרים.",
         allowedTools: ["figma", "backlog", "notepad", "delegate_task"],
         memory: { type: "longterm", ttlDays: 365 },
-        maxRuntimeSeconds: 3600
+        maxRuntimeSeconds: 3600,
+        reportsTo: "board-chairman"
     },
     {
         id: "partnership-founder-agent",
@@ -127,7 +132,8 @@ export const agents = [
         systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה מנכ"ל LEONS. המשימה שלך היא לבנות את ה-Service Hub הכי טוב בקוסמוי. אתה ממוקד בביצוע, באמינות ובשביעות רצון של המשתמשים והספקים.`,
         allowedTools: ["scheduler", "issue_api", "reporter", "delegate_task"],
         memory: { type: "midterm", ttlDays: 120 },
-        maxRuntimeSeconds: 3600
+        maxRuntimeSeconds: 3600,
+        reportsTo: "board-chairman"
     },
     {
         id: "tech-lead-agent",
@@ -139,7 +145,8 @@ export const agents = [
         יש לך גם יכולת מיוחדת: אתה יכול לשנות את נראות האפליקציה (שם, צבעים, לוגו) בזמן אמת. אם מבקשים לשנות את שם האפליקציה או הצבע, השתמש בפעולת "update_ui" ב-JSON.`,
         allowedTools: ["editor", "terminal", "git", "write_code", "update_ui"],
         memory: { type: "midterm", ttlDays: 365 },
-        maxRuntimeSeconds: 3600
+        maxRuntimeSeconds: 3600,
+        reportsTo: "cto-agent"
     },
     {
         id: "hr-agent",
@@ -214,7 +221,8 @@ export const agents = [
         systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה בונה את המסכים שאנשים רואים. אתה אוהב פיקסלים מסודרים.`,
         allowedTools: ["editor", "terminal", "git", "storybook", "tester"],
         memory: { type: "shortterm", ttlDays: 14 },
-        maxRuntimeSeconds: 1800
+        maxRuntimeSeconds: 1800,
+        reportsTo: "tech-lead-agent"
     },
     {
         id: "backend-agent",
@@ -224,7 +232,8 @@ export const agents = [
         systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה המנוע. אתה מפתח לוגיקה, APIs, מסדי נתונים ודואג שהכל עובד מהר ובטוח.`,
         allowedTools: ["editor", "terminal", "db", "http"],
         memory: { type: "shortterm", ttlDays: 14 },
-        maxRuntimeSeconds: 1800
+        maxRuntimeSeconds: 1800,
+        reportsTo: "tech-lead-agent"
     },
     {
         id: "graphic-designer-agent",
@@ -541,9 +550,9 @@ TOOL: dev_ticket { "title": "...", "description": "...", "priority": "medium" }
     }
 ].map(agent => ({
     ...agent,
-    allowedTools: [...agent.allowedTools, "execute_command", "write_file"], // Enable MCP for everyone
-    // Reverting to Flash for stability as Pro is not found
-    model: "gemini-2.0-flash",
+    allowedTools: [...agent.allowedTools, "execute_command", "write_file", "read_knowledge", "write_knowledge", "update_task_status", "update_agent_config", "send_email", "send_telegram", "generate_image", "escalate_issue", "browser", "write_code"], // Enable MCP, Knowledge, Evolution, Email, Telegram, Image Gen, Escalation, Browser & Code
+    // User requested Gemini 3. Using gemini-3-pro-preview.
+    model: "gemini-3-pro-preview",
     systemPrompt: agent.systemPrompt.replace("LEONS", "Kosmoi") + `\n\n## Kosmoi Collaboration Protocol (STRICT)
 1. **NO SMALL TALK**: NEVER say "Hello", "Thank you", "I am honored", or "Great idea". START DIRECTLY with your analysis or action.
 2. **CHAIN OF THOUGHT (REQUIRED)**: Before every action or response, you MUST output a hidden thought block:
@@ -591,4 +600,41 @@ export function groupAgentsByLayer() {
         acc[agent.layer].push(agent);
         return acc;
     }, {});
+}
+
+// Sync agents with dynamic overrides from Database
+export async function syncAgentsWithDatabase() {
+    try {
+        console.log("🔄 Syncing agents with database overrides...");
+        const configs = await db.entities.AgentConfigs.list();
+
+        if (!configs || configs.length === 0) {
+            console.log("   No overrides found.");
+            return;
+        }
+
+        let updateCount = 0;
+        configs.forEach(config => {
+            const agent = agents.find(a => a.id === config.agent_id);
+            if (agent) {
+                // Determine if value is JSON or string
+                let value = config.value;
+                try {
+                    // Try to parse if it looks like an object/array, but systemPrompt is usually a string.
+                    // However, if we store complex objects later, this might be needed.
+                    // For now, let's assume if it's a string, it's a string.
+                } catch (e) { }
+
+                // Apply override
+                if (agent[config.key] !== value) {
+                    console.log(`   Updating ${agent.id}.${config.key}`);
+                    agent[config.key] = value;
+                    updateCount++;
+                }
+            }
+        });
+        console.log(`✅ Synced ${updateCount} agent configurations.`);
+    } catch (error) {
+        console.error("❌ Failed to sync agents:", error);
+    }
 }

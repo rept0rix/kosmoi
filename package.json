@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "worker": "node scripts/agent_worker.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.3",

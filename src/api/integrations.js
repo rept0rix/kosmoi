@@ -1,5 +1,5 @@
-import { db } from './supabaseClient';
-import { supabase } from './supabaseClient';
+import { db } from './supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 
 
 export const Core = {
@@ -8,7 +8,8 @@ export const Core = {
             const { GoogleGenerativeAI } = await import("@google/generative-ai");
 
             // Get API key from local storage or env
-            const apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
+            const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) ||
+                (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GEMINI_API_KEY : process.env.VITE_GEMINI_API_KEY);
 
             if (!apiKey) {
                 throw new Error("API_KEY_MISSING");
@@ -72,8 +73,73 @@ export const Core = {
             throw error;
         }
     },
-    SendEmail: async () => { console.warn('SendEmail not implemented'); return {}; },
+    SendEmail: async ({ to, subject, html, from = "onboarding@resend.dev" }) => {
+        console.log(`[Integrations] Sending email to ${to}...`);
+        const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('resend_api_key') : null) ||
+            (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_RESEND_API_KEY : process.env.VITE_RESEND_API_KEY);
+
+        if (!apiKey) {
+            console.warn("Missing Resend API Key. Email simulated.");
+            return { simulated: true, status: "success", message: "Email simulated (No API Key)" };
+        }
+
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    from: from,
+                    to: [to],
+                    subject: subject,
+                    html: html
+                })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || 'Failed to send email');
+            }
+
+            const data = await res.json();
+            return { id: data.id, status: "success" };
+        } catch (error) {
+            console.error("Email Error:", error);
+            return { error: error.message };
+        }
+    },
     SendSMS: async () => { console.warn('SendSMS not implemented'); return {}; },
+    SendTelegram: async ({ message, chatId = "7224939578" }) => {
+        console.log(`[Integrations] Sending Telegram to ${chatId}...`);
+        const token = "7144778392:AAH4Mjp8BiwOLZZzZI3ZJfxkgunAh-KbqLw";
+
+        try {
+            // We use fetch (native in Node 18+ and Browser)
+            const url = `https://api.telegram.org/bot${token}/sendMessage`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.description || 'Failed to send Telegram');
+            }
+
+            const data = await res.json();
+            return { status: "success", message_id: data.result.message_id };
+        } catch (error) {
+            console.error("Telegram Error:", error);
+            return { error: error.message };
+        }
+    },
     UploadFile: async ({ file }) => {
         if (!file) throw new Error('No file provided');
 
@@ -90,7 +156,38 @@ export const Core = {
 
         return { file_url: publicUrl };
     },
-    GenerateImage: async () => { console.warn('GenerateImage not implemented'); return {}; },
+    GenerateImage: async ({ prompt, aspectRatio = "16:9" }) => {
+        console.log(`[Integrations] Generating image for: "${prompt}"...`);
+        try {
+            const { data, error } = await supabase.functions.invoke('generate-image', {
+                body: {
+                    prompt,
+                    aspectRatio,
+                    resolution: "1024x1024" // Default resolution
+                }
+            });
+
+            if (error) throw error;
+            if (data.error) throw new Error(data.error);
+
+            // The function returns base64. We should probably upload it to storage to get a URL, 
+            // or return it as data URI. For now, let's return data URI.
+            const imageUrl = `data:image/jpeg;base64,${data.imageBase64}`;
+
+            // OPTIONAL: Upload to Supabase Storage to make it persistent
+            // const uploadRes = await Core.UploadFile({ file: dataURItoBlob(imageUrl) });
+            // return { url: uploadRes.file_url };
+
+            return { url: imageUrl, base64: data.imageBase64 };
+        } catch (error) {
+            console.error("GenerateImage Error:", error);
+            // Fallback to placeholder if function fails (e.g. local dev without edge functions)
+            return {
+                url: `https://placehold.co/600x400/png?text=${encodeURIComponent(prompt)}`,
+                error: error.message
+            };
+        }
+    },
     ExtractDataFromUploadedFile: async () => { console.warn('ExtractDataFromUploadedFile not implemented'); return {}; }
 };
 
@@ -99,6 +196,8 @@ export const InvokeLLM = Core.InvokeLLM;
 export const SendEmail = Core.SendEmail;
 
 export const SendSMS = Core.SendSMS;
+
+export const SendTelegram = Core.SendTelegram;
 
 export const UploadFile = Core.UploadFile;
 
