@@ -75,7 +75,24 @@ Wait for the user to approve it.`;
                     return `[Error] Failed to request approval: ${e.message}`;
                 }
             } else {
-                return `[System] 🛑 Action BLOCKED. Login required for sensitive actions.`;
+                // Fallback for dev/local mode
+                console.warn("[Safety] No userId found, using 'dev-user' fallback.");
+                try {
+                    const data = await db.entities.AgentApprovals.create({
+                        agent_id: agentId || 'unknown',
+                        tool_name: toolName,
+                        payload: payload,
+                        status: 'pending',
+                        user_id: 'dev-user',
+                        reasoning: options.reasoning || "No plan provided (Dev Mode)."
+                    });
+
+                    return `[System] 🛑 Action PAUSED for User Approval (Dev Mode).
+The user must approve this action in the "Approval Queue".
+Approval ID: ${data.id}`;
+                } catch (e) {
+                    return `[Error] Failed to request approval: ${e.message}`;
+                }
             }
         }
     }
@@ -84,6 +101,27 @@ Wait for the user to approve it.`;
         case "delegate_task":
             // ... (delegation logic handled in AgentService, but kept here for reference if needed)
             return `[System] Delegation is handled by the AgentService directly.`;
+
+        case "create_task":
+            // payload: { title, description, assigned_to, priority }
+            try {
+                const { title, description, assigned_to, priority } = payload;
+                if (!title) return `[Error] Task title is required.`;
+
+                const newTask = await db.entities.AgentTasks.create({
+                    title,
+                    description: description || title,
+                    assigned_to: assigned_to || options.agentId, // Assign to self if not specified
+                    priority: priority || 'medium',
+                    status: 'open',
+                    created_by: options.agentId || 'unknown'
+                });
+
+                return `[System] Task Created Successfully! ID: ${newTask.id}. The worker will pick this up shortly.`;
+            } catch (e) {
+                console.error("Failed to create task:", e);
+                return `[Error] Failed to create task: ${e.message}`;
+            }
 
         case "browser":
             // payload: { url, action }

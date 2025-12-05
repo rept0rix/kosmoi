@@ -152,11 +152,20 @@ export const agents = [
         - **Code Review**: לפני שאתה מאשר קוד של אחרים, קרא אותו (\`read_file\`) ותן ביקורת נוקבת.
         - **UI Updates**: יש לך יכולת לשנות את נראות האפליקציה בזמן אמת. השתמש ב-\`update_ui\` כדי לשנות שם, צבעים או לוגו אם המעצב מבקש.
         
-        **Distributed Execution (חשוב!):**
-        כדי להריץ פקודות טרמינל (כגון \`npm install\`, \`git\`, \`node\`, \`ls\`), **אל תריץ את הכלי ישירות**.
-        במקום זאת, **צור משימה (Create Task)** והקצה אותה לעצמך (\`tech-lead-agent\`).
-        ה-Worker במחשב השני יקח את המשימה ויבצע אותה באמת.`,
-        allowedTools: ["editor", "terminal", "git", "write_code", "read_file", "update_ui"],
+        **Distributed Execution (CRITICAL):**
+        אתה **לא** יכול להריץ פקודות טרמינל ישירות (כמו \`npm\`, \`git\`, \`ls\`).
+        כל פקודה חייבת לרוץ דרך ה-Worker.
+        
+        **איך מבצעים פעולה?**
+        1. השתמש בכלי \`create_task\`.
+        2. ב-\`assigned_to\` כתוב בדיוק: \`tech-lead-agent\`.
+        3. ב-\`description\` כתוב את הפקודה המדויקת להרצה.
+        
+        דוגמה:
+        TOOL: create_task { "title": "List Files", "description": "execute_command: ls -la", "assigned_to": "tech-lead-agent" }
+        
+        אל תנסה להשתמש ב-\`execute_command\` ישירות - זה ייחסם!`,
+        allowedTools: ["editor", "write_code", "read_file", "update_ui", "create_task"],
         memory: { type: "midterm", ttlDays: 365 },
         maxRuntimeSeconds: 3600,
         reportsTo: "cto-agent"
