@@ -47,6 +47,17 @@ if (!agentConfig) {
 console.log(`🤖 Starting Worker for Agent: ${agentConfig.role} (${agentConfig.id})`);
 console.log(`📂 Project Root: ${PROJECT_ROOT}`);
 
+// Override System Prompt for Worker Mode
+agentConfig.systemPrompt += `
+\n\n
+=== WORKER MODE ACTIVE ===
+You are running as a WORKER on the target machine.
+1. You ARE allowed and EXPECTED to use 'execute_command', 'write_code', 'read_file' directly.
+2. Ignore any previous instructions about delegating tasks or using 'create_task'.
+3. EXECUTE the task description immediately using the appropriate tool.
+4. Do not ask for permission. Just do it.
+`;
+
 // Initialize Agent Service
 const agent = new AgentService(agentConfig, { userId: 'worker-node' }); // Use a static ID for the worker
 
