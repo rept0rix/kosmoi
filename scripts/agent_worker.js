@@ -4,16 +4,36 @@ import path from 'path';
 import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 
-// Polyfills for Node.js environment
-if (typeof localStorage === "undefined" || localStorage === null) {
-    global.localStorage = {
-        _data: {},
-        getItem: function (key) { return this._data[key] || null; },
-        setItem: function (key, value) { this._data[key] = value; },
-        removeItem: function (key) { delete this._data[key]; },
-        clear: function () { this._data = {}; }
-    };
+global.localStorage = {
+    _data: {},
+    getItem: function (key) { return this._data[key] || null; },
+    setItem: function (key, value) { this._data[key] = value; },
+    removeItem: function (key) { delete this._data[key]; },
+    clear: function () { this._data = {}; }
+};
+
+// --- LOGGING OVERRIDE ---
+const logFile = path.join(process.cwd(), 'worker.log');
+const originalLog = console.log;
+const originalError = console.error;
+
+function logToFile(type, args) {
+    const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg))).join(' ');
+    const timestamp = new Date().toISOString();
+    const logLine = `[${timestamp}] [${type}] ${message}\n`;
+    fs.appendFileSync(logFile, logLine);
 }
+
+console.log = function (...args) {
+    originalLog.apply(console, args);
+    logToFile('INFO', args);
+};
+
+console.error = function (...args) {
+    originalError.apply(console, args);
+    logToFile('ERROR', args);
+};
+// ------------------------
 
 // Import services
 // Note: We need to use absolute paths or handle imports carefully in Node
