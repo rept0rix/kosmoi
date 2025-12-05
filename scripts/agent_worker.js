@@ -248,7 +248,7 @@ async function main() {
                 .from('agent_tasks')
                 .select('*')
                 .eq('assigned_to', agentConfig.id)
-                .in('status', ['open', 'pending']) // 'pending' might be used?
+                .in('status', ['open', 'pending', 'in_progress']) // Include in_progress to resume stuck tasks
                 .limit(1);
 
             if (error) throw error;
