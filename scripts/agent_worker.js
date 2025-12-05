@@ -81,10 +81,11 @@ You are running as a WORKER on the target machine.
 
 // Clear memory to avoid "refusal loops" from previous runs
 console.log("🧹 Clearing Agent Memory for fresh start...");
-await clearMemory(agentConfig.id, 'worker-node');
+const WORKER_UUID = '00000000-0000-0000-0000-000000000000';
+await clearMemory(agentConfig.id, WORKER_UUID);
 
 // Initialize Agent Service
-const agent = new AgentService(agentConfig, { userId: 'worker-node' }); // Use a static ID for the worker
+const agent = new AgentService(agentConfig, { userId: WORKER_UUID }); // Use a static ID for the worker
 
 async function executeTool(toolName, payload) {
     console.log(`🛠️ Executing Tool: ${toolName}`, payload);
