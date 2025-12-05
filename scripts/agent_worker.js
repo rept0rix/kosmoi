@@ -21,6 +21,7 @@ if (typeof localStorage === "undefined" || localStorage === null) {
 import { db, realSupabase } from '../src/api/supabaseClient.js';
 import { AgentService } from '../src/services/agents/AgentService.js';
 import { agents } from '../src/services/agents/AgentRegistry.js';
+import { clearMemory } from '../src/services/agents/memorySupabase.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +58,10 @@ You are running as a WORKER on the target machine.
 3. EXECUTE the task description immediately using the appropriate tool.
 4. Do not ask for permission. Just do it.
 `;
+
+// Clear memory to avoid "refusal loops" from previous runs
+console.log("🧹 Clearing Agent Memory for fresh start...");
+await clearMemory(agentConfig.id, 'worker-node');
 
 // Initialize Agent Service
 const agent = new AgentService(agentConfig, { userId: 'worker-node' }); // Use a static ID for the worker

@@ -10,7 +10,7 @@ import { db } from '../../api/supabaseClient.js';
 export async function loadMemoryFromSupabase(agentId, userId) {
     if (!userId) return [];
     try {
-        const data = await db.AgentMemory.get(agentId, userId);
+        const data = await db.entities.AgentMemory.get(agentId, userId);
         return data ? data.history : [];
     } catch (error) {
         console.error("Failed to load memory:", error);
@@ -27,7 +27,7 @@ export async function loadMemoryFromSupabase(agentId, userId) {
 export async function saveMemoryToSupabase(agentId, userId, history) {
     if (!userId) return;
     try {
-        await db.AgentMemory.upsert({
+        await db.entities.AgentMemory.upsert({
             agent_id: agentId,
             user_id: userId,
             history: history,
@@ -38,12 +38,32 @@ export async function saveMemoryToSupabase(agentId, userId, history) {
     }
 }
 
+/**
+ * Clear agent memory from Supabase
+ * @param {string} agentId 
+ * @param {string} userId 
+ */
+export async function clearMemory(agentId, userId) {
+    if (!userId) return;
+    try {
+        await db.entities.AgentMemory.upsert({
+            agent_id: agentId,
+            user_id: userId,
+            history: [],
+            updated_at: new Date().toISOString()
+        });
+        console.log(`[Memory] Cleared history for ${agentId}`);
+    } catch (error) {
+        console.error("Failed to clear memory:", error);
+    }
+}
+
 // --- FILE SYSTEM PERSISTENCE ---
 
 export async function saveFileToSupabase(path, content, agentId, userId) {
     if (!userId) return;
     try {
-        await db.AgentFiles.upsert({
+        await db.entities.AgentFiles.upsert({
             path,
             content,
             agent_id: agentId,
@@ -58,7 +78,7 @@ export async function saveFileToSupabase(path, content, agentId, userId) {
 export async function listFilesFromSupabase(userId) {
     if (!userId) return [];
     try {
-        return await db.AgentFiles.list(userId);
+        return await db.entities.AgentFiles.list(userId);
     } catch (e) {
         console.error("Error listing files:", e);
         return [];
@@ -68,7 +88,7 @@ export async function listFilesFromSupabase(userId) {
 export async function loadFileFromSupabase(path, userId) {
     if (!userId) return null;
     try {
-        const data = await db.AgentFiles.get(path, userId);
+        const data = await db.entities.AgentFiles.get(path, userId);
         return data ? data.content : null;
     } catch (e) {
         console.error("Error loading file:", e);
@@ -81,7 +101,7 @@ export async function loadFileFromSupabase(path, userId) {
 export async function createTicketInSupabase(ticket, userId) {
     if (!userId) return;
     try {
-        await db.AgentTickets.create({
+        await db.entities.AgentTickets.create({
             ...ticket,
             user_id: userId
         });
