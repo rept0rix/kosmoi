@@ -81,7 +81,7 @@ You are running as a WORKER on the target machine.
 
 // Clear memory to avoid "refusal loops" from previous runs
 console.log("🧹 Clearing Agent Memory for fresh start...");
-const WORKER_UUID = '00000000-0000-0000-0000-000000000000';
+const WORKER_UUID = '87fbda0b-46d9-44e9-a460-395ca941fd31';
 await clearMemory(agentConfig.id, WORKER_UUID);
 
 // Initialize Agent Service
