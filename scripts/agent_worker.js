@@ -132,7 +132,7 @@ When finished, reply with "TASK_COMPLETED".
 
         // Call Agent (simulateTools: false so we handle them)
         const response = await agent.sendMessage(currentMessage, { simulateTools: false });
-        console.log(`🗣️ Agent: ${response.text}`);
+        console.log(`🗣️ Agent Raw Response:\n${response.text}\n---End Response---`);
 
         // Check for Tool Call (JSON action or parsed toolRequest)
         let action = response.toolRequest;
@@ -157,11 +157,12 @@ When finished, reply with "TASK_COMPLETED".
                     }
                 }
             } catch (e) {
-                // Ignore parse errors
+                console.warn("⚠️ Failed to parse manual JSON:", e.message);
             }
         }
 
         if (action) {
+            console.log(`✅ Detected Tool Action: ${action.name}`);
             const result = await executeTool(action.name, action.payload);
             console.log(`✅ Tool Result:`, result.slice(0, 100) + "...");
 
@@ -176,12 +177,23 @@ When finished, reply with "TASK_COMPLETED".
             }
 
             // If no tool and no completion, just continue conversation or stop?
-            // Usually the agent asks a question or says something.
-            // We can treat it as a "pause" or ask for clarification.
-            // For now, let's stop this loop if no tool is called, to avoid infinite chat.
-            console.log("⚠️ No tool called. Waiting for next poll.");
-            break;
+            console.log("⚠️ No tool called and not completed. Agent might be confused.");
+
+            // Force fail if we are stuck in a loop without actions
+            if (turnCount >= 3) {
+                console.error("❌ Task Failed: Agent is not calling tools.");
+                await db.entities.AgentTasks.update(task.id, { status: 'failed', result: "Agent failed to execute tools. Raw response: " + response.text.substring(0, 200) });
+                return;
+            }
+
+            // Try to nudge the agent
+            currentMessage = "You have not executed the command yet. Please use the 'execute_command' tool now.";
         }
+    }
+
+    if (turnCount >= MAX_TURNS) {
+        console.error("❌ Task Timeout: Max turns reached.");
+        await db.entities.AgentTasks.update(task.id, { status: 'failed', result: "Timeout: Max turns reached." });
     }
 }
 
