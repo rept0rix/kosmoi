@@ -12,6 +12,12 @@ global.localStorage = {
     clear: function () { this._data = {}; }
 };
 
+// Set Service Role Key to bypass RLS
+if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
+    global.localStorage.setItem('sb-access-token', process.env.VITE_SUPABASE_SERVICE_ROLE_KEY);
+    console.log("🔑 Worker running with Service Role Privileges");
+}
+
 // --- LOGGING OVERRIDE ---
 const logFile = path.join(process.cwd(), 'worker.log');
 const originalLog = console.log;
@@ -51,6 +57,10 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const roleArg = args.find(arg => arg.startsWith('--role='));
 const agentRole = roleArg ? roleArg.split('=')[1] : null;
+
+const nameArg = args.find(arg => arg.startsWith('--name='));
+const workerName = nameArg ? nameArg.split('=')[1] : `Worker-${Math.floor(Math.random() * 1000)}`;
+
 
 if (!agentRole) {
     console.error("❌ Please specify an agent role using --role=<role_id>");
@@ -143,8 +153,25 @@ async function executeTool(toolName, payload) {
 async function processTask(task) {
     console.log(`\n📋 Processing Task: ${task.title}`);
 
-    // 1. Mark as In Progress
+    // 1. Mark as In Progress (and tag worker)
+    // We append the worker name to the task description temporarily or just log it?
+    // Better: Update the status to 'in_progress' and maybe we can use a metadata field if exists.
+    // For now, let's just log it to the console which goes to the file.
+    console.log(`[${workerName}] Claiming task...`);
     await db.entities.AgentTasks.update(task.id, { status: 'in_progress' });
+
+    // Announce in chat/memory
+    try {
+        await realSupabase.from('agent_memory').insert([{
+            agent_id: agentRole,
+            user_id: WORKER_UUID,
+            message: `🤖 [${workerName}] I am starting task: "${task.title}"`,
+            context: { taskId: task.id },
+            type: 'status_update'
+        }]);
+    } catch (announceError) {
+        console.warn("⚠️ Failed to announce task start (non-critical):", announceError.message);
+    }
 
     // 2. Send to Agent
     const prompt = `
@@ -203,13 +230,18 @@ When finished, reply with "TASK_COMPLETED".
             const result = await executeTool(action.name, action.payload);
             console.log(`✅ Tool Result:`, result.slice(0, 100) + "...");
 
+
+
             // Feed result back to agent
             currentMessage = `Tool '${action.name}' output:\n${result}\n\nWhat is the next step?`;
         } else {
             // No tool call. Check if done.
             if (response.text.includes("TASK_COMPLETED") || response.text.includes("TERMINATE")) {
                 console.log("✅ Task Completed by Agent.");
-                await db.entities.AgentTasks.update(task.id, { status: 'completed' });
+                await db.entities.AgentTasks.update(task.id, {
+                    status: 'completed',
+                    result: response.text
+                });
                 return;
             }
 

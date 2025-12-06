@@ -11,6 +11,9 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AgentCommandCenter from '@/pages/AgentCommandCenter';
+import AdminImporter from '@/pages/AdminImporter';
+
+import VendorSignup from '@/pages/VendorSignup';
 import { AppConfigProvider } from '@/components/AppConfigContext';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 import PersistenceTestPage from '@/pages/PersistenceTest';
@@ -77,6 +80,8 @@ const AuthenticatedApp = () => {
             <Route key={path} path={`/${path.toLowerCase()}`} element={<Page />} />
           ))}
         <Route path="/command-center" element={<AgentCommandCenter />} />
+        <Route path="/admin-importer" element={<AdminImporter />} />
+        <Route path="/vendor-signup" element={<VendorSignup />} />
         <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
         <Route path="/test-persistence" element={<PersistenceTestPage />} />
         <Route path="*" element={<PageNotFound />} />
