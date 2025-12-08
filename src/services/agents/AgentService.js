@@ -39,7 +39,10 @@ export async function toolRouter(toolName, payload, options = {}) {
         } else {
             console.log(`[Safety] Intercepting sensitive action: ${toolName}`);
 
-            if (userId) {
+            // UUID Regex Check
+            const isUuid = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+            if (userId && isUuid(userId)) {
                 try {
                     let data;
                     try {
@@ -75,15 +78,20 @@ Wait for the user to approve it.`;
                     return `[Error] Failed to request approval: ${e.message}`;
                 }
             } else {
-                // Fallback for dev/local mode
-                console.warn("[Safety] No userId found, using 'dev-user' fallback.");
+                // Fallback for dev/terminal mode (if userId is not provided or valid)
+                console.warn("[Safety] No valid userId found, using fallback.");
                 try {
+                    // We must use a VALID UUID for the database insert to succeed.
+                    // This is a known "Dev User" UUID that should exist or we generate a random one for tracking.
+                    // Ideally, we should fetch the actual user ID, but for terminal runner, we act as system.
+                    const DEV_USER_UUID = '2ff0dcb1-37f2-4338-bb3b-f71fb6dd444e'; // Real Dev User UUID
+
                     const data = await db.entities.AgentApprovals.create({
                         agent_id: agentId || 'unknown',
                         tool_name: toolName,
                         payload: payload,
                         status: 'pending',
-                        user_id: 'dev-user',
+                        user_id: DEV_USER_UUID,
                         reasoning: options.reasoning || "No plan provided (Dev Mode)."
                     });
 
@@ -288,11 +296,75 @@ Approval ID: ${data.id}`;
             const encodedPrompt = encodeURIComponent(enhancedPrompt);
             const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=600&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
 
-            // We can also use the Gemini Key from env if we needed to enhance the prompt further, 
-            // but for now, direct generation is faster and more reliable.
-
             return `[Nano Banana Pro] Image generated successfully: ![Generated Image](${imageUrl})
 URL: ${imageUrl}`;
+
+        case "read_n8n_catalog":
+            // payload: { search }
+            try {
+                // Dynamic import to avoid build time issues if file doesn't exist yet
+                // But in node env we can just read file
+                // For simplified dev:
+                console.log("[n8n] Reading catalog...");
+
+                // We will try to fetch it if we are in browser, or read fs if in node?
+                // AgentService (Frontend) cannot read FS directly.
+                // WE MUST USE SUPABASE OR IMPORT IT.
+                // Since I generated a JSON file in src/knowledge, we can import it if we knew the path at build time.
+                // Better: The AgentService runs in Browser. It can't read '/Users/...'.
+                // SOLUTION: The index_n8n.js ran in Node. The file is on disk.
+                // We need to serve it or import it.
+                // Quick fix: Assume the user will import it or we hardcode a 'search' over a known list.
+                // OR: We use 'execute_command' to grep the file content on the server (via worker).
+
+                // Let's use the 'execute_command' bridge to search the file on the "Worker" machine.
+                // This keeps the separation clean.
+
+                const searchTerm = payload.search || "";
+                const command = `grep -i "${searchTerm}" src/knowledge/n8n_catalog.json | head -n 20`;
+
+                // Reuse existing execute_command logic? 
+                // We are inside the browser. We can call the MCP bridge.
+
+                // Let's actually create a task for the worker to read it? No, too slow.
+                // Use the MCP WebSocket bridge directly here.
+
+                const ws = new WebSocket('ws://localhost:3001');
+                return await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        ws.close();
+                        resolve("[Error] Search timed out.");
+                    }, 5000);
+
+                    ws.onopen = () => {
+                        ws.send(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "n8n-search", version: "1.0" } } }));
+                    };
+
+                    ws.onmessage = (event) => {
+                        const response = JSON.parse(event.data);
+                        if (response.id === 1) {
+                            ws.send(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
+                            ws.send(JSON.stringify({
+                                jsonrpc: "2.0",
+                                id: 3,
+                                method: "tools/call",
+                                params: {
+                                    name: "execute_command",
+                                    arguments: { command: command }
+                                }
+                            }));
+                        } else if (response.id === 3) {
+                            clearTimeout(timeout);
+                            ws.close();
+                            const content = response.result?.content?.[0]?.text || "";
+                            resolve(`[n8n Catalog Search Results for '${searchTerm}']:\n${content}\n...(truncated)`);
+                        }
+                    };
+                });
+
+            } catch (e) {
+                return `[Error] Failed to search catalog: ${e.message}`;
+            }
 
         case "read_knowledge":
             const key = payload.key;
@@ -585,6 +657,57 @@ URL: ${imageUrl}`;
                 });
             } catch (e) {
                 return `Error connecting to MCP Proxy: ${e.message}. Is 'node mcp-proxy.js' running?`;
+            }
+
+        case "search_services":
+            // payload: { query, category, location }
+            try {
+                const { query, category, location } = payload;
+                console.log(`[Concierge] Searching DB for: ${query || category}...`);
+
+                let queryBuilder = db.entities.ServiceProvider.select('*');
+
+                if (query) {
+                    // Simple text search on name or description
+                    // Supabase textSearch might require config, so we use ilike for simplicity or 'or'
+                    queryBuilder = queryBuilder.or(`business_name.ilike.%${query}%,description.ilike.%${query}%`);
+                }
+
+                if (category) {
+                    queryBuilder = queryBuilder.eq('category', category);
+                }
+
+                if (location) {
+                    queryBuilder = queryBuilder.ilike('location', `%${location}%`);
+                }
+
+                const { data, error } = await queryBuilder.limit(5);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    return `[Database] No results found for "${query || category}".`;
+                }
+
+                // Format results for the agent
+                const results = data.map(p => `- **${p.business_name}** (${p.category}): ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating})`).join('\n');
+
+                return `[Database Results]:\n${results}`;
+
+            } catch (e) {
+                console.error("Search failed:", e);
+                return `[Error] Database search failed: ${e.message}`;
+            }
+
+        case "notify_admin":
+            // payload: { message, priority }
+            try {
+                const { sendTelegramNotification } = await import("../TelegramService.js");
+                await sendTelegramNotification(`[Admin Notification] ${payload.message}`);
+                return `[System] Admin notified via Telegram.`;
+            } catch (e) {
+                console.error("Notify Admin failed:", e);
+                return `[Error] Failed to notify admin: ${e.message}`;
             }
 
         default:

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { agents, groupAgentsByLayer } from '../services/agents/AgentRegistry';
-import { AgentCard } from '../components/agents/AgentCard';
+import { AgentCard } from "@/components/agents/AgentCard";
 import { AgentChatWindow } from '../components/agents/AgentChatWindow';
+import { ApprovalQueue } from "@/components/agents/ApprovalQueue";
 import { AgentService } from '../services/agents/AgentService';
 import GroupChatWindow from '../components/agents/GroupChatWindow';
 import { useAuth } from '@/lib/AuthContext';
@@ -57,6 +58,9 @@ export default function AgentCommandCenter() {
                         </Button>
                     </div>
                 </div>
+
+                {/* 🛡️ SAFETY: Approval Queue */}
+                <ApprovalQueue userId={user?.id} />
 
                 {/* Content Area */}
                 {viewMode === 'group' ? (

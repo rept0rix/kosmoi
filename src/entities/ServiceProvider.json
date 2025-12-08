@@ -2,57 +2,175 @@
   "name": "ServiceProvider",
   "type": "object",
   "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier"
+    },
     "business_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05d4\u05e2\u05e1\u05e7 \u05d0\u05d5 \u05e9\u05dd \u05d4\u05e1\u05e4\u05e7"
+      "description": "שם העסק או שם הספק"
     },
     "contact_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05d0\u05d9\u05e9 \u05d4\u05e7\u05e9\u05e8"
+      "description": "שם איש הקשר"
     },
     "phone": {
       "type": "string",
-      "description": "\u05de\u05e1\u05e4\u05e8 \u05d8\u05dc\u05e4\u05d5\u05df"
+      "description": "מספר טלפון"
     },
     "whatsapp": {
       "type": "string",
-      "description": "\u05de\u05e1\u05e4\u05e8 \u05d5\u05d5\u05d0\u05d8\u05e1\u05d0\u05e4"
+      "description": "מספר וואטסאפ"
+    },
+    "line_id": {
+      "type": "string",
+      "description": "Line ID (חשוב מאוד בתאילנד)"
     },
     "email": {
       "type": "string",
       "format": "email",
-      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc"
+      "description": "אימייל"
+    },
+    "website": {
+      "type": "string",
+      "description": "כתובת אתר"
+    },
+    "super_category": {
+      "type": "string",
+      "enum": [
+        "eat",
+        "fix",
+        "shop",
+        "enjoy",
+        "go_out",
+        "travel",
+        "help",
+        "get_service",
+        "get_info"
+      ],
+      "description": "קטגוריית אב"
     },
     "category": {
       "type": "string",
       "enum": [
-        "handyman",
-        "carpenter",
-        "electrician",
         "plumber",
+        "handyman",
+        "electrician",
         "ac_repair",
-        "cleaning",
+        "construction",
+        "technicians",
+        "renovations",
+        "home_maintenance",
+        "craftsmen",
+        "installers",
+        "repair_labs",
+        "carpenter",
         "locksmith",
         "painter",
         "gardener",
         "pest_control",
+        "pool_cleaning",
+        "solar_energy",
+        "cleaning",
         "appliance_repair",
-        "moving",
-        "pool_maintenance",
         "internet_tech",
-        "car_mechanic",
-        "motorcycle_mechanic",
-        "tuktuk_driver",
-        "translator",
+        "housekeeping",
+        "restaurants",
+        "delivery",
+        "cafes",
+        "fast_food",
+        "bar_restaurant",
+        "coffee_carts",
+        "kosher_restaurant",
+        "chef_restaurant",
+        "ice_cream",
+        "outdoor_seating",
+        "sweets",
+        "fashion",
+        "electronics",
+        "sports_camping",
+        "pet_supplies",
+        "food_beverages",
+        "furniture",
+        "leisure_products",
+        "baby_products",
+        "flowers",
+        "second_hand",
+        "department_store",
+        "sports",
+        "workshops",
+        "health_spa",
+        "parks_gardens",
+        "fountains",
+        "enrichment",
+        "shopping_centers",
+        "attractions",
+        "gymboree",
+        "pubs",
+        "movies",
+        "concerts",
+        "escape_rooms",
+        "exhibitions",
+        "kids_events",
+        "shows",
+        "stand_up",
+        "clubs",
+        "accommodation",
+        "trip_attractions",
+        "trip_routes",
+        "springs",
+        "points_of_interest",
+        "nature",
+        "heritage_sites",
+        "emergency_volunteering",
+        "aid_organizations",
+        "food_distribution",
+        "clothing_collection",
+        "wizo",
+        "volunteer",
+        "hair_donation",
+        "one_in_nine",
+        "pharmacies",
+        "fuel_transport",
+        "atms",
+        "health",
+        "mental_health",
+        "beauty",
+        "consulting_treatment",
+        "finance",
+        "business_services",
+        "animals",
+        "event_organizers",
         "visa_services",
-        "real_estate_agent",
+        "translator",
+        "car_rental",
+        "bike_rental",
+        "taxi_service",
+        "laundry",
+        "protected_spaces",
+        "social_security",
+        "education",
+        "authorities",
+        "welfare",
+        "organizations",
+        "cell_towers",
+        "religious_institutions",
+        "agriculture_environment",
+        "industries",
         "other"
       ],
-      "description": "\u05e1\u05d5\u05d2 \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea"
+      "description": "סוג השירות הספציפי"
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "רשימת שירותים ספציפיים (תגיות)"
     },
     "description": {
       "type": "string",
-      "description": "\u05ea\u05d9\u05d0\u05d5\u05e8 \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea"
+      "description": "תיאור השירות"
     },
     "languages": {
       "type": "array",
@@ -68,26 +186,26 @@
           "french"
         ]
       },
-      "description": "\u05e9\u05e4\u05d5\u05ea"
+      "description": "שפות"
     },
     "location": {
       "type": "string",
-      "description": "\u05de\u05d9\u05e7\u05d5\u05dd (\u05d0\u05d6\u05d5\u05e8 \u05db\u05dc\u05dc\u05d9)"
+      "description": "מיקום (אזור כללי)"
     },
     "latitude": {
       "type": "number",
-      "description": "\u05e7\u05d5 \u05e8\u05d5\u05d7\u05d1"
+      "description": "קו רוחב"
     },
     "longitude": {
       "type": "number",
-      "description": "\u05e7\u05d5 \u05d0\u05d5\u05e8\u05da"
+      "description": "קו אורך"
     },
     "service_areas": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "\u05d0\u05d6\u05d5\u05e8\u05d9 \u05e9\u05d9\u05e8\u05d5\u05ea"
+      "description": "אזורי שירות"
     },
     "price_range": {
       "type": "string",
@@ -97,55 +215,65 @@
         "premium"
       ],
       "default": "moderate",
-      "description": "\u05d8\u05d5\u05d5\u05d7 \u05de\u05d7\u05d9\u05e8\u05d9\u05dd"
+      "description": "טווח מחירים"
     },
     "average_rating": {
       "type": "number",
       "minimum": 0,
       "maximum": 5,
       "default": 0,
-      "description": "\u05d3\u05d9\u05e8\u05d5\u05d2 \u05de\u05de\u05d5\u05e6\u05e2"
+      "description": "דירוג ממוצע"
     },
     "total_reviews": {
       "type": "number",
       "default": 0,
-      "description": "\u05de\u05e1\u05e4\u05e8 \u05d1\u05d9\u05e7\u05d5\u05e8\u05d5\u05ea"
+      "description": "מספר ביקורות"
     },
     "images": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "\u05ea\u05de\u05d5\u05e0\u05d5\u05ea \u05e2\u05d1\u05d5\u05d3\u05d5\u05ea"
+      "description": "תמונות עבודות"
     },
     "available_hours": {
       "type": "string",
-      "description": "\u05e9\u05e2\u05d5\u05ea \u05d6\u05de\u05d9\u05e0\u05d5\u05ea"
+      "description": "שעות זמינות"
     },
     "emergency_service": {
       "type": "boolean",
       "default": false,
-      "description": "\u05e9\u05d9\u05e8\u05d5\u05ea \u05d7\u05d9\u05e8\u05d5\u05dd"
+      "description": "שירות חירום (24/7)"
     },
     "verified": {
       "type": "boolean",
       "default": false,
-      "description": "\u05d0\u05d5\u05de\u05ea \u05e2\u05dc \u05d9\u05d3\u05d9 \u05de\u05e0\u05d4\u05dc"
+      "description": "אומת על ידי מנהל"
     },
     "status": {
       "type": "string",
       "enum": [
         "pending",
         "active",
-        "inactive"
+        "inactive",
+        "suspended"
       ],
       "default": "pending",
-      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1"
+      "description": "סטטוס"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
     "business_name",
     "phone",
-    "category"
+    "category",
+    "super_category"
   ]
 }

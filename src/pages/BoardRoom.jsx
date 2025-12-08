@@ -10,7 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Send, Users, Layout, MessageSquare, CheckSquare, Play, Pause, Archive, Bot, Sparkles, MoreVertical, Zap } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Plus, Send, Users, Layout, MessageSquare, CheckSquare, Play, Pause, Archive, Bot, Sparkles, MoreVertical, Zap, TriangleAlert } from 'lucide-react';
 import { agents, getAgentById, syncAgentsWithDatabase } from '@/services/agents/AgentRegistry';
 import { toolRouter } from '@/services/agents/AgentService';
 import { useLanguage } from "@/components/LanguageContext";
@@ -26,7 +27,17 @@ import AgentNetworkGraph from '@/components/agents/AgentNetworkGraph';
 import initialCompanyState from '@/data/company_state.json';
 import { CompanyHeartbeat } from '@/services/CompanyHeartbeat';
 import { CompanyKnowledge } from '@/services/agents/CompanyKnowledge';
-import { BookOpen, Database } from 'lucide-react';
+import { WORKFLOWS, workflowService } from '@/services/agents/WorkflowService';
+import { BookOpen, Database, PlayCircle } from 'lucide-react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+
+import LivePreview from '@/components/LivePreview';
 
 // Initialize direct Supabase client for Realtime support
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -43,7 +54,8 @@ export default function BoardRoom() {
     const [messages, setMessages] = useState([]);
     const [tasks, setTasks] = useState([]);
     const [knowledgeItems, setKnowledgeItems] = useState([]);
-    const [activeRightTab, setActiveRightTab] = useState('tasks'); // 'tasks' | 'knowledge'
+    const [activeRightTab, setActiveRightTab] = useState('tasks'); // 'tasks' | 'knowledge' | 'preview'
+    const [isSplitView, setIsSplitView] = useState(false); // New state for split view
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [typingAgent, setTypingAgent] = useState(null);
@@ -56,6 +68,7 @@ export default function BoardRoom() {
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const [companyState, setCompanyState] = useState(initialCompanyState);
+    const [activeWorkflowState, setActiveWorkflowState] = useState(null);
 
     // Initialize selected agents from localStorage or default to all board agents
     useEffect(() => {
@@ -107,14 +120,15 @@ export default function BoardRoom() {
         fetchMeetings();
 
         // Realtime subscription for meetings
-        const subscription = supabase.channel('board_meetings')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'board_meetings' }, payload => {
-                fetchMeetings();
-            })
-            .subscribe();
+        // Realtime disabled to prevent quota loop for now
+        // const subscription = supabase.channel('board_meetings')
+        //     .on('postgres_changes', { event: '*', schema: 'public', table: 'board_meetings' }, payload => {
+        //         fetchMeetings();
+        //     })
+        //     .subscribe();
 
         return () => {
-            subscription.unsubscribe();
+            // subscription.unsubscribe();
         };
     }, []);
 
@@ -196,8 +210,32 @@ export default function BoardRoom() {
 
         let selectedAgent = forcedAgent;
 
-        // ORCHESTRATOR LOGIC (Dynamic Team Management)
-        if (!selectedAgent) {
+        // WORKFLOW LOGIC OVERRIDE
+        if (activeWorkflowState && !forcedAgent) {
+            console.log("Workflow Active:", activeWorkflowState.workflow.name);
+            console.log("Current Step:", activeWorkflowState.currentStep);
+
+            // If current step is 'user', we wait for user input (handled in handleSendMessage)
+            // If current step is an agent role, we force that agent.
+            const currentRole = activeWorkflowState.currentStep.role;
+
+            if (currentRole !== 'user') {
+                // Find agent by role (approximate match or exact)
+                // Our roles in registry are like 'tech-lead', 'qa', etc.
+                // Workflow roles should match registry roles.
+                selectedAgent = agents.find(a => a.role === currentRole || a.id === currentRole + '-agent');
+
+                if (!selectedAgent) {
+                    console.warn(`Workflow agent for role ${currentRole} not found!`);
+                    // Fallback?
+                } else {
+                    console.log(`Workflow forcing agent: ${selectedAgent.role}`);
+                }
+            }
+        }
+
+        // ORCHESTRATOR LOGIC (Dynamic Team Management) - Only if NO workflow and NO forced agent
+        if (!selectedAgent && !activeWorkflowState) {
             const orchestrator = new BoardOrchestrator(agents, { userId: user?.id }); // Pass all agents so it knows who exists
 
             // Prepare history for orchestrator
@@ -336,6 +374,32 @@ export default function BoardRoom() {
                         variant: "default",
                         className: "bg-green-600 text-white border-none"
                     });
+                } else if (response.action.type === 'tool_call') {
+                    msgType = 'system'; // Or a new type for tool usage
+                    const { name, payload } = response.action;
+
+                    console.log(`[BoardRoom] Executing tool: ${name}`, payload);
+
+                    // Add "Executing Tool" message to chat
+                    await supabase.from('board_messages').insert([{
+                        meeting_id: selectedMeeting.id,
+                        agent_id: 'SYSTEM',
+                        content: `**Executing Tool**: ${selectedAgent.role} is using \`${name}\`...`,
+                        type: 'system'
+                    }]);
+
+                    // Execute the tool
+                    toolRouter(name, payload, { userId: user?.id, agentId: selectedAgent.id }).then(result => {
+                        console.log(`[BoardRoom] Tool ${name} result:`, result);
+
+                        // Feed result back to chat as a system message
+                        supabase.from('board_messages').insert([{
+                            meeting_id: selectedMeeting.id,
+                            agent_id: 'SYSTEM',
+                            content: `**Tool Result (${name})**:\n\`\`\`\n${result}\n\`\`\``,
+                            type: 'system'
+                        }]);
+                    });
                 }
             }
 
@@ -346,6 +410,31 @@ export default function BoardRoom() {
                 content: response.message,
                 type: msgType
             }]);
+
+            // ADVANCE WORKFLOW
+            if (activeWorkflowState) {
+                const nextState = workflowService.nextStep();
+                setActiveWorkflowState(nextState);
+
+                if (nextState) {
+                    // If next step is an agent, trigger them automatically
+                    if (nextState.currentStep.role !== 'user') {
+                        setTimeout(() => triggerAgentReply(), 2000);
+                    } else {
+                        // Notify user it's their turn
+                        toast({ title: "Your Turn", description: "Waiting for your input...", className: "bg-blue-500 text-white" });
+                    }
+                } else {
+                    // Workflow Complete
+                    toast({ title: "Workflow Complete", description: "All steps finished.", className: "bg-green-600 text-white" });
+                    await supabase.from('board_messages').insert([{
+                        meeting_id: selectedMeeting.id,
+                        agent_id: 'SYSTEM',
+                        content: `**WORKFLOW COMPLETE**: ${activeWorkflowState.workflow.name}`,
+                        type: 'system'
+                    }]);
+                }
+            }
 
         } catch (error) {
             console.error("Failed to get agent reply:", error);
@@ -501,7 +590,7 @@ export default function BoardRoom() {
             }
         };
 
-        const interval = setInterval(tick, 10000);
+        const interval = setInterval(tick, 30000);
         return () => clearInterval(interval);
     }, [autonomousMode]);
     useEffect(() => {
@@ -563,10 +652,17 @@ export default function BoardRoom() {
         if (!error) {
             setInput('');
             setSelectedImage(null);
-        }
-        if (!error) {
-            setInput('');
-            setSelectedImage(null);
+
+            // WORKFLOW: If we are in a workflow and it was the user's turn, advance!
+            if (activeWorkflowState && activeWorkflowState.currentStep.role === 'user') {
+                const nextState = workflowService.nextStep();
+                setActiveWorkflowState(nextState);
+
+                // If next is agent, trigger them
+                if (nextState && nextState.currentStep.role !== 'user') {
+                    setTimeout(() => triggerAgentReply(), 1000);
+                }
+            }
         }
     };
 
@@ -665,7 +761,37 @@ export default function BoardRoom() {
         }
     };
 
+    const handleStartWorkflow = (workflowId) => {
+        if (!selectedMeeting) return;
+        try {
+            const state = workflowService.startWorkflow(workflowId, { meetingId: selectedMeeting.id });
+            setActiveWorkflowState(state);
+
+            // Notify the room
+            const workflow = WORKFLOWS[Object.keys(WORKFLOWS).find(k => WORKFLOWS[k].id === workflowId)];
+            supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'SYSTEM',
+                content: `**WORKFLOW STARTED**: ${workflow.name}\n${workflow.description}\n\n**Step 1**: ${workflow.steps[0].label} (${workflow.steps[0].role})`,
+                type: 'system'
+            }]);
+
+            toast({
+                title: "Workflow Started",
+                description: `Started ${workflow.name}`,
+                className: "bg-blue-600 text-white"
+            });
+        } catch (e) {
+            console.error("Failed to start workflow", e);
+        }
+    };
+
     const boardAgents = agents.filter(a => a.layer === 'board');
+
+    // Worker Status Check
+    const workerStatusItem = knowledgeItems.find(k => k.key === 'WORKER_STATUS');
+    const workerStatus = workerStatusItem?.value;
+    const isWorkerStopped = workerStatus?.status === 'STOPPED';
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -678,6 +804,7 @@ export default function BoardRoom() {
             <div className="w-72 border-e bg-white flex flex-col shadow-sm z-10">
                 <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
                     <h2 className="font-semibold flex items-center gap-2 text-gray-800">
+                        {isWorkerStopped && <TriangleAlert className="h-5 w-5 text-red-600 animate-pulse" />}
                         <Layout className="w-4 h-4 text-blue-600" />
                     </h2>
                     <Button variant="ghost" size="icon" onClick={handleCreateMeeting} className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600">
@@ -719,8 +846,27 @@ export default function BoardRoom() {
                 </div>
             </div>
 
-            {/* Main Content - Chat */}
-            <div className="flex-1 flex flex-col min-w-0 bg-white/50 backdrop-blur-sm relative">
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col relative bg-white">
+                {/* Worker Alert */}
+                {isWorkerStopped && (
+                    <div className="p-4 bg-red-50 border-b border-red-200">
+                        <Alert variant="destructive" className="bg-white border-red-200">
+                            <TriangleAlert className="h-4 w-4" />
+                            <AlertTitle>System Critical Alert</AlertTitle>
+                            <AlertDescription className="flex flex-col gap-2">
+                                <p>The Autonomous Worker has stopped due to an error:</p>
+                                <code className="bg-red-100 p-2 rounded text-xs overflow-x-auto">
+                                    {workerStatus?.error || "Unknown Error"}
+                                </code>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Last seen: {new Date(workerStatus?.last_seen).toLocaleString()}
+                                </p>
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
+
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
@@ -759,6 +905,25 @@ export default function BoardRoom() {
                                         <Zap className="w-3 h-3" />
                                         {isRTL ? 'אתגר הדולר' : 'One Dollar Challenge'}
                                     </Button>
+                                    <Separator orientation="vertical" className="h-4" />
+
+                                    {/* Workflow Selector */}
+                                    <Select onValueChange={handleStartWorkflow}>
+                                        <SelectTrigger className="h-7 w-[140px] text-xs bg-slate-50 border-slate-200">
+                                            <SelectValue placeholder="Start Workflow" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.values(WORKFLOWS).map(wf => (
+                                                <SelectItem key={wf.id} value={wf.id} className="text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{wf.name.split(' ')[0]}</span>
+                                                        <span>{wf.name.split(' ').slice(1).join(' ')}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
                                     <Separator orientation="vertical" className="h-4" />
 
                                     {/* Participants Popover */}
@@ -894,6 +1059,9 @@ export default function BoardRoom() {
                                                     <ReactMarkdown
                                                         remarkPlugins={[remarkGfm]}
                                                         components={{
+                                                            img: ({ node, ...props }) => (
+                                                                <img {...props} className="max-w-full h-auto rounded-lg shadow-md my-2 border border-gray-100" />
+                                                            ),
                                                             code({ node, className, children, ...props }) {
                                                                 const match = /language-(\w+)/.exec(className || '')
                                                                 return match ? (
@@ -1002,8 +1170,11 @@ export default function BoardRoom() {
                 )}
             </div>
 
-            {/* Right Sidebar - Tasks & Knowledge */}
-            <div className="w-80 border-s bg-white flex flex-col shadow-sm z-10">
+            {/* Right Sidebar - Tasks & Knowledge & Preview */}
+            <div className={`border-s bg-white flex flex-col shadow-sm z-10 transition-all duration-300 ${activeRightTab === 'preview'
+                ? (isSplitView ? 'w-1/2' : 'w-[480px]')
+                : 'w-80'
+                }`}>
                 <div className="p-2 border-b flex gap-1 bg-gray-50/50">
                     <button
                         onClick={() => setActiveRightTab('tasks')}
@@ -1021,99 +1192,116 @@ export default function BoardRoom() {
                         {isRTL ? 'ידע' : 'Knowledge'}
                         <Badge variant="secondary" className="h-4 px-1 text-[9px] min-w-[16px]">{knowledgeItems.length}</Badge>
                     </button>
+                    <button
+                        onClick={() => setActiveRightTab('preview')}
+                        className={`flex-1 py-2 text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors ${activeRightTab === 'preview' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                    >
+                        <PlayCircle className="w-3 h-3" />
+                        {isRTL ? 'Live' : 'Preview'}
+                    </button>
                 </div>
 
-                <ScrollArea className="flex-1 p-4 bg-gray-50/30">
-                    {activeRightTab === 'tasks' ? (
-                        <div className="space-y-3">
-                            {tasks.length === 0 && (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
-                                        <CheckSquare className="w-6 h-6 text-green-200" />
-                                    </div>
-                                    <p className="text-sm text-gray-400">
-                                        {isRTL ? 'אין משימות פעילות' : 'No active tasks'}
-                                    </p>
-                                </div>
-                            )}
-                            {tasks.map(task => (
-                                <Card key={task.id} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <CardHeader className="p-3 pb-0">
-                                        <div className="flex justify-between items-start gap-2">
-                                            <CardTitle className="text-sm font-semibold leading-tight text-gray-800">
-                                                {task.title}
-                                            </CardTitle>
-                                            <Badge variant="outline" className={`text-[10px] shrink-0 ${task.status === 'done' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                    'bg-gray-50 text-gray-600'
-                                                }`}>
-                                                {task.status}
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="p-3 pt-2">
-                                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">
-                                            {task.description}
-                                        </p>
-                                        <div className="flex justify-between items-center pt-2 border-t border-gray-50">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600">
-                                                    {(task.assigned_to || 'U')[0]}
-                                                </div>
-                                                <span className="text-[10px] text-gray-400 font-medium">
-                                                    {task.assigned_to || 'Unassigned'}
-                                                </span>
-                                            </div>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${task.priority === 'high' ? 'bg-red-50 text-red-600' :
-                                                task.priority === 'medium' ? 'bg-orange-50 text-orange-600' :
-                                                    'bg-gray-50 text-gray-500'
-                                                }`}>
-                                                {task.priority}
-                                            </span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                <div className="flex-1 bg-gray-50/30 overflow-hidden relative">
+                    {activeRightTab === 'preview' ? (
+                        <LivePreview
+                            initialUrl="http://localhost:5173/landing"
+                            isSplitView={isSplitView}
+                            onSplitViewToggle={() => setIsSplitView(!isSplitView)}
+                        />
                     ) : (
-                        <div className="space-y-3">
-                            {knowledgeItems.length === 0 && (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
-                                        <Database className="w-6 h-6 text-purple-200" />
-                                    </div>
-                                    <p className="text-sm text-gray-400">
-                                        {isRTL ? 'אין פריטי ידע' : 'No knowledge items'}
-                                    </p>
+                        <ScrollArea className="h-full p-4">
+                            {activeRightTab === 'tasks' ? (
+                                <div className="space-y-3">
+                                    {tasks.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                                            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
+                                                <CheckSquare className="w-6 h-6 text-green-200" />
+                                            </div>
+                                            <p className="text-sm text-gray-400">
+                                                {isRTL ? 'אין משימות פעילות' : 'No active tasks'}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {tasks.map(task => (
+                                        <Card key={task.id} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                            <CardHeader className="p-3 pb-0">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <CardTitle className="text-sm font-semibold leading-tight text-gray-800">
+                                                        {task.title}
+                                                    </CardTitle>
+                                                    <Badge variant="outline" className={`text-[10px] shrink-0 ${task.status === 'done' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                        task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                            'bg-gray-50 text-gray-600'
+                                                        }`}>
+                                                        {task.status}
+                                                    </Badge>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="p-3 pt-2">
+                                                <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">
+                                                    {task.description}
+                                                </p>
+                                                <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600">
+                                                            {(task.assigned_to || 'U')[0]}
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 font-medium">
+                                                            {task.assigned_to || 'Unassigned'}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${task.priority === 'high' ? 'bg-red-50 text-red-600' :
+                                                        task.priority === 'medium' ? 'bg-orange-50 text-orange-600' :
+                                                            'bg-gray-50 text-gray-500'
+                                                        }`}>
+                                                        {task.priority}
+                                                    </span>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {knowledgeItems.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                                            <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
+                                                <Database className="w-6 h-6 text-purple-200" />
+                                            </div>
+                                            <p className="text-sm text-gray-400">
+                                                {isRTL ? 'אין פריטי ידע' : 'No knowledge items'}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {knowledgeItems.map(item => (
+                                        <Card key={item.key} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                            <CardHeader className="p-3 pb-0">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <CardTitle className="text-xs font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+                                                        {item.key}
+                                                    </CardTitle>
+                                                    <Badge variant="outline" className="text-[9px] text-gray-400 border-gray-100">
+                                                        {item.category}
+                                                    </Badge>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="p-3 pt-2">
+                                                <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 font-mono break-all">
+                                                    {typeof item.value === 'object' ? JSON.stringify(item.value) : item.value}
+                                                </div>
+                                                <div className="flex justify-end items-center pt-2 mt-2 border-t border-gray-50">
+                                                    <span className="text-[9px] text-gray-400">
+                                                        Updated by {item.updated_by}
+                                                    </span>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
                                 </div>
                             )}
-                            {knowledgeItems.map(item => (
-                                <Card key={item.key} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <CardHeader className="p-3 pb-0">
-                                        <div className="flex justify-between items-start gap-2">
-                                            <CardTitle className="text-xs font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
-                                                {item.key}
-                                            </CardTitle>
-                                            <Badge variant="outline" className="text-[9px] text-gray-400 border-gray-100">
-                                                {item.category}
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="p-3 pt-2">
-                                        <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 font-mono break-all">
-                                            {typeof item.value === 'object' ? JSON.stringify(item.value) : item.value}
-                                        </div>
-                                        <div className="flex justify-end items-center pt-2 mt-2 border-t border-gray-50">
-                                            <span className="text-[9px] text-gray-400">
-                                                Updated by {item.updated_by}
-                                            </span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        </ScrollArea>
                     )}
-                </ScrollArea>
+                </div>
             </div>
             {/* Create Meeting Dialog */}
             <Dialog open={isCreateMeetingOpen} onOpenChange={setIsCreateMeetingOpen}>

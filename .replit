@@ -1,0 +1,2 @@
+run = "npm run worker"
+entrypoint = "scripts/agent_worker.js"

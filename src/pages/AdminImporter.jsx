@@ -1,16 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import { db } from '@/api/supabaseClient';
 import { supabaseAdmin } from '@/api/supabaseClient';
 import GoogleMap from '@/components/GoogleMap';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Plus, Check, MapPin, Star, Image as ImageIcon, Rocket, AlertCircle } from 'lucide-react';
+import { Loader2, Search, Plus, Check, MapPin, Star, Image as ImageIcon, Rocket, AlertCircle, Database, CheckCircle, Upload } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import seedData from '@/data/samui_real_data_seed.json';
+import { subCategoriesBySuperCategory } from '@/components/subCategories';
 
 /** @type {any} */
 const google = (/** @type {any} */ (window)).google;
@@ -24,6 +25,9 @@ export default function AdminImporter() {
     const [mapReady, setMapReady] = useState(false);
     const [pagination, setPagination] = useState(null);
     const [selectedPlaces, setSelectedPlaces] = useState({});
+
+    // Seed Data State
+    const [isSeeding, setIsSeeding] = useState(false);
 
     // Automated import state
     const [autoImporting, setAutoImporting] = useState(false);
@@ -40,14 +44,15 @@ export default function AdminImporter() {
     const categories = [
         'restaurant', 'hotel', 'resort', 'spa', 'massage',
         'cafe', 'bar', 'diving', 'tour', 'rental',
-        'pharmacy', 'supermarket', 'temple', 'beach'
+        'pharmacy', 'supermarket', 'temple', 'beach',
+        'plumber', 'electrician', 'laundry', 'gym'
     ];
 
     // Generate all search combinations (category + area)
     const searchCategories = [];
     categories.forEach(cat => {
         areas.forEach(area => {
-            searchCategories.push(`${cat} ${area} `);
+            searchCategories.push(`${cat} ${area}`);
         });
     });
 
@@ -84,6 +89,66 @@ export default function AdminImporter() {
 
         return () => clearInterval(interval);
     }, []);
+
+    const getSuperCategory = (category) => {
+        for (const [superCat, subCats] of Object.entries(subCategoriesBySuperCategory)) {
+            if (subCats.includes(category)) return superCat;
+        }
+        return 'other';
+    };
+
+    const handleSeedData = async () => {
+        setIsSeeding(true);
+        try {
+            console.log("Starting quick seed...");
+
+            // Map seed data to database schema
+            const rows = seedData.map(item => ({
+                business_name: item.title,
+                category: item.category,
+                super_category: getSuperCategory(item.category),
+                description: item.description,
+                location: item.location,
+                phone: item.contact || null,
+                website: null,
+                average_rating: item.rating,
+                total_reviews: 0,
+                status: 'active',
+                verified: true,
+                created_by: user?.email || 'system',
+                metadata: {
+                    sub_category: item.sub_category,
+                    price_range: item.price_range,
+                    tags: item.tags,
+                    image_url: item.image_url
+                },
+                created_at: new Date().toISOString()
+            }));
+
+            // Insert into Supabase
+            const { data, error } = await supabaseAdmin.from('service_providers').insert(rows).select();
+
+            if (error) {
+                console.error("Supabase insert error:", error);
+                throw error;
+            }
+
+            toast({
+                title: "Seeding Complete",
+                description: `Successfully injected ${rows.length} real venues into the database.`,
+                className: "bg-green-50 border-green-200"
+            });
+        } catch (error) {
+            console.error("Seeding error:", error);
+            toast({
+                title: "Seeding Failed",
+                description: error.message || "Unknown error during seeding",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSeeding(false);
+        }
+    };
 
     const searchPlaces = async (nextPage = false) => {
         if (!mapReady) {
@@ -137,7 +202,7 @@ export default function AdminImporter() {
                 } else {
                     toast({
                         title: "שגיאה בחיפוש",
-                        description: `סטטוס: ${status} `,
+                        description: `סטטוס: ${status}`,
                         variant: "destructive"
                     });
                 }
@@ -158,17 +223,42 @@ export default function AdminImporter() {
     const mapCategory = (types) => {
         if (!types || types.length === 0) return 'other';
 
-        // Priority mapping
-        if (types.includes('restaurant') || types.includes('food')) return 'restaurant';
-        if (types.includes('lodging') || types.includes('hotel') || types.includes('resort')) return 'hotel';
-        if (types.includes('spa') || types.includes('health')) return 'spa';
-        if (types.includes('cafe')) return 'cafe';
-        if (types.includes('bar') || types.includes('night_club')) return 'bar';
-        if (types.includes('shopping_mall') || types.includes('store')) return 'shopping';
-        if (types.includes('tourist_attraction')) return 'attraction';
+        // Map Google types to our schema categories
+        if (types.includes('plumber')) return 'plumber';
+        if (types.includes('electrician')) return 'electrician';
+        if (types.includes('locksmith')) return 'locksmith';
+        if (types.includes('painter')) return 'painter';
+        if (types.includes('roofing_contractor') || types.includes('general_contractor')) return 'handyman';
+        
+        if (types.includes('restaurant') || types.includes('food')) return 'restaurants';
+        if (types.includes('cafe')) return 'cafes';
+        if (types.includes('bar') || types.includes('night_club')) return 'pubs';
+        if (types.includes('bakery')) return 'sweets';
+        if (types.includes('meal_delivery') || types.includes('meal_takeaway')) return 'delivery';
+        
+        if (types.includes('lodging') || types.includes('hotel') || types.includes('resort')) return 'accommodation';
+        
+        if (types.includes('spa') || types.includes('health')) return 'health_spa';
+        if (types.includes('park')) return 'parks_gardens';
+        if (types.includes('gym')) return 'gym';
+        if (types.includes('tourist_attraction')) return 'attractions';
+        
+        if (types.includes('shopping_mall') || types.includes('department_store')) return 'department_store';
+        if (types.includes('clothing_store')) return 'fashion';
+        if (types.includes('electronics_store')) return 'electronics';
+        if (types.includes('supermarket') || types.includes('grocery_or_supermarket') || types.includes('convenience_store')) return 'food_beverages';
+        if (types.includes('furniture_store') || types.includes('home_goods_store')) return 'furniture';
+        if (types.includes('florist')) return 'flowers';
+        
+        if (types.includes('pharmacy')) return 'pharmacies';
+        if (types.includes('hospital') || types.includes('doctor') || types.includes('dentist')) return 'health';
+        if (types.includes('beauty_salon') || types.includes('hair_care')) return 'beauty';
+        if (types.includes('laundry')) return 'laundry';
+        if (types.includes('real_estate_agency')) return 'real_estate_agent';
+        if (types.includes('car_repair')) return 'car_mechanic';
+        if (types.includes('car_rental')) return 'car_rental';
 
-        // Default to the first type if no specific mapping
-        return types[0];
+        return 'other';
     };
 
     const mapPriceLevel = (level) => {
@@ -195,7 +285,6 @@ export default function AdminImporter() {
                 return false;
             }
 
-            // Fetch details for reviews and more photos
             const mapDiv = document.createElement('div');
             const map = new (/** @type {any} */ (window)).google.maps.Map(mapDiv, { center: { lat: 0, lng: 0 }, zoom: 1 });
             const service = new (/** @type {any} */ (window)).google.maps.places.PlacesService(map);
@@ -208,7 +297,7 @@ export default function AdminImporter() {
                     if (status === (/** @type {any} */ (window)).google.maps.places.PlacesServiceStatus.OK) {
                         resolve(result);
                     } else {
-                        resolve(null); // Fallback to basic place data if details fail
+                        resolve(null);
                     }
                 });
             });
@@ -217,20 +306,22 @@ export default function AdminImporter() {
 
             let imageUrls = [];
             if (sourcePlace.photos && sourcePlace.photos.length > 0) {
-                // Get up to 10 photos
                 imageUrls = sourcePlace.photos.slice(0, 10).map(photo => photo.getUrl({ maxWidth: 800 }));
             }
 
-            // Validate required fields
             if (!sourcePlace.name || !sourcePlace.geometry || !sourcePlace.geometry.location) {
                 console.warn("Skipping place due to missing data:", sourcePlace);
                 return false;
             }
 
+            const category = mapCategory(sourcePlace.types);
+            const super_category = getSuperCategory(category);
+
             const businessData = {
                 business_name: sourcePlace.name,
-                category: mapCategory(sourcePlace.types),
-                description: `Imported from Google Maps.${sourcePlace.formatted_address || ''} `,
+                category: category,
+                super_category: super_category,
+                description: `Imported from Google Maps. ${sourcePlace.formatted_address || ''}`,
                 location: sourcePlace.formatted_address || 'Koh Samui, Thailand',
                 latitude: typeof sourcePlace.geometry.location.lat === 'function' ? sourcePlace.geometry.location.lat() : sourcePlace.geometry.location.lat,
                 longitude: typeof sourcePlace.geometry.location.lng === 'function' ? sourcePlace.geometry.location.lng() : sourcePlace.geometry.location.lng,
@@ -247,21 +338,14 @@ export default function AdminImporter() {
                 created_by: user?.email || "admin@kosamui.com"
             };
 
-            // Ensure lat/lng are numbers
-            if (isNaN(businessData.latitude) || isNaN(businessData.longitude)) {
-                console.error("Invalid coordinates for place:", sourcePlace.name);
-                return false;
-            }
-
             const newProvider = await adminDb.entities.ServiceProvider.create(businessData);
 
-            // Import Reviews
             if (sourcePlace.reviews && sourcePlace.reviews.length > 0 && newProvider?.id) {
                 for (const review of sourcePlace.reviews) {
                     try {
                         await db.entities.Review.create({
                             service_provider_id: newProvider.id,
-                            user_id: user?.id, // Assigned to admin for now, or null if schema allows
+                            user_id: user?.id,
                             rating: review.rating,
                             comment: review.text,
                             author_name: review.author_name,
@@ -277,20 +361,14 @@ export default function AdminImporter() {
             return true;
 
         } catch (error) {
-            // Retry logic
             if (retryCount < 2) {
-                console.log(`Retrying import for ${place.name}(Attempt ${retryCount + 2})...`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 return importPlace(place, retryCount + 1);
             }
 
-            console.error("FULL IMPORT ERROR:", error); // Log the full error object
-            console.error("Error details:", error.message, error.details, error.hint);
-
             if (error.message && error.message.includes('duplicate key')) {
                 setImporting(prev => ({ ...prev, [place.place_id]: 'exists' }));
             } else {
-                // Don't show toast for every error in bulk import to avoid spamming
                 if (!autoImporting) {
                     toast({
                         title: "שגיאה בייבוא",
@@ -351,9 +429,7 @@ export default function AdminImporter() {
 
     const selectedCount = Object.values(selectedPlaces).filter(Boolean).length;
 
-    // Automated bulk import function
     const startAutomatedImport = async () => {
-        // Check if Google Maps is ready
         if (!(/** @type {any} */ (window)).google || !(/** @type {any} */ (window)).google.maps || !(/** @type {any} */ (window)).google.maps.places) {
             toast({
                 title: "Google Maps לא מוכן",
@@ -368,28 +444,23 @@ export default function AdminImporter() {
         setAutoStats(stats);
         setAutoProgress({ current: 0, total: searchCategories.length, category: '' });
 
-        // Load completed categories from localStorage
         const completedCategories = JSON.parse(localStorage.getItem('completedCategories') || '[]');
         let skippedCategories = 0;
 
         for (let i = 0; i < searchCategories.length; i++) {
             const category = searchCategories[i];
 
-            // Skip if already completed successfully
             if (completedCategories.includes(category)) {
                 skippedCategories++;
                 continue;
             }
 
             setAutoProgress({ current: i + 1, total: searchCategories.length, category });
-
             let categoryErrors = 0;
 
             try {
-                // Search for this category using a promise wrapper
                 const searchResults = await new Promise((resolve) => {
                     setQuery(category);
-
                     setTimeout(() => {
                         const mapDiv = document.createElement('div');
                         const map = new (/** @type {any} */ (window)).google.maps.Map(mapDiv, {
@@ -418,7 +489,6 @@ export default function AdminImporter() {
                     }, 500);
                 });
 
-                // Import all results from this search
                 for (const place of searchResults) {
                     const success = await importPlace(place);
                     if (success) {
@@ -437,26 +507,24 @@ export default function AdminImporter() {
                     await new Promise(resolve => setTimeout(resolve, 300));
                 }
 
-                // If no errors in this category, mark as completed
                 if (categoryErrors === 0 && searchResults.length > 0) {
                     completedCategories.push(category);
                     localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
                 }
 
             } catch (error) {
-                console.error(`Error importing category ${category}: `, error);
+                console.error(`Error importing category ${category}:`, error);
                 stats.errors++;
                 setAutoStats({ ...stats });
             }
 
-            // Delay between categories
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         setAutoImporting(false);
         toast({
             title: "ייבוא אוטומטי הושלם!",
-            description: `יובאו: ${stats.imported} | דולגו: ${stats.skipped} | שגיאות: ${stats.errors} | קטגוריות שדולגו: ${skippedCategories} `,
+            description: `יובאו: ${stats.imported} | דולגו: ${stats.skipped} | שגיאות: ${stats.errors} | קטגוריות שדולגו: ${skippedCategories}`,
         });
     };
 
@@ -470,10 +538,65 @@ export default function AdminImporter() {
 
     return (
         <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
-            <div className="max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold mb-8">ייבוא עסקים מגוגל</h1>
+            <div className="max-w-4xl mx-auto space-y-8">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                        <Database className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Data Injection Center</h1>
+                        <p className="text-gray-500">Populate the Kosmoi Hub with verified intelligence.</p>
+                    </div>
+                </div>
 
-                <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Quick Seed Card */}
+                    <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+                        <CardHeader>
+                            <CardTitle className="text-blue-900">Quick Seed (Phase 1)</CardTitle>
+                            <CardDescription className="text-blue-600">Inject "Top 10" listings for immediate testing.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-blue-700/80 mb-6">
+                                Loads 10 verified venues: Coco Tam's, Jungle Club, W Hotel, and more.
+                                Use this to demonstrate capabilities instantly.
+                            </p>
+                            <Button
+                                onClick={handleSeedData}
+                                disabled={isSeeding}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200"
+                            >
+                                {isSeeding ? (
+                                    <span className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Injecting Data...
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-2">
+                                        <CheckCircle className="w-4 h-4" />
+                                        Inject Real Data
+                                    </span>
+                                )}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Manual Import Card (Placeholder) */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>CSV Import</CardTitle>
+                            <CardDescription>Upload bulk data from external sources.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors cursor-pointer">
+                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-500">Drag & drop CSV here</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <Alert variant="destructive" className="bg-red-50 border-red-200">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>פתרון בעיות תמונות</AlertTitle>
                     <AlertDescription>
@@ -482,34 +605,33 @@ export default function AdminImporter() {
                 </Alert>
 
                 {/* Automated Import Section */}
-                <Card className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200">
+                <Card className="bg-white border-2 border-blue-100">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h2 className="text-2xl font-bold text-blue-900 mb-2 flex items-center gap-2">
-                                    <Rocket className="w-6 h-6" />
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                    <Rocket className="w-6 h-6 text-blue-500" />
                                     ייבוא אוטומטי המוני
                                 </h2>
-                                <p className="text-gray-700">לחץ כאן כדי לייבא אוטומטית את כל העסקים מכל הקטגוריות ({searchCategories.length} קטגוריות)</p>
+                                <p className="text-gray-500 text-sm">לחץ כאן כדי לייבא אוטומטית את כל העסקים מכל הקטגוריות ({searchCategories.length} קטגוריות)</p>
                             </div>
                             <div className="flex gap-2">
                                 <Button
                                     onClick={resetProgress}
                                     disabled={autoImporting}
                                     variant="outline"
-                                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                                    className="text-gray-600"
                                 >
                                     אפס התקדמות
                                 </Button>
                                 <Button
                                     onClick={startAutomatedImport}
                                     disabled={autoImporting}
-                                    size="lg"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg"
+                                    className="bg-gray-900 text-white hover:bg-black"
                                 >
                                     {autoImporting ? (
                                         <>
-                                            <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                                             מייבא...
                                         </>
                                     ) : (
@@ -521,21 +643,21 @@ export default function AdminImporter() {
 
                         {/* Progress Display */}
                         {autoImporting && (
-                            <div className="mt-4 space-y-3">
+                            <div className="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg">
                                 <div className="flex justify-between text-sm text-gray-700">
                                     <span>קטגוריה: <strong>{autoProgress.category}</strong></span>
                                     <span>{autoProgress.current} / {autoProgress.total}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
-                                        className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                                        style={{ width: `${(autoProgress.current / autoProgress.total) * 100}% ` }}
+                                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                        style={{ width: `${(autoProgress.current / autoProgress.total) * 100}%` }}
                                     ></div>
                                 </div>
-                                <div className="flex gap-4 text-sm">
-                                    <span className="text-green-600">✓ יובאו: {autoStats.imported}</span>
-                                    <span className="text-yellow-600">⊘ דולגו: {autoStats.skipped}</span>
-                                    <span className="text-red-600">✗ שגיאות: {autoStats.errors}</span>
+                                <div className="flex gap-4 text-xs font-mono">
+                                    <span className="text-green-600">✓ IMPORTED: {autoStats.imported}</span>
+                                    <span className="text-yellow-600">⊘ SKIPPED: {autoStats.skipped}</span>
+                                    <span className="text-red-600">✗ ERRORS: {autoStats.errors}</span>
                                 </div>
                             </div>
                         )}
@@ -543,7 +665,7 @@ export default function AdminImporter() {
                 </Card>
 
                 {/* Manual Search Section */}
-                <Card className="mb-6">
+                <Card>
                     <CardContent className="p-6">
                         <h3 className="text-lg font-semibold mb-4">חיפוש ידני (אופציונלי)</h3>
                         <div className="flex gap-4">
@@ -552,7 +674,6 @@ export default function AdminImporter() {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && searchPlaces()}
-                                className="text-lg"
                             />
                             <Button onClick={() => searchPlaces()} disabled={loading} className="w-32">
                                 {loading ? <Loader2 className="animate-spin" /> : <Search />}
@@ -602,14 +723,12 @@ export default function AdminImporter() {
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
                                                     e.currentTarget.style.display = 'none';
-                                                    const fallback = /** @type {HTMLElement} */ (e.currentTarget.parentElement?.querySelector('.fallback-icon'));
-                                                    if (fallback) {
-                                                        fallback.style.display = 'flex';
-                                                    }
+                                                    const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+                                                    if (fallback) fallback.style.display = 'flex';
                                                 }}
                                             />
                                         ) : null}
-                                        <div className="fallback-icon w-full h-full flex items-center justify-center text-gray-400 absolute top-0 left-0" style={{ display: place.photos && place.photos.length > 0 ? 'none' : 'flex' }}>
+                                        <div className="fallback-icon w-full h-full flex items-center justify-center text-gray-400 absolute top-0 left-0 bg-gray-50" style={{ display: place.photos && place.photos.length > 0 ? 'none' : 'flex' }}>
                                             <ImageIcon />
                                         </div>
                                     </div>
@@ -629,7 +748,7 @@ export default function AdminImporter() {
                                         )}
                                         <div className="flex gap-2 flex-wrap">
                                             {place.types?.slice(0, 3).map((type, idx) => (
-                                                <Badge key={idx} variant="secondary" className="">
+                                                <Badge key={idx} variant="secondary">
                                                     {type}
                                                 </Badge>
                                             ))}
@@ -664,7 +783,6 @@ export default function AdminImporter() {
                 )}
 
 
-                {/* Hidden map component to load Google Maps Script */}
                 <div className="hidden">
                     <GoogleMap />
                 </div>

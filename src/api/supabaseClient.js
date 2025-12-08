@@ -6,8 +6,10 @@ const getEnv = (key) => {
     return undefined;
 };
 
-const supabaseUrl = getEnv('VITE_SUPABASE_URL') || 'https://gzjzeywhqbwppfxqkptf.supabase.co'
-const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6anpleXdocWJ3cHBmeHFrcHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MTg5NTMsImV4cCI6MjA3OTE5NDk1M30.y8xbJ06Mr17O4Y0KZH_MlozxlOma92wjIpH4ers8zeI'
+const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = (typeof process !== 'undefined' && process.env && process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)
+    ? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+    : ((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || process.env.VITE_SUPABASE_ANON_KEY);
 const supabaseServiceKey = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY')
 
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -42,7 +44,12 @@ export const supabase = {
 const TOKEN_KEY = 'sb-access-token';
 const REFRESH_TOKEN_KEY = 'sb-refresh-token';
 
-const getAccessToken = () => localStorage.getItem(TOKEN_KEY);
+const getAccessToken = () => {
+    if (typeof localStorage !== 'undefined') {
+        return localStorage.getItem(TOKEN_KEY);
+    }
+    return null;
+};
 const setSession = (session) => {
     if (!session) {
         localStorage.removeItem(TOKEN_KEY);
@@ -452,6 +459,30 @@ export const supabaseHelpers = {
                 });
                 return result;
             }
+        },
+
+        AgentApprovals: {
+            async create(data) {
+                const result = await fetchSupabase('agent_approvals', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            },
+            async update(id, data) {
+                const result = await fetchSupabase(`agent_approvals?id=eq.${id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(data)
+                });
+                return result[0];
+            },
+            async get(id) {
+                const result = await fetchSupabase(`agent_approvals?id=eq.${id}&select=*`);
+                return result[0];
+            },
+            async list(userId) {
+                return fetchSupabase(`agent_approvals?user_id=eq.${userId}&status=eq.pending&order=created_at.desc`);
+            }
         }
     },
 
@@ -642,6 +673,9 @@ export const db = supabaseHelpers
 
 // Export supabaseAdmin for AdminImporter
 export const supabaseAdmin = supabaseHelpers.asServiceRole
+
+// Export REAL Supabase client for Realtime and standard usage
+export const realSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Default export
 export default supabase

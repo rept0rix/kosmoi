@@ -241,7 +241,7 @@ Start the meeting now. Be authoritative.
         if (!activeMeeting) {
             // Check for OPEN tasks
             try {
-                const tasks = await db.AgentTasks.list(); // Fetch all tasks (ordered by created_at desc)
+                const tasks = await db.entities.AgentTasks.list(); // Fetch all tasks (ordered by created_at desc)
                 const openTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
 
                 if (openTasks.length > 0) {

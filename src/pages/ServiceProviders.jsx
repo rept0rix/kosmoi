@@ -41,29 +41,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SearchFiltersPanel from "../components/SearchFiltersPanel";
+import SuperCategories from "../components/SuperCategories";
+import SubCategorySelector from "../components/SubCategorySelector";
 import { useLanguage } from "@/components/LanguageContext";
 import { getTranslation } from "@/components/translations";
 import { getCategoryIcon } from "@/utils/mapIcons";
-
-const categories = [
-  { value: "all", label: "כל השירותים" },
-  { value: "handyman", label: "אנדימן" },
-  { value: "carpenter", label: "נגר" },
-  { value: "electrician", label: "חשמלאי" },
-  { value: "plumber", label: "אינסטלטור" },
-  { value: "ac_repair", label: "מזגנים" },
-  { value: "cleaning", label: "ניקיון" },
-  { value: "locksmith", label: "מנעולן" },
-  { value: "painter", label: "צבע" },
-  { value: "gardener", label: "גנן" },
-  { value: "pest_control", label: "הדברה" },
-  { value: "moving", label: "הובלות" },
-  { value: "internet_tech", label: "אינטרנט" },
-  { value: "car_mechanic", label: "מוסך" },
-  { value: "translator", label: "מתרגם" },
-  { value: "visa_services", label: "ויזה" },
-  { value: "real_estate_agent", label: "נדל״ן" },
-];
+import { getSubCategoryLabel } from "../components/subCategories";
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
@@ -110,6 +93,8 @@ export default function ServiceProviders() {
     filters.emergencyService,
     filters.verifiedOnly,
     isOpenNow,
+    filters.superCategory !== 'all',
+    filters.subCategory !== 'all'
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -141,15 +126,6 @@ export default function ServiceProviders() {
     initialData: [],
   });
 
-  const hasActiveSearch = searchQuery.trim() !== '' ||
-    filters.superCategory !== 'all' ||
-    activeFiltersCount > 0;
-
-  console.log("DEBUG: Providers raw count:", providers.length);
-  console.log("DEBUG: Filters:", filters);
-  console.log("DEBUG: User Location:", userLocation);
-  console.log("DEBUG: Has Active Search:", hasActiveSearch);
-
   const filteredProviders = providers
     .map(provider => {
       if (userLocation && provider.latitude && provider.longitude) {
@@ -170,7 +146,8 @@ export default function ServiceProviders() {
         provider.contact_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesSuperCategory = filters.superCategory === 'all' || provider.super_category === filters.superCategory;
-      const matchesSubCategory = filters.subCategory === 'all' || provider.sub_category === filters.subCategory;
+      // FIX: Use provider.category to match subCategory filter
+      const matchesSubCategory = filters.subCategory === 'all' || provider.category === filters.subCategory;
 
       const matchesRating = (provider.average_rating || 0) >= filters.minRating;
       const matchesReviews = (provider.total_reviews || 0) >= filters.minReviews;
@@ -185,8 +162,7 @@ export default function ServiceProviders() {
       const matchesEmergency = !filters.emergencyService || provider.emergency_service;
       const matchesVerified = !filters.verifiedOnly || provider.verified;
 
-      // Open Now Logic (Placeholder)
-      const matchesOpenNow = !isOpenNow || true; // TODO: Implement real opening hours check
+      const matchesOpenNow = !isOpenNow || true; 
 
       return matchesSearch && matchesSuperCategory && matchesSubCategory &&
         matchesRating && matchesReviews && matchesDistance &&
@@ -204,8 +180,6 @@ export default function ServiceProviders() {
       return (b.average_rating || 0) - (a.average_rating || 0);
     });
 
-  console.log("DEBUG: Filtered Providers count:", filteredProviders.length);
-
   const suggestions = searchQuery.trim()
     ? providers
       .filter(p =>
@@ -214,10 +188,6 @@ export default function ServiceProviders() {
       )
       .slice(0, 5)
     : [];
-
-  const getCategoryLabel = (categoryValue) => {
-    return categories.find(c => c.value === categoryValue)?.label || categoryValue;
-  };
 
   const handleCall = async (phone) => {
     try {
@@ -246,7 +216,7 @@ export default function ServiceProviders() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Search Bar */}
       <div className="bg-white px-4 py-3 shadow-sm sticky top-14 z-30">
         <div className="max-w-7xl mx-auto space-y-3">
@@ -291,12 +261,6 @@ export default function ServiceProviders() {
                             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                             <span className="text-xs font-medium">{provider.average_rating?.toFixed(1) || '0.0'}</span>
                           </div>
-                          {provider.distance !== null && provider.distance !== undefined && (
-                            <>
-                              <span className="text-gray-300">•</span>
-                              <span className="text-xs text-gray-500">{provider.distance.toFixed(1)} ק"מ</span>
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -305,6 +269,20 @@ export default function ServiceProviders() {
               )}
             </div>
           </div>
+
+          {/* Super Categories */}
+          <SuperCategories 
+            selectedCategory={filters.superCategory} 
+            onSelectCategory={(value) => setFilters(prev => ({ ...prev, superCategory: value, subCategory: 'all' }))} 
+          />
+
+          {/* Sub Category Selector */}
+          <SubCategorySelector
+            superCategory={filters.superCategory}
+            selectedSubCategory={filters.subCategory}
+            onSelectSubCategory={(value) => setFilters(prev => ({ ...prev, subCategory: value === prev.subCategory ? 'all' : value }))}
+            language={language}
+          />
 
           {/* Filters Panel */}
           <SearchFiltersPanel
@@ -331,7 +309,7 @@ export default function ServiceProviders() {
         {/* Map - Desktop Only */}
         <div className="hidden lg:block lg:w-1/2 sticky top-28 h-full relative">
           <GoogleMap
-            center={{ lat: 9.5297, lng: 100.0626 }} // Fixed center on Koh Samui
+            center={{ lat: 9.5297, lng: 100.0626 }} 
             zoom={12}
             userLocation={userLocation}
             markers={filteredProviders
@@ -353,204 +331,202 @@ export default function ServiceProviders() {
               onClose={() => setSelectedMapProvider(null)}
             />
           )}
+        </div>
 
-          {/* Results List */}
-          <div className="w-full lg:w-1/2 overflow-y-auto">
-            <div className="max-w-full mx-auto px-4 py-3">
-              {/* Results Header */}
-              <div className="mb-4 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  נמצאו <span className="font-semibold text-gray-900">{filteredProviders.length}</span> ספקי שירות
-                </div>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rating">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4" />
-                        דירוג
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="reviews">
-                      <div className="flex items-center gap-2">
-                        <MessageCircle className="w-4 h-4" />
-                        ביקורות
-                      </div>
-                    </SelectItem>
-                    {userLocation && (
-                      <SelectItem value="distance">
-                        <div className="flex items-center gap-2">
-                          <Navigation className="w-4 h-4" />
-                          מרחק
-                        </div>
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+        {/* Results List */}
+        <div className="w-full lg:w-1/2 overflow-y-auto">
+          <div className="max-w-full mx-auto px-4 py-3">
+            {/* Results Header */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                נמצאו <span className="font-semibold text-gray-900">{filteredProviders.length}</span> ספקי שירות
               </div>
-
-              {/* Results */}
-              {isLoading ? (
-                <div className="text-center py-12 text-gray-500">טוען...</div>
-              ) : filteredProviders.length === 0 ? (
-                <Card className="p-12 text-center bg-white">
-                  <div className="max-w-md mx-auto">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-blue-50 rounded-full flex items-center justify-center">
-                      <Search className="w-12 h-12 text-blue-300" />
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rating">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4" />
+                      דירוג
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">לא נמצאו תוצאות עבור החיפוש</h3>
-                    <p className="text-gray-500 mb-6">
-                      נסה לשנות את הפילטרים, להרחיב את טווח החיפוש או לחפש מונחים אחרים
-                    </p>
-                    {activeFiltersCount > 0 && (
-                      <Button
-                        onClick={() => {
-                          setFilters({
-                            minRating: 0,
-                            minReviews: 0,
-                            maxDistance: 50,
-                            priceRanges: [],
-                            languages: [],
-                            emergencyService: false,
-                            verifiedOnly: false,
-                            superCategory: 'all',
-                            subCategory: 'all',
-                          });
-                          setIsOpenNow(false);
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <X className="w-4 h-4 ml-2" />
-                        נקה את כל הפילטרים
-                      </Button>
-                    )}
+                  </SelectItem>
+                  <SelectItem value="reviews">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      ביקורות
+                    </div>
+                  </SelectItem>
+                  {userLocation && (
+                    <SelectItem value="distance">
+                      <div className="flex items-center gap-2">
+                        <Navigation className="w-4 h-4" />
+                        מרחק
+                      </div>
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Results */}
+            {isLoading ? (
+              <div className="text-center py-12 text-gray-500">טוען...</div>
+            ) : filteredProviders.length === 0 ? (
+              <Card className="p-12 text-center bg-white">
+                <div className="max-w-md mx-auto">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-blue-50 rounded-full flex items-center justify-center">
+                    <Search className="w-12 h-12 text-blue-300" />
                   </div>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {filteredProviders.map((provider) => {
-                    const CategoryIcon = {
-                      handyman: Wrench,
-                      carpenter: Hammer,
-                      electrician: Zap,
-                      plumber: Droplets,
-                      ac_repair: Wind,
-                      cleaning: Sparkles,
-                      locksmith: Lock,
-                      painter: PaintBucket,
-                      gardener: Leaf,
-                      pest_control: Bug,
-                      moving: Truck,
-                      internet_tech: Wifi,
-                      car_mechanic: Wrench, // Using Wrench as a fallback/example for car_mechanic
-                      translator: User, // Using User as a fallback/example for translator
-                      visa_services: User, // Using User as a fallback/example for visa_services
-                      real_estate_agent: MapPin, // Using MapPin as a fallback/example for real_estate_agent
-                    }[provider.category] || Wrench; // Default fallback icon
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">לא נמצאו תוצאות עבור החיפוש</h3>
+                  <p className="text-gray-500 mb-6">
+                    נסה לשנות את הפילטרים, להרחיב את טווח החיפוש או לחפש מונחים אחרים
+                  </p>
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      onClick={() => {
+                        setFilters({
+                          minRating: 0,
+                          minReviews: 0,
+                          maxDistance: 50,
+                          priceRanges: [],
+                          languages: [],
+                          emergencyService: false,
+                          verifiedOnly: false,
+                          superCategory: 'all',
+                          subCategory: 'all',
+                        });
+                        setIsOpenNow(false);
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <X className="w-4 h-4 ml-2" />
+                      נקה את כל הפילטרים
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {filteredProviders.map((provider) => {
+                  const CategoryIcon = {
+                    handyman: Wrench,
+                    carpenter: Hammer,
+                    electrician: Zap,
+                    plumber: Droplets,
+                    ac_repair: Wind,
+                    cleaning: Sparkles,
+                    locksmith: Lock,
+                    painter: PaintBucket,
+                    gardener: Leaf,
+                    pest_control: Bug,
+                    moving: Truck,
+                    internet_tech: Wifi,
+                    car_mechanic: Wrench,
+                    translator: User,
+                    visa_services: User,
+                    real_estate_agent: MapPin,
+                  }[provider.category] || Wrench;
 
-                    return (
-                      <Card
-                        key={provider.id}
-                        className="hover:shadow-md transition-shadow border border-gray-200"
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex gap-4">
-
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start gap-2 mb-1">
-                                <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                  <CategoryIcon className="w-4 h-4 text-blue-600" />
-                                </div>
-                                <div className="flex-1">
-                                  <Badge className="bg-blue-600 text-white hover:bg-blue-600 mb-1 text-xs">
-                                    {getCategoryLabel(provider.category)}
-                                  </Badge>
-                                  <h3 className="font-bold text-gray-900">
-                                    {provider.business_name}
-                                  </h3>
-                                  {provider.contact_name && (
-                                    <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
-                                      <User className="w-3 h-3" />
-                                      {provider.contact_name}
-                                    </p>
-                                  )}
-                                </div>
+                  return (
+                    <Card
+                      key={provider.id}
+                      className="hover:shadow-md transition-shadow border border-gray-200 cursor-pointer"
+                      onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                           {/* Image or Placeholder */}
+                           <div className="w-24 h-24 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                            {provider.images?.[0] ? (
+                              <img src={provider.images[0]} alt={provider.business_name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                <CategoryIcon className="w-8 h-8" />
                               </div>
+                            )}
+                          </div>
 
-                              <div className="flex items-center gap-3 mb-2">
-                                <div className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                  <span className="font-semibold text-sm">
-                                    {provider.average_rating?.toFixed(1) || '0.0'}
-                                  </span>
-                                </div>
-                                <span className="text-xs text-gray-500">
-                                  ({provider.total_reviews || 0} ביקורות)
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <div>
+                                <Badge className="bg-blue-600 text-white hover:bg-blue-600 mb-1 text-xs">
+                                  {getSubCategoryLabel(provider.category, language)}
+                                </Badge>
+                                <h3 className="font-bold text-gray-900 text-lg">
+                                  {provider.business_name}
+                                </h3>
+                              </div>
+                              {provider.verified && (
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                <span className="font-semibold text-sm">
+                                  {provider.average_rating?.toFixed(1) || '0.0'}
                                 </span>
                               </div>
+                              <span className="text-xs text-gray-500">
+                                ({provider.total_reviews || 0} ביקורות)
+                              </span>
+                            </div>
 
-                              <div className="flex items-center gap-2 text-xs text-gray-600 mb-3 flex-wrap">
-                                {provider.location && (
+                            <div className="flex items-center gap-2 text-xs text-gray-600 mb-3 flex-wrap">
+                              {provider.location && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span className="truncate">{provider.location}</span>
+                                </div>
+                              )}
+                              {provider.distance !== null && provider.distance !== undefined && (
+                                <>
+                                  {provider.location && <span className="text-gray-300">•</span>}
                                   <div className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3" />
-                                    <span className="truncate">{provider.location}</span>
+                                    <Navigation className="w-3 h-3 text-blue-500" />
+                                    <span className="font-medium text-blue-600">{provider.distance.toFixed(1)} ק"מ</span>
                                   </div>
-                                )}
-                                {provider.distance !== null && provider.distance !== undefined && (
-                                  <>
-                                    {provider.location && <span className="text-gray-300">•</span>}
-                                    <div className="flex items-center gap-1">
-                                      <Navigation className="w-3 h-3 text-blue-500" />
-                                      <span className="font-medium text-blue-600">{provider.distance.toFixed(1)} ק"מ</span>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
+                                </>
+                              )}
+                            </div>
 
-                              <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-3 gap-2">
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCall(provider.phone);
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 h-9"
+                                size="sm"
+                              >
+                                <Phone className="w-4 h-4 mr-2" />
+                                חייג
+                              </Button>
+                              {provider.whatsapp && (
                                 <Button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleCall(provider.phone);
+                                    handleWhatsApp(provider.whatsapp);
                                   }}
-                                  className="bg-blue-600 hover:bg-blue-700 h-9"
+                                  className="bg-green-600 hover:bg-green-700 h-9"
                                   size="sm"
                                 >
-                                  <Phone className="w-4 h-4" />
+                                  <MessageCircle className="w-4 h-4 mr-2" />
+                                  וואטסאפ
                                 </Button>
-                                {provider.whatsapp && (
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleWhatsApp(provider.whatsapp);
-                                    }}
-                                    className="bg-green-600 hover:bg-green-700 h-9"
-                                    size="sm"
-                                  >
-                                    <MessageCircle className="w-4 h-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
-                                  variant="outline"
-                                  className="h-9"
-                                  size="sm"
-                                >
-                                  פרטים
-                                </Button>
-                              </div>
+                              )}
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

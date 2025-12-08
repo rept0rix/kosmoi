@@ -1,27 +1,44 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { WebSocket } from 'ws';
-import { agents } from './src/services/agents/AgentRegistry.js';
-import { BoardOrchestrator } from './src/services/agents/BoardOrchestrator.js';
-import { getAgentReply } from './src/services/agents/AgentBrain.js';
-import { toolRouter } from './src/services/agents/AgentService.js';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+
+// Load .env manually to ensure VITE_ vars are present for sub-modules
+// We do this BEFORE any other imports that might depend on env vars.
+try {
+    const envConfig = dotenv.parse(fs.readFileSync('.env'));
+    for (const k in envConfig) {
+        process.env[k] = envConfig[k];
+    }
+} catch (e) {
+    console.warn("Could not load .env file manually:", e.message);
+    dotenv.config();
+}
 
 // Polyfills for Node.js
 global.WebSocket = WebSocket;
 
-// Set Environment Variables for AgentService
+// Dynamic Imports to ensure Environment Variables are loaded FIRST
+const { agents } = await import('./src/services/agents/AgentRegistry.js');
+const { BoardOrchestrator } = await import('./src/services/agents/BoardOrchestrator.js');
+const { getAgentReply } = await import('./src/services/agents/AgentBrain.js');
+const { toolRouter } = await import('./src/services/agents/AgentService.js');
+
+
 // Set Environment Variables for AgentService
 if (!process.env.VITE_GEMINI_API_KEY) {
     console.log("⚠️  VITE_GEMINI_API_KEY not found in environment. Please run with: VITE_GEMINI_API_KEY=your_key node run_agents_terminal.mjs");
 }
 
 // Configuration
-const SUPABASE_URL = 'https://gzjzeywhqbwppfxqkptf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6anpleXdocWJ3cHBmeHFrcHRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MTg5NTMsImV4cCI6MjA3OTE5NDk1M30.y8xbJ06Mr17O4Y0KZH_MlozxlOma92wjIpH4ers8zeI';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://gzjzeywhqbwppfxqkptf.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_SERVICE_KEY) {
-    console.warn("⚠️  SUPABASE_SERVICE_ROLE_KEY not found. Agents might fail if RLS is enabled.");
+    console.warn("⚠️  SUPABASE_SERVICE_ROLE_KEY not found (checked VITE_ prefix too). Agents might fail if RLS is enabled.");
 }
 
 // Use Service Key if available, otherwise Anon Key
@@ -52,10 +69,6 @@ async function fetchNewMessages(meetingId) {
         .select('*')
         .eq('meeting_id', meetingId)
         .order('created_at', { ascending: true });
-
-    // In a real polling loop, we'd filter by > lastMessageId, but for simplicity we fetch all and slice locally or rely on distinct
-    // Actually, let's just fetch the last 20 and process any we haven't seen?
-    // Better: fetch all for context, but only "process" the last one if it's new.
 
     const { data } = await query;
     return data || [];
@@ -93,32 +106,6 @@ async function runLoop() {
 
             // Check if we already processed this message
             if (lastMsg.id === lastMessageId) {
-                // Nothing new.
-                // Check if we should auto-discuss (if last was agent, maybe wait? But BoardRoom handles auto-discuss via UI)
-                // Here we want to simulate the "Backend" agents.
-                // If the last message was from a USER, we MUST reply.
-                // If the last message was from an AGENT, we might reply if auto-discuss is on.
-                // For this script, let's assume we ALWAYS reply if the last message was NOT from us (the runner) 
-                // BUT we need to coordinate.
-
-                // SIMPLIFICATION: We only reply if the last message was from 'HUMAN_USER'.
-                // The agents in the browser (BoardRoom) might be running too. We don't want double replies.
-                // User asked to "open terminals of the bots".
-                // If BoardRoom is open, it will reply.
-                // If BoardRoom is closed, this script should reply.
-
-                // Let's assume this script is the PRIMARY runner now.
-                // But we need to avoid infinite loops if we reply to ourselves.
-
-                // We will rely on the Orchestrator to decide if we should speak.
-                // But Orchestrator needs to know who "we" are.
-                // We are ALL the agents.
-
-                // Let's use a simple trigger:
-                // If last message is USER -> Trigger Orchestrator.
-                // If last message is AGENT -> Trigger Orchestrator (Auto-Discuss).
-
-                // To avoid spam, we'll wait a bit.
                 isProcessing = false;
                 return;
             }
@@ -138,7 +125,6 @@ async function runLoop() {
             }));
 
             // Decide who speaks next
-            // We pass 'true' for autoDiscuss to keep the conversation going
             const decision = await orchestrator.getNextSpeaker(
                 activeMeeting.title,
                 history,
@@ -163,24 +149,60 @@ async function runLoop() {
                     });
 
                     console.log(`   💡 Reply: ${response.message}`);
-                    if (response.action) {
-                        console.log(`   ⚡ Action: ${response.action.type}`);
-                    }
 
-                    // 5. Execute Action (Write Code, etc.)
-                    if (response.action && response.action.type === 'write_code') {
-                        console.log(`   💾 Writing code to ${response.action.title}...`);
-                        await toolRouter('write_code', {
-                            path: response.action.title,
-                            content: response.action.code
-                        }, { userId: 'terminal-user', agentId: agent.id });
+                    // 5. Execute Action (Generic)
+                    if (response.action) {
+                        let actionType = response.action.type || response.action.name;
+                        let actionPayload = response.action.payload || response.action;
+
+                        // Unwrap specific 'tool_call' wrapper if present
+                        if (actionType === 'tool_call') {
+                            actionType = response.action.name;
+                            actionPayload = response.action.payload;
+                        }
+
+                        console.log(`   ⚡ Executing Action: ${actionType}`);
+
+                        // 1. Log Tool Start to DB
+                        await supabase.from('board_messages').insert([{
+                            meeting_id: activeMeeting.id,
+                            agent_id: 'SYSTEM',
+                            content: `**Executing Tool**: ${agent.role} is using \`${actionType}\`...`,
+                            type: 'system'
+                        }]);
+
+                        try {
+                            const result = await toolRouter(actionType, actionPayload, {
+                                userId: 'terminal-user',
+                                agentId: agent.id
+                            });
+                            console.log(`   ✅ Result: ${result.substring(0, 100)}...`);
+
+                            // 2. Log Tool Result to DB
+                            await supabase.from('board_messages').insert([{
+                                meeting_id: activeMeeting.id,
+                                agent_id: 'SYSTEM',
+                                content: `**Tool Result (${actionType})**:\n\`\`\`\n${result}\n\`\`\``,
+                                type: 'system'
+                            }]);
+
+                        } catch (err) {
+                            console.error(`   ❌ Action Failed: ${err.message}`);
+
+                            // Log Failure
+                            await supabase.from('board_messages').insert([{
+                                meeting_id: activeMeeting.id,
+                                agent_id: 'SYSTEM',
+                                content: `**Tool Failed (${actionType})**:\n${err.message}`,
+                                type: 'system'
+                            }]);
+                        }
                     }
 
                     // 6. Save Message to DB
-                    // We append the code to the message for visibility
                     let content = response.message;
-                    if (response.action && response.action.type === 'write_code') {
-                        content += `\n\n\`\`\`${response.action.language}\n${response.action.code}\n\`\`\``;
+                    if (response.action && (response.action.type === 'write_code' || response.action.code)) {
+                        content += `\n\n\`\`\`${response.action.language || 'javascript'}\n${response.action.code}\n\`\`\``;
                     }
 
                     await supabase.from('board_messages').insert([{
@@ -189,12 +211,13 @@ async function runLoop() {
                         content: content,
                         type: response.action ? 'action' : 'text'
                     }]);
-
-                    // Update lastMessageId so we don't process our own message immediately as a trigger (wait for next poll)
-                    // Actually, fetching again in next loop will get it.
                 }
             } else {
                 console.log("   (Silence)");
+                // If orchestrator says terminate, we might want to log it once
+                if (decision.nextSpeakerId === 'TERMINATE') {
+                    console.log("   (Mission/Conversation Terminated by Orchestrator)");
+                }
             }
 
         } catch (e) {

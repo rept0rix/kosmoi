@@ -1,0 +1,172 @@
+[
+    {
+        "title": "Coco Tam's",
+        "category": "bar_restaurant",
+        "sub_category": "Beach Club",
+        "description": "Popular beach club in Fisherman's Village with fire shows, Italian food, and great cocktails.",
+        "location": "Fisherman's Village, Bophut",
+        "rating": 4.5,
+        "price_range": "premium",
+        "image_url": "https://images.unsplash.com/photo-1544521855-66778aad0ea5?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Beachfront",
+            "Fire Show",
+            "Italian",
+            "Cocktails"
+        ],
+        "contact": "+66 77 945 210"
+    },
+    {
+        "title": "Jungle Club",
+        "category": "restaurants",
+        "sub_category": "Viewpoint",
+        "description": "Famous viewpoint restaurant offering panoramic views of Chaweng Bay. Thai and International cuisine.",
+        "location": "Chaweng Noi",
+        "rating": 4.7,
+        "price_range": "moderate",
+        "image_url": "https://images.unsplash.com/photo-1533552755452-9b2f6da12d09?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Viewpoint",
+            "Thai Food",
+            "Sunset",
+            "Relaxed"
+        ],
+        "contact": "+66 81 894 2322"
+    },
+    {
+        "title": "Hemingway's on the Beach",
+        "category": "restaurants",
+        "sub_category": "Thai",
+        "description": "Authentic Thai cuisine right on the sand in Thong Krut. Known for fresh seafood and boat trips.",
+        "location": "Thong Krut",
+        "rating": 4.6,
+        "price_range": "moderate",
+        "image_url": "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Seafood",
+            "Beachfront",
+            "Authentic",
+            "Boat Trips"
+        ],
+        "contact": "+66 81 538 4567"
+    },
+    {
+        "title": "Silver Beach (Thongtakian)",
+        "category": "nature",
+        "sub_category": "Beach",
+        "description": "One of the most beautiful beaches in Samui with crystal clear water and granite boulders.",
+        "location": "Lamai",
+        "rating": 4.8,
+        "price_range": "budget",
+        "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Swimming",
+            "Snorkeling",
+            "Nature",
+            "Relaxing"
+        ],
+        "contact": ""
+    },
+    {
+        "title": "Ang Thong National Marine Park",
+        "category": "nature",
+        "sub_category": "Tour",
+        "description": "Archipelago of 42 islands featuring limestone mountains, thick jungle, white-sand beaches, waterfalls and hidden coves.",
+        "location": "Marine Park",
+        "rating": 4.9,
+        "price_range": "premium",
+        "image_url": "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Adventure",
+            "Kayaking",
+            "Hiking",
+            "Snorkeling"
+        ],
+        "contact": ""
+    },
+    {
+        "title": "Fisherman's Village Walking Street",
+        "category": "attractions",
+        "sub_category": "Market",
+        "description": "Lively Friday night market with street food, souvenirs, and live music in Bophut.",
+        "location": "Bophut",
+        "rating": 4.6,
+        "price_range": "budget",
+        "image_url": "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Shopping",
+            "Street Food",
+            "Night Market",
+            "Culture"
+        ],
+        "contact": ""
+    },
+    {
+        "title": "W Hotel - Woobar",
+        "category": "pubs",
+        "sub_category": "Luxury",
+        "description": "Iconic bar with circular seating floating in a reflection pond. Famous for instagram photos and sunsets.",
+        "location": "Maenam",
+        "rating": 4.4,
+        "price_range": "premium",
+        "image_url": "https://images.unsplash.com/photo-1561587271-2c0690947761?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Luxury",
+            "Sunset",
+            "Cocktails",
+            "Instagrammable"
+        ],
+        "contact": "+66 77 915 999"
+    },
+    {
+        "title": "Big Buddha (Wat Phra Yai)",
+        "category": "religious_institutions",
+        "sub_category": "Temple",
+        "description": "12-meter seated golden Buddha statue. A major landmark and cultural site.",
+        "location": "Bangrak",
+        "rating": 4.5,
+        "price_range": "budget",
+        "image_url": "https://images.unsplash.com/photo-1599584288019-91ff6d0c754d?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Culture",
+            "Temple",
+            "Landmark",
+            "Viewpoint"
+        ],
+        "contact": ""
+    },
+    {
+        "title": "Namu",
+        "category": "chef_restaurant",
+        "sub_category": "Japanese",
+        "description": "Cutting-edge Japanese dining at W Koh Samui. Fresh sashimi and modern twists.",
+        "location": "Maenam",
+        "rating": 4.6,
+        "price_range": "premium",
+        "image_url": "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Japanese",
+            "Fine Dining",
+            "Sushi",
+            "Romantic"
+        ],
+        "contact": "+66 77 915 999"
+    },
+    {
+        "title": "Ark Bar Beach Club",
+        "category": "clubs",
+        "sub_category": "Party",
+        "description": "The center of Chaweng's nightlife. Beach parties, DJs, and fire shows.",
+        "location": "Chaweng",
+        "rating": 4.2,
+        "price_range": "moderate",
+        "image_url": "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=1000&auto=format&fit=crop",
+        "tags": [
+            "Party",
+            "DJ",
+            "Beach",
+            "Nightlife"
+        ],
+        "contact": "+66 77 961 333"
+    }
+]

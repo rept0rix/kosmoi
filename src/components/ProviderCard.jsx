@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -23,10 +22,24 @@ import {
   Bug,
   Truck,
   Wifi,
-  User
+  User,
+  Waves,
+  Sun,
+  Shirt,
+  Home,
+  FileText,
+  Car,
+  Bike,
+  Languages,
+  Building2,
+  Utensils,
+  ShoppingBag
 } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
+import { getSubCategoryLabel } from "@/components/subCategories";
 
 const categoryIcons = {
+  // Fix
   handyman: Wrench,
   carpenter: Hammer,
   electrician: Zap,
@@ -37,32 +50,39 @@ const categoryIcons = {
   painter: PaintBucket,
   gardener: Leaf,
   pest_control: Bug,
-  moving: Truck,
+  pool_cleaning: Waves,
+  solar_energy: Sun,
+  
+  // Get Service
+  laundry: Shirt,
+  housekeeping: Home,
   internet_tech: Wifi,
-};
-
-const categoryNames = {
-  handyman: "אנדימן",
-  carpenter: "נגר",
-  electrician: "חשמלאי",
-  plumber: "אינסטלטור",
-  ac_repair: "מזגנים",
-  cleaning: "ניקיון",
-  locksmith: "מנעולן",
-  painter: "צבע",
-  gardener: "גנן",
-  pest_control: "הדברה",
-  moving: "הובלות",
-  internet_tech: "אינטרנט",
+  visa_services: FileText,
+  
+  // Transport
+  moving: Truck,
+  car_mechanic: Wrench,
+  motorcycle_mechanic: Wrench,
+  taxi_service: Car,
+  car_rental: Car,
+  bike_rental: Bike,
+  
+  // Other
+  translator: Languages,
+  real_estate_agent: Building2,
+  restaurants: Utensils,
+  fashion: ShoppingBag
 };
 
 export default function ProviderCard({ provider, onCall, showDistance = false }) {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const CategoryIcon = categoryIcons[provider.category] || Wrench;
 
   return (
     <Card 
-      className="hover:shadow-lg transition-shadow border border-gray-200"
+      className="hover:shadow-lg transition-shadow border border-gray-200 cursor-pointer"
+      onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
     >
       {provider.images && provider.images.length > 0 ? (
         <div className="h-40 overflow-hidden bg-gray-200 relative">
@@ -97,7 +117,7 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
           </div>
           <div className="flex-1 min-w-0">
             <Badge className="bg-blue-600 text-white hover:bg-blue-600 mb-1 text-xs">
-              {categoryNames[provider.category]}
+              {getSubCategoryLabel(provider.category, language)}
             </Badge>
             <h4 className="font-bold text-gray-900 text-lg">
               {provider.business_name}

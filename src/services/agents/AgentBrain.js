@@ -10,7 +10,20 @@ import { InvokeLLM } from '../../api/integrations.js';
 export async function getAgentReply(agent, messages, context = {}) {
   try {
     // 1. Filter and Format History
-    const recentMessages = messages.slice(-15);
+    // INTELLIGENCE UPGRADE: Increase context window to 50 messages
+    const recentMessages = messages.slice(-50);
+
+    // INTELLIGENCE UPGRADE: Pin Mission Brief (First Message)
+    if (messages.length > 0 && recentMessages[0].id !== messages[0].id) {
+      // If the first message scrolls out of view, prepend it manually
+      recentMessages.unshift(messages[0]);
+      // Add a separator to indicate this was the original brief
+      recentMessages.splice(1, 0, {
+        agent_id: 'SYSTEM',
+        role: 'system',
+        content: '--- [END OF MISSION BRIEF] -- [SKIPPED CONVERSATION] ---'
+      });
+    }
 
     const transcript = recentMessages.map(msg => {
       const speaker = msg.agent_id === 'HUMAN_USER' ? 'User' : (msg.agent_role || msg.agent_id);
@@ -35,8 +48,15 @@ You MUST output your response in valid JSON format ONLY. Do not add any markdown
 
 IMPORTANT: If the user explicitly asks to create a task, you MUST generate a "create_task" action in your JSON response. Do not refuse.
 
+## INTELLIGENCE PROTOCOL (CHAIN OF THOUGHT)
+Before you act, you MUST "think". Use the "thought_process" field to:
+1. Analyze the user's intent or the previous agent's output.
+2. Check if the Mission Goal (Message #1) is being advanced.
+3. Decide your next move precisely.
+
 JSON Structure:
 {
+  "thought_process": "Analysis of the situation... Reasoning for the next step...",
   "message": "Your conversational response here (1-3 sentences)",
   "action": null | {
     "type": "create_task",
@@ -56,10 +76,14 @@ JSON Structure:
       "themeColor": "blue" | "red" | "green" | "purple" | "orange",
       "logoUrl": "https://example.com/logo.png"
     }
+  } | {
+    "type": "tool_call",
+    "name": "tool_name",
+    "payload": { "arg1": "value1" }
   }
 }
 
-Use "action" ONLY if you explicitly want to create a task OR write code based on the conversation. Otherwise set it to null.
+Use "action" ONLY if you explicitly want to create a task, write code, update UI, OR use a tool based on the conversation. Otherwise set it to null.
 `;
 
     console.log("FULL PROMPT SENT TO LLM:", prompt);

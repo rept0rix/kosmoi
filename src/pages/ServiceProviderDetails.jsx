@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from '@/api/supabaseClient';
@@ -30,34 +31,29 @@ import {
   Heart,
   Globe,
   Share2,
-  Calendar
+  Calendar,
+  Waves,
+  Sun,
+  Shirt,
+  Home,
+  Globe2,
+  FileText,
+  Car,
+  Bike,
+  Languages,
+  Building2,
+  Utensils,
+  ShoppingBag
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
 import { getCategoryIcon } from "@/utils/mapIcons";
-
-const categories = {
-  handyman: "אנדימן",
-  carpenter: "נגר",
-  electrician: "חשמלאי",
-  plumber: "אינסטלטור",
-  ac_repair: "מזגנים",
-  cleaning: "ניקיון",
-  locksmith: "מנעולן",
-  painter: "צבע",
-  gardener: "גנן",
-  pest_control: "הדברה",
-  moving: "הובלות",
-  internet_tech: "אינטרנט",
-  car_mechanic: "מוסך",
-  translator: "מתרגם",
-  visa_services: "ויזה",
-  real_estate_agent: "נדל״ן",
-  taxi: "מוניות", // Added taxi
-};
+import { getSubCategoryLabel } from "../components/subCategories";
+import { useLanguage } from "@/components/LanguageContext";
 
 export default function ServiceProviderDetails() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { language } = useLanguage();
   const urlParams = new URLSearchParams(window.location.search);
   const providerId = urlParams.get("id");
 
@@ -201,6 +197,7 @@ export default function ServiceProviderDetails() {
 
   const CategoryIconComponent = (() => {
     const icons = {
+      // Fix
       handyman: Wrench,
       carpenter: Hammer,
       electrician: Zap,
@@ -209,15 +206,29 @@ export default function ServiceProviderDetails() {
       cleaning: Sparkles,
       locksmith: Wrench,
       painter: ImageIcon,
-      gardener: Wind,
-      pest_control: Sparkles,
-      moving: Navigation,
-      internet_tech: Zap,
+      gardener: Leaf,
+      pest_control: Bug,
+      pool_cleaning: Waves,
+      solar_energy: Sun,
+      
+      // Get Service
+      laundry: Shirt,
+      housekeeping: Home,
+      internet_tech: Wifi,
+      visa_services: FileText,
+      
+      // Transport
+      moving: Truck,
       car_mechanic: Wrench,
-      translator: MessageCircle,
-      visa_services: ArrowRight,
-      real_estate_agent: MapPin,
-      taxi: Navigation,
+      taxi_service: Car,
+      car_rental: Car,
+      bike_rental: Bike,
+      
+      // Other
+      translator: Languages,
+      real_estate_agent: Building2,
+      restaurants: Utensils,
+      fashion: ShoppingBag
     };
     return icons[provider.category] || Wrench;
   })();
@@ -243,7 +254,7 @@ export default function ServiceProviderDetails() {
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-blue-600 hover:bg-blue-700 border-none text-white">
-                {categories[provider.category] || provider.category}
+                {getSubCategoryLabel(provider.category, language)}
               </Badge>
               {provider.verified && (
                 <Badge className="bg-green-500 hover:bg-green-600 border-none text-white gap-1">
@@ -356,6 +367,15 @@ export default function ServiceProviderDetails() {
                         </div>
                         <p className="text-gray-600 text-sm">{provider.email || "לא צויין"}</p>
                       </div>
+                      {provider.line_id && (
+                        <div className="p-4 bg-gray-50 rounded-xl">
+                          <div className="flex items-center gap-3 mb-2">
+                            <MessageCircle className="w-5 h-5 text-green-600" />
+                            <h4 className="font-semibold">Line ID</h4>
+                          </div>
+                          <p className="text-gray-600 text-sm">{provider.line_id}</p>
+                        </div>
+                      )}
                       <div className="p-4 bg-gray-50 rounded-xl">
                         <div className="flex items-center gap-3 mb-2">
                           <MessageCircle className="w-5 h-5 text-blue-600" />

@@ -16,17 +16,25 @@ async function triggerTelegramTest() {
         .order('created_at', { ascending: false })
         .limit(1);
 
-    if (!meetings || !meetings.length) return;
+    if (!meetings || !meetings.length) {
+        console.log("❌ No active meeting found.");
+        return;
+    }
     const meeting = meetings[0];
+    console.log(`Found meeting: ${meeting.id}`);
 
-    await supabase.from('board_messages').insert([{
+    const { error } = await supabase.from('board_messages').insert([{
         meeting_id: meeting.id,
         agent_id: 'HUMAN_USER',
-        content: "Please send a test message to my Telegram now to confirm the connection is working.",
+        content: "@CEO Please use the 'send_telegram' tool IMMEDIATELY to send a test message to my Telegram. Do not create a task, just do it.",
         type: 'text'
     }]);
 
-    console.log("✅ Test trigger sent.");
+    if (error) {
+        console.error("❌ Insert Error:", error);
+    } else {
+        console.log("✅ Test trigger sent.");
+    }
 }
 
 triggerTelegramTest();

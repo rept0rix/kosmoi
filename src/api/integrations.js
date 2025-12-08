@@ -17,14 +17,24 @@ export const Core = {
 
             const genAI = new GoogleGenerativeAI(apiKey);
 
+            // 0. Model Mapping / Override
+            // Force legacy/unavailable models to newer versions to avoid initial 404/400 errors
+            if (requestedModel === 'gemini-1.5-flash' || requestedModel === 'gemini-1.5-pro') {
+                requestedModel = 'gemini-2.0-flash';
+            }
+            // If the user specifically asked for 3-pro, ensure it's the preview
+            if (requestedModel === 'gemini-3-pro') {
+                requestedModel = 'gemini-3-pro-preview';
+            }
+
             // List of models to try. We prioritize the requested model, then fall back to known available ones.
             // Based on available models: gemini-2.0-flash, gemini-3-pro-preview, etc.
             const modelsToTry = [
                 requestedModel,
                 "gemini-2.0-flash",
+                "gemini-2.0-flash-exp",
                 "gemini-2.0-flash-lite",
-                "gemini-3-pro-preview",
-                "gemini-1.5-flash" // Keep as legacy fallback
+                "gemini-3-pro-preview"
             ].filter(Boolean); // Remove null/undefined
 
             let lastError = null;
@@ -188,7 +198,50 @@ export const Core = {
             };
         }
     },
-    ExtractDataFromUploadedFile: async () => { console.warn('ExtractDataFromUploadedFile not implemented'); return {}; }
+    ExtractDataFromUploadedFile: async () => { console.warn('ExtractDataFromUploadedFile not implemented'); return {}; },
+    CreatePaymentLink: async ({ name, amount, currency = 'usd' }) => {
+        console.log(`[Integrations] Creating payment link for ${name} ($${amount})...`);
+        const apiKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_KEY || process.env.VITE_STRIPE_KEY || process.env.stripe_key || process.env.stirpe_s_key;
+
+        if (!apiKey) {
+            console.warn("Missing Stripe API Key. Payment link simulated.");
+            return { simulated: true, url: "https://checkout.stripe.com/pay/simulated_link" };
+        }
+
+        try {
+            // Create a Price first (simplified flow) or use ad-hoc line items if allowed
+            // For simplicity, we'll use the direct Checkout Session creation with line_items
+            const params = new URLSearchParams();
+            params.append('payment_method_types[]', 'card');
+            params.append('line_items[0][price_data][currency]', currency);
+            params.append('line_items[0][price_data][product_data][name]', name);
+            params.append('line_items[0][price_data][unit_amount]', Math.round(amount * 100).toString()); // Cents
+            params.append('line_items[0][quantity]', '1');
+            params.append('mode', 'payment');
+            params.append('success_url', 'https://samui-service-hub.vercel.app/success');
+            params.append('cancel_url', 'https://samui-service-hub.vercel.app/cancel');
+
+            const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error?.message || 'Failed to create payment link');
+            }
+
+            const data = await res.json();
+            return { url: data.url, id: data.id };
+        } catch (error) {
+            console.error("Stripe Error:", error);
+            return { error: error.message };
+        }
+    }
 };
 
 export const InvokeLLM = Core.InvokeLLM;
@@ -204,4 +257,6 @@ export const UploadFile = Core.UploadFile;
 export const GenerateImage = Core.GenerateImage;
 
 export const ExtractDataFromUploadedFile = Core.ExtractDataFromUploadedFile;
+
+export const CreatePaymentLink = Core.CreatePaymentLink;
 

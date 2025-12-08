@@ -2,17 +2,145 @@
   "name": "ServiceRequest",
   "type": "object",
   "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "User ID"
+    },
     "service_provider_id": {
       "type": "string",
-      "description": "\u05de\u05d6\u05d4\u05d4 \u05e1\u05e4\u05e7 \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea"
+      "description": "מזהה ספק השירות (אופציונלי)"
+    },
+    "super_category": {
+      "type": "string",
+      "enum": [
+        "eat",
+        "fix",
+        "shop",
+        "enjoy",
+        "go_out",
+        "travel",
+        "help",
+        "get_service",
+        "get_info"
+      ],
+      "description": "קטגוריית אב"
     },
     "category": {
       "type": "string",
-      "description": "\u05e1\u05d5\u05d2 \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea \u05d4\u05de\u05d1\u05d5\u05e7\u05e9"
+      "enum": [
+        "plumber",
+        "handyman",
+        "electrician",
+        "ac_repair",
+        "technicians",
+        "renovations",
+        "home_maintenance",
+        "craftsmen",
+        "installers",
+        "repair_labs",
+        "carpenter",
+        "locksmith",
+        "painter",
+        "gardener",
+        "pest_control",
+        "pool_cleaning",
+        "solar_energy",
+        "cleaning",
+        "internet_tech",
+        "housekeeping",
+        "restaurants",
+        "delivery",
+        "cafes",
+        "fast_food",
+        "bar_restaurant",
+        "coffee_carts",
+        "kosher_restaurant",
+        "chef_restaurant",
+        "ice_cream",
+        "outdoor_seating",
+        "sweets",
+        "fashion",
+        "electronics",
+        "sports_camping",
+        "pet_supplies",
+        "food_beverages",
+        "furniture",
+        "leisure_products",
+        "baby_products",
+        "flowers",
+        "second_hand",
+        "department_store",
+        "sports",
+        "workshops",
+        "health_spa",
+        "parks_gardens",
+        "fountains",
+        "enrichment",
+        "shopping_centers",
+        "attractions",
+        "gymboree",
+        "pubs",
+        "movies",
+        "concerts",
+        "escape_rooms",
+        "exhibitions",
+        "kids_events",
+        "shows",
+        "stand_up",
+        "clubs",
+        "accommodation",
+        "trip_attractions",
+        "trip_routes",
+        "springs",
+        "points_of_interest",
+        "nature",
+        "heritage_sites",
+        "emergency_volunteering",
+        "aid_organizations",
+        "food_distribution",
+        "clothing_collection",
+        "wizo",
+        "volunteer",
+        "hair_donation",
+        "one_in_nine",
+        "pharmacies",
+        "fuel_transport",
+        "atms",
+        "health",
+        "mental_health",
+        "beauty",
+        "consulting_treatment",
+        "finance",
+        "business_services",
+        "animals",
+        "event_organizers",
+        "visa_services",
+        "translator",
+        "car_rental",
+        "bike_rental",
+        "taxi_service",
+        "laundry",
+        "protected_spaces",
+        "social_security",
+        "education",
+        "authorities",
+        "welfare",
+        "organizations",
+        "cell_towers",
+        "religious_institutions",
+        "agriculture_environment",
+        "industries",
+        "other"
+      ],
+      "description": "סוג השירות המבוקש"
     },
     "description": {
       "type": "string",
-      "description": "\u05ea\u05d9\u05d0\u05d5\u05e8 \u05d4\u05d1\u05e2\u05d9\u05d4 \u05d0\u05d5 \u05d4\u05e6\u05d5\u05e8\u05da"
+      "description": "תיאור הבעיה או הצורך"
     },
     "urgency": {
       "type": "string",
@@ -23,31 +151,42 @@
         "emergency"
       ],
       "default": "medium",
-      "description": "\u05e8\u05de\u05ea \u05d3\u05d7\u05d9\u05e4\u05d5\u05ea"
+      "description": "רמת דחיפות"
     },
     "preferred_date": {
       "type": "string",
       "format": "date",
-      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05de\u05d5\u05e2\u05d3\u05e3"
+      "description": "תאריך מועדף"
     },
     "location": {
       "type": "string",
-      "description": "\u05de\u05d9\u05e7\u05d5\u05dd \u05d4\u05e9\u05d9\u05e8\u05d5\u05ea"
+      "description": "מיקום השירות"
+    },
+    "coordinates": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "type": "number"
+            },
+            "lng": {
+              "type": "number"
+            }
+          }
     },
     "contact_phone": {
       "type": "string",
-      "description": "\u05d8\u05dc\u05e4\u05d5\u05df \u05dc\u05d9\u05e6\u05d9\u05e8\u05ea \u05e7\u05e9\u05e8"
+      "description": "טלפון ליצירת קשר"
     },
     "contact_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05d4\u05de\u05d1\u05e7\u05e9"
+      "description": "שם המבקש"
     },
     "images": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "\u05ea\u05de\u05d5\u05e0\u05d5\u05ea \u05e9\u05dc \u05d4\u05d1\u05e2\u05d9\u05d4"
+      "description": "תמונות של הבעיה"
     },
     "status": {
       "type": "string",
@@ -59,15 +198,23 @@
         "cancelled"
       ],
       "default": "pending",
-      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05d1\u05e7\u05e9\u05d4"
+      "description": "סטטוס הבקשה"
     },
     "estimated_price": {
       "type": "number",
-      "description": "\u05de\u05d7\u05d9\u05e8 \u05de\u05e9\u05d5\u05e2\u05e8"
+      "description": "מחיר משוער"
     },
     "notes": {
       "type": "string",
-      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea \u05e0\u05d5\u05e1\u05e4\u05d5\u05ea"
+      "description": "הערות נוספות"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

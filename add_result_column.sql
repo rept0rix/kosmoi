@@ -1,0 +1,3 @@
+
+ALTER TABLE agent_tasks ADD COLUMN IF NOT EXISTS result TEXT;
+ALTER TABLE agent_tasks ADD COLUMN IF NOT EXISTS input_context JSONB;

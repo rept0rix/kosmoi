@@ -271,17 +271,20 @@ async function main() {
 
     while (true) {
         try {
-            // Poll for tasks assigned to this agent (or 'Unassigned' if we want to be generous, but stick to assigned for now)
-            // We need to filter by assigned_to = agentConfig.id AND status = 'open'
-            // db.entities.AgentTasks.list() returns all. We need to filter client side or add filter support.
-            // AgentTasks.list accepts meetingId. It doesn't seem to have generic filters in the helper.
-            // Let's use realSupabase for better filtering.
+            // Report Heartbeat / Status
+            await realSupabase.from('company_knowledge').upsert({
+                key: 'WORKER_STATUS',
+                value: { status: 'RUNNING', last_seen: new Date().toISOString(), worker: workerName },
+                category: 'system',
+                updated_at: new Date().toISOString()
+            });
 
+            // Poll for tasks...
             const { data: tasks, error } = await realSupabase
                 .from('agent_tasks')
                 .select('*')
                 .eq('assigned_to', agentConfig.id)
-                .in('status', ['open', 'pending', 'in_progress']) // Include in_progress to resume stuck tasks
+                .in('status', ['open', 'pending', 'in_progress'])
                 .limit(1);
 
             if (error) throw error;
@@ -289,12 +292,22 @@ async function main() {
             if (tasks && tasks.length > 0) {
                 await processTask(tasks[0]);
             } else {
-                // No tasks. Pulse.
                 process.stdout.write('.');
             }
 
         } catch (e) {
             console.error("\n❌ Error in Polling Loop:", e.message);
+
+            // Report Error State
+            await realSupabase.from('company_knowledge').upsert({
+                key: 'WORKER_STATUS',
+                value: { status: 'STOPPED', error: e.message, last_seen: new Date().toISOString(), worker: workerName },
+                category: 'system',
+                updated_at: new Date().toISOString()
+            });
+
+            // If it's a quota error, we might want to wait longer or just crash?
+            // For now, allow the loop to continue (maybe it was transient), but the UI will know.
         }
 
         // Sleep 5s

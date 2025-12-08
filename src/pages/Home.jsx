@@ -6,26 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { db } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useLanguage } from "@/components/LanguageContext";
 import { getTranslation } from "@/components/translations";
 import {
   Search,
-  CheckCircle,
   MapPin,
   Navigation as NavigationIcon,
-  Wrench,
-  Hammer,
-  Zap,
-  Droplets,
-  Wind,
-  Sparkles,
-  Lock,
-  PaintBucket,
-  Leaf,
-  Bug,
-  Truck,
-  Wifi,
 } from "lucide-react";
 import {
   Dialog,
@@ -42,8 +29,6 @@ import OfflineIndicator from "../components/OfflineIndicator";
 import { autoSync } from "@/services/syncService";
 import { offlineQuery } from "@/services/offlineQuery";
 import WeatherWidget from "@/components/WeatherWidget";
-
-
 
 const predefinedLocations = [
   { name: "בו-פוט", latitude: 9.5297, longitude: 100.0626 },
@@ -66,8 +51,6 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const distance = R * c;
   return distance;
 };
-
-
 
 export default function Home() {
   const navigate = useNavigate();
@@ -94,16 +77,12 @@ export default function Home() {
       const isDevelopment = import.meta.env.DEV;
 
       if (isDevelopment) {
-        // For local development, call Google Geocoding API directly
-        // For local development, call Google Geocoding API directly
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-        // Fetch English address
         const urlEn = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}&language=en`;
         const responseEn = await fetch(urlEn);
         const dataEn = await responseEn.json();
 
-        // Fetch Thai address
         const urlTh = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}&language=th`;
         const responseTh = await fetch(urlTh);
         const dataTh = await responseTh.json();
@@ -114,7 +93,6 @@ export default function Home() {
         };
       }
 
-      // For production, use Supabase backend function
       const response = await db.functions.invoke('geocode', {
         latitude,
         longitude
@@ -129,21 +107,6 @@ export default function Home() {
       return { en: null, th: null };
     }
   };
-
-  const categories = [
-    { id: "handyman", name: t("handyman"), icon: Wrench },
-    { id: "carpenter", name: t("carpenter"), icon: Hammer },
-    { id: "electrician", name: t("electrician"), icon: Zap },
-    { id: "plumber", name: t("plumber"), icon: Droplets },
-    { id: "ac_repair", name: t("ac_repair"), icon: Wind },
-    { id: "cleaning", name: t("cleaning"), icon: Sparkles },
-    { id: "locksmith", name: t("locksmith"), icon: Lock },
-    { id: "painter", name: t("painter"), icon: PaintBucket },
-    { id: "gardener", name: t("gardener"), icon: Leaf },
-    { id: "pest_control", name: t("pest_control"), icon: Bug },
-    { id: "moving", name: t("moving"), icon: Truck },
-    { id: "internet_tech", name: t("internet_tech"), icon: Wifi },
-  ];
 
   useEffect(() => {
     const savedLocation = localStorage.getItem('userLocation');
@@ -168,7 +131,6 @@ export default function Home() {
     }
   }, []);
 
-  // Initialize sync on component mount
   useEffect(() => {
     autoSync().catch(err => {
       console.error('Auto-sync failed:', err);
@@ -194,7 +156,6 @@ export default function Home() {
         setLocationPermission('granted');
         setLocationError(null);
 
-        // Get address from coordinates
         setLoadingAddress(true);
         try {
           const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
@@ -250,7 +211,6 @@ export default function Home() {
     setLocationError(null);
     setShowLocationDialog(false);
 
-    // Get address for predefined location
     setLoadingAddress(true);
     try {
       const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
@@ -330,7 +290,7 @@ export default function Home() {
         return (
           provider.business_name?.toLowerCase().includes(searchLower) ||
           provider.description?.toLowerCase().includes(searchLower) ||
-          categories.find(c => c.id === provider.category)?.name.includes(searchQuery)
+          provider.category?.includes(searchLower)
         );
       }).slice(0, 5);
       setSuggestions(filtered);
@@ -354,21 +314,20 @@ export default function Home() {
     setSearchQuery("");
   };
 
-  const handleCategoryClick = (categoryId) => {
-    navigate(createPageUrl("ServiceProviders") + `?category=${categoryId}`);
-  };
-
   const handleSuperCategoryClick = (superCategoryId) => {
-    setSelectedSuperCategory(superCategoryId);
-    setSelectedSubCategory(null);
+    if (selectedSuperCategory === superCategoryId) {
+       setSelectedSuperCategory(null); // Deselect if already selected
+       setSelectedSubCategory(null);
+    } else {
+       setSelectedSuperCategory(superCategoryId);
+       setSelectedSubCategory(null);
+    }
   };
 
   const handleSubCategoryClick = (subCategoryId) => {
     if (subCategoryId.startsWith('all_')) {
-      // אם בחרו "הכל", נווט לפי קטגוריה-על בלבד
       navigate(createPageUrl("ServiceProviders") + `?super_category=${selectedSuperCategory}`);
     } else {
-      // אחרת, נווט לפי תת-הקטגוריה
       navigate(createPageUrl("ServiceProviders") + `?super_category=${selectedSuperCategory}&sub_category=${subCategoryId}`);
     }
   };
@@ -386,7 +345,6 @@ export default function Home() {
     }
   };
 
-  // Background images for slideshow
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   const backgroundImages = [
     "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&w=1920&q=80",
@@ -398,18 +356,15 @@ export default function Home() {
   React.useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
-    }, 5000); // Change every 5 seconds
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Offline Indicator */}
       <OfflineIndicator />
 
-      {/* Hero Section with Background Slideshow */}
       <div className="relative h-[500px] overflow-hidden">
-        {/* Background Images */}
         {backgroundImages.map((image, index) => (
           <div
             key={index}
@@ -423,16 +378,13 @@ export default function Home() {
           />
         ))}
 
-        {/* Dark Overlay */}
         <div className="absolute inset-0 bg-black/40" />
 
-        {/* Hero Content */}
         <div className="relative h-full flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-8">
             {t('findLocalServices')}
           </h1>
 
-          {/* Search Bar - Centered */}
           <div className="w-full max-w-2xl">
             <div className="relative flex gap-2">
               <div className="flex-1 relative">
@@ -464,7 +416,7 @@ export default function Home() {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 truncate">{provider.business_name}</p>
                           <p className="text-xs text-gray-500 truncate">
-                            {categories.find(c => c.id === provider.category)?.name || provider.category}
+                            {provider.category}
                           </p>
                         </div>
                       </div>
@@ -481,7 +433,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Location Info */}
           {userLocation && (
             <div className="mt-4 bg-black/30 backdrop-blur-sm px-6 py-3 rounded-lg max-w-2xl w-full">
               <div className="flex items-start gap-3">
@@ -521,6 +472,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Location Permission UI Blocks */}
       {locationPermission === 'loading' && (
         <div className="bg-blue-500 text-white px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
@@ -592,8 +544,6 @@ export default function Home() {
         </div>
       )}
 
-
-
       <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -603,7 +553,6 @@ export default function Home() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
-            {/* Location Search Bar */}
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Input
@@ -642,9 +591,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-
-
-      {/* Blue Separator */}
+      {/* Categories Section */}
       <div className="bg-blue-600 py-3">
         <div className="max-w-7xl mx-auto px-4">
           <h3 className="text-white text-center font-semibold text-lg">
@@ -654,7 +601,6 @@ export default function Home() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        {/* Temporary Admin Link - Moved to top for visibility */}
         <div className="mb-4">
           <Button
             variant="outline"
@@ -665,17 +611,15 @@ export default function Home() {
           </Button>
         </div>
 
-        {/* Weather Widget */}
         <div className="mb-6">
           <WeatherWidget />
         </div>
 
-        {/* Sync Status */}
         <SyncStatus />
 
         <div>
           <SuperCategories
-            onSelect={handleSuperCategoryClick}
+            onSelectCategory={handleSuperCategoryClick}
             selectedCategory={selectedSuperCategory}
           />
           {selectedSuperCategory && (
@@ -691,27 +635,6 @@ export default function Home() {
         </div>
 
         <div>
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-            {categories.map((category) => (
-              <Card
-                key={category.id}
-                className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200"
-                onClick={() => handleCategoryClick(category.id)}
-              >
-                <CardContent className="p-2 text-center">
-                  <div className="w-10 h-10 mx-auto mb-1 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <category.icon className="w-5 h-5 text-gray-700" />
-                  </div>
-                  <p className="text-xs font-medium text-gray-900 leading-tight">
-                    {category.name}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-gray-900">
               {userLocation ? t('nearbyProviders') : t('recommendedProviders')}
@@ -724,8 +647,6 @@ export default function Home() {
               {t('seeAll')}
             </Button>
           </div>
-
-
 
           {isLoading ? (
             <div className="text-center py-8 text-gray-500">{t('loading')}</div>

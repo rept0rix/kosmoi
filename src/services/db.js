@@ -1,21 +1,29 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'samui-hub';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Initialize IndexedDB
 export async function initDB() {
     return openDB(DB_NAME, DB_VERSION, {
-        upgrade(db) {
+        upgrade(db, oldVersion, newVersion, transaction) {
             // Providers store
             if (!db.objectStoreNames.contains('providers')) {
                 const providerStore = db.createObjectStore('providers', { keyPath: 'id' });
                 providerStore.createIndex('super_category', 'super_category');
-                providerStore.createIndex('sub_category', 'sub_category');
+                providerStore.createIndex('category', 'category');
                 providerStore.createIndex('business_name', 'business_name');
                 providerStore.createIndex('status', 'status');
                 providerStore.createIndex('verified', 'verified');
                 providerStore.createIndex('google_place_id', 'google_place_id');
+            } else {
+                const providerStore = transaction.objectStore('providers');
+                if (!providerStore.indexNames.contains('category')) {
+                    providerStore.createIndex('category', 'category');
+                }
+                if (providerStore.indexNames.contains('sub_category')) {
+                    providerStore.deleteIndex('sub_category');
+                }
             }
 
             // Sync metadata store
@@ -62,10 +70,6 @@ export async function filterProviders(filters = {}) {
 
     if (filters.super_category) {
         providers = providers.filter(p => p.super_category === filters.super_category);
-    }
-
-    if (filters.sub_category) {
-        providers = providers.filter(p => p.sub_category === filters.sub_category);
     }
 
     if (filters.category) {

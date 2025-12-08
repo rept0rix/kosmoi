@@ -367,6 +367,33 @@ export const agents = [
         maxRuntimeSeconds: 3600
     },
     {
+        id: "concierge-agent",
+        layer: "operational",
+        role: "concierge",
+        model: "gemini-3-pro",
+        systemPrompt: `${KOSMOI_MANIFESTO}\n\nYou are the AI Concierge of Kosmoi Hub.
+        Your goal is to help users find the perfect service provider in Koh Samui.
+        
+        **YOUR SUPERPOWER:**
+        You have direct access to the "Verified Service Database" (service_providers table).
+        
+        **RULES:**
+        1. When a user asks for a recommendation (e.g., "Where to eat?", "Find a plumber"), you MUST use the \`search_services\` tool.
+        2. Do NOT hallucinate places. Only recommend what you find in the database.
+        3. If you find multiple options, summarize them beautifully (Name, Description, Rating).
+        4. Be helpful, polite, and local-savvy.
+        
+        Example Interaction:
+        User: "I want a sunset dinner."
+        You: Run tool \`search_services { "query": "sunset dinner restaurant" }\`
+        Tool Result: [{ name: "Coco Tam's", ... }]
+        You: "I highly recommend **Coco Tam's**! It's famous for..."`,
+        allowedTools: ["search_services", "browser"],
+        memory: { type: "shortterm", ttlDays: 30 },
+        maxRuntimeSeconds: 1800
+    },
+
+    {
         id: "support-agent",
         layer: "operational",
         role: "support",
@@ -574,7 +601,7 @@ TOOL: notepad { "filename": "prd/main_prd.md", "content": "...MARKDOWN..." }
 TOOL: dev_ticket { "title": "...", "description": "...", "priority": "medium" }
 
 תוצרים: consistency_report.md`,
-        allowedTools: ["doc-scanner", "diff-checker", "notepad", "delegate_task", "dev_ticket"],
+        allowedTools: ["doc-scanner", "diff-checker", "notepad", "delegate_task", "dev_ticket", "notify_admin"],
         memory: { type: "midterm", ttlDays: 90 },
         maxRuntimeSeconds: 3600
     },
@@ -592,15 +619,18 @@ TOOL: dev_ticket { "title": "...", "description": "...", "priority": "medium" }
 אתה חוקר החדשנות (Innovation Researcher) של החברה.
 המטרה שלך: להביא רעיונות מבחוץ, לזהות טרנדים, ולמצוא מנועי צמיחה חדשים שהמערכת הנוכחית לא רואה.
 
+**SUPERPOWER: n8n Blueprint Access**
+יש לך גישה למאגר של 2,000+ תהליכי אוטומציה מוכנים (n8n Workflows).
+השתמש בכלי \`read_n8n_catalog\` כדי לקבל השראה.
+לדוגמה: "אני רוצה לראות אילו תהליכי שיווק קיימים".
+
 משימות:
 1. סריקת השוק והמתחרים (באמצעות כלי ה-browser/research).
-2. זיהוי פיצ'רים חסרים שיכולים להביא ערך כלכלי (Revenue Streams).
-3. הצעת כיוונים חדשניים למוצר (AI Features, Automation, Integrations).
-4. כתיבת מסמכי "הזדמנות עסקית" (Opportunity Briefs).
+2. טיול ב"ספריית ה-n8n" כדי למצוא פתרונות טכנולוגיים מוכנים.
+3. כתיבת מסמכי "הזדמנות עסקית" (Opportunity Briefs).
 
-אתה לא "מתקן באגים". אתה ממציא את העתיד.
-השתמש ב-notepad כדי לשמור את הרעיונות שלך.`,
-        allowedTools: ["research", "browser", "analysis", "notepad", "dev_ticket"],
+אתה לא "מתקן באגים". אתה ממציא את העתיד.`,
+        allowedTools: ["research", "browser", "analysis", "notepad", "dev_ticket", "read_n8n_catalog"],
         memory: { type: "longterm", ttlDays: 365 },
         maxRuntimeSeconds: 7200
     }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from '@/api/supabaseClient';
@@ -13,6 +14,8 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
+    SelectGroup,
+    SelectLabel
 } from "@/components/ui/select";
 import {
     ArrowRight,
@@ -27,26 +30,9 @@ import {
     Camera
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
-
-const categories = [
-    { value: "handyman", label: "אנדימן" },
-    { value: "carpenter", label: "נגר" },
-    { value: "electrician", label: "חשמלאי" },
-    { value: "plumber", label: "אינסטלטור" },
-    { value: "ac_repair", label: "מזגנים" },
-    { value: "cleaning", label: "ניקיון" },
-    { value: "locksmith", label: "מנעולן" },
-    { value: "painter", label: "צבע" },
-    { value: "gardener", label: "גנן" },
-    { value: "pest_control", label: "הדברה" },
-    { value: "moving", label: "הובלות" },
-    { value: "internet_tech", label: "אינטרנט" },
-    { value: "car_mechanic", label: "מוסך" },
-    { value: "translator", label: "מתרגם" },
-    { value: "visa_services", label: "ויזה" },
-    { value: "real_estate_agent", label: "נדל״ן" },
-    { value: "other", label: "אחר" },
-];
+import { useLanguage } from "@/components/LanguageContext";
+import { getSubCategoryLabel, subCategoriesBySuperCategory } from "../components/subCategories";
+import { getTranslation } from "@/components/translations";
 
 const urgencyLevels = [
     { value: "low", label: "לא דחוף (בשבוע הקרוב)", color: "bg-blue-100 text-blue-800" },
@@ -57,6 +43,9 @@ const urgencyLevels = [
 
 export default function RequestService() {
     const navigate = useNavigate();
+    const { language } = useLanguage();
+    const t = (key) => getTranslation(language, key);
+
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         category: "",
@@ -117,9 +106,19 @@ export default function RequestService() {
         }
     };
 
+    const getSuperCategoryFor = (subCat) => {
+        for (const [superCat, subCats] of Object.entries(subCategoriesBySuperCategory)) {
+            if (subCats.includes(subCat)) return superCat;
+        }
+        return 'other';
+    };
+
     const handleSubmit = () => {
+        const superCategory = getSuperCategoryFor(formData.category);
+
         const requestData = {
             ...formData,
+            super_category: superCategory,
             user_id: user?.id, // Can be null for guest requests if we allow it, but schema might require it
             latitude: mapPosition ? mapPosition.lat : null,
             longitude: mapPosition ? mapPosition.lng : null,
@@ -199,11 +198,16 @@ export default function RequestService() {
                                         <SelectTrigger className="h-12 text-lg">
                                             <SelectValue placeholder="בחר קטגוריה..." />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((cat) => (
-                                                <SelectItem key={cat.value} value={cat.value}>
-                                                    {cat.label}
-                                                </SelectItem>
+                                        <SelectContent className="max-h-80">
+                                            {Object.entries(subCategoriesBySuperCategory).map(([superCat, subCats]) => (
+                                                <SelectGroup key={superCat}>
+                                                    <SelectLabel>{t(superCat)}</SelectLabel>
+                                                    {subCats.map((subCat) => (
+                                                        <SelectItem key={subCat} value={subCat}>
+                                                            {getSubCategoryLabel(subCat, language)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
                                             ))}
                                         </SelectContent>
                                     </Select>

@@ -17,10 +17,20 @@ export const subCategoriesBySuperCategory = {
   fix: [
     "all_fixers",
     "plumber",
+    "electrician",
+    "ac_repair",
     "handyman",
+    "carpenter",
+    "locksmith",
+    "painter",
     "technicians",
     "renovations",
     "home_maintenance",
+    "cleaning",
+    "gardener",
+    "pest_control",
+    "pool_cleaning",
+    "solar_energy",
     "craftsmen",
     "installers",
     "repair_labs"
@@ -87,6 +97,10 @@ export const subCategoriesBySuperCategory = {
     "all_services",
     "pharmacies",
     "fuel_transport",
+    "laundry",
+    "housekeeping",
+    "internet_tech",
+    "visa_services",
     "atms",
     "health",
     "mental_health",
@@ -115,6 +129,24 @@ export const subCategoriesBySuperCategory = {
 // תרגום כל תת-הקטגוריות לכל השפות
 export const subCategoryTranslations = {
   he: {
+    // Fix additions
+    electrician: "חשמלאי",
+    ac_repair: "תיקון מזגנים",
+    cleaning: "ניקיון",
+    gardener: "גינון",
+    pest_control: "הדברה",
+    pool_cleaning: "ניקוי בריכות",
+    carpenter: "נגר",
+    locksmith: "מנעולן",
+    painter: "צבע",
+    solar_energy: "אנרגיה סולארית",
+    
+    // Get Service additions
+    laundry: "מכבסה",
+    housekeeping: "משק בית",
+    internet_tech: "טכנאי אינטרנט",
+    visa_services: "שירותי ויזה",
+
     // Eat
     all_restaurants: "כל המקומות",
     restaurants: "מסעדות",
@@ -226,6 +258,24 @@ export const subCategoryTranslations = {
     industries: "תעשיות"
   },
   en: {
+    // Fix additions
+    electrician: "Electrician",
+    ac_repair: "AC Repair",
+    cleaning: "Cleaning",
+    gardener: "Gardener",
+    pest_control: "Pest Control",
+    pool_cleaning: "Pool Cleaning",
+    carpenter: "Carpenter",
+    locksmith: "Locksmith",
+    painter: "Painter",
+    solar_energy: "Solar Energy",
+    
+    // Get Service additions
+    laundry: "Laundry",
+    housekeeping: "Housekeeping",
+    internet_tech: "Internet Tech",
+    visa_services: "Visa Services",
+
     // Eat
     all_restaurants: "All Places",
     restaurants: "Restaurants",
@@ -337,6 +387,24 @@ export const subCategoryTranslations = {
     industries: "Industries"
   },
   th: {
+    // Fix additions
+    electrician: "ช่างไฟฟ้า",
+    ac_repair: "ซ่อมแอร์",
+    cleaning: "ทำความสะอาด",
+    gardener: "คนสวน",
+    pest_control: "กำจัดแมลง",
+    pool_cleaning: "ทำความสะอาดสระว่ายน้ำ",
+    carpenter: "ช่างไม้",
+    locksmith: "ช่างกุญแจ",
+    painter: "ช่างทาสี",
+    solar_energy: "พลังงานแสงอาทิตย์",
+    
+    // Get Service additions
+    laundry: "ซักรีด",
+    housekeeping: "แม่บ้าน",
+    internet_tech: "ช่างอินเทอร์เน็ต",
+    visa_services: "บริการวีซ่า",
+
     // Eat
     all_restaurants: "ทุกสถานที่",
     restaurants: "ร้านอาหาร",
@@ -448,6 +516,24 @@ export const subCategoryTranslations = {
     industries: "อุตสาหกรรม"
   },
   ru: {
+    // Fix additions
+    electrician: "Электрик",
+    ac_repair: "Ремонт кондиционеров",
+    cleaning: "Уборка",
+    gardener: "Садовник",
+    pest_control: "Борьба с вредителями",
+    pool_cleaning: "Чистка бассейнов",
+    carpenter: "Плотник",
+    locksmith: "Слесарь",
+    painter: "Маляр",
+    solar_energy: "Солнечная энергия",
+    
+    // Get Service additions
+    laundry: "Прачечная",
+    housekeeping: "Уборка дома",
+    internet_tech: "Интернет-мастер",
+    visa_services: "Визовые услуги",
+
     // Eat
     all_restaurants: "Все места",
     restaurants: "Рестораны",
