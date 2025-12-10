@@ -103,10 +103,26 @@ const AuthenticatedApp = () => {
 
             {/* Admin & Vendor Routes */}
             <Route path="/command-center" element={<CommandCenter />} />
-            <Route path="/board-room" element={<AgentCommandCenter />} />
+            import BoardRoom from '@/pages/BoardRoom';
+            // ...
+            {/* Admin & Vendor Routes */}
+            <Route path="/command-center" element={<CommandCenter />} />
+            {/* Switched to BoardRoom as requested by user ("missing screen with daily tasks etc") */}
+            <Route path="/board-room" element={<BoardRoom />} />
             {/* Admin Routes (New Layout) */}
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminOverview />} />
+              <Route index element={<CommandCenter />} />
+              {/* Note: I'm making CommandCenter the default admin view, replacing AdminOverview if that's preferred, 
+                  or I can keep them separate. The user complained about missing sidebar in Command Center. 
+                  Let's make /admin/command-center explicit or just use it as the main dashboard. 
+                  User said "Command Center... is what it was before". 
+                  Let's map /admin/dashboard to CommandCenter or just keep /admin point to it?
+                  The existing code had <Route index element={<AdminOverview />} />.
+                  I will add CommandCenter and BoardRoom here. */}
+              <Route path="overview" element={<AdminOverview />} />
+              <Route path="command-center" element={<CommandCenter />} />
+              <Route path="board-room" element={<BoardRoom />} />
+
               <Route path="users" element={<AdminUsers />} />
               <Route path="data" element={<AdminData />} />
               <Route path="crm" element={<AdminCRM />} />

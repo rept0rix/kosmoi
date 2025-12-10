@@ -23,7 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { BoardOrchestrator } from '@/services/agents/BoardOrchestrator';
 import CompanyStateDisplay from '@/components/agents/CompanyStateDisplay';
-import AgentNetworkGraph from '@/components/agents/AgentNetworkGraph';
+import TeamGallery from '@/components/agents/TeamGallery';
 import initialCompanyState from '@/data/company_state.json';
 import { CompanyHeartbeat } from '@/services/CompanyHeartbeat';
 import { CompanyKnowledge } from '@/services/agents/CompanyKnowledge';
@@ -639,6 +639,54 @@ export default function BoardRoom() {
         }
     };
 
+    // --- TASK MANAGEMENT ---
+    const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+    const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskDescription, setNewTaskDescription] = useState('');
+    const [newTaskPriority, setNewTaskPriority] = useState('medium');
+
+    const handleCreateTask = async () => {
+        if (!selectedMeeting || !newTaskTitle.trim()) return;
+
+        const { data, error } = await supabase.from('agent_tasks').insert([{
+            meeting_id: selectedMeeting.id,
+            title: newTaskTitle,
+            description: newTaskDescription,
+            assigned_to: 'Human', // Manual tasks assigned to user by default
+            priority: newTaskPriority,
+            status: 'in_progress'
+        }]).select();
+
+        if (error) {
+            toast({ title: "Error", description: "Failed to create task", variant: "destructive" });
+        } else {
+            setTasks(prev => [data[0], ...prev]);
+            setIsCreateTaskOpen(false);
+            setNewTaskTitle('');
+            setNewTaskDescription('');
+            toast({ title: "Task Created", description: "New task added to the board." });
+        }
+    };
+
+    const handleUpdateTaskStatus = async (taskId, newStatus) => {
+        const { error } = await supabase.from('agent_tasks')
+            .update({ status: newStatus })
+            .eq('id', taskId);
+
+        if (!error) {
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+        }
+    };
+
+    const handleDeleteTask = async (taskId) => {
+        if (!confirm("Are you sure you want to delete this task?")) return;
+        const { error } = await supabase.from('agent_tasks').delete().eq('id', taskId);
+        if (!error) {
+            setTasks(prev => prev.filter(t => t.id !== taskId));
+            toast({ title: "Task Deleted", description: "Task removed from board." });
+        }
+    };
+
     const handleSendMessage = async () => {
         if (!input.trim() || !selectedMeeting) return;
 
@@ -836,12 +884,11 @@ export default function BoardRoom() {
                     </div>
                 </ScrollArea>
 
-                {/* Agent Network Graph (Spider Map) */}
-                <div className="border-t p-0">
-                    <AgentNetworkGraph
+                {/* Team Gallery (Active Agents + Human) */}
+                <div className="flex-1 flex flex-col min-h-0">
+                    <TeamGallery
                         agents={agents}
                         activeAgentIds={selectedAgentIds}
-                        messages={messages}
                     />
                 </div>
             </div>
@@ -1212,6 +1259,14 @@ export default function BoardRoom() {
                         <ScrollArea className="h-full p-4">
                             {activeRightTab === 'tasks' ? (
                                 <div className="space-y-3">
+                                    <Button
+                                        onClick={() => setIsCreateTaskOpen(true)}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs mb-2"
+                                    >
+                                        <Plus className="w-3 h-3 mr-1" />
+                                        {isRTL ? 'הוסף משימה' : 'Add New Task'}
+                                    </Button>
+
                                     {tasks.length === 0 && (
                                         <div className="flex flex-col items-center justify-center py-12 text-center">
                                             <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
@@ -1223,18 +1278,29 @@ export default function BoardRoom() {
                                         </div>
                                     )}
                                     {tasks.map(task => (
-                                        <Card key={task.id} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                        <Card key={task.id} className="bg-white border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 group">
                                             <CardHeader className="p-3 pb-0">
                                                 <div className="flex justify-between items-start gap-2">
-                                                    <CardTitle className="text-sm font-semibold leading-tight text-gray-800">
+                                                    <CardTitle className="text-sm font-semibold leading-tight text-gray-800 flex-1">
                                                         {task.title}
                                                     </CardTitle>
-                                                    <Badge variant="outline" className={`text-[10px] shrink-0 ${task.status === 'done' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                        task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                            'bg-gray-50 text-gray-600'
-                                                        }`}>
-                                                        {task.status}
-                                                    </Badge>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => handleUpdateTaskStatus(task.id, task.status === 'done' ? 'in_progress' : 'done')}
+                                                            className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${task.status === 'done'
+                                                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                                                : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                                                }`}
+                                                        >
+                                                            {task.status === 'done' ? 'Done' : 'Active'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteTask(task.id)}
+                                                            className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                                        >
+                                                            <Archive className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="p-3 pt-2">
@@ -1323,6 +1389,45 @@ export default function BoardRoom() {
                         </Button>
                         <Button onClick={confirmCreateMeeting}>
                             {isRTL ? 'צור' : 'Create'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Task Dialog */}
+            <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{isRTL ? 'הוסף משימה חדשה' : 'Create New Task'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <Input
+                            placeholder={isRTL ? "כותרת המשימה..." : "Task Title..."}
+                            value={newTaskTitle}
+                            onChange={(e) => setNewTaskTitle(e.target.value)}
+                        />
+                        <Input
+                            placeholder={isRTL ? "תיאור..." : "Description..."}
+                            value={newTaskDescription}
+                            onChange={(e) => setNewTaskDescription(e.target.value)}
+                        />
+                        <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreateTaskOpen(false)}>
+                            {isRTL ? 'ביטול' : 'Cancel'}
+                        </Button>
+                        <Button onClick={handleCreateTask} className="bg-blue-600 text-white">
+                            {isRTL ? 'הוסף משימה' : 'Add Task'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

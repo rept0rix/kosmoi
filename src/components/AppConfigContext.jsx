@@ -17,7 +17,7 @@ export const AppConfigProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : {
             appName: 'Kosmoi',
             themeColor: 'blue', // blue, red, green, purple, orange
-            logoUrl: '/kosmoi_logo_full.png', // uses extracted PNG logo
+            logoUrl: '/kosmoi_logo_blue.svg', // Default for light mode
             debugRole: 'user' // 'user', 'business', 'admin'
         };
     });

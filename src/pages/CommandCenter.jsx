@@ -57,13 +57,7 @@ const CommandCenter = () => {
             <div className="border-b border-slate-900 bg-[#020617]/50 backdrop-blur-xl sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <Shield className="w-6 h-6 text-blue-500" />
-                            <div className="absolute inset-0 bg-blue-500 blur-lg opacity-20"></div>
-                        </div>
-                        <h1 className="text-lg font-bold text-white tracking-wide">
-                            KOSMOI <span className="text-slate-600 font-light">NEXUS</span>
-                        </h1>
+                        <img src="/kosmoi_logo_white.svg" alt="Kosmoi Logo" className="h-8 md:h-10 w-auto" />
                     </div>
 
                     <div className="flex gap-2">

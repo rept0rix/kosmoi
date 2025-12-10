@@ -1,0 +1,9 @@
+<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(45,20) scale(0.8)">
+        <rect x="25" y="25" width="10" height="50" rx="5" fill="#c2410c" />
+        <rect x="0" y="35" width="60" height="10" rx="5" transform="rotate(-15 30 40)" fill="#10b981" />
+        <rect x="0" y="35" width="60" height="10" rx="5" transform="rotate(15 30 40)" fill="#0ea5e9" />
+        <circle cx="50" cy="15" r="8" fill="#facc15" />
+    </g>
+    <text x="75" y="120" font-family="sans-serif" font-weight="800" font-size="36" fill="#ffffff" text-anchor="middle">Kosmoi</text>
+</svg>

@@ -34,27 +34,24 @@ export default function AdminLayout() {
                 fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out md:relative md:translate-x-0
                 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
-                <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                <div className="p-4 flex items-center justify-between border-b border-white/5">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
-                            K
-                        </div>
-                        <span className="font-semibold text-lg">Kosmoi Admin</span>
+                        <img src="/kosmoi_logo_white.svg" alt="Kosmoi Logo" className="h-8 md:h-10 w-auto" />
                     </div>
                     {/* Mobile Close Button */}
                     <button
-                        onClick={() => setIsMobileOpen(false)}
                         className="md:hidden text-slate-400 hover:text-white"
+                        onClick={() => setIsMobileOpen(false)}
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">
-                    <NavItem to="/admin" end icon={<LayoutDashboard />} label="Overview" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
+                    <NavItem to="/admin/command-center" icon={<LayoutDashboard />} label="Command Center" onClick={() => setIsMobileOpen(false)} />
+                    <NavItem to="/admin/board-room" icon={<Bot />} label="Board Room" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/data" icon={<Database />} label="Data & Businesses" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/board-room" icon={<Bot />} label="Agents" onClick={() => setIsMobileOpen(false)} />
+                    <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/settings" icon={<Settings />} label="Settings" onClick={() => setIsMobileOpen(false)} />

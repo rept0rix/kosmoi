@@ -8,6 +8,7 @@ import DebugRoleSwitcher from "@/components/DebugRoleSwitcher";
 import MiniWeather from "@/components/MiniWeather";
 import { Home, Search, User, Map, Languages, Sparkles, LayoutDashboard, Briefcase, ExternalLink, ShieldAlert, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import Footer from "@/components/Footer";
 
 // --- Configuration ---
 // Define which paths belong to which zone
@@ -84,7 +85,11 @@ function LayoutContent({ children }) {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             {config.logoUrl ? (
-              <img src={config.logoUrl} alt="Kosmoi" className="h-10 w-auto object-contain" />
+              <img
+                src={isAdminZone ? '/kosmoi_logo_white.svg' : config.logoUrl}
+                alt="Kosmoi"
+                className="h-10 w-auto object-contain"
+              />
             ) : (
               <span className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent ${isAdminZone ? 'from-white to-slate-400' : ''}`}>
                 {isAdminZone ? 'Kosmoi ADMIN' : (isBusinessZone ? 'Kosmoi BUSINESS' : config.appName)}
@@ -165,18 +170,9 @@ function LayoutContent({ children }) {
         </nav>
       )}
 
-      {/* Footer - Only for Public Zone (excluding Landing which has its own) / Business */}
+      {/* Footer - Only for Public Zone (excluding Landing which is handled separately) / Business */}
       {((isPublicZone && currentPath !== '/') || isBusinessZone) && (
-        <footer className="bg-white border-t border-gray-200 py-6 text-center text-sm text-gray-500">
-          <div className="flex justify-center gap-6 mb-4">
-            <Link to="/about" className="hover:text-gray-900">{t('nav.about')}</Link>
-            <Link to="/team" className="hover:text-gray-900">{t('nav.team')}</Link>
-            <Link to="/pricing" className="hover:text-gray-900">{t('nav.pricing')}</Link>
-            <Link to="/legal/terms" className="hover:text-gray-900">{t('nav.terms')}</Link>
-            <Link to="/business-info" className="hover:text-gray-900 flex items-center gap-1"><Briefcase className="w-3 h-3" /> {t('nav.business')}</Link>
-          </div>
-          <p>&copy; {new Date().getFullYear()} {config.appName}. All rights reserved.</p>
-        </footer>
+        <Footer />
       )}
     </div>
   );

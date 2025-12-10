@@ -76,6 +76,7 @@ export default function VendorSignup() {
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12">
+                    <img src="/kosmoi_logo_blue.svg" alt="Kosmoi" className="h-12 w-auto mx-auto mb-6" />
                     <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
                         Join Kosmoi Service Hub
                     </h1>

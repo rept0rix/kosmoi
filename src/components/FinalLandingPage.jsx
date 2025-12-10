@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowRight, Zap, CheckCircle, Shield, TrendingUp, Users, Menu, X, Globe, Bot, BarChart3, Quote } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
+import { ArrowRight, Zap, CheckCircle, Shield, TrendingUp, Users, Menu, X, Globe, Bot, BarChart3, Quote, ChevronDown } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import Footer from '@/components/Footer';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 const FinalLandingPage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -22,39 +29,57 @@ const FinalLandingPage = () => {
   return (
     <div className="min-h-screen font-sans text-slate-900 bg-white">
       {/* Navbar */}
-      <nav className="bg-white border-b border-slate-100 sticky top-0 z-50">
+      {/* Navbar */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
+          <div className="flex justify-between h-20 items-center">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center transform -rotate-3">
-                <span className="text-slate-900 font-extrabold text-xl">K</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight">Kosmoi<span className="text-yellow-500">.AI</span></span>
-            </div>
+            <Link to="/" className="flex items-center space-x-2 group">
+              <img src="/kosmoi_logo_blue.svg" alt="Kosmoi" className="h-9 w-auto group-hover:opacity-80 transition-opacity" />
+            </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex space-x-8">
-              <button onClick={() => scrollToSection('vision')} className="text-slate-600 hover:text-yellow-600 font-medium transition">Vision</button>
-              <button onClick={() => scrollToSection('services')} className="text-slate-600 hover:text-yellow-600 font-medium transition">Services</button>
-              <button onClick={() => scrollToSection('challenge')} className="text-slate-600 hover:text-yellow-600 font-medium transition">The $1 Challenge</button>
+            <div className="hidden md:flex items-center space-x-1">
+              <Link to="/about" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-all">About</Link>
+              <Link to="/team" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-all">Team</Link>
+              <Link to="/business-info" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-all">Business Info</Link>
+              <Link to="/pricing" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-all">Plans & Pricing</Link>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-all flex items-center gap-1 focus:outline-none">
+                    Legal <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border-slate-100 shadow-xl rounded-xl">
+                  <DropdownMenuItem asChild>
+                    <Link to="/legal/terms" className="cursor-pointer">Terms of Service</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/legal/privacy" className="cursor-pointer">Privacy Policy</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/legal/accessibility" className="cursor-pointer">Accessibility</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden md:flex">
-              <button
-                onClick={() => scrollToSection('challenge')}
-                className="bg-slate-900 text-white px-6 py-2 rounded-full font-bold hover:bg-yellow-400 hover:text-slate-900 transition-all shadow-lg hover:scale-105 active:scale-95"
+            <div className="hidden md:flex items-center gap-4">
+              <Link
+                to="/app"
+                className="px-6 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-full hover:bg-blue-600 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
               >
-                Start for $1
-              </button>
+                Enter App
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-slate-600 hover:text-slate-900 focus:outline-none"
+                className="p-2 text-slate-600 hover:text-slate-900 focus:outline-none bg-slate-50 rounded-lg"
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
@@ -64,68 +89,66 @@ const FinalLandingPage = () => {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-slate-100 absolute w-full left-0 top-16 shadow-lg z-40">
-            <div className="px-4 pt-2 pb-4 space-y-1">
-              <button onClick={() => scrollToSection('vision')} className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-yellow-600 hover:bg-yellow-50">Vision</button>
-              <button onClick={() => scrollToSection('services')} className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-yellow-600 hover:bg-yellow-50">Services</button>
-              <button onClick={() => scrollToSection('challenge')} className="block w-full text-left mt-4 px-3 py-3 rounded-md text-base font-bold text-center text-white bg-slate-900 hover:bg-yellow-400 hover:text-slate-900">
-                Start for $1
-              </button>
+          <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-100 absolute w-full left-0 top-20 shadow-2xl z-40 animate-in slide-in-from-top-2">
+            <div className="px-4 pt-4 pb-6 space-y-2">
+              <Link to="/about" className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">About</Link>
+              <Link to="/team" className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">Team</Link>
+              <Link to="/business-info" className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">Business Info</Link>
+              <Link to="/pricing" className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">Plans & Pricing</Link>
+              <div className="px-4 py-3">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Legal</p>
+                <div className="space-y-1 pl-2 border-l-2 border-slate-100">
+                  <Link to="/legal/terms" className="block py-2 text-sm text-slate-600 hover:text-blue-600">Terms of Service</Link>
+                  <Link to="/legal/privacy" className="block py-2 text-sm text-slate-600 hover:text-blue-600">Privacy Policy</Link>
+                </div>
+              </div>
+              <div className="pt-4 mt-4 border-t border-slate-100">
+                <Link to="/app" className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold text-white bg-slate-900 hover:bg-blue-600 transition-all shadow-lg">
+                  Enter App
+                </Link>
+              </div>
             </div>
           </div>
         )}
       </nav>
 
       {/* Hero Section */}
-      <header id="vision" className="relative overflow-hidden pt-12 pb-20 lg:pt-32">
+      <header id="vision" className="relative overflow-hidden pt-16 pb-24 lg:pt-32 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center space-x-2 bg-yellow-100 px-4 py-2 rounded-full mb-8 animate-fade-in-up">
-              <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-              <span className="text-xs sm:text-sm font-bold text-yellow-800 tracking-wide uppercase">The Island's Operating System</span>
+            <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-100 px-4 py-2 rounded-full mb-8 animate-fade-in-up">
+              <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
+              <span className="text-xs sm:text-sm font-bold text-blue-900 tracking-wide uppercase">The Island's Digital Infrastructure</span>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-8 leading-tight">
-              Connecting Koh Samui with <br className="hidden sm:block" />
-              <span className="relative inline-block">
-                <span className="relative z-10">Intelligent Action.</span>
-                <span className="absolute bottom-2 left-0 w-full h-3 sm:h-4 bg-yellow-400 -z-0 transform -rotate-1"></span>
+              Powering Koh Samui with <br className="hidden sm:block" />
+              <span className="relative inline-block text-blue-600">
+                Intelligent Autonomy
               </span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto mb-10">
-              We don't just build software; we build the digital heartbeat of the island.
-              Streamline operations, automate support, and drive growth.
-              <span className="block mt-2 font-bold text-slate-900">Proven in 48 hours. For just $1.</span>
+            <p className="mt-6 text-lg sm:text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+              We architect the digital nervous system for the island's leading businesses.
+              From autonomous booking agents to predictive operational management.
+              <span className="block mt-4 font-semibold text-slate-900">Experience the future of work with our Pilot Program.</span>
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <Link
+                to="/business-info"
+                className="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white font-bold text-lg rounded-xl shadow-lg hover:bg-blue-600 hover:transform hover:-translate-y-1 transition-all flex items-center justify-center"
+              >
+                Partner With Us <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
               <button
                 onClick={() => scrollToSection('challenge')}
-                className="w-full sm:w-auto px-10 py-4 bg-yellow-400 text-slate-900 font-black text-lg rounded-xl shadow-[0_10px_20px_-10px_rgba(250,204,21,0.5)] hover:bg-yellow-300 hover:transform hover:-translate-y-1 hover:scale-105 transition-all flex items-center justify-center"
+                className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 font-bold text-lg rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-blue-600 transition-all"
               >
-                Start the $1 Pilot <ArrowRight className="ml-2 h-5 w-5" />
-              </button>
-              <button
-                onClick={() => scrollToSection('services')}
-                className="w-full sm:w-auto px-10 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold text-lg rounded-xl hover:border-slate-900 hover:text-slate-900 transition-all text-center"
-              >
-                Explore Ecosystem
+                View Pilot Program
               </button>
             </div>
           </div>
         </div>
 
-        {/* Trusted By Bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 relative z-10">
-          <p className="text-center text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Trusted by Local Businesses</p>
-          <div className="flex justify-center items-center flex-wrap gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            {/* Placeholder Logos - In a real app these would be SVGs */}
-            <div className="h-8 w-24 bg-slate-200 rounded animate-pulse"></div>
-            <div className="h-8 w-24 bg-slate-200 rounded animate-pulse delay-75"></div>
-            <div className="h-8 w-24 bg-slate-200 rounded animate-pulse delay-150"></div>
-            <div className="h-8 w-24 bg-slate-200 rounded animate-pulse delay-200"></div>
-          </div>
-        </div>
-
-        {/* Abstract Background Elements */}
+        {/* Decorative background elements - Abstract Data Flow */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
           <div className="absolute top-[-10%] right-[-5%] w-72 sm:w-96 h-72 sm:h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-72 sm:w-96 h-72 sm:h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
@@ -272,19 +295,7 @@ const FinalLandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0 text-center md:text-left">
-            <span className="font-bold text-slate-900 text-xl">Kosmoi.AI</span>
-            <p className="text-slate-500 text-sm mt-1">© 2024 Koh Samui. Built for the Island.</p>
-          </div>
-          <div className="flex space-x-6">
-            <a href="#" className="text-slate-400 hover:text-slate-900">Terms</a>
-            <a href="#" className="text-slate-400 hover:text-slate-900">Privacy</a>
-            <a href="#" className="text-slate-400 hover:text-slate-900">Contact</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
