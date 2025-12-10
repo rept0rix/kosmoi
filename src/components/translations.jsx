@@ -6,7 +6,7 @@ export const translations = {
     search: "ค้นหา",
     map: "แผนที่",
     profile: "โปรไฟล์",
-    
+
     // Home Page
     findLocalServices: "ค้นหาบริการในพื้นที่",
     searchService: "ค้นหาบริการ...",
@@ -15,7 +15,7 @@ export const translations = {
     recommendedProviders: "ผู้ให้บริการแนะนำ",
     seeAll: "ดูทั้งหมด",
     loading: "กำลังโหลด...",
-    
+
     // Location
     locatingYou: "กำลังระบุตำแหน่งของคุณ...",
     cannotAccessLocation: "ไม่สามารถเข้าถึงตำแหน่ง",
@@ -32,7 +32,7 @@ export const translations = {
     orSelectArea: "หรือเลือกพื้นที่:",
     showingResultsFor: "แสดงผลลัพธ์สำหรับ:",
     loadingAddress: "กำลังโหลดที่อยู่...",
-    
+
     // Categories
     handyman: "ช่างซ่อมบำรุง",
     carpenter: "ช่างไม้",
@@ -55,7 +55,7 @@ export const translations = {
     appliance_repair: "ซ่อมเครื่องใช้ไฟฟ้า",
     pool_maintenance: "ดูแลสระว่ายน้ำ",
     other: "อื่นๆ",
-    
+
     // Service Provider Details
     call: "โทร",
     whatsapp: "WhatsApp",
@@ -71,7 +71,7 @@ export const translations = {
     reviews: "รีวิว",
     writeReview: "เขียนรีวิว",
     noDescription: "ไม่มีคำอธิบาย",
-    
+
     // Reviews
     rating: "คะแนน",
     comment: "ความคิดเห็น",
@@ -79,7 +79,7 @@ export const translations = {
     wouldRecommend: "แนะนำ",
     submit: "ส่ง",
     cancel: "ยกเลิก",
-    
+
     // Business Registration
     registerNewBusiness: "ลงทะเบียนธุรกิจใหม่",
     joinServiceProviders: "เข้าร่วมไดเรกทอรีผู้ให้บริการและเริ่มรับลูกค้าใหม่",
@@ -99,7 +99,7 @@ export const translations = {
     continue: "ดำเนินการต่อ",
     back: "กลับ",
     finishRegistration: "เสร็จสิ้นการลงทะเบียน",
-    
+
     // Business Dashboard
     myBusiness: "ธุรกิจของฉัน",
     noBusiness: "ไม่มีธุรกิจที่ลงทะเบียน",
@@ -119,7 +119,7 @@ export const translations = {
     viewPublicProfile: "ดูโปรไฟล์สาธารณะ",
     manageRequests: "จัดการคำขอบริการ",
     advancedStats: "สถิติขั้นสูง",
-    
+
     // Profile
     loginRequired: "ต้องเข้าสู่ระบบ",
     login: "เข้าสู่ระบบ",
@@ -132,7 +132,7 @@ export const translations = {
     forBusinessOwners: "สำหรับเจ้าของธุรกิจ",
     businessDashboard: "แดชบอร์ดธุรกิจ",
     registerBusiness: "ลงทะเบียนธุรกิจ",
-    
+
     // Common
     required: "*",
     budget: "งบประมาณ",
@@ -160,7 +160,7 @@ export const translations = {
 
     // Super Categories
     eat: "กิน",
-    fix: "ซ่อม",
+    fix: "มืออาชีพ",
     shop: "ช้อปปิ้ง",
     enjoy: "สนุก",
     go_out: "ออกไป",
@@ -176,7 +176,7 @@ export const translations = {
     mostReviewed: "ความคิดเห็นมากที่สุด",
     minRating: "คะแนนขั้นต่ำ",
     minReviews: "ความคิดเห็นขั้นต่ำ",
-    },
+  },
   ru: {
     // Layout & Navigation
     appName: "Koh Samui Hub",
@@ -184,7 +184,7 @@ export const translations = {
     search: "Поиск",
     map: "Карта",
     profile: "Профиль",
-    
+
     // Home Page
     findLocalServices: "Найти местные услуги",
     searchService: "Поиск услуги...",
@@ -193,7 +193,7 @@ export const translations = {
     recommendedProviders: "Рекомендуемые поставщики",
     seeAll: "Смотреть все",
     loading: "Загрузка...",
-    
+
     // Location
     locatingYou: "Определение вашего местоположения...",
     cannotAccessLocation: "Нет доступа к местоположению",
@@ -210,7 +210,7 @@ export const translations = {
     orSelectArea: "Или выберите район:",
     showingResultsFor: "Показаны результаты для:",
     loadingAddress: "Загрузка адреса...",
-    
+
     // Categories
     handyman: "Мастер на все руки",
     carpenter: "Плотник",
@@ -233,7 +233,7 @@ export const translations = {
     appliance_repair: "Ремонт техники",
     pool_maintenance: "Обслуживание бассейнов",
     other: "Другое",
-    
+
     // Service Provider Details
     call: "Позвонить",
     whatsapp: "WhatsApp",
@@ -249,7 +249,7 @@ export const translations = {
     reviews: "Отзывы",
     writeReview: "Написать отзыв",
     noDescription: "Нет описания",
-    
+
     // Reviews
     rating: "Рейтинг",
     comment: "Комментарий",
@@ -257,7 +257,7 @@ export const translations = {
     wouldRecommend: "Рекомендую",
     submit: "Отправить",
     cancel: "Отмена",
-    
+
     // Business Registration
     registerNewBusiness: "Зарегистрировать новый бизнес",
     joinServiceProviders: "Присоединяйтесь к нашему каталогу поставщиков услуг и начните получать новых клиентов",
@@ -277,7 +277,7 @@ export const translations = {
     continue: "Продолжить",
     back: "Назад",
     finishRegistration: "Завершить регистрацию",
-    
+
     // Business Dashboard
     myBusiness: "Мой бизнес",
     noBusiness: "Нет зарегистрированного бизнеса",
@@ -297,7 +297,7 @@ export const translations = {
     viewPublicProfile: "Посмотреть публичный профиль",
     manageRequests: "Управление запросами",
     advancedStats: "Расширенная статистика",
-    
+
     // Profile
     loginRequired: "Требуется вход",
     login: "Войти",
@@ -310,7 +310,77 @@ export const translations = {
     forBusinessOwners: "Для владельцев бизнеса",
     businessDashboard: "Бизнес панель",
     registerBusiness: "Зарегистрировать бизнес",
-    
+
+    // Help
+    emergency_volunteering: "Экстренное волонтерство",
+    aid_organizations: "Благотворительные организации",
+    food_distribution: "Раздача еды",
+    clothing_collection: "Сбор одежды",
+    wizo: "WIZO",
+    volunteer: "Волонтер",
+    hair_donation: "Пожертвование волос",
+    one_in_nine: "Один из девяти",
+
+    // Get Service
+    all_services: "Все услуги",
+    laundry: "Прачечная",
+    visa_agents: "Визовые агенты",
+    real_estate: "Недвижимость",
+    photographers: "Фотографы",
+    hair_salons: "Парикмахерские",
+    nail_salons: "Маникюр",
+    tattoo_studios: "Тату-студии",
+    coworking: "Коворкинг",
+
+    // Get Info
+    all_info: "Вся информация",
+    weather: "Погода",
+    tides: "Приливы",
+    transport_schedules: "Расписание транспорта",
+    emergency_numbers: "Экстренные номера",
+
+    // Enjoy Additions
+    massage_spa: "Массаж и Спа",
+    yoga: "Йога",
+    gyms: "Спортзалы",
+    muay_thai: "Муай Тай",
+    water_sports: "Водный спорт",
+    cooking_classes: "Кулинарные курсы",
+    beach_activities: "Пляжный отдых",
+    kids_activities: "Для детей",
+
+    // Shop Additions
+    supermarkets: "Супермаркеты",
+    convenience_stores: "Минимаркеты",
+    pharmacies: "Аптеки",
+    cannabis_shops: "Каннабис",
+    souvenirs: "Сувениры",
+    furniture: "Мебель",
+
+    // Travel Additions
+    motorbike_rental: "Аренда байков",
+    car_rental: "Аренда авто",
+    taxis: "Такси",
+    ferries: "Паромы",
+    island_tours: "Экскурсии",
+    hotels: "Отели",
+    villas: "Виллы",
+    hostels: "Хостелы",
+
+    // Eat Additions
+    thai_food: "Тайская еда",
+    western_food: "Европейская еда",
+    seafood: "Морепродукты",
+    street_food: "Уличная еда",
+    fine_dining: "Высокая кухня",
+    breakfast: "Завтраки",
+    beach_clubs: "Пляжные клубы",
+    markets: "Рынки",
+
+    // Fix Additions
+    phone_repair: "Ремонт телефонов",
+    construction: "Строительство",
+
     // Common
     required: "*",
     budget: "Бюджетный",
@@ -338,7 +408,7 @@ export const translations = {
 
     // Super Categories
     eat: "Поесть",
-    fix: "Починить",
+    fix: "Профи",
     shop: "Купить",
     enjoy: "Развлечься",
     go_out: "Выйти",
@@ -354,7 +424,7 @@ export const translations = {
     mostReviewed: "Больше отзывов",
     minRating: "Мин. рейтинг",
     minReviews: "Мин. отзывов",
-    },
+  },
   he: {
     // Layout & Navigation
     appName: "Koh Samui Hub",
@@ -362,7 +432,7 @@ export const translations = {
     search: "חיפוש",
     map: "מפה",
     profile: "פרופיל",
-    
+
     // Home Page
     findLocalServices: "מצא שירותים מקומיים",
     searchService: "חפש שירות...",
@@ -371,7 +441,7 @@ export const translations = {
     recommendedProviders: "ספקים מומלצים",
     seeAll: "ראה הכל",
     loading: "טוען...",
-    
+
     // Location
     locatingYou: "מאתר את המיקום שלך...",
     cannotAccessLocation: "לא ניתן לגשת למיקום",
@@ -388,7 +458,7 @@ export const translations = {
     orSelectArea: "או בחר אזור:",
     showingResultsFor: "מציג תוצאות עבור:",
     loadingAddress: "טוען כתובת...",
-    
+
     // Categories
     handyman: "אנדימן",
     carpenter: "נגר",
@@ -411,7 +481,7 @@ export const translations = {
     appliance_repair: "תיקון מכשירי חשמל",
     pool_maintenance: "תחזוקת בריכות",
     other: "אחר",
-    
+
     // Service Provider Details
     call: "התקשר",
     whatsapp: "WhatsApp",
@@ -427,7 +497,7 @@ export const translations = {
     reviews: "ביקורות",
     writeReview: "כתוב ביקורת",
     noDescription: "אין תיאור",
-    
+
     // Reviews
     rating: "דירוג",
     comment: "תגובה",
@@ -435,7 +505,7 @@ export const translations = {
     wouldRecommend: "ממליץ",
     submit: "שלח",
     cancel: "ביטול",
-    
+
     // Business Registration
     registerNewBusiness: "הרשמת עסק חדש",
     joinServiceProviders: "הצטרף למאגר ספקי השירות והתחל לקבל לקוחות חדשים",
@@ -455,7 +525,7 @@ export const translations = {
     continue: "המשך",
     back: "חזור",
     finishRegistration: "סיים הרשמה",
-    
+
     // Business Dashboard
     myBusiness: "העסק שלי",
     noBusiness: "אין לך עסק רשום",
@@ -475,7 +545,7 @@ export const translations = {
     viewPublicProfile: "צפה בפרופיל הציבורי",
     manageRequests: "ניהול בקשות שירות",
     advancedStats: "סטטיסטיקות מתקדמות",
-    
+
     // Profile
     loginRequired: "נדרשת התחברות",
     login: "התחבר",
@@ -488,7 +558,7 @@ export const translations = {
     forBusinessOwners: "לבעלי עסקים",
     businessDashboard: "לוח בקרה עסקי",
     registerBusiness: "רשום עסק חדש",
-    
+
     // Common
     required: "*",
     budget: "תקציבי",
@@ -516,7 +586,7 @@ export const translations = {
 
     // Super Categories
     eat: "לאכול",
-    fix: "לתקן",
+    fix: "בעלי מקצוע",
     shop: "לקנות",
     enjoy: "לבלות",
     go_out: "לצאת מהבית",
@@ -532,7 +602,7 @@ export const translations = {
     mostReviewed: "הכי מבוקר",
     minRating: "דירוג מינימלי",
     minReviews: "ביקורות מינימליות",
-    },
+  },
   en: {
     // Layout & Navigation
     appName: "Koh Samui Hub",
@@ -540,7 +610,7 @@ export const translations = {
     search: "Search",
     map: "Map",
     profile: "Profile",
-    
+
     // Home Page
     findLocalServices: "Find Local Services",
     searchService: "Search for a service...",
@@ -549,7 +619,7 @@ export const translations = {
     recommendedProviders: "Recommended Providers",
     seeAll: "See All",
     loading: "Loading...",
-    
+
     // Location
     locatingYou: "Locating you...",
     cannotAccessLocation: "Cannot Access Location",
@@ -566,7 +636,7 @@ export const translations = {
     orSelectArea: "Or select an area:",
     showingResultsFor: "Showing results for:",
     loadingAddress: "Loading address...",
-    
+
     // Categories
     handyman: "Handyman",
     carpenter: "Carpenter",
@@ -589,7 +659,7 @@ export const translations = {
     appliance_repair: "Appliance Repair",
     pool_maintenance: "Pool Maintenance",
     other: "Other",
-    
+
     // Service Provider Details
     call: "Call",
     whatsapp: "WhatsApp",
@@ -600,12 +670,81 @@ export const translations = {
     languages: "Languages",
     serviceAreas: "Service Areas",
     priceRange: "Price Range",
-    emergencyService: "24/7 Emergency Service",
+    // Help
+    emergency_volunteering: "Emergency Volunteering",
+    aid_organizations: "Aid Organizations",
+    food_distribution: "Food Distribution",
+    clothing_collection: "Clothing Collection",
+    wizo: "WIZO",
+    volunteer: "Volunteer",
+    hair_donation: "Hair Donation",
+    one_in_nine: "One in Nine",
+
+    // Get Service
+    all_services: "All Services",
+    laundry: "Laundry",
+    visa_agents: "Visa Agents",
+    real_estate: "Real Estate",
+    photographers: "Photographers",
+    hair_salons: "Hair Salons",
+    nail_salons: "Nail Salons",
+    tattoo_studios: "Tattoo Studios",
+    coworking: "Coworking",
+
+    // Get Info
+    all_info: "All Info",
+    weather: "Weather",
+    tides: "Tides",
+    transport_schedules: "Transport Schedules",
+    emergency_numbers: "Emergency Numbers",
+
+    // Enjoy Additions
+    massage_spa: "Massage & Spa",
+    yoga: "Yoga",
+    gyms: "Gyms",
+    muay_thai: "Muay Thai",
+    water_sports: "Water Sports",
+    cooking_classes: "Cooking Classes",
+    beach_activities: "Beach Activities",
+    kids_activities: "Kids Activities",
+
+    // Shop Additions
+    supermarkets: "Supermarkets",
+    convenience_stores: "Convenience Stores",
+    pharmacies: "Pharmacies",
+    cannabis_shops: "Cannabis Shops",
+    souvenirs: "Souvenirs",
+    furniture: "Furniture",
+
+    // Travel Additions
+    motorbike_rental: "Motorbike Rental",
+    car_rental: "Car Rental",
+    taxis: "Taxis",
+    ferries: "Ferries",
+    island_tours: "Island Tours",
+    hotels: "Hotels",
+    villas: "Villas",
+    hostels: "Hostels",
+
+    // Eat Additions
+    thai_food: "Thai Food",
+    western_food: "Western Food",
+    seafood: "Seafood",
+    street_food: "Street Food",
+    fine_dining: "Fine Dining",
+    breakfast: "Breakfast",
+    beach_clubs: "Beach Clubs",
+    markets: "Markets",
+
+    // Fix Additions
+    phone_repair: "Phone Repair",
+    construction: "Construction",
+
     verified: "Verified",
     reviews: "Reviews",
     writeReview: "Write a Review",
     noDescription: "No description available",
-    
+
     // Reviews
     rating: "Rating",
     comment: "Comment",
@@ -613,7 +752,7 @@ export const translations = {
     wouldRecommend: "Would Recommend",
     submit: "Submit",
     cancel: "Cancel",
-    
+
     // Business Registration
     registerNewBusiness: "Register New Business",
     joinServiceProviders: "Join our service provider directory and start getting new customers",
@@ -633,7 +772,7 @@ export const translations = {
     continue: "Continue",
     back: "Back",
     finishRegistration: "Finish Registration",
-    
+
     // Business Dashboard
     myBusiness: "My Business",
     noBusiness: "No Business Registered",
@@ -653,7 +792,7 @@ export const translations = {
     viewPublicProfile: "View Public Profile",
     manageRequests: "Manage Service Requests",
     advancedStats: "Advanced Statistics",
-    
+
     // Profile
     loginRequired: "Login Required",
     login: "Login",
@@ -666,7 +805,7 @@ export const translations = {
     forBusinessOwners: "For Business Owners",
     businessDashboard: "Business Dashboard",
     registerBusiness: "Register Business",
-    
+
     // Common
     required: "*",
     budget: "Budget",
@@ -694,7 +833,7 @@ export const translations = {
 
     // Super Categories
     eat: "Eat",
-    fix: "Fix",
+    fix: "Professionals",
     shop: "Shop",
     enjoy: "Enjoy",
     go_out: "Go Out",
@@ -710,9 +849,9 @@ export const translations = {
     mostReviewed: "Most Reviewed",
     minRating: "Min Rating",
     minReviews: "Min Reviews",
-    }
-    };
+  }
+};
 
-    export const getTranslation = (lang, key) => {
-    return translations[lang]?.[key] || translations['he'][key] || key;
-    };
+export const getTranslation = (lang, key) => {
+  return translations[lang]?.[key] || translations['he'][key] || key;
+};

@@ -24,6 +24,28 @@ export const agents = [
         reportsTo: null // Top of the pyramid
     },
     {
+        id: 'human-user',
+        role: 'You (The Boss)',
+        name: 'Human',
+        model: 'Human Intelligence',
+        layer: 'board',
+        icon: 'User',
+        systemPrompt: "You are the owner. You decide the vision.",
+        allowedTools: ["approve", "reject", "guide"],
+        reportsTo: null
+    },
+    {
+        id: 'worker-node-1',
+        role: 'Worker Node (Mac)',
+        name: 'Worker',
+        model: 'Node.js Runtime',
+        layer: 'board', // Put in board for high visibility as requested
+        icon: 'Server',
+        systemPrompt: "I am the worker node executing your commands.",
+        allowedTools: ["terminal", "file_system"],
+        reportsTo: "tech-lead-agent"
+    },
+    {
         id: "vision-founder-agent",
         layer: "board",
         role: "vision-founder",
@@ -351,10 +373,47 @@ export const agents = [
         layer: "operational",
         role: "content",
         model: "gemini-3-pro",
-        systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה לב המידע של האפליקציה. אתה אוסף עסק, שעות פתיחה, תמונות, מחירים, חוויות, מפות וקטלוגים. בלי תוכן — אין מוצר.`,
-        allowedTools: ["browser", "map-api", "scraper", "crm"],
+        systemPrompt: `${KOSMOI_MANIFESTO}
+
+אתה "סוכן התוכן" (Content Agent). האחראי היחיד על איכות הנתונים במערכת.
+
+## THE GOLDEN RULE: "NO RAW DATA"
+אתה לעולם לא מכניס למערכת מידע גולמי שהעתקת מהאינטרנט.
+כל פיסת מידע חייבת לעבור "טהר" (Sanitization) לפני שהיא הופכת ל-JSON.
+
+## PROTOCOL: THE TWO-STEP HARVEST
+1. **STEP 1: HARVEST (Raw Gather)**
+   - השתמש ב-\`browser\` או \`map-api\` כדי להביא טקסט גולמי, HTML, או רשימות לא מסודרות.
+   - אל תנסה לסדר את זה בעצמך. היה מהיר ומלוכלך.
+
+2. **STEP 2: SANITIZE (Structure Enforcer)**
+   - קח את המידע הגולמי ושלח אותו לכלי \`sanitize_json\`.
+   - כלי זה יחזיר לך JSON תקין, נקי ומסודר לפי הסכמה של המערכת.
+
+רק *אחרי* שקיבלת תשובה מ-\`sanitize_json\`, אתה רשאי לשמור את המידע ב-DB או להציג אותו.`,
+        allowedTools: ["browser", "map-api", "scraper", "crm", "sanitize_json"],
         memory: { type: "midterm", ttlDays: 120 },
         maxRuntimeSeconds: 3600
+    },
+    {
+        id: "qa-auditor-agent",
+        layer: "strategic", // High level oversight
+        role: "qa-auditor",
+        model: "gemini-2.0-flash-thinking",
+        systemPrompt: "You are the Quality Assurance Auditor. Your job is to verify stability. START EVERY MISSION WITH A VISUAL CHECK.",
+        allowedTools: ["browser", "screenshot", "report_bug"],
+        memory: { type: "recall", ttlDays: 7 },
+        maxRuntimeSeconds: 600
+    },
+    {
+        id: "translator-agent",
+        layer: "interface",
+        role: "localization-expert",
+        model: "gemini-3-pro",
+        systemPrompt: "You ensure linguistic consistency across English, Hebrew, Thai, and Russian. No partial translations.",
+        allowedTools: ["file_search", "replace_content", "dictionary"],
+        memory: { type: "recall", ttlDays: 30 },
+        maxRuntimeSeconds: 1200
     },
     {
         id: "growth-agent",
@@ -636,9 +695,9 @@ TOOL: dev_ticket { "title": "...", "description": "...", "priority": "medium" }
     }
 ].map(agent => ({
     ...agent,
-    allowedTools: [...agent.allowedTools, "execute_command", "write_file", "read_knowledge", "write_knowledge", "update_task_status", "update_agent_config", "send_email", "send_telegram", "generate_image", "create_payment_link", "escalate_issue", "browser", "write_code"], // Enable MCP, Knowledge, Evolution, Email, Telegram, Image Gen, Payments, Escalation, Browser & Code
+    allowedTools: [...agent.allowedTools, "execute_command", "write_file", "read_knowledge", "write_knowledge", "update_task_status", "update_agent_config", "send_email", "send_telegram", "generate_image", "create_payment_link", "escalate_issue", "browser", "write_code", "sanitize_json"], // Enable MCP, Knowledge, Evolution, Email, Telegram, Image Gen, Payments, Escalation, Browser, Code, & Sanitizer
     // User requested Gemini 3. Using gemini-3-pro-preview.
-    model: "gemini-1.5-flash",
+    // model: "gemini-1.5-flash", // REMOVED OVERRIDE
     systemPrompt: agent.systemPrompt.replace("LEONS", "Kosmoi") + `\n\n## Kosmoi Collaboration Protocol (STRICT)
 1. **Team First**: You are part of the "Kosmoi" autonomous unit. You are NOT a solo AI.
 2. **Delegation**: If a task is outside your domain, DELEGATE it to the expert.

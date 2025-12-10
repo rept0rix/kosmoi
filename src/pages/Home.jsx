@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
+import LandingHero from "@/components/LandingHero";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -316,11 +317,11 @@ export default function Home() {
 
   const handleSuperCategoryClick = (superCategoryId) => {
     if (selectedSuperCategory === superCategoryId) {
-       setSelectedSuperCategory(null); // Deselect if already selected
-       setSelectedSubCategory(null);
+      setSelectedSuperCategory(null); // Deselect if already selected
+      setSelectedSubCategory(null);
     } else {
-       setSelectedSuperCategory(superCategoryId);
-       setSelectedSubCategory(null);
+      setSelectedSuperCategory(superCategoryId);
+      setSelectedSubCategory(null);
     }
   };
 
@@ -345,47 +346,19 @@ export default function Home() {
     }
   };
 
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
-  const backgroundImages = [
-    "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&w=1920&q=80",
-    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80",
-    "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1920&q=80",
-    "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1920&q=80"
-  ];
-
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // Background images logic removed in favor of LandingHero
 
   return (
     <div className="min-h-screen bg-gray-50">
       <OfflineIndicator />
 
-      <div className="relative h-[500px] overflow-hidden">
-        {backgroundImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-              }`}
-            style={{
-              backgroundImage: `url(${image})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
-        ))}
+      {/* Marketing Hero */}
+      <LandingHero />
 
-        <div className="absolute inset-0 bg-black/40" />
-
-        <div className="relative h-full flex flex-col items-center justify-center px-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-8">
-            {t('findLocalServices')}
-          </h1>
-
-          <div className="w-full max-w-2xl">
+      {/* Main Search Section */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 py-4 shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="w-full max-w-3xl mx-auto">
             <div className="relative flex gap-2">
               <div className="flex-1 relative">
                 <Input
@@ -395,7 +368,7 @@ export default function Home() {
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   onFocus={() => searchQuery && setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="text-base h-14 bg-white shadow-lg text-lg pr-12"
+                  className="text-base h-12 bg-gray-50 border-gray-300 focus:bg-white transition-colors text-lg pr-12"
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 {showSuggestions && suggestions.length > 0 && (
@@ -426,49 +399,27 @@ export default function Home() {
               </div>
               <Button
                 onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 h-14 px-6"
+                className="bg-blue-600 hover:bg-blue-700 h-12 px-6"
               >
                 <Search className="w-5 h-5" />
               </Button>
             </div>
-          </div>
 
-          {userLocation && (
-            <div className="mt-4 bg-black/30 backdrop-blur-sm px-6 py-3 rounded-lg max-w-2xl w-full">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-white flex-shrink-0 mt-1" />
-                <div className="flex-1 text-white">
-                  <div className="font-semibold text-base mb-2">{selectedLocationName}</div>
-                  {loadingAddress ? (
-                    <div className="text-sm opacity-90 animate-pulse">טוען כתובת...</div>
-                  ) : (
-                    <div className="space-y-1">
-                      {locationAddressEn && (
-                        <div className="text-sm opacity-90 flex items-center gap-2">
-                          <span className="font-medium">🇬🇧 EN:</span>
-                          <span>{locationAddressEn}</span>
-                        </div>
-                      )}
-                      {locationAddressTh && (
-                        <div className="text-sm opacity-90 flex items-center gap-2">
-                          <span className="font-medium">🇹🇭 TH:</span>
-                          <span>{locationAddressTh}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <Button
+            {/* Location Bar */}
+            {userLocation && (
+              <div className="mt-3 flex items-center gap-2 justify-center text-sm text-gray-600">
+                <MapPin className="w-4 h-4 text-blue-500" />
+                <span className="font-medium">{selectedLocationName}</span>
+                <span className="text-gray-300">|</span>
+                <button
                   onClick={() => setShowLocationDialog(true)}
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 h-8 text-xs flex-shrink-0"
+                  className="text-blue-600 hover:underline"
                 >
                   {t('change')}
-                </Button>
+                </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

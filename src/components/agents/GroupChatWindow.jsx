@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, RotateCcw, Users, CheckCircle2, Circle } from 'lucide-react';
+import { Send, Bot, User, RotateCcw, Users, CheckCircle2, Circle, Info } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import AgentDetailsDialog from './AgentDetailsDialog';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +25,7 @@ export default function GroupChatWindow({ userId }) {
     const [showContinueButton, setShowContinueButton] = useState(false);
     const [autonomousMode, setAutonomousMode] = useState(false);
     const [companyState, setCompanyState] = useState(initialCompanyState); // State for company data // New Autonomous Mode State
+    const [viewingAgent, setViewingAgent] = useState(null); // For Agent Details Dialog
 
     console.log("DEBUG: companyState in GroupChatWindow:", companyState); // DEBUG LOG
 
@@ -255,93 +257,108 @@ DO NOT just print the content. SAVE IT.`;
     };
 
     return (
-        <div className="flex h-screen bg-slate-50/50 p-4 gap-4 font-sans text-slate-900">
-            <div className="fixed top-0 left-0 z-50 w-full bg-yellow-100 border-b-4 border-red-500 p-4">
-                <p className="font-bold text-red-600 text-xl">DEBUG OVERLAY: IF YOU SEE THIS, RENDER IS WORKING</p>
-                <pre className="text-xs text-black">{JSON.stringify(companyState, null, 2)}</pre>
-            </div>
+        <div className="flex h-[calc(100vh-200px)] bg-slate-950/50 p-4 gap-4 font-sans text-slate-200 rounded-xl border border-white/10 backdrop-blur-md">
             {/* Left Sidebar - Agent Selection */}
-            <Card className="w-1/4 p-4 flex flex-col gap-4 bg-white/50 backdrop-blur-sm border-slate-200/60 shadow-sm">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <Users className="w-5 h-5 text-slate-600" />
-                    <h2 className="font-semibold text-slate-800">Board Members</h2>
+            <Card className="w-1/4 p-4 flex flex-col gap-4 bg-slate-900/80 backdrop-blur-sm border-white/5 shadow-inner">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                    <Users className="w-5 h-5 text-blue-400" />
+                    <h2 className="font-semibold text-slate-200">Board Members</h2>
                 </div>
                 <ScrollArea className="flex-1 pr-2">
                     <div className="space-y-2">
                         {agents.map(agent => (
                             <div
                                 key={agent.id}
-                                onClick={() => toggleAgentSelection(agent.id)}
-                                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all border ${selectedAgents.includes(agent.id)
-                                    ? 'bg-blue-50 border-blue-200 shadow-sm'
-                                    : 'hover:bg-slate-50 border-transparent'
+                                className={`flex items-center gap-2 p-2 rounded-lg transition-all border ${selectedAgents.includes(agent.id)
+                                    ? 'bg-blue-900/30 border-blue-500/30 shadow-sm'
+                                    : 'hover:bg-white/5 border-transparent'
                                     }`}
                             >
-                                <div className="relative">
-                                    <Avatar className="h-8 w-8 border border-white shadow-sm">
-                                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${agent.id}`} />
-                                        <AvatarFallback>{agent.role[0].toUpperCase()}</AvatarFallback>
-                                    </Avatar>
-                                    {selectedAgents.includes(agent.id) && (
-                                        <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border-2 border-white">
-                                            <CheckCircle2 className="w-3 h-3 text-white" />
-                                        </div>
-                                    )}
+                                <div
+                                    className="flex-1 flex items-center gap-3 cursor-pointer min-w-0"
+                                    onClick={() => toggleAgentSelection(agent.id)}
+                                >
+                                    <div className="relative shrink-0">
+                                        <Avatar className="h-8 w-8 border border-white/10 shadow-sm">
+                                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${agent.id}`} />
+                                            <AvatarFallback className="bg-slate-800 text-slate-400">{agent.role[0].toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        {selectedAgents.includes(agent.id) && (
+                                            <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-slate-900">
+                                                <CheckCircle2 className="w-3 h-3 text-white" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={`text-sm font-medium truncate ${selectedAgents.includes(agent.id) ? 'text-blue-300' : 'text-slate-300'}`}>
+                                            {agent.role}
+                                        </p>
+                                        <p className="text-xs text-slate-500 truncate">{agent.role}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium truncate ${selectedAgents.includes(agent.id) ? 'text-blue-700' : 'text-slate-700'}`}>
-                                        {agent.role}
-                                    </p>
-                                    <p className="text-xs text-slate-500 truncate">{agent.role}</p>
-                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-slate-500 hover:text-white shrink-0"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setViewingAgent(agent);
+                                    }}
+                                >
+                                    <Info className="w-4 h-4" />
+                                </Button>
                             </div>
                         ))}
                     </div>
                 </ScrollArea>
-                <div className="pt-2 border-t border-slate-100 text-xs text-slate-400 text-center">
+                <div className="pt-2 border-t border-white/10 text-xs text-slate-500 text-center">
                     {selectedAgents.length} agents selected
                 </div>
             </Card>
 
+            <AgentDetailsDialog
+                agent={viewingAgent}
+                isOpen={!!viewingAgent}
+                onClose={() => setViewingAgent(null)}
+                onSave={() => {
+                    // Start sync to update runtime 
+                    import('../../services/agents/AgentRegistry').then(({ syncAgentsWithDatabase }) => syncAgentsWithDatabase());
+                }}
+            />
+
             {/* Main Chat Area */}
-            <Card className="flex-1 flex flex-col bg-white/50 backdrop-blur-sm border-slate-200/60 shadow-sm overflow-hidden">
+            <Card className="flex-1 flex flex-col bg-slate-900/80 backdrop-blur-sm border-white/5 shadow-xl overflow-hidden">
                 {/* Chat Header */}
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white/50">
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
                     <div>
-                        <h2 className="font-semibold text-slate-800">Board Meeting Room</h2>
+                        <h2 className="font-semibold text-slate-200">Board Meeting Room</h2>
                         <p className="text-xs text-slate-500">Multi-Agent Collaboration</p>
-                        <div className="bg-blue-500 text-white p-2 font-bold">TESTING UI UPDATES - CAN YOU SEE THIS?</div>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2 mr-2">
-                            <span className={`text-xs font-medium ${autonomousMode ? 'text-green-600' : 'text-slate-400'}`}>
+                            <span className={`text-xs font-medium ${autonomousMode ? 'text-green-400' : 'text-slate-500'}`}>
                                 {autonomousMode ? 'Autonomous ON' : 'Autonomous OFF'}
                             </span>
                             <Switch
                                 checked={autonomousMode}
                                 onCheckedChange={setAutonomousMode}
-                                className={autonomousMode ? "bg-green-500" : "bg-slate-200"}
+                                className={autonomousMode ? "bg-green-500" : "bg-slate-700"}
                             />
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setMessages([])} title="Clear Chat">
-                            <RotateCcw className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+                            <RotateCcw className="w-4 h-4 text-slate-500 hover:text-white" />
                         </Button>
                     </div>
                 </div>
 
-
-
-                {/* Company State Visualization */}
-
-
                 {/* Messages Area */}
                 <div
                     ref={scrollRef}
-                    className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/50"
+                    className="flex-1 overflow-y-auto p-4 space-y-6 bg-transparent"
                 >
                     {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4 opacity-60">
+                        <div className="flex flex-col items-center justify-center h-full text-slate-600 space-y-4 opacity-60">
                             <Users className="w-16 h-16" />
                             <p className="text-sm">Select agents and start the meeting</p>
                         </div>
@@ -354,7 +371,7 @@ DO NOT just print the content. SAVE IT.`;
                         return (
                             <div key={idx} className={`flex gap-4 ${isUser ? 'flex-row-reverse' : ''}`}>
                                 {/* Avatar */}
-                                <Avatar className={`h-8 w-8 mt-1 border border-white shadow-sm ${isUser ? 'bg-slate-700' : ''}`}>
+                                <Avatar className={`h-8 w-8 mt-1 border border-white/10 shadow-sm ${isUser ? 'bg-slate-700' : ''}`}>
                                     {isUser ? (
                                         <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white">
                                             <User className="w-4 h-4" />
@@ -367,67 +384,89 @@ DO NOT just print the content. SAVE IT.`;
                                 {/* Message Bubble */}
                                 <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-medium text-slate-600">
+                                        <span className="text-xs font-medium text-slate-500">
                                             {isUser ? 'You' : agent?.role || 'Unknown Agent'}
                                         </span>
                                         {!isUser && agent && (
-                                            <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-slate-200 text-slate-400">
+                                            <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-slate-700 text-slate-500">
                                                 {agent.role}
                                             </Badge>
                                         )}
-                                        <span className="text-[10px] text-slate-400">
+                                        <span className="text-[10px] text-slate-600">
                                             {msg.timestamp ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                         </span>
                                     </div>
 
                                     <div className={`rounded-2xl px-4 py-3 text-sm shadow-sm ${isUser
                                         ? 'bg-blue-600 text-white rounded-tr-sm'
-                                        : 'bg-white border border-slate-100 text-slate-700 rounded-tl-sm'
+                                        : 'bg-slate-800 border border-white/10 text-slate-300 rounded-tl-sm'
                                         }`}>
                                         {isUser ? (
                                             msg.content
                                         ) : (
                                             <div>
+                                                {/* Translation Toggle Trigger */}
+                                                {msg.original_en_message && (
+                                                    <div className="flex justify-end mb-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newMessages = [...messages];
+                                                                // Toggle logic: Swap content with original and back
+                                                                // We need a way to track state per message or just swap the content property directly in state.
+                                                                // Swapping content directly in the state object (for this render cycle) is easiest if we don't persist it wrong.
+                                                                // BETTER: Add a local 'showOriginal' property to the message object in state.
+
+                                                                newMessages[idx].showOriginal = !newMessages[idx].showOriginal;
+                                                                setMessages(newMessages);
+                                                            }}
+                                                            className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-blue-400 transition-colors bg-white/5 px-2 py-0.5 rounded-full"
+                                                        >
+                                                            <RotateCcw className="w-3 h-3" />
+                                                            {msg.showOriginal ? "Show Translated (HE)" : "Show Original (EN)"}
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 <ReactMarkdown
-                                                    className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-pre:bg-slate-100 prose-pre:p-2 prose-pre:rounded-md"
+                                                    className="prose prose-sm max-w-none prose-invert prose-p:leading-relaxed prose-pre:bg-slate-950 prose-pre:p-2 prose-pre:rounded-md"
                                                     components={{
                                                         p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                        a: ({ node, ...props }) => <a className="text-blue-500 hover:underline" {...props} />,
+                                                        a: ({ node, ...props }) => <a className="text-blue-400 hover:underline" {...props} />,
                                                         code: (/** @type {any} */ props) => {
                                                             const { node, inline, className, children, ...rest } = props;
                                                             return inline
-                                                                ? <code className="bg-slate-100 px-1 py-0.5 rounded text-xs font-mono text-slate-800" {...rest}>{children}</code>
-                                                                : <code className="block bg-slate-100 p-2 rounded text-xs font-mono text-slate-800 overflow-x-auto" {...rest}>{children}</code>
+                                                                ? <code className="bg-slate-950 px-1 py-0.5 rounded text-xs font-mono text-blue-300" {...rest}>{children}</code>
+                                                                : <code className="block bg-slate-950 p-2 rounded text-xs font-mono text-slate-300 overflow-x-auto" {...rest}>{children}</code>
                                                         }
                                                     }}
                                                 >
-                                                    {msg.content.replace(/\[TASK\] (.*?) \(Assignee: (.*?)\)/g, '')}
+                                                    {(msg.showOriginal ? msg.original_en_message : msg.content).replace(/\[TASK\] (.*?) \(Assignee: (.*?)\)/g, '')}
                                                 </ReactMarkdown>
 
                                                 {/* Render Detected Tasks */}
-                                                {msg.content.match(/\[TASK\] (.*?) \(Assignee: (.*?)\)/g)?.map((taskStr, idx) => {
+                                                {(msg.showOriginal ? msg.original_en_message : msg.content).match(/\[TASK\] (.*?) \(Assignee: (.*?)\)/g)?.map((taskStr, idx) => {
                                                     const match = taskStr.match(/\[TASK\] (.*?) \(Assignee: (.*?)\)/);
                                                     if (!match) return null;
                                                     const [_, taskDesc, assignee] = match;
                                                     return (
-                                                        <div key={idx} className="mt-3 p-3 bg-blue-50/50 border border-blue-100 rounded-lg flex flex-col gap-2">
+                                                        <div key={idx} className="mt-3 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg flex flex-col gap-2">
                                                             <div className="flex items-start justify-between gap-2">
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="m9 12 2 2 4-4" /></svg>
                                                                     </div>
-                                                                    <span className="font-medium text-sm text-slate-700">New Task Identified</span>
+                                                                    <span className="font-medium text-sm text-blue-300">New Task Identified</span>
                                                                 </div>
-                                                                <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
+                                                                <span className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full border border-slate-700">
                                                                     {assignee}
                                                                 </span>
                                                             </div>
-                                                            <p className="text-sm text-slate-600 pl-8">{taskDesc}</p>
+                                                            <p className="text-sm text-slate-400 pl-8">{taskDesc}</p>
                                                             <div className="pl-8 flex gap-2">
                                                                 <button className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors shadow-sm">
                                                                     Execute Task
                                                                 </button>
-                                                                <button className="text-xs bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-50 transition-colors">
+                                                                <button className="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-md hover:bg-slate-700 transition-colors">
                                                                     Edit Details
                                                                 </button>
                                                             </div>
@@ -444,19 +483,19 @@ DO NOT just print the content. SAVE IT.`;
 
                     {isProcessing && (
                         <div className="flex gap-4">
-                            <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse flex items-center justify-center">
-                                <Bot className="w-4 h-4 text-slate-400" />
+                            <div className="w-8 h-8 rounded-full bg-slate-800 animate-pulse flex items-center justify-center">
+                                <Bot className="w-4 h-4 text-slate-500" />
                             </div>
                             <div className="space-y-2">
-                                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
-                                <div className="h-auto min-h-[40px] w-auto max-w-[300px] bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center px-4 py-2">
+                                <div className="h-4 w-24 bg-slate-800 rounded animate-pulse" />
+                                <div className="h-auto min-h-[40px] w-auto max-w-[300px] bg-slate-900 rounded-2xl border border-white/10 shadow-sm flex items-center px-4 py-2">
                                     <div className="flex gap-2 items-center">
                                         <div className="flex gap-1">
-                                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                            <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                            <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                            <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                         </div>
-                                        <span className="text-xs text-slate-500 ml-2">{statusMessage || "Board is deliberating..."}</span>
+                                        <span className="text-xs text-slate-400 ml-2">{statusMessage || "Board is deliberating..."}</span>
                                     </div>
                                 </div>
                             </div>
@@ -484,7 +523,7 @@ DO NOT just print the content. SAVE IT.`;
                 }
 
                 {/* Input Area */}
-                <div className="p-4 bg-white border-t border-slate-100">
+                <div className="p-4 bg-white/5 border-t border-white/10">
                     <div className="flex gap-2">
                         <Input
                             value={input}
@@ -492,7 +531,7 @@ DO NOT just print the content. SAVE IT.`;
                             onKeyDown={handleKeyDown}
                             placeholder={selectedAgents.length > 0 ? `Message the board (${selectedAgents.length} listening)...` : "Select agents to start..."}
                             disabled={selectedAgents.length === 0 || isProcessing}
-                            className="flex-1 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                            className="flex-1 bg-slate-950/50 border-white/10 text-white focus:bg-slate-900 transition-colors placeholder:text-slate-600"
                         />
                         <Button
                             onClick={handleSendMessage}

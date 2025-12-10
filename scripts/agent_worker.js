@@ -102,6 +102,22 @@ async function executeTool(toolName, payload) {
 
     try {
         switch (toolName) {
+            case 'sanitize_json':
+                try {
+                    // "Smart Model" Validation Simulation
+                    // In a real dual-model setup, this would call GPT-4o with "Structured Output".
+                    // Here, we use strict parsing and error correction.
+                    const raw = payload.raw_data;
+                    let clean = raw.trim();
+                    // Attempt to extract JSON from markdown code blocks if present
+                    const jsonMatch = clean.match(/```json\n([\s\S]*?)\n```/) || clean.match(/```([\s\S]*?)```/);
+                    if (jsonMatch) clean = jsonMatch[1];
+
+                    const parsed = JSON.parse(clean);
+                    return JSON.stringify({ status: "success", sanitized: parsed });
+                } catch (e) {
+                    return JSON.stringify({ status: "error", message: "Sanitization Failed: " + e.message, hint: "Raw data was not valid JSON." });
+                }
             case 'execute_command':
                 return new Promise((resolve) => {
                     exec(payload.command, { cwd: PROJECT_ROOT }, (error, stdout, stderr) => {

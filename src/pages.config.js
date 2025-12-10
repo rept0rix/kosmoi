@@ -1,4 +1,5 @@
-import Home from './pages/Home';
+import LandingPage from './components/FinalLandingPage'; // Updated to use FinalLandingPage from components
+import Dashboard from './pages/Dashboard';
 import ServiceProviders from './pages/ServiceProviders';
 import ServiceProviderDetails from './pages/ServiceProviderDetails';
 import MapView from './pages/MapView';
@@ -19,11 +20,19 @@ import SeedData from './pages/SeedData';
 import Diagnostics from './pages/Diagnostics';
 import TripPlanner from './pages/TripPlanner';
 import BoardRoom from './pages/BoardRoom';
+import BusinessInfo from './pages/BusinessInfo';
+import Team from './pages/Team';
+import CommandCenter from './pages/CommandCenter';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
+    "Home": LandingPage, // Root is now Landing Page
+    "App": Dashboard,    // Main App Dashboard
+    "Dashboard": Dashboard, // Keep alias for backward compat if needed
+    "Welcome": LandingPage,
+    "BusinessInfo": BusinessInfo, // Added
+    "Team": Team, // Added
     "ServiceProviders": ServiceProviders,
     "ServiceProviderDetails": ServiceProviderDetails,
     "MapView": MapView,
@@ -44,6 +53,7 @@ export const PAGES = {
     "Diagnostics": Diagnostics,
     "TripPlanner": TripPlanner,
     "BoardRoom": BoardRoom,
+    "CommandCenter": CommandCenter,
 }
 
 export const pagesConfig = {

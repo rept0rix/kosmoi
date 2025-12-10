@@ -1,14 +1,20 @@
 import { InvokeLLM } from '../../api/integrations.js';
+import { TranslationService } from '../TranslationService.js';
 
 /**
  * Generates a reply from a specific agent based on the conversation history.
  * @param {Object} agent - The agent object from AgentRegistry.
  * @param {Array} messages - The list of previous messages in the meeting.
  * @param {Object} context - Additional context (e.g., meeting title, tasks).
- * @returns {Promise<{message: string, action: Object|null}>} - The agent's response and optional action.
+ * @returns {Promise<{message: string, action: Object|null, original_en_message?: string}>}
  */
 export async function getAgentReply(agent, messages, context = {}) {
   try {
+    // 0. Detect Language Context from recent user messages
+    // If the user spoke Hebrew recently, we should reply in Hebrew (translated from EN logic)
+    const recentUserMsg = [...messages].reverse().find(m => m.agent_id === 'HUMAN_USER');
+    const userLang = recentUserMsg ? TranslationService.detectLanguage(recentUserMsg.content) : 'en';
+
     // 1. Filter and Format History
     // INTELLIGENCE UPGRADE: Increase context window to 50 messages
     const recentMessages = messages.slice(-50);
@@ -25,10 +31,23 @@ export async function getAgentReply(agent, messages, context = {}) {
       });
     }
 
-    const transcript = recentMessages.map(msg => {
+    // 1.1 Translate Messages for AI Context (Hebrew -> English)
+    // The AI thinks better in English. We present the conversation in English.
+    const translatedTranscript = await Promise.all(recentMessages.map(async msg => {
       const speaker = msg.agent_id === 'HUMAN_USER' ? 'User' : (msg.agent_role || msg.agent_id);
-      return `${speaker}: ${msg.content}`;
-    }).join('\n');
+
+      // If message has stored translation, use it. Otherwise translate on fly.
+      let content = msg.content;
+
+      // Optimize: Only translate if it looks like Hebrew and we don't have a translation
+      if (TranslationService.detectLanguage(content) === 'he') {
+        content = await TranslationService.translate(content, 'en');
+      }
+
+      return `${speaker}: ${content}`;
+    }));
+
+    const transcript = translatedTranscript.join('\n');
 
     // 2. Construct Prompt
     const prompt = `
@@ -36,10 +55,11 @@ Context:
 Meeting Title: ${context.meetingTitle || 'General Discussion'}
 System State: ${JSON.stringify(context.config || {})}
 Current Tasks: ${JSON.stringify(context.tasks || [])}
+User Language: ${userLang} (You must reply in JSON, but our system will handle translation if needed)
 
 IMPORTANT: The "System State" above represents the CURRENT reality of the application (Name, Theme, etc.). It overrides any static information in your manifesto. If the System State says the app name is "Super App", then the app name IS "Super App", even if your manifesto says "LEONS".
 
-Conversation Transcript:
+Conversation Transcript (Translated to English for your convenience):
 ${transcript}
 
 Instruction:
@@ -105,12 +125,35 @@ IMPORTANT: You are a helpful AI agent. You always output valid JSON.`,
     // 4. Parse JSON
     try {
       // Clean up potential markdown code blocks
-      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      let jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      // Robust Extractor: Find the first '{' and last '}'
+      const firstOpen = jsonStr.indexOf('{');
+      const lastClose = jsonStr.lastIndexOf('}');
+      if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+        jsonStr = jsonStr.substring(firstOpen, lastClose + 1);
+      }
+
       const data = JSON.parse(jsonStr);
-      return data; // Returns { message, action }
+
+      // 5. AUTO-TRANSLATE OUTPUT (If User is Hebrew)
+      // If user language is Hebrew, we translate the 'message' field back to Hebrew
+      // But we keep the original English in 'original_en_message' for debugging/toggling
+      if (userLang === 'he' && data.message) {
+        const originalEn = data.message;
+        const translatedHe = await TranslationService.translate(originalEn, 'he');
+        data.message = translatedHe; // The UI will show this by default
+        data.original_en_message = originalEn; // Store original
+      }
+
+      return data; // Returns { message, action, original_en_message? }
     } catch (e) {
       console.warn("Failed to parse JSON from agent:", text);
-      // Fallback if parsing fails
+      // Fallback: If it looks like JSON but failed, try to salvage the message property regex
+      const msgMatch = text.match(/"message":\s*"([^"]*)"/);
+      if (msgMatch) {
+        return { message: msgMatch[1], action: null };
+      }
       return { message: text, action: null };
     }
 

@@ -2,127 +2,99 @@
 export const subCategoriesBySuperCategory = {
   eat: [
     "all_restaurants",
-    "restaurants",
     "delivery",
+    "thai_food",
+    "western_food",
     "cafes",
-    "fast_food",
-    "bar_restaurant",
-    "coffee_carts",
-    "kosher_restaurant",
-    "chef_restaurant",
-    "ice_cream",
-    "outdoor_seating",
-    "sweets"
+    "seafood",
+    "street_food",
+    "fine_dining",
+    "breakfast",
+    "bars",
+    "beach_clubs",
+    "markets"
   ],
   fix: [
     "all_fixers",
+    "ac_repair",
     "plumber",
     "electrician",
-    "ac_repair",
-    "handyman",
-    "carpenter",
-    "locksmith",
-    "painter",
-    "technicians",
-    "renovations",
-    "home_maintenance",
+    "motorcycle_mechanic",
+    "car_mechanic",
+    "phone_repair",
     "cleaning",
+    "laundry",
+    "pool_maintenance",
     "gardener",
     "pest_control",
-    "pool_cleaning",
-    "solar_energy",
-    "craftsmen",
-    "installers",
-    "repair_labs"
+    "construction"
   ],
   shop: [
     "all_shops",
-    "fashion",
+    "supermarkets",
+    "convenience_stores",
+    "clothing",
+    "pharmacies",
+    "cannabis_shops",
     "electronics",
-    "sports_camping",
-    "pet_supplies",
-    "food_beverages",
-    "furniture",
-    "leisure_products",
-    "baby_products",
-    "flowers",
-    "second_hand",
-    "department_store"
+    "souvenirs",
+    "furniture"
   ],
   enjoy: [
     "all_activities",
-    "sports",
-    "workshops",
-    "health_spa",
-    "parks_gardens",
-    "fountains",
-    "enrichment",
-    "shopping_centers",
-    "attractions",
-    "gymboree"
+    "massage_spa",
+    "yoga",
+    "gyms",
+    "muay_thai",
+    "water_sports",
+    "cooking_classes",
+    "beach_activities",
+    "kids_activities"
   ],
   go_out: [
     "all_events",
+    "night_clubs",
+    "live_music",
+    "beach_parties",
     "pubs",
-    "movies",
-    "concerts",
-    "escape_rooms",
-    "exhibitions",
-    "kids_events",
-    "shows",
-    "stand_up",
-    "clubs"
+    "shows"
   ],
   travel: [
     "all_trips",
-    "accommodation",
-    "trip_attractions",
-    "trip_routes",
-    "springs",
-    "points_of_interest",
-    "nature",
-    "heritage_sites"
+    "motorbike_rental",
+    "car_rental",
+    "taxis",
+    "ferries",
+    "island_tours",
+    "visa_services",
+    "hotels",
+    "villas",
+    "hostels"
   ],
   help: [
-    "emergency_volunteering",
-    "aid_organizations",
-    "food_distribution",
-    "clothing_collection",
-    "wizo",
-    "volunteer",
-    "hair_donation",
-    "one_in_nine"
+    "tourist_police",
+    "hospitals",
+    "clinics",
+    "animal_rescue",
+    "embassies"
   ],
   get_service: [
     "all_services",
-    "pharmacies",
-    "fuel_transport",
     "laundry",
-    "housekeeping",
-    "internet_tech",
-    "visa_services",
-    "atms",
-    "health",
-    "mental_health",
-    "beauty",
-    "consulting_treatment",
-    "finance",
-    "business_services",
-    "animals",
-    "event_organizers"
+    "visa_agents",
+    "real_estate",
+    "photographers",
+    "hair_salons",
+    "nail_salons",
+    "tattoo_studios",
+    "coworking"
   ],
   get_info: [
     "all_info",
-    "protected_spaces",
-    "social_security",
-    "education",
-    "authorities",
-    "welfare",
-    "organizations",
-    "cell_towers",
-    "religious_institutions",
-    "agriculture_environment",
-    "industries"
+    "weather",
+    "tides",
+    "transport_schedules",
+    "emergency_numbers"
   ]
 };
 
@@ -140,7 +112,7 @@ export const subCategoryTranslations = {
     locksmith: "מנעולן",
     painter: "צבע",
     solar_energy: "אנרגיה סולארית",
-    
+
     // Get Service additions
     laundry: "מכבסה",
     housekeeping: "משק בית",
@@ -160,7 +132,7 @@ export const subCategoryTranslations = {
     ice_cream: "גלידריה",
     outdoor_seating: "ישיבה בחוץ",
     sweets: "מתוקים",
-    
+
     // Fix
     all_fixers: "את מי מזמינים?",
     plumber: "אינסטלטורים",
@@ -171,7 +143,7 @@ export const subCategoryTranslations = {
     craftsmen: "בעלי מלאכה",
     installers: "מתקינים",
     repair_labs: "מעבדות שירות",
-    
+
     // Shop
     all_shops: "כל החנויות",
     fashion: "אופנה",
@@ -185,7 +157,7 @@ export const subCategoryTranslations = {
     flowers: "פרחים",
     second_hand: "יד שנייה",
     department_store: "כלבו",
-    
+
     // Enjoy
     all_activities: "כל הפעילויות",
     sports: "ספורט",
@@ -197,7 +169,7 @@ export const subCategoryTranslations = {
     shopping_centers: "מרכזי קניות",
     attractions: "אטרקציות",
     gymboree: "ג'ימבורי",
-    
+
     // Go Out
     all_events: "כל האירועים",
     pubs: "פאבים",
@@ -209,7 +181,7 @@ export const subCategoryTranslations = {
     shows: "הצגות",
     stand_up: "סטנד אפ",
     clubs: "מועדונים",
-    
+
     // Travel
     all_trips: "כל הטיולים",
     accommodation: "מקומות לינה",
@@ -219,7 +191,7 @@ export const subCategoryTranslations = {
     points_of_interest: "נקודות עניין",
     nature: "חיק הטבע",
     heritage_sites: "אתרי מורשת",
-    
+
     // Help
     emergency_volunteering: "התנדבות חירום",
     aid_organizations: "ארגוני סיוע",
@@ -229,7 +201,7 @@ export const subCategoryTranslations = {
     volunteer: "להתנדב",
     hair_donation: "תרומות שיער",
     one_in_nine: "אחת מתשע",
-    
+
     // Get Service
     all_services: "כל השירותים",
     pharmacies: "בתי מרקחת",
@@ -243,7 +215,7 @@ export const subCategoryTranslations = {
     business_services: "שירותים לעסק",
     animals: "בעלי חיים",
     event_organizers: "מארגנים אירוע",
-    
+
     // Get Info
     all_info: "כל המידע",
     protected_spaces: "מרחבים מוגנים",
@@ -269,7 +241,7 @@ export const subCategoryTranslations = {
     locksmith: "Locksmith",
     painter: "Painter",
     solar_energy: "Solar Energy",
-    
+
     // Get Service additions
     laundry: "Laundry",
     housekeeping: "Housekeeping",
@@ -289,7 +261,7 @@ export const subCategoryTranslations = {
     ice_cream: "Ice Cream",
     outdoor_seating: "Outdoor Seating",
     sweets: "Sweets",
-    
+
     // Fix
     all_fixers: "All Services",
     plumber: "Plumbers",
@@ -300,7 +272,7 @@ export const subCategoryTranslations = {
     craftsmen: "Craftsmen",
     installers: "Installers",
     repair_labs: "Repair Labs",
-    
+
     // Shop
     all_shops: "All Shops",
     fashion: "Fashion",
@@ -314,7 +286,7 @@ export const subCategoryTranslations = {
     flowers: "Flowers",
     second_hand: "Second Hand",
     department_store: "Department Store",
-    
+
     // Enjoy
     all_activities: "All Activities",
     sports: "Sports",
@@ -326,7 +298,7 @@ export const subCategoryTranslations = {
     shopping_centers: "Shopping Centers",
     attractions: "Attractions",
     gymboree: "Gymboree",
-    
+
     // Go Out
     all_events: "All Events",
     pubs: "Pubs",
@@ -338,7 +310,7 @@ export const subCategoryTranslations = {
     shows: "Shows",
     stand_up: "Stand Up",
     clubs: "Clubs",
-    
+
     // Travel
     all_trips: "All Trips",
     accommodation: "Accommodation",
@@ -348,7 +320,7 @@ export const subCategoryTranslations = {
     points_of_interest: "Points of Interest",
     nature: "Nature",
     heritage_sites: "Heritage Sites",
-    
+
     // Help
     emergency_volunteering: "Emergency Volunteering",
     aid_organizations: "Aid Organizations",
@@ -358,7 +330,7 @@ export const subCategoryTranslations = {
     volunteer: "Volunteer",
     hair_donation: "Hair Donation",
     one_in_nine: "One in Nine",
-    
+
     // Get Service
     all_services: "All Services",
     pharmacies: "Pharmacies",
@@ -372,7 +344,7 @@ export const subCategoryTranslations = {
     business_services: "Business Services",
     animals: "Animals",
     event_organizers: "Event Organizers",
-    
+
     // Get Info
     all_info: "All Info",
     protected_spaces: "Protected Spaces",
@@ -398,7 +370,7 @@ export const subCategoryTranslations = {
     locksmith: "ช่างกุญแจ",
     painter: "ช่างทาสี",
     solar_energy: "พลังงานแสงอาทิตย์",
-    
+
     // Get Service additions
     laundry: "ซักรีด",
     housekeeping: "แม่บ้าน",
@@ -418,7 +390,7 @@ export const subCategoryTranslations = {
     ice_cream: "ไอศกรีม",
     outdoor_seating: "ที่นั่งกลางแจ้ง",
     sweets: "ขนมหวาน",
-    
+
     // Fix
     all_fixers: "บริการทั้งหมด",
     plumber: "ช่างประปา",
@@ -429,7 +401,7 @@ export const subCategoryTranslations = {
     craftsmen: "ช่างฝีมือ",
     installers: "ติดตั้ง",
     repair_labs: "ศูนย์ซ่อม",
-    
+
     // Shop
     all_shops: "ร้านค้าทั้งหมด",
     fashion: "แฟชั่น",
@@ -443,7 +415,7 @@ export const subCategoryTranslations = {
     flowers: "ดอกไม้",
     second_hand: "มือสอง",
     department_store: "ห้างสรรพสินค้า",
-    
+
     // Enjoy
     all_activities: "กิจกรรมทั้งหมด",
     sports: "กีฬา",
@@ -455,7 +427,7 @@ export const subCategoryTranslations = {
     shopping_centers: "ศูนย์การค้า",
     attractions: "สถานที่ท่องเที่ยว",
     gymboree: "ยิมโบรี",
-    
+
     // Go Out
     all_events: "งานทั้งหมด",
     pubs: "ผับ",
@@ -467,7 +439,7 @@ export const subCategoryTranslations = {
     shows: "การแสดง",
     stand_up: "สแตนด์อัพ",
     clubs: "คลับ",
-    
+
     // Travel
     all_trips: "ทริปทั้งหมด",
     accommodation: "ที่พัก",
@@ -477,7 +449,7 @@ export const subCategoryTranslations = {
     points_of_interest: "จุดที่น่าสนใจ",
     nature: "ธรรมชาติ",
     heritage_sites: "มรดก",
-    
+
     // Help
     emergency_volunteering: "อาสาสมัครฉุกเฉิน",
     aid_organizations: "องค์กรช่วยเหลือ",
@@ -487,7 +459,7 @@ export const subCategoryTranslations = {
     volunteer: "อาสาสมัคร",
     hair_donation: "บริจาคผม",
     one_in_nine: "หนึ่งในเก้า",
-    
+
     // Get Service
     all_services: "บริการทั้งหมด",
     pharmacies: "ร้านขายยา",
@@ -501,7 +473,7 @@ export const subCategoryTranslations = {
     business_services: "บริการธุรกิจ",
     animals: "สัตว์",
     event_organizers: "จัดงาน",
-    
+
     // Get Info
     all_info: "ข้อมูลทั้งหมด",
     protected_spaces: "พื้นที่คุ้มครอง",
@@ -527,7 +499,7 @@ export const subCategoryTranslations = {
     locksmith: "Слесарь",
     painter: "Маляр",
     solar_energy: "Солнечная энергия",
-    
+
     // Get Service additions
     laundry: "Прачечная",
     housekeeping: "Уборка дома",
@@ -547,7 +519,7 @@ export const subCategoryTranslations = {
     ice_cream: "Мороженое",
     outdoor_seating: "Места на улице",
     sweets: "Сладости",
-    
+
     // Fix
     all_fixers: "Все услуги",
     plumber: "Сантехники",
@@ -558,7 +530,7 @@ export const subCategoryTranslations = {
     craftsmen: "Мастера",
     installers: "Установщики",
     repair_labs: "Ремонтные мастерские",
-    
+
     // Shop
     all_shops: "Все магазины",
     fashion: "Мода",
@@ -572,7 +544,7 @@ export const subCategoryTranslations = {
     flowers: "Цветы",
     second_hand: "Б/у",
     department_store: "Универмаг",
-    
+
     // Enjoy
     all_activities: "Все активности",
     sports: "Спорт",
@@ -584,7 +556,7 @@ export const subCategoryTranslations = {
     shopping_centers: "Торговые центры",
     attractions: "Достопримечательности",
     gymboree: "Джимбори",
-    
+
     // Go Out
     all_events: "Все мероприятия",
     pubs: "Пабы",
@@ -596,7 +568,7 @@ export const subCategoryTranslations = {
     shows: "Шоу",
     stand_up: "Стендап",
     clubs: "Клубы",
-    
+
     // Travel
     all_trips: "Все поездки",
     accommodation: "Проживание",
@@ -606,7 +578,7 @@ export const subCategoryTranslations = {
     points_of_interest: "Интересные места",
     nature: "Природа",
     heritage_sites: "Наследие",
-    
+
     // Help
     emergency_volunteering: "Волонтерство в чрезвычайных ситуациях",
     aid_organizations: "Организации помощи",
@@ -616,7 +588,7 @@ export const subCategoryTranslations = {
     volunteer: "Волонтер",
     hair_donation: "Пожертвование волос",
     one_in_nine: "Одна из девяти",
-    
+
     // Get Service
     all_services: "Все услуги",
     pharmacies: "Аптеки",
@@ -630,7 +602,7 @@ export const subCategoryTranslations = {
     business_services: "Бизнес-услуги",
     animals: "Животные",
     event_organizers: "Организация мероприятий",
-    
+
     // Get Info
     all_info: "Вся информация",
     protected_spaces: "Защищенные пространства",

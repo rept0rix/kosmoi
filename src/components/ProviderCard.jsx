@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageContext";
 import { getSubCategoryLabel } from "@/components/subCategories";
+import AuthGate from "@/components/AuthGate";
 
 const categoryIcons = {
   // Fix
@@ -52,13 +53,13 @@ const categoryIcons = {
   pest_control: Bug,
   pool_cleaning: Waves,
   solar_energy: Sun,
-  
+
   // Get Service
   laundry: Shirt,
   housekeeping: Home,
   internet_tech: Wifi,
   visa_services: FileText,
-  
+
   // Transport
   moving: Truck,
   car_mechanic: Wrench,
@@ -66,7 +67,7 @@ const categoryIcons = {
   taxi_service: Car,
   car_rental: Car,
   bike_rental: Bike,
-  
+
   // Other
   translator: Languages,
   real_estate_agent: Building2,
@@ -80,14 +81,14 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
   const CategoryIcon = categoryIcons[provider.category] || Wrench;
 
   return (
-    <Card 
+    <Card
       className="hover:shadow-lg transition-shadow border border-gray-200 cursor-pointer"
       onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
     >
       {provider.images && provider.images.length > 0 ? (
         <div className="h-40 overflow-hidden bg-gray-200 relative">
-          <img 
-            src={provider.images[0]} 
+          <img
+            src={provider.images[0]}
             alt={provider.business_name}
             className="w-full h-full object-cover"
           />
@@ -159,18 +160,20 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onCall(provider.phone);
-            }}
-            className="bg-blue-600 hover:bg-blue-700"
-            size="sm"
-          >
-            <Phone className="w-4 h-4 ml-1" />
-            התקשר
-          </Button>
-          <Button 
+          <AuthGate>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCall(provider.phone);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 w-full"
+              size="sm"
+            >
+              <Phone className="w-4 h-4 ml-1" />
+              התקשר
+            </Button>
+          </AuthGate>
+          <Button
             onClick={(e) => {
               e.stopPropagation(); // Prevent card's onClick from firing
               navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`);

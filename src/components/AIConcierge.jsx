@@ -4,11 +4,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Bot, X, Send, Sparkles, MapPin, Wrench } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function AIConcierge() {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'Sawadee krup! 🙏 I am your Koh Samui Concierge. How can I help you today?' }
+        { role: 'assistant', content: t('concierge.welcome') }
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -27,35 +29,35 @@ export default function AIConcierge() {
     // Simple keyword-based AI logic for MVP
     const processMessage = async (text) => {
         const lowerText = text.toLowerCase();
-        let response = "I'm not sure about that yet. I'm still learning! Try asking for a specific service like 'plumber' or 'taxi'.";
+        let response = t('concierge.unknown_response');
         let action = null;
 
         // 1. Navigation / Service Discovery
         if (lowerText.includes('plumber') || lowerText.includes('pipe') || lowerText.includes('leak')) {
-            response = "I can help you find a plumber. Would you like to see a list of plumbers or request one immediately?";
-            action = { type: 'navigate', path: '/ServiceProviders?category=plumber', label: 'View Plumbers' };
+            response = t('concierge.plumber_response');
+            action = { type: 'navigate', path: '/ServiceProviders?category=plumber', label: t('concierge.plumber_label') };
         } else if (lowerText.includes('ac') || lowerText.includes('air con') || lowerText.includes('cooling')) {
-            response = "It's hot in Samui! ☀️ Let's get your AC fixed. I can take you to the AC repair specialists.";
-            action = { type: 'navigate', path: '/ServiceProviders?category=ac_repair', label: 'Find AC Repair' };
+            response = t('concierge.ac_response');
+            action = { type: 'navigate', path: '/ServiceProviders?category=ac_repair', label: t('concierge.ac_label') };
         } else if (lowerText.includes('taxi') || lowerText.includes('driver') || lowerText.includes('transport')) {
-            response = "Need a ride? I can show you local taxi services.";
-            action = { type: 'navigate', path: '/ServiceProviders?category=taxi', label: 'Find Taxis' };
+            response = t('concierge.taxi_response');
+            action = { type: 'navigate', path: '/ServiceProviders?category=taxi', label: t('concierge.taxi_label') };
         } else if (lowerText.includes('clean') || lowerText.includes('maid')) {
-            response = "Looking for a cleaner? We have great housekeeping services.";
-            action = { type: 'navigate', path: '/ServiceProviders?category=cleaning', label: 'Find Cleaners' };
+            response = t('concierge.clean_response');
+            action = { type: 'navigate', path: '/ServiceProviders?category=cleaning', label: t('concierge.clean_label') };
         }
 
         // 2. Direct Requests
         else if (lowerText.includes('request') || lowerText.includes('book') || lowerText.includes('hire')) {
-            response = "You can submit a detailed service request and let providers come to you.";
-            action = { type: 'navigate', path: '/RequestService', label: 'Create Request' };
+            response = t('concierge.request_response');
+            action = { type: 'navigate', path: '/RequestService', label: t('concierge.request_label') };
         }
 
         // 3. Support / FAQ
         else if (lowerText.includes('price') || lowerText.includes('cost') || lowerText.includes('free')) {
-            response = "Using the Service Hub is free for customers! You only pay the service provider directly for their work.";
+            response = t('concierge.free_response');
         } else if (lowerText.includes('who are you') || lowerText.includes('bot')) {
-            response = "I am the Koh Samui Service Hub AI. My job is to connect you with the best local professionals.";
+            response = t('concierge.who_response');
         }
 
         // Simulate network delay
@@ -93,8 +95,8 @@ export default function AIConcierge() {
                                 <Bot className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <CardTitle className="text-base">Samui Concierge</CardTitle>
-                                <p className="text-xs text-blue-100 opacity-90">Always here to help</p>
+                                <CardTitle className="text-base">{t('concierge.title')}</CardTitle>
+                                <p className="text-xs text-blue-100 opacity-90">{t('concierge.subtitle')}</p>
                             </div>
                         </div>
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={() => setIsOpen(false)}>
@@ -141,7 +143,7 @@ export default function AIConcierge() {
                             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                         >
                             <Input
-                                placeholder="Ask for a service..."
+                                placeholder={t('concierge.placeholder')}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 className="flex-1 focus-visible:ring-blue-500"

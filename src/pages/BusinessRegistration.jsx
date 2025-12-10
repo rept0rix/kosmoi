@@ -33,25 +33,26 @@ import {
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
 
-const categories = [
-  { value: "handyman", label: "אנדימן" },
-  { value: "carpenter", label: "נגר" },
-  { value: "electrician", label: "חשמלאי" },
-  { value: "plumber", label: "אינסטלטור" },
-  { value: "ac_repair", label: "מזגנים" },
-  { value: "cleaning", label: "ניקיון" },
-  { value: "locksmith", label: "מנעולן" },
-  { value: "painter", label: "צבע" },
-  { value: "gardener", label: "גנן" },
-  { value: "pest_control", label: "הדברה" },
-  { value: "moving", label: "הובלות" },
-  { value: "internet_tech", label: "אינטרנט" },
-  { value: "car_mechanic", label: "מוסך" },
-  { value: "translator", label: "מתרגם" },
-  { value: "visa_services", label: "ויזה" },
-  { value: "real_estate_agent", label: "נדל״ן" },
-  { value: "other", label: "אחר" },
-];
+import { subCategoriesBySuperCategory } from "@/components/subCategories";
+import { getTranslation } from "@/components/translations";
+
+// Helper to flatten categories for the select dropdown
+const getCategoryOptions = () => {
+  const options = [];
+  Object.keys(subCategoriesBySuperCategory).forEach(superCat => {
+    subCategoriesBySuperCategory[superCat].forEach(subCat => {
+      // Skip 'all_' categories for registration
+      if (!subCat.startsWith('all_')) {
+        options.push({ value: subCat, label: getTranslation('hebrew', subCat) || subCat });
+      }
+    });
+  });
+  // Add "Other" manually
+  options.push({ value: "other", label: "אחר / בקש קטגוריה" });
+  return options.sort((a, b) => a.label.localeCompare(b.label));
+};
+
+const categories = getCategoryOptions();
 
 const languages = [
   { value: "thai", label: "תאילנדית" },
@@ -102,7 +103,7 @@ export default function BusinessRegistration() {
   });
 
   const createBusinessMutation = useMutation({
-    mutationFn: async (businessData) => {
+    mutationFn: async (/** @type {any} */ businessData) => {
       return await db.entities.ServiceProvider.create(businessData);
     },
     onSuccess: () => {

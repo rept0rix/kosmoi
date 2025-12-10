@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bot, Send, Sparkles, Key, MapPin, Phone, MessageCircle, Navigation, X, Star, Compass, Map as MapIcon, Info, User, Maximize2, Minimize2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '@/api/supabaseClient';
 import GoogleMap from "@/components/GoogleMap";
 import { useQuery } from "@tanstack/react-query";
@@ -82,8 +82,37 @@ export default function AIChat() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    const locationState = useLocation(); // Need to import useLocation if not already imported, wait, imports are top level.
+    // Check if useLocation is imported... it's not in the snippet I saw. I need to check imports text first or just add it.
+    // Actually, `useNavigate` is used, so `react-router-dom` is there. I'll add `useLocation` to imports in a separate step if needed. 
+    // Assuming I will add it or it exists. I will check file first in thought? No, I viewed it.
+    // View of AIChat showed: `import { useNavigate } from 'react-router-dom';` on line 5.
+
+    // I will use `window.location` or safer `useLocation` hook.
+    // Let's assume I will fix imports.
+
+    // Logic for context:
+    const { state } = useLocation();
+
     useEffect(() => {
         scrollToBottom();
+
+        // Handle Incoming Context from Dashboard
+        if (state?.category && !messages.some(m => m.isContextTrigger)) {
+            const prompt = `I'm interested in ${state.label || state.category}. What can you recommend?`;
+
+            // Add user message visually (optional, or just start assistant)
+            // Let's make it look like user asked.
+            setMessages(prev => [
+                ...prev,
+                { role: 'user', content: prompt, isContextTrigger: true }
+            ]);
+
+            processMessage(prompt);
+
+            // Clear state to prevent re-trigger on refresh? 
+            // React Router state persists on refresh usually, but we check `!messages.some` so it's fine.
+        }
 
         // Get User Location
         if (navigator.geolocation) {
@@ -102,7 +131,7 @@ export default function AIChat() {
                 }
             );
         }
-    }, []);
+    }, [state]); // Add state dependency
 
     useEffect(() => {
         scrollToBottom();

@@ -17,6 +17,25 @@ import VendorSignup from '@/pages/VendorSignup';
 import { AppConfigProvider } from '@/components/AppConfigContext';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 import PersistenceTestPage from '@/pages/PersistenceTest';
+import { SpeedInsights } from "@vercel/speed-insights/react"
+import Footer from '@/components/Footer';
+
+// Content Sprint Pages
+import AboutUs from '@/pages/AboutUs';
+import UseCases from '@/pages/UseCases';
+import Pricing from '@/pages/Pricing';
+import Terms from '@/pages/legal/Terms';
+import Privacy from '@/pages/legal/Privacy';
+import Accessibility from '@/pages/legal/Accessibility';
+import BusinessInfo from '@/pages/BusinessInfo';
+import Contact from '@/pages/Contact';
+
+import CommandCenter from '@/pages/CommandCenter';
+import AdminLayout from '@/layouts/AdminLayout';
+import AdminOverview from '@/pages/admin/AdminOverview';
+import AdminUsers from '@/pages/admin/AdminUsers';
+import AdminData from '@/pages/admin/AdminData';
+import AdminCRM from '@/pages/admin/AdminCRM';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -64,28 +83,57 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <LayoutWrapper currentPageName={mainPageKey}>
-      {/* Persistent MapView */}
-      <div style={{ display: location.pathname.toLowerCase() === '/mapview' ? 'block' : 'none', height: '100%' }}>
-        <MapViewPage />
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          {/* Persistent MapView */}
+          <div style={{ display: location.pathname.toLowerCase() === '/mapview' ? 'block' : 'none', height: '100%' }}>
+            <MapViewPage />
+          </div>
+
+          <Routes>
+            <Route path="/" element={<MainPage />} />
+            {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
+            <Route path="/mapview" element={null} />
+
+            {Object.entries(Pages)
+              .filter(([path]) => path !== 'MapView') // Exclude MapView from standard routing
+              .map(([path, Page]) => (
+                <Route key={path} path={`/${path.toLowerCase()}`} element={<Page />} />
+              ))}
+
+            {/* Admin & Vendor Routes */}
+            <Route path="/command-center" element={<CommandCenter />} />
+            <Route path="/board-room" element={<AgentCommandCenter />} />
+            {/* Admin Routes (New Layout) */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverview />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="data" element={<AdminData />} />
+              <Route path="crm" element={<AdminCRM />} />
+              {/* Placeholders for now */}
+              <Route path="logs" element={<div className="p-8 text-slate-400">System Logs Coming Soon...</div>} />
+              <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
+            </Route>
+            <Route path="/admin-importer" element={<AdminImporter />} />
+            <Route path="/vendor-signup" element={<VendorSignup />} />
+            <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
+            <Route path="/test-persistence" element={<PersistenceTestPage />} />
+
+            {/* Trust Pages */}
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/use-cases" element={<UseCases />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/legal/terms" element={<Terms />} />
+            <Route path="/legal/privacy" element={<Privacy />} />
+            <Route path="/legal/accessibility" element={<Accessibility />} />
+            <Route path="/business-info" element={<BusinessInfo />} />
+            <Route path="/contact" element={<Contact />} />
+
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </div>
+        <Footer />
       </div>
-
-      <Routes>
-        <Route path="/" element={<MainPage />} />
-        {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
-        <Route path="/mapview" element={null} />
-
-        {Object.entries(Pages)
-          .filter(([path]) => path !== 'MapView') // Exclude MapView from standard routing
-          .map(([path, Page]) => (
-            <Route key={path} path={`/${path.toLowerCase()}`} element={<Page />} />
-          ))}
-        <Route path="/command-center" element={<AgentCommandCenter />} />
-        <Route path="/admin-importer" element={<AdminImporter />} />
-        <Route path="/vendor-signup" element={<VendorSignup />} />
-        <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
-        <Route path="/test-persistence" element={<PersistenceTestPage />} />
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
     </LayoutWrapper>
   );
 };
@@ -108,6 +156,7 @@ function App() {
           <Toaster />
           <VisualEditAgent />
         </QueryClientProvider>
+        <SpeedInsights />
       </AppConfigProvider>
     </AuthProvider>
   )
