@@ -2,7 +2,13 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Shield, User as UserIcon } from "lucide-react";
+import { MoreHorizontal, Shield, User as UserIcon, Info } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function UserTable({ users, onAction }) {
     return (
@@ -44,13 +50,24 @@ export default function UserTable({ users, onAction }) {
                                 </div>
                             </td>
                             <td className="px-6 py-4">
-                                <Badge variant="outline" className={
-                                    user.status === 'active'
-                                        ? "border-green-500/30 text-green-400 bg-green-500/10"
-                                        : "border-slate-700 text-slate-500"
-                                }>
-                                    {user.status || 'Active'}
-                                </Badge>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span tabIndex={0} className="cursor-help inline-flex">
+                                                <Badge variant="outline" className={
+                                                    user.status === 'active'
+                                                        ? "border-green-500/30 text-green-400 bg-green-500/10"
+                                                        : "border-slate-700 text-slate-500"
+                                                }>
+                                                    {user.status || 'Active'}
+                                                </Badge>
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="bg-slate-900 border-slate-700 text-slate-300">
+                                            <p>{user.status === 'active' ? 'User has full access' : 'User access is restricted'}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </td>
                             <td className="px-6 py-4 text-slate-400">
                                 {new Date(user.created_at).toLocaleDateString()}

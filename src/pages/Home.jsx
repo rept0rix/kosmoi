@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import LandingHero from "@/components/LandingHero";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -22,11 +22,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import ProviderCard from "../components/ProviderCard";
-import SuperCategories from "../components/SuperCategories";
-import SubCategorySelector from "../components/SubCategorySelector";
-import SyncStatus from "../components/SyncStatus";
-import OfflineIndicator from "../components/OfflineIndicator";
+import ProviderCard from "@/components/ProviderCard";
+import SuperCategories from "@/components/SuperCategories";
+import SubCategorySelector from "@/components/SubCategorySelector";
+import SyncStatus from "@/components/SyncStatus";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { autoSync } from "@/services/syncService";
 import { offlineQuery } from "@/services/offlineQuery";
 import WeatherWidget from "@/components/WeatherWidget";
@@ -160,7 +160,7 @@ export default function Home() {
         setLoadingAddress(true);
         try {
           const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-          console.log('Fetched addresses:', addresses);
+          // console.log('Fetched addresses:', addresses);
 
           if (addresses.en) {
             setLocationAddressEn(addresses.en);
@@ -179,7 +179,7 @@ export default function Home() {
         localStorage.setItem('locationName', t('currentLocation'));
       },
       (error) => {
-        console.log("Location access error:", error);
+        // console.log("Location access error:", error);
         setLocationPermission('denied');
         if (error.code === error.PERMISSION_DENIED) {
           setLocationError('נדרשת הרשאה למיקום');
@@ -215,7 +215,7 @@ export default function Home() {
     setLoadingAddress(true);
     try {
       const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-      console.log('Fetched addresses for predefined location:', addresses);
+      // console.log('Fetched addresses for predefined location:', addresses);
 
       if (addresses.en) {
         setLocationAddressEn(addresses.en);
@@ -381,7 +381,7 @@ export default function Home() {
                       >
                         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                           {provider.images?.[0] ? (
-                            <img src={provider.images[0]} alt="" className="w-full h-full object-cover rounded-lg" />
+                            <img src={provider.images[0]} alt={provider.business_name} className="w-full h-full object-cover rounded-lg" />
                           ) : (
                             <span className="text-gray-500 font-bold">{provider.business_name?.charAt(0)}</span>
                           )}

@@ -12,6 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import seedData from '@/data/samui_real_data_seed.json';
 import { subCategoriesBySuperCategory } from '@/components/subCategories';
+import AutomatedImportPanel from './admin/AutomatedImportPanel';
+import { getSuperCategory } from '@/utils/categoryMapping';
 
 /** @type {any} */
 const google = (/** @type {any} */ (window)).google;
@@ -29,32 +31,7 @@ export default function AdminImporter() {
     // Seed Data State
     const [isSeeding, setIsSeeding] = useState(false);
 
-    // Automated import state
-    const [autoImporting, setAutoImporting] = useState(false);
-    const [autoProgress, setAutoProgress] = useState({ current: 0, total: 0, category: '' });
-    const [autoStats, setAutoStats] = useState({ imported: 0, skipped: 0, errors: 0 });
 
-    // Areas in Koh Samui to search
-    const areas = [
-        'Chaweng', 'Lamai', 'Bophut', 'Maenam', 'Nathon',
-        'Choeng Mon', 'Bang Rak', 'Lipa Noi', 'Taling Ngam'
-    ];
-
-    // Main business categories
-    const categories = [
-        'restaurant', 'hotel', 'resort', 'spa', 'massage',
-        'cafe', 'bar', 'diving', 'tour', 'rental',
-        'pharmacy', 'supermarket', 'temple', 'beach',
-        'plumber', 'electrician', 'laundry', 'gym'
-    ];
-
-    // Generate all search combinations (category + area)
-    const searchCategories = [];
-    categories.forEach(cat => {
-        areas.forEach(area => {
-            searchCategories.push(`${cat} ${area}`);
-        });
-    });
 
     const { data: user } = useQuery({
         queryKey: ["currentUser"],
@@ -90,17 +67,12 @@ export default function AdminImporter() {
         return () => clearInterval(interval);
     }, []);
 
-    const getSuperCategory = (category) => {
-        for (const [superCat, subCats] of Object.entries(subCategoriesBySuperCategory)) {
-            if (subCats.includes(category)) return superCat;
-        }
-        return 'other';
-    };
+
 
     const handleSeedData = async () => {
         setIsSeeding(true);
         try {
-            console.log("Starting quick seed...");
+            // console.log("Starting quick seed...");
 
             // Map seed data to database schema
             const rows = seedData.map(item => ({
@@ -229,27 +201,27 @@ export default function AdminImporter() {
         if (types.includes('locksmith')) return 'locksmith';
         if (types.includes('painter')) return 'painter';
         if (types.includes('roofing_contractor') || types.includes('general_contractor')) return 'handyman';
-        
+
         if (types.includes('restaurant') || types.includes('food')) return 'restaurants';
         if (types.includes('cafe')) return 'cafes';
         if (types.includes('bar') || types.includes('night_club')) return 'pubs';
         if (types.includes('bakery')) return 'sweets';
         if (types.includes('meal_delivery') || types.includes('meal_takeaway')) return 'delivery';
-        
+
         if (types.includes('lodging') || types.includes('hotel') || types.includes('resort')) return 'accommodation';
-        
+
         if (types.includes('spa') || types.includes('health')) return 'health_spa';
         if (types.includes('park')) return 'parks_gardens';
         if (types.includes('gym')) return 'gym';
         if (types.includes('tourist_attraction')) return 'attractions';
-        
+
         if (types.includes('shopping_mall') || types.includes('department_store')) return 'department_store';
         if (types.includes('clothing_store')) return 'fashion';
         if (types.includes('electronics_store')) return 'electronics';
         if (types.includes('supermarket') || types.includes('grocery_or_supermarket') || types.includes('convenience_store')) return 'food_beverages';
         if (types.includes('furniture_store') || types.includes('home_goods_store')) return 'furniture';
         if (types.includes('florist')) return 'flowers';
-        
+
         if (types.includes('pharmacy')) return 'pharmacies';
         if (types.includes('hospital') || types.includes('doctor') || types.includes('dentist')) return 'health';
         if (types.includes('beauty_salon') || types.includes('hair_care')) return 'beauty';
@@ -369,13 +341,25 @@ export default function AdminImporter() {
             if (error.message && error.message.includes('duplicate key')) {
                 setImporting(prev => ({ ...prev, [place.place_id]: 'exists' }));
             } else {
-                if (!autoImporting) {
+                // If we are calling this from the automated panel, we don't want to show toasts for every error
+                // The Panel manages its own error count.
+                // However, we don't have 'autoImporting' state here anymore. 
+                // Using a check for user interaction or passed context would be better, but for now:
+                console.error("Import error:", error);
+
+                // We show toast only if it looks like a manual action error, 
+                // but checking `importing` state is tricky since we set it to true.
+                // Let's rely on the assumption that if it's a bulk operation, the toast spam is bad.
+                // But preventing it without the state is hard.
+                // Re-introducing a minimal check:
+                if (Object.keys(importing).length < 5) { // Heuristic: if many items are importing, don't toast
                     toast({
                         title: "שגיאה בייבוא",
                         description: error.message || "Unknown error",
                         variant: "destructive"
                     });
                 }
+
                 setImporting(prev => ({ ...prev, [place.place_id]: false }));
             }
             return false;
@@ -429,112 +413,7 @@ export default function AdminImporter() {
 
     const selectedCount = Object.values(selectedPlaces).filter(Boolean).length;
 
-    const startAutomatedImport = async () => {
-        if (!(/** @type {any} */ (window)).google || !(/** @type {any} */ (window)).google.maps || !(/** @type {any} */ (window)).google.maps.places) {
-            toast({
-                title: "Google Maps לא מוכן",
-                description: "אנא המתן מספר שניות ונסה שוב",
-                variant: "destructive"
-            });
-            return;
-        }
 
-        setAutoImporting(true);
-        const stats = { imported: 0, skipped: 0, errors: 0 };
-        setAutoStats(stats);
-        setAutoProgress({ current: 0, total: searchCategories.length, category: '' });
-
-        const completedCategories = JSON.parse(localStorage.getItem('completedCategories') || '[]');
-        let skippedCategories = 0;
-
-        for (let i = 0; i < searchCategories.length; i++) {
-            const category = searchCategories[i];
-
-            if (completedCategories.includes(category)) {
-                skippedCategories++;
-                continue;
-            }
-
-            setAutoProgress({ current: i + 1, total: searchCategories.length, category });
-            let categoryErrors = 0;
-
-            try {
-                const searchResults = await new Promise((resolve) => {
-                    setQuery(category);
-                    setTimeout(() => {
-                        const mapDiv = document.createElement('div');
-                        const map = new (/** @type {any} */ (window)).google.maps.Map(mapDiv, {
-                            center: { lat: 9.5, lng: 100.0 },
-                            zoom: 12
-                        });
-
-                        const service = new (/** @type {any} */ (window)).google.maps.places.PlacesService(map);
-                        const koSamuiCenter = { lat: 9.5, lng: 100.0 };
-                        const searchRadius = 25000;
-
-                        const request = {
-                            query: category + " Koh Samui",
-                            location: koSamuiCenter,
-                            radius: searchRadius,
-                            fields: ['name', 'formatted_address', 'geometry', 'photos', 'rating', 'user_ratings_total', 'types', 'place_id', 'formatted_phone_number', 'website', 'opening_hours', 'price_level']
-                        };
-
-                        service.textSearch(request, (newResults, status) => {
-                            if (status === (/** @type {any} */ (window)).google.maps.places.PlacesServiceStatus.OK) {
-                                resolve(newResults || []);
-                            } else {
-                                resolve([]);
-                            }
-                        });
-                    }, 500);
-                });
-
-                for (const place of searchResults) {
-                    const success = await importPlace(place);
-                    if (success) {
-                        stats.imported++;
-                        setAutoStats({ ...stats });
-                    } else {
-                        if (importing[place.place_id] === 'exists') {
-                            stats.skipped++;
-                            setAutoStats({ ...stats });
-                        } else {
-                            stats.errors++;
-                            categoryErrors++;
-                            setAutoStats({ ...stats });
-                        }
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                }
-
-                if (categoryErrors === 0 && searchResults.length > 0) {
-                    completedCategories.push(category);
-                    localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
-                }
-
-            } catch (error) {
-                console.error(`Error importing category ${category}:`, error);
-                stats.errors++;
-                setAutoStats({ ...stats });
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-
-        setAutoImporting(false);
-        toast({
-            title: "ייבוא אוטומטי הושלם!",
-            description: `יובאו: ${stats.imported} | דולגו: ${stats.skipped} | שגיאות: ${stats.errors} | קטגוריות שדולגו: ${skippedCategories}`,
-        });
-    };
-
-    const resetProgress = () => {
-        localStorage.removeItem('completedCategories');
-        toast({
-            title: "ההתקדמות אופסה",
-            description: "בייבוא הבא המערכת תעבור על כל הקטגוריות מחדש",
-        });
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
@@ -605,64 +484,7 @@ export default function AdminImporter() {
                 </Alert>
 
                 {/* Automated Import Section */}
-                <Card className="bg-white border-2 border-blue-100">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                    <Rocket className="w-6 h-6 text-blue-500" />
-                                    ייבוא אוטומטי המוני
-                                </h2>
-                                <p className="text-gray-500 text-sm">לחץ כאן כדי לייבא אוטומטית את כל העסקים מכל הקטגוריות ({searchCategories.length} קטגוריות)</p>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={resetProgress}
-                                    disabled={autoImporting}
-                                    variant="outline"
-                                    className="text-gray-600"
-                                >
-                                    אפס התקדמות
-                                </Button>
-                                <Button
-                                    onClick={startAutomatedImport}
-                                    disabled={autoImporting}
-                                    className="bg-gray-900 text-white hover:bg-black"
-                                >
-                                    {autoImporting ? (
-                                        <>
-                                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                                            מייבא...
-                                        </>
-                                    ) : (
-                                        'התחל ייבוא'
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Progress Display */}
-                        {autoImporting && (
-                            <div className="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg">
-                                <div className="flex justify-between text-sm text-gray-700">
-                                    <span>קטגוריה: <strong>{autoProgress.category}</strong></span>
-                                    <span>{autoProgress.current} / {autoProgress.total}</span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                        style={{ width: `${(autoProgress.current / autoProgress.total) * 100}%` }}
-                                    ></div>
-                                </div>
-                                <div className="flex gap-4 text-xs font-mono">
-                                    <span className="text-green-600">✓ IMPORTED: {autoStats.imported}</span>
-                                    <span className="text-yellow-600">⊘ SKIPPED: {autoStats.skipped}</span>
-                                    <span className="text-red-600">✗ ERRORS: {autoStats.errors}</span>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                <AutomatedImportPanel importPlace={importPlace} importing={importing} />
 
                 {/* Manual Search Section */}
                 <Card>
@@ -723,7 +545,7 @@ export default function AdminImporter() {
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
                                                     e.currentTarget.style.display = 'none';
-                                                    const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+                                                    const fallback = /** @type {HTMLElement} */ (e.currentTarget.parentElement?.querySelector('.fallback-icon'));
                                                     if (fallback) fallback.style.display = 'flex';
                                                 }}
                                             />

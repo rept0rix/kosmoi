@@ -1,6 +1,12 @@
 import React from 'react';
 import { Check, CheckCircle, Smartphone, Building, Zap } from 'lucide-react';
 
+/**
+ * Pricing Page
+ *
+ * Displays pricing tiers (Trial, Starter, Growth) for business partners.
+ * Clarifies that the platform is free for users.
+ */
 const Pricing = () => {
     return (
         <div className="min-h-screen bg-slate-50 py-20 font-sans">

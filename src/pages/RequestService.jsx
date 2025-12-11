@@ -293,7 +293,7 @@ export default function RequestService() {
                                         <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
                                             {images.map((url, idx) => (
                                                 <div key={idx} className="relative w-20 h-20 flex-shrink-0">
-                                                    <img src={url} alt="" className="w-full h-full object-cover rounded-md" />
+                                                    <img src={url} alt="Uploaded preview" className="w-full h-full object-cover rounded-md" />
                                                     <button
                                                         onClick={() => setImages(prev => prev.filter((_, i) => i !== idx))}
                                                         className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"

@@ -52,6 +52,19 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c;
 };
 
+/**
+ * AIChat Page (Samui Concierge)
+ *
+ * A conversational interface powered by Google Gemini to help users plan trips
+ * and find local services. Integrates with the ServiceProvider database and
+ * weather API to provide context-aware recommendations.
+ *
+ * Features:
+ * - Interactive Map with provider markers
+ * - Trip planning capabilities
+ * - Local knowledge base integration
+ * - Real-time weather context
+ */
 export default function AIChat() {
     const [messages, setMessages] = useState([
         { role: 'assistant', content: 'Sawadee krup! 🙏 I am your Koh Samui Concierge. How can I help you today?' }
@@ -127,7 +140,7 @@ export default function AIChat() {
                     setMapZoom(15); // Zoom in when location is found
                 },
                 (error) => {
-                    console.log("Location access denied");
+                    // console.log("Location access denied");
                 }
             );
         }

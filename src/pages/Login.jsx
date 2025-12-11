@@ -26,7 +26,7 @@ export default function Login() {
                 const refreshToken = params.get('refresh_token');
 
                 if (accessToken) {
-                    console.log('Found access token in URL, setting session...');
+                    // console.log('Found access token in URL, setting session...');
                     db.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken
@@ -62,7 +62,7 @@ export default function Login() {
         try {
             setLoading(true);
             setError(null);
-            console.log('Attempting Google login...');
+            // console.log('Attempting Google login...');
 
             // Construct the full URL to return to this login page with the returnUrl param
             const currentOrigin = window.location.origin;
@@ -71,7 +71,7 @@ export default function Login() {
             await db.auth.signInWithOAuth('google', {
                 redirectTo: redirectUrl
             });
-            console.log('Login initiated');
+            // console.log('Login initiated');
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || 'אירעה שגיאה בהתחברות. אנא נסה שוב.');

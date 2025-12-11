@@ -80,7 +80,7 @@ export default function ServiceProviderDetails() {
           setUserLocation(location);
           localStorage.setItem('userLocation', JSON.stringify(location));
         },
-        (error) => console.log("Location access error:", error)
+        (error) => { } // console.log("Location access error:", error)
       );
     }
   }, []);
@@ -210,20 +210,20 @@ export default function ServiceProviderDetails() {
       pest_control: Bug,
       pool_cleaning: Waves,
       solar_energy: Sun,
-      
+
       // Get Service
       laundry: Shirt,
       housekeeping: Home,
       internet_tech: Wifi,
       visa_services: FileText,
-      
+
       // Transport
       moving: Truck,
       car_mechanic: Wrench,
       taxi_service: Car,
       car_rental: Car,
       bike_rental: Bike,
-      
+
       // Other
       translator: Languages,
       real_estate_agent: Building2,

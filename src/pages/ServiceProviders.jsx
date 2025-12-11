@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search,
   MapPin,
@@ -60,6 +61,17 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
+/**
+ * ServiceProviders Page
+ *
+ * Displays a list of service providers with filtering, searching, and map view capabilities.
+ * Allows users to find and contact local businesses in Koh Samui.
+ *
+ * Filter Params (URL):
+ * - search: Search query string
+ * - super_category: Main category filter
+ * - sub_category: Specific sub-category filter
+ */
 export default function ServiceProviders() {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -115,7 +127,7 @@ export default function ServiceProviders() {
           setUserLocation(location);
           localStorage.setItem('userLocation', JSON.stringify(location));
         },
-        (error) => console.log("Location access error:", error)
+        (error) => { } // console.log("Location access error:", error)
       );
     }
   }, []);
@@ -162,7 +174,7 @@ export default function ServiceProviders() {
       const matchesEmergency = !filters.emergencyService || provider.emergency_service;
       const matchesVerified = !filters.verifiedOnly || provider.verified;
 
-      const matchesOpenNow = !isOpenNow || true; 
+      const matchesOpenNow = !isOpenNow || true;
 
       return matchesSearch && matchesSuperCategory && matchesSubCategory &&
         matchesRating && matchesReviews && matchesDistance &&
@@ -249,7 +261,7 @@ export default function ServiceProviders() {
                     >
                       <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         {provider.images?.[0] ? (
-                          <img src={provider.images[0]} alt="" className="w-full h-full object-cover rounded-lg" />
+                          <img src={provider.images[0]} alt={provider.business_name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <span className="text-gray-500 font-bold text-lg">{provider.business_name?.charAt(0)}</span>
                         )}
@@ -271,9 +283,9 @@ export default function ServiceProviders() {
           </div>
 
           {/* Super Categories */}
-          <SuperCategories 
-            selectedCategory={filters.superCategory} 
-            onSelectCategory={(value) => setFilters(prev => ({ ...prev, superCategory: value, subCategory: 'all' }))} 
+          <SuperCategories
+            selectedCategory={filters.superCategory}
+            onSelectCategory={(value) => setFilters(prev => ({ ...prev, superCategory: value, subCategory: 'all' }))}
           />
 
           {/* Sub Category Selector */}
@@ -309,7 +321,7 @@ export default function ServiceProviders() {
         {/* Map - Desktop Only */}
         <div className="hidden lg:block lg:w-1/2 sticky top-28 h-full relative">
           <GoogleMap
-            center={{ lat: 9.5297, lng: 100.0626 }} 
+            center={{ lat: 9.5297, lng: 100.0626 }}
             zoom={12}
             userLocation={userLocation}
             markers={filteredProviders
@@ -372,7 +384,33 @@ export default function ServiceProviders() {
 
             {/* Results */}
             {isLoading ? (
-              <div className="text-center py-12 text-gray-500">טוען...</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
+                    {/* Image Skeleton */}
+                    <Skeleton className="h-48 w-full rounded-none" />
+                    <div className="p-5 flex flex-col flex-1 gap-3">
+                      {/* Badge & Rating Skeleton */}
+                      <div className="flex justify-between">
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                        <Skeleton className="h-6 w-12 rounded-full" />
+                      </div>
+                      {/* Title Skeleton */}
+                      <Skeleton className="h-7 w-3/4 rounded-md" />
+                      {/* Description Skeleton */}
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full rounded-md" />
+                        <Skeleton className="h-4 w-5/6 rounded-md" />
+                      </div>
+                      {/* Footer Skeleton */}
+                      <div className="mt-auto pt-4 flex gap-2">
+                        <Skeleton className="h-10 flex-1 rounded-lg" />
+                        <Skeleton className="h-10 flex-1 rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredProviders.length === 0 ? (
               <Card className="p-12 text-center bg-white">
                 <div className="max-w-md mx-auto">
@@ -437,8 +475,8 @@ export default function ServiceProviders() {
                     >
                       <CardContent className="p-4">
                         <div className="flex gap-4">
-                           {/* Image or Placeholder */}
-                           <div className="w-24 h-24 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                          {/* Image or Placeholder */}
+                          <div className="w-24 h-24 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
                             {provider.images?.[0] ? (
                               <img src={provider.images[0]} alt={provider.business_name} className="w-full h-full object-cover" />
                             ) : (
@@ -462,7 +500,7 @@ export default function ServiceProviders() {
                                 <CheckCircle className="w-5 h-5 text-green-500" />
                               )}
                             </div>
-                            
+
                             <div className="flex items-center gap-3 mb-2">
                               <div className="flex items-center gap-1">
                                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />

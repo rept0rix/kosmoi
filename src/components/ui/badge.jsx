@@ -31,14 +31,14 @@ const badgeVariants = cva(
  */
 
 /**
- * @param {BadgeProps & React.HTMLAttributes<HTMLDivElement>} props
+ * @param {BadgeProps & React.HTMLAttributes<HTMLSpanElement>} props
  */
 function Badge({
   className,
   variant,
   ...props
 }) {
-  return (<div className={cn(badgeVariants({ variant }), className)} {...props} />);
+  return (<span className={cn(badgeVariants({ variant }), className)} {...props} />);
 }
 
 export { Badge, badgeVariants }

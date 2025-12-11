@@ -86,7 +86,7 @@ export default function MapView() {
           }
         },
         (error) => {
-          console.log("Location access denied");
+          // console.log("Location access denied");
         }
       );
     }
@@ -329,7 +329,7 @@ export default function MapView() {
             markers={mapMarkers}
             userLocation={userLocation}
             onMapClick={(position) => {
-              console.log('Map clicked:', position);
+              // console.log('Map clicked:', position);
             }}
           />
         )}

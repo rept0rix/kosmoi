@@ -2,6 +2,12 @@ import React from 'react';
 import { Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
+/**
+ * Contact Page
+ *
+ * Displays contact information (Email, WhatsApp, Office) and a quick message form.
+ * Includes information for business partnerships.
+ */
 const Contact = () => {
     return (
         <div className="min-h-screen bg-white py-20 px-4">

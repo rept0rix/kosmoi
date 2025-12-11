@@ -27,6 +27,20 @@ const categories = {
     taxi: "Taxi",
 };
 
+/**
+ * Popup card component for map markers showing provider details.
+ *
+ * @param {Object} props
+ * @param {Object} props.provider - The provider data object (see ProviderCard for typedef)
+ * @param {number} [props.provider.average_rating]
+ * @param {string} props.provider.business_name
+ * @param {string} props.provider.category
+ * @param {string} [props.provider.phone]
+ * @param {string} [props.provider.whatsapp]
+ * @param {number} props.provider.latitude
+ * @param {number} props.provider.longitude
+ * @param {() => void} props.onClose - Callback to close the popup
+ */
 export default function MapProviderCard({ provider, onClose }) {
     const navigate = useNavigate();
 

@@ -7,7 +7,6 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { setupIframeMessaging } from './lib/iframe-messaging';
-import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AgentCommandCenter from '@/pages/AgentCommandCenter';
@@ -36,6 +35,9 @@ import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
+import BoardRoom from '@/pages/BoardRoom';
+import NotFound from '@/pages/NotFound';
+import LocalBrain from '@/pages/LocalBrain';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -103,22 +105,11 @@ const AuthenticatedApp = () => {
 
             {/* Admin & Vendor Routes */}
             <Route path="/command-center" element={<CommandCenter />} />
-            import BoardRoom from '@/pages/BoardRoom';
-            // ...
-            {/* Admin & Vendor Routes */}
-            <Route path="/command-center" element={<CommandCenter />} />
-            {/* Switched to BoardRoom as requested by user ("missing screen with daily tasks etc") */}
             <Route path="/board-room" element={<BoardRoom />} />
+
             {/* Admin Routes (New Layout) */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<CommandCenter />} />
-              {/* Note: I'm making CommandCenter the default admin view, replacing AdminOverview if that's preferred, 
-                  or I can keep them separate. The user complained about missing sidebar in Command Center. 
-                  Let's make /admin/command-center explicit or just use it as the main dashboard. 
-                  User said "Command Center... is what it was before". 
-                  Let's map /admin/dashboard to CommandCenter or just keep /admin point to it?
-                  The existing code had <Route index element={<AdminOverview />} />.
-                  I will add CommandCenter and BoardRoom here. */}
               <Route path="overview" element={<AdminOverview />} />
               <Route path="command-center" element={<CommandCenter />} />
               <Route path="board-room" element={<BoardRoom />} />
@@ -130,6 +121,7 @@ const AuthenticatedApp = () => {
               <Route path="logs" element={<div className="p-8 text-slate-400">System Logs Coming Soon...</div>} />
               <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
             </Route>
+
             <Route path="/admin-importer" element={<AdminImporter />} />
             <Route path="/vendor-signup" element={<VendorSignup />} />
             <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
@@ -145,19 +137,15 @@ const AuthenticatedApp = () => {
             <Route path="/business-info" element={<BusinessInfo />} />
             <Route path="/contact" element={<Contact />} />
 
-            <Route path="*" element={<PageNotFound />} />
+            <Route path="/local-brain" element={<LocalBrain />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
-        <Footer />
+
       </div>
     </LayoutWrapper>
   );
 };
-
-
-// import AIConcierge from '@/components/AIConcierge'; // Removed in favor of full page
-
-// ... (existing imports)
 
 function App() {
 

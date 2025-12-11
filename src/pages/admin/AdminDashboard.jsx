@@ -1,6 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
-import { AdminService } from '../../services/AdminService';
+import { useAdminStats } from '../../hooks/useAdminStats';
 import UserTable from '../../components/admin/UserTable';
 import BusinessTable from '../../components/admin/BusinessTable';
 import { Card } from "@/components/ui/card";
@@ -8,47 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Building2, DollarSign, TrendingUp, Activity } from 'lucide-react';
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState({ totalUsers: 0, totalBusinesses: 0, mrr: 0, activeSubscriptions: 0 });
-    const [users, setUsers] = useState([]);
-    const [businesses, setBusinesses] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const [usersData, businessesData, statsData] = await Promise.all([
-                AdminService.getUsers(),
-                AdminService.getBusinesses(),
-                AdminService.getStats()
-            ]);
-
-            setUsers(usersData);
-            setBusinesses(businessesData);
-            setStats(statsData);
-        } catch (e) {
-            console.error("Dashboard Load Failed", e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, []); // Only runs once on mount, but actions will call loadData
-
-    const handleUserAction = async (type, user) => {
-        if (type === 'ban') {
-            await AdminService.toggleUserBan(user.id);
-            await loadData();
-        }
-    };
-
-    const handleBusinessAction = async (type, business) => {
-        if (type === 'verify') {
-            await AdminService.toggleBusinessVerification(business.id);
-            await loadData();
-        }
-    };
+    const {
+        stats,
+        users,
+        businesses,
+        loading,
+        handleUserAction,
+        handleBusinessAction
+    } = useAdminStats();
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8 space-y-8 font-sans">

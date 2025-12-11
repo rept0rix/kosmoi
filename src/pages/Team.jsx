@@ -25,12 +25,19 @@ const AVATAR_MAP = {
 const getAvatarUrl = (seed) => `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=transparent`;
 const DEFAULT_AVATAR = getAvatarUrl('general');
 
+/**
+ * Team Page
+ *
+ * visualizes the "Synthetic Collective" of autonomous agents.
+ * Displays agents grouped by hierarchy/layer with detailed inspection views
+ * of their system prompts and capabilities.
+ */
 const Team = () => {
     const [selectedAgent, setSelectedAgent] = useState(null);
 
     useEffect(() => {
         // Debugging Agent Models
-        console.log("Team Page Loaded. Agents:", agents.map(a => `${a.role}: ${a.model}`));
+        // console.log("Team Page Loaded. Agents:", agents.map(a => `${a.role}: ${a.model}`));
     }, []);
 
     // Group agents by layer for better organization

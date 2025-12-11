@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils"
 
 const Tabs = TabsPrimitive.Root
 
+/**
+ * @typedef {import("@radix-ui/react-tabs").TabsListProps & { children: React.ReactNode }} TabsListProps
+ */
+
+/**
+ * @type {React.ForwardRefExoticComponent<TabsListProps & React.RefAttributes<HTMLDivElement>>}
+ */
 const TabsList = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
@@ -16,6 +23,13 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
 ))
 TabsList.displayName = TabsPrimitive.List.displayName
 
+/**
+ * @typedef {import("@radix-ui/react-tabs").TabsTriggerProps & { children: React.ReactNode }} TabsTriggerProps
+ */
+
+/**
+ * @type {React.ForwardRefExoticComponent<TabsTriggerProps & React.RefAttributes<HTMLButtonElement>>}
+ */
 const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
@@ -27,6 +41,13 @@ const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => (
 ))
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
+/**
+ * @typedef {import("@radix-ui/react-tabs").TabsContentProps & { children: React.ReactNode }} TabsContentProps
+ */
+
+/**
+ * @type {React.ForwardRefExoticComponent<TabsContentProps & React.RefAttributes<HTMLDivElement>>}
+ */
 const TabsContent = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}

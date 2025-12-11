@@ -2,7 +2,13 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Building2, CheckCircle2, AlertCircle, CreditCard } from "lucide-react";
+import { MoreHorizontal, Building2, CheckCircle2, AlertCircle, CreditCard, Info } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function BusinessTable({ businesses, onAction }) {
     return (
@@ -44,14 +50,26 @@ export default function BusinessTable({ businesses, onAction }) {
                                     {biz.category}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex flex-col gap-1">
-                                        <Badge variant="outline" className={
-                                            isVerified
-                                                ? "w-fit border-blue-500/30 text-blue-400 bg-blue-500/10"
-                                                : "w-fit border-slate-700 text-slate-500"
-                                        }>
-                                            {plan} Plan
-                                        </Badge>
+                                    <div className="flex flex-col gap-1 items-start">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span tabIndex={0} className="cursor-help inline-flex">
+                                                        <Badge variant="outline" className={
+                                                            isVerified
+                                                                ? "w-fit border-blue-500/30 text-blue-400 bg-blue-500/10"
+                                                                : "w-fit border-slate-700 text-slate-500"
+                                                        }>
+                                                            {plan} Plan
+                                                        </Badge>
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="bg-slate-900 border-slate-700 text-slate-300">
+                                                    <p>{isVerified ? 'Verified Pro Plan (Monthly)' : 'Free Basic Listing'}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+
                                         <span className="text-[10px] text-green-400 flex items-center gap-1">
                                             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                             Active

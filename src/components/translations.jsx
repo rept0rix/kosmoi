@@ -8,6 +8,19 @@ export const translations = {
     profile: "โปรไฟล์",
 
     // Home Page
+    // Home Page
+    "hero.badge": "ระบบนิเวศ AI",
+    "hero.title": "การเชื่อมต่อที่เชื่อถือได้สู่เกาะสมุย",
+    "hero.subtitle": "ค้นหาบริการที่ตรวจสอบแล้วและสำรวจเกาะด้วย AI",
+    "hero.join_pro": "เข้าร่วมเป็นผู้ให้บริการ",
+    "hero.learn_more": "เรียนรู้เพิ่มเติม",
+    "hero.feature_smart": "ผู้ช่วย AI",
+    "hero.feature_smart_desc": "รับคําแนะนําทันที",
+    "hero.feature_verified": "ตรวจสอบแล้ว",
+    "hero.feature_verified_desc": "เชื่อมต่อกับผู้เชี่ยวชาญที่เชื่อถือได้",
+    "hero.feature_map": "แผนที่",
+    "hero.feature_map_desc": "ค้นพบบริการรอบตัวคุณ",
+
     findLocalServices: "ค้นหาบริการในพื้นที่",
     searchService: "ค้นหาบริการ...",
     categories: "หมวดหมู่",
@@ -186,6 +199,19 @@ export const translations = {
     profile: "Профиль",
 
     // Home Page
+    // Home Page
+    "hero.badge": "Экосистема с ИИ",
+    "hero.title": "Ваша надежная связь с Самуи",
+    "hero.subtitle": "Находите проверенные услуги и исследуйте остров с помощью ИИ",
+    "hero.join_pro": "Стать профи",
+    "hero.learn_more": "Узнать больше",
+    "hero.feature_smart": "Умный ИИ",
+    "hero.feature_smart_desc": "Мгновенные ответы и советы",
+    "hero.feature_verified": "Проверено",
+    "hero.feature_verified_desc": "Надежные местные эксперты",
+    "hero.feature_map": "Интерактивная карта",
+    "hero.feature_map_desc": "Услуги рядом с вами",
+
     findLocalServices: "Найти местные услуги",
     searchService: "Поиск услуги...",
     categories: "Категории",
@@ -434,6 +460,19 @@ export const translations = {
     profile: "פרופיל",
 
     // Home Page
+    // Home Page
+    "hero.badge": "מערכת מבוססת AI",
+    "hero.title": "החיבור האמין שלך לקוסמוי",
+    "hero.subtitle": "מצא שירותים מאומתים וחקור את האי בעזרת AI",
+    "hero.join_pro": "הצטרף כמקצוען",
+    "hero.learn_more": "למד עוד",
+    "hero.feature_smart": "עוזר חכם",
+    "hero.feature_smart_desc": "קבל המלצות ותשובות מיידיות",
+    "hero.feature_verified": "ספקים מאומתים",
+    "hero.feature_verified_desc": "התחבר למומחים אמינים",
+    "hero.feature_map": "מפה אינטראקטיבית",
+    "hero.feature_map_desc": "גלה שירותים סביבך",
+
     findLocalServices: "מצא שירותים מקומיים",
     searchService: "חפש שירות...",
     categories: "קטגוריות",
@@ -612,6 +651,19 @@ export const translations = {
     profile: "Profile",
 
     // Home Page
+    // Home Page
+    "hero.badge": "AI-Powered Ecosystem",
+    "hero.title": "Your Trusted Connection to Koh Samui",
+    "hero.subtitle": "Find verified services and explore the island with AI help",
+    "hero.join_pro": "Join as Pro",
+    "hero.learn_more": "Learn More",
+    "hero.feature_smart": "Smart AI",
+    "hero.feature_smart_desc": "Get instant answers and tips",
+    "hero.feature_verified": "Verified Pros",
+    "hero.feature_verified_desc": "Connect with trusted experts",
+    "hero.feature_map": "Interactive Map",
+    "hero.feature_map_desc": "Discover services near you",
+
     findLocalServices: "Find Local Services",
     searchService: "Search for a service...",
     categories: "Categories",

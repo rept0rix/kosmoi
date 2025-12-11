@@ -161,7 +161,7 @@ export default function Dashboard() {
         setLoadingAddress(true);
         try {
           const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-          console.log('Fetched addresses:', addresses);
+          // console.log('Fetched addresses:', addresses);
 
           if (addresses.en) {
             setLocationAddressEn(addresses.en);
@@ -180,7 +180,7 @@ export default function Dashboard() {
         localStorage.setItem('locationName', t('currentLocation'));
       },
       (error) => {
-        console.log("Location access error:", error);
+        // console.log("Location access error:", error);
         setLocationPermission('denied');
         if (error.code === error.PERMISSION_DENIED) {
           setLocationError('נדרשת הרשאה למיקום');
@@ -216,7 +216,7 @@ export default function Dashboard() {
     setLoadingAddress(true);
     try {
       const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-      console.log('Fetched addresses for predefined location:', addresses);
+      // console.log('Fetched addresses for predefined location:', addresses);
 
       if (addresses.en) {
         setLocationAddressEn(addresses.en);

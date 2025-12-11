@@ -61,35 +61,36 @@ export default function AgentDetailsDialog({ agent, isOpen, onClose, onSave }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-4 sm:p-6 mb-0 sm:mb-2 w-[95vw] rounded-xl sm:rounded-lg">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
                         <DialogTitle className="text-xl flex items-center gap-2">
                             {agent.icon && <span>{agent.icon}</span>}
-                            Details: {agent.role}
+                            <span className="truncate">Details: {agent.role}</span>
                         </DialogTitle>
-                        <Badge variant="outline">{agent.layer}</Badge>
+                        <Badge variant="outline" className="hidden sm:inline-flex">{agent.layer}</Badge>
                     </div>
                     <DialogDescription>
                         Internal ID: <span className="font-mono text-xs">{agent.id}</span>
+                        <Badge variant="outline" className="ml-2 sm:hidden text-[10px]">{agent.layer}</Badge>
                     </DialogDescription>
                 </DialogHeader>
 
-                <Tabs defaultValue="prompt" className="flex-1 overflow-hidden flex flex-col">
-                    <TabsList>
+                <Tabs defaultValue="prompt" className="flex-1 overflow-hidden flex flex-col mt-2">
+                    <TabsList className="w-full justify-start overflow-x-auto">
                         <TabsTrigger value="prompt">System Prompt</TabsTrigger>
                         <TabsTrigger value="info">Info & Tools</TabsTrigger>
                         <TabsTrigger value="hierarchy">Hierarchy</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="prompt" className="flex-1 flex flex-col gap-4 p-1">
-                        <div className="flex flex-col gap-2 flex-1">
+                    <TabsContent value="prompt" className="flex-1 flex flex-col gap-4 py-4 data-[state=active]:flex">
+                        <div className="flex flex-col gap-2 flex-1 min-h-0">
                             <Label>System Instruction (Persona)</Label>
-                            <ScrollArea className="h-[300px] border rounded-md">
+                            <ScrollArea className="flex-1 border rounded-md min-h-[200px]">
                                 <Textarea
                                     value={systemPrompt}
                                     onChange={(e) => setSystemPrompt(e.target.value)}
-                                    className="min-h-[300px] border-none focus-visible:ring-0 font-mono text-xs p-4 resize-none"
+                                    className="min-h-full border-none focus-visible:ring-0 font-mono text-xs p-4 resize-none"
                                 />
                             </ScrollArea>
                             <p className="text-xs text-slate-500">
@@ -98,8 +99,8 @@ export default function AgentDetailsDialog({ agent, isOpen, onClose, onSave }) {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="info" className="space-y-4 p-1">
-                        <div className="grid grid-cols-2 gap-4">
+                    <TabsContent value="info" className="space-y-4 py-4 overflow-y-auto">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Role Name</Label>
                                 <Input value={role} onChange={(e) => setRole(e.target.value)} />
@@ -122,7 +123,7 @@ export default function AgentDetailsDialog({ agent, isOpen, onClose, onSave }) {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="hierarchy" className="space-y-4 p-1">
+                    <TabsContent value="hierarchy" className="space-y-4 py-4 overflow-y-auto">
                         <div className="p-4 bg-slate-50 border rounded-lg">
                             <h3 className="font-bold text-sm mb-4">Reporting Structure</h3>
                             <div className="flex flex-col gap-4 items-center">

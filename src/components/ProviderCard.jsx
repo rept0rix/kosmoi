@@ -75,6 +75,29 @@ const categoryIcons = {
   fashion: ShoppingBag
 };
 
+/**
+ * @typedef {Object} ServiceProvider
+ * @property {string} id - The provider's ID
+ * @property {string} category - The service category
+ * @property {string} business_name - name of the business
+ * @property {string} [contact_name] - contact person name
+ * @property {number} [average_rating] - average rating
+ * @property {number} [total_reviews] - total number of reviews
+ * @property {string[]} [images] - array of image URLs
+ * @property {boolean} [verified] - whether the provider is verified
+ * @property {string} [phone] - phone number
+ * @property {string} [location] - location string
+ * @property {number} [distance] - distance from user in km
+ */
+
+/**
+ * Card component to display service provider information.
+ *
+ * @param {Object} props
+ * @param {ServiceProvider} props.provider - The provider data object
+ * @param {(phone: string) => void} props.onCall - Callback function for call button
+ * @param {boolean} [props.showDistance=false] - Whether to show distance from user
+ */
 export default function ProviderCard({ provider, onCall, showDistance = false }) {
   const navigate = useNavigate();
   const { language } = useLanguage();
