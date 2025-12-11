@@ -115,8 +115,8 @@ export default function LocalBrain() {
                                             {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                                         </div>
                                         <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user'
-                                                ? 'bg-blue-600 text-white rounded-tr-none'
-                                                : 'bg-white border shadow-sm rounded-tl-none text-gray-800'
+                                            ? 'bg-blue-600 text-white rounded-tr-none'
+                                            : 'bg-white border shadow-sm rounded-tl-none text-gray-800'
                                             }`}>
                                             <div className="prose prose-sm dark:prose-invert max-w-none break-words">
                                                 <Markdown>{msg.content}</Markdown>
@@ -168,6 +168,7 @@ export default function LocalBrain() {
                                 <Button
                                     type="submit"
                                     size="icon"
+                                    aria-label="Send Message"
                                     disabled={!isReady || isGenerating || !input.trim()}
                                     className={isGenerating ? "animate-pulse" : ""}
                                 >

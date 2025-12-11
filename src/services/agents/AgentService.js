@@ -208,6 +208,26 @@ Approval ID: ${data.id}`;
             }
 
         case "research":
+            return "[System] Research tool is a placeholder. Use 'browser' for web research.";
+
+        case "linter":
+            // payload: { path }
+            try {
+                const target = payload.path || ".";
+                const { exec } = await import('child_process');
+                return await new Promise((resolve) => {
+                    exec(`npx eslint "${target}"`, (error, stdout, stderr) => {
+                        if (error) {
+                            // Lint errors properly returned as result, not tool error
+                            resolve(`[Linter] Issues found:\n${stdout}`);
+                        } else {
+                            resolve(`[Linter] No issues found in ${target}.`);
+                        }
+                    });
+                });
+            } catch (e) {
+                return `[Linter] Check failed: ${e.message}`;
+            }
 
         case "spreadsheet":
             return "Simulated spreadsheet: Textual table instead of Excel.";
@@ -445,6 +465,7 @@ URL: ${imageUrl}`;
                 const { title, description, severity } = payload;
                 const agentId = options.agentId;
                 const agentConfig = getAgentById(agentId);
+                // @ts-ignore
                 const managerId = agentConfig?.reportsTo;
 
                 if (!managerId) {
@@ -708,6 +729,56 @@ URL: ${imageUrl}`;
             } catch (e) {
                 console.error("Notify Admin failed:", e);
                 return `[Error] Failed to notify admin: ${e.message}`;
+            }
+
+        case "calendar-api":
+        case "scheduler":
+            // payload: { action, date, providerId, bookingId, details }
+            try {
+                // Dynamic import to avoid circular dependencies if any
+                const { BookingService } = await import("../BookingService.js");
+                const { action } = payload;
+
+                if (action === "get_slots") {
+                    const slots = await BookingService.getAvailableSlots(payload.date, payload.providerId);
+                    return `[Calendar] Available slots for ${payload.date}: ${slots.join(", ")}`;
+                } else if (action === "create_booking") {
+                    const booking = await BookingService.createBooking(payload.details);
+                    return `[Calendar] Booking Confirmed! ID: ${booking.id}. Details: ${JSON.stringify(booking)}`;
+                } else if (action === "cancel_booking") {
+                    await BookingService.cancelBooking(payload.bookingId);
+                    return `[Calendar] Booking ${payload.bookingId} cancelled.`;
+                } else {
+                    return `[Error] Unknown calendar action: ${action}`;
+                }
+            } catch (e) {
+                console.error("Calendar action failed:", e);
+                return `[Error] Calendar failed: ${e.message}`;
+            }
+
+        case "payment-gateway":
+        case "ledger":
+        case "invoice-generator":
+            // payload: { action, amount, currency, description, walletId }
+            try {
+                const { PaymentService } = await import("../PaymentService.js");
+                const { action } = payload;
+
+                if (action === "create_link" || toolName === "invoice-generator") {
+                    const link = await PaymentService.createPaymentLink(payload.amount, payload.currency, payload.description);
+                    return `[Payment] Link Created: ${link.url} (Amount: ${link.amount} ${link.currency})`;
+                } else if (action === "get_balance" || toolName === "ledger") {
+                    const balance = await PaymentService.getBalance(payload.walletId || "default");
+                    return `[Payment] Wallet Balance: ${balance.available} ${balance.currency} (Pending: ${balance.pending})`;
+                } else if (action === "history") {
+                    const history = await PaymentService.getTransactionHistory(payload.walletId || "default");
+                    return `[Payment] Recent Transactions:\n${history.map(t => `- ${t.date}: ${t.type.toUpperCase()} ${t.amount} (${t.description})`).join('\n')}`;
+                } else {
+                    return `[Error] Unknown payment action: ${action}`;
+                }
+            } catch (e) {
+                console.error("Payment action failed:", e);
+                return `[Error] Payment failed: ${e.message}`;
             }
 
         default:

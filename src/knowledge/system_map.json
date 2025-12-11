@@ -1,0 +1,72 @@
+{
+    "projectName": "samui-service-hub",
+    "version": "0.0.0",
+    "description": "Multi-agent AI platform with Board Room interface and Autonomous capabilities.",
+    "techStack": {
+        "frontend": "React, Vite, TailwindCSS, ShadcnUI",
+        "backend": "Supabase (Auth, DB, Realtime)",
+        "ai": "Wiki (Local LLM), Google Gemini (Cloud), Orchestration (Custom)"
+    },
+    "architecture": {
+        "modules": [
+            {
+                "name": "BoardRoom",
+                "path": "src/pages/BoardRoom.jsx",
+                "type": "Core Feature",
+                "description": "Main interface for User-Agent collaboration.",
+                "dependencies": [
+                    "useBoardRoom",
+                    "AgentService"
+                ]
+            },
+            {
+                "name": "Agent Core",
+                "path": "src/services/agents/",
+                "type": "Service Layer",
+                "description": "Logic for Agent Registry, Brain, and Orchestration.",
+                "components": [
+                    "AgentRegistry.js",
+                    "AgentService.js",
+                    "AgentBrain.js",
+                    "BoardOrchestrator.js"
+                ]
+            },
+            {
+                "name": "Local Intelligence",
+                "path": "src/services/ai/useLocalLLM.js",
+                "type": "Service Layer",
+                "description": "WebLLM integration for privacy-first inference."
+            },
+            {
+                "name": "Company Knowledge",
+                "path": "src/knowledge/",
+                "type": "Data Layer",
+                "description": "Storage for SOPs, PRDs, and n8n workflows."
+            },
+            {
+                "name": "Landing Page",
+                "path": "src/pages/Home.jsx",
+                "type": "Public UI",
+                "description": "Marketing site for the platform."
+            }
+        ],
+        "services": [
+            "PaymentService",
+            "HeatmapService",
+            "WorkflowService"
+        ]
+    },
+    "agents": {
+        "active": [
+            "ceo-agent",
+            "tech-lead-agent",
+            "product-founder-agent",
+            "growth-agent"
+        ],
+        "dormant": [
+            "qa-agent",
+            "consistency-auditor",
+            "vector-search-agent"
+        ]
+    }
+}

@@ -4,6 +4,7 @@ const WORKER_PATH = new URL('./LocalLLMWorker.js', import.meta.url).href;
 
 export function useLocalLLM() {
     const workerRef = useRef(null);
+    const pendingParamsRef = useRef(null); // { resolve, reject }
     const [isReady, setIsReady] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
@@ -28,8 +29,6 @@ export function useLocalLLM() {
                         break;
                     case 'INIT_PROGRESS':
                         setLoadingText(payload.text);
-                        // payload.progress uses 0-1 range typically, or string progress
-                        // We'll trust the text for now or try to parse
                         break;
                     case 'INIT_COMPLETE':
                         setIsDownloading(false);
@@ -43,11 +42,19 @@ export function useLocalLLM() {
                     case 'GENERATE_COMPLETE':
                         setIsGenerating(false);
                         setResponse(payload.output);
+                        if (pendingParamsRef.current) {
+                            pendingParamsRef.current.resolve(payload.output);
+                            pendingParamsRef.current = null;
+                        }
                         break;
                     case 'ERROR':
                         setError(payload);
                         setIsDownloading(false);
                         setIsGenerating(false);
+                        if (pendingParamsRef.current) {
+                            pendingParamsRef.current.reject(payload);
+                            pendingParamsRef.current = null;
+                        }
                         break;
                 }
             };
@@ -69,13 +76,16 @@ export function useLocalLLM() {
         });
     }, []);
 
-    const generate = useCallback((prompt, options = {}) => {
-        setError(null);
-        setResponse('');
-        setIsGenerating(true);
-        workerRef.current.postMessage({
-            type: 'GENERATE',
-            payload: { prompt, options }
+    const generate = useCallback((input, options = {}) => {
+        return new Promise((resolve, reject) => {
+            pendingParamsRef.current = { resolve, reject };
+            setError(null);
+            setResponse('');
+            setIsGenerating(true);
+            workerRef.current.postMessage({
+                type: 'GENERATE',
+                payload: { input, options }
+            });
         });
     }, []);
 
@@ -87,7 +97,7 @@ export function useLocalLLM() {
     return {
         isReady,
         isDownloading,
-        downloadProgress, // Note: Simplified mapping, consider parsing detailed progress
+        downloadProgress,
         loadingText,
         isGenerating,
         response,

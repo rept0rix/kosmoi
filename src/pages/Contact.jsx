@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import AuthGate from '@/components/AuthGate';
 
 /**
  * Contact Page
@@ -82,9 +83,11 @@ const Contact = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
                                 <textarea rows={4} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="How can we help?"></textarea>
                             </div>
-                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6">
-                                Send Message
-                            </Button>
+                            <AuthGate>
+                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6">
+                                    Send Message
+                                </Button>
+                            </AuthGate>
                         </form>
                     </div>
                 </div>

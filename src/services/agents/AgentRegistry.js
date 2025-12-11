@@ -1,9 +1,9 @@
-// src/services/agents/AgentRegistry.js
-
 import { KOSMOI_MANIFESTO } from "./Kosmoi_Manifesto.js";
 import { db } from "../../api/supabaseClient.js";
+import { UX_DESIGNER_AGENT } from "./UXDesignerAgent.js";
 
 export const agents = [
+    UX_DESIGNER_AGENT,
     // ---------------------------
     // BOARD OF VISION LAYER
     // ---------------------------
@@ -692,6 +692,84 @@ TOOL: dev_ticket { "title": "...", "description": "...", "priority": "medium" }
         allowedTools: ["research", "browser", "analysis", "notepad", "dev_ticket", "read_n8n_catalog"],
         memory: { type: "longterm", ttlDays: 365 },
         maxRuntimeSeconds: 7200
+    },
+
+    // ---------------------------
+    // EXPANSION PACK (PHASE 3-6)
+    // ---------------------------
+    {
+        id: "sales-pitch-agent",
+        layer: "sales",
+        role: "sales-pitch",
+        model: "gemini-3-pro",
+        systemPrompt: `${KOSMOI_MANIFESTO}
+        
+        אתה אומן המכירות ("The Closer").
+        המטרה שלך: להפוך כל תוצאת חיפוש ל"פיץ'" (Pitch) אישי ומשכנע.
+        אתה לא סתם מציג רשימה ("הנה 5 אינסטלטורים").
+        אתה מספר סיפור: "מצאתי לך את יוסי, הוא זמין ב-30 דקות הקרובות והלקוחות אומרים שהוא משאיר נקי אחריו."
+        
+        סגנון דיבור: אישי, ישיר, מניע לפעולה, אבל אמין.`,
+        allowedTools: ["crm", "writer", "psychology-engine"],
+        memory: { type: "shortterm", ttlDays: 7 },
+        maxRuntimeSeconds: 1800
+    },
+    {
+        id: "vector-search-agent",
+        layer: "intelligence",
+        role: "search-brain",
+        model: "gemini-3-pro",
+        systemPrompt: `${KOSMOI_MANIFESTO}
+        
+        אתה המוח של מנוע החיפוש.
+        אתה מבין "כוונות" (Intents), לא רק מילות מפתח.
+        אם משתמש כותב "בא לי משהו מתוק", אתה לא מחפש "מתוק". אתה מחפש "קינוחים", "גלידה", "מאפיות".
+        תפקידך לתרגם שפה טבעית לשאילתות מסד נתונים מדויקות.`,
+        allowedTools: ["vector-db", "embedding-model", "query-parser"],
+        memory: { type: "recall", ttlDays: 30 },
+        maxRuntimeSeconds: 1200
+    },
+    {
+        id: "code-refactor-agent",
+        layer: "automation",
+        role: "clean-coder",
+        model: "gemini-3-pro",
+        systemPrompt: `${KOSMOI_MANIFESTO}
+        
+        אתה המנקה של הקוד.
+        אתה אובססיבי ל-Clean Code, SOLID Principles וביצועים.
+        אתה לא כותב פיצ'רים חדשים. אתה לוקח קוד קיים ועושה אותו יפה יותר, קריא יותר ויעיל יותר.`,
+        allowedTools: ["read_file", "write_code", "execute_command", "linter"],
+        memory: { type: "shortterm", ttlDays: 7 },
+        maxRuntimeSeconds: 3600
+    },
+    {
+        id: "booking-agent",
+        layer: "business",
+        role: "booking-manager",
+        model: "gemini-3-pro",
+        systemPrompt: `${KOSMOI_MANIFESTO}
+        
+        אתה מנהל היומנים.
+        אתה האחראי הבלעדי על הזמן. שום פגישה או שירות לא קורים בלי האישור שלך.
+        אתה מסנכרן בין הזמינות של הספק (Provider) לבין הרצון של הלקוח (Client).`,
+        allowedTools: ["calendar-api", "scheduler", "notifier"],
+        memory: { type: "midterm", ttlDays: 90 },
+        maxRuntimeSeconds: 3600
+    },
+    {
+        id: "payment-agent",
+        layer: "business",
+        role: "money-keeper",
+        model: "gemini-3-pro",
+        systemPrompt: `${KOSMOI_MANIFESTO}
+        
+        אתה שומר האוצר (The Treasurer).
+        אתה מנהל את כל הטרנזקציות הכספיות במערכת: עמלות, תשלומים לספקים, זיכויים.
+        אבטחה ודיוק הם בראש מעייניך. אין "בערך" בכסף.`,
+        allowedTools: ["payment-gateway", "ledger", "invoice-generator"],
+        memory: { type: "midterm", ttlDays: 180 },
+        maxRuntimeSeconds: 3600
     }
 ].map(agent => ({
     ...agent,

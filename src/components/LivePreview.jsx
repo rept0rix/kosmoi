@@ -1,22 +1,50 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { RefreshCw, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+import { supabase } from '@/lib/instance';
 
 const LivePreview = ({
     initialUrl = 'http://localhost:5173',
     onSplitViewToggle,
-    isSplitView
+    isSplitView,
+    additionalActions,
+    overlay
 }) => {
     const [url, setUrl] = useState(initialUrl);
     const [inputUrl, setInputUrl] = useState(initialUrl);
     const [key, setKey] = useState(0); // Used to force iframe refresh
     const [lastUpdate, setLastUpdate] = useState(null);
     const iframeRef = useRef(null);
+    const containerRef = useRef(null);
+
+    // UX Vision / Heatmap State
+    const [showHeatmap, setShowHeatmap] = useState(false);
+    const [heatmapData, setHeatmapData] = useState([]);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+    // Measure container for heatmap
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const updateDims = () => {
+            const { clientWidth, clientHeight } = containerRef.current;
+            setDimensions({ width: clientWidth, height: clientHeight });
+        };
+        updateDims();
+        window.addEventListener('resize', updateDims);
+        return () => window.removeEventListener('resize', updateDims);
+    }, []);
+
+    // Toggle Heatmap Logic
+    const toggleHeatmap = () => {
+        if (!showHeatmap) {
+            // Generating...
+            const data = HeatmapService.generateHeatmapData(dimensions.width, dimensions.height);
+            setHeatmapData(data);
+        }
+        setShowHeatmap(!showHeatmap);
+    };
 
     // Auto-refresh on task completion
     useEffect(() => {
@@ -77,6 +105,17 @@ const LivePreview = ({
                 <div className="flex gap-1">
                     <Button
                         size="icon"
+                        variant={showHeatmap ? "default" : "ghost"}
+                        className={`h-6 w-6 ${showHeatmap ? 'bg-purple-600 text-white hover:bg-purple-700' : 'text-purple-600 hover:bg-purple-50'}`}
+                        onClick={toggleHeatmap}
+                        title="Toggle UX Vision (Heatmap)"
+                    >
+                        {showHeatmap ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                    </Button>
+
+                    {additionalActions}
+                    <Button
+                        size="icon"
                         variant="ghost"
                         className={`h-6 w-6 ${isSplitView ? 'text-blue-600 bg-blue-100' : 'text-gray-500'}`}
                         onClick={onSplitViewToggle}
@@ -101,15 +140,25 @@ const LivePreview = ({
             )}
 
             {/* Iframe */}
-            <div className="flex-1 relative bg-white">
+            <div className="flex-1 relative bg-white" ref={containerRef}>
                 <iframe
                     key={key}
                     ref={iframeRef}
                     src={url}
-                    className="w-full h-full border-0"
+                    className="w-full h-full border-0 relative z-0"
                     title="Live Preview"
                     sandbox="allow-same-origin allow-scripts allow-forms"
                 />
+
+                {/* Heatmap Layer */}
+                <HeatmapOverlay
+                    width={dimensions.width}
+                    height={dimensions.height}
+                    data={heatmapData}
+                    visible={showHeatmap}
+                />
+
+                {overlay}
             </div>
         </div>
     );

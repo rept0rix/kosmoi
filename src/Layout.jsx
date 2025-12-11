@@ -52,7 +52,7 @@ function LayoutContent({ children }) {
   // --- Navigation Items ---
   // Only for APP Zone
   let appNavItems = [
-    { title: t('nav.home'), url: createPageUrl("Dashboard"), icon: Home },
+    { title: t('nav.home'), url: createPageUrl("App"), icon: Home },
     { title: t('nav.search'), url: createPageUrl("ServiceProviders"), icon: Search },
     { title: t('nav.ai'), url: createPageUrl("AIChat"), icon: Sparkles },
     { title: t('nav.map'), url: createPageUrl("MapView"), icon: Map },
@@ -91,107 +91,105 @@ function LayoutContent({ children }) {
                 className="h-10 w-auto object-contain"
               />
             ) : (
-            ): (
-                <>
+              <>
                 <img
-                  src = { isAdminZone? '/kosmoi_logo_white.svg': '/kosmoi_logo.svg' } 
-                  alt = "Kosmoi"
-                  className = "h-10 w-auto object-contain"
-                  onError = { (e) => {
+                  src={isAdminZone ? '/kosmoi_logo_white.svg' : '/kosmoi_logo.svg'}
+                  alt="Kosmoi"
+                  className="h-10 w-auto object-contain"
+                  onError={(e) => {
                     const target = e.currentTarget;
-            target.style.display = 'none';
-            if (target.nextSibling) {
-              target.nextSibling.style.display = 'block';
+                    target.style.display = 'none';
+                    if (target.nextSibling && target.nextSibling instanceof HTMLElement) {
+                      target.nextSibling.style.display = 'block';
                     }
                   }}
                 />
-            <span className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent ${isAdminZone ? 'from-white to-slate-400' : ''}`} style={{ display: 'none' }}>
-              {isAdminZone ? 'Kosmoi ADMIN' : (isBusinessZone ? 'Kosmoi BUSINESS' : config.appName)}
-            </span>
-          </>
+                <span className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent ${isAdminZone ? 'from-white to-slate-400' : ''}`} style={{ display: 'none' }}>
+                  {isAdminZone ? 'Kosmoi ADMIN' : (isBusinessZone ? 'Kosmoi BUSINESS' : config.appName)}
+                </span>
+              </>
             )}
+          </Link>
+
+          <div className="flex items-center gap-3">
+            {/* Public Zone Context Links */}
+            {isPublicZone && (
+              <div className="hidden md:flex items-center gap-4 text-sm font-medium text-gray-600 mr-4">
+                <Link to="/about" className="hover:text-blue-600">{t('nav.about')}</Link>
+                <Link to="/team" className="hover:text-blue-600">{t('nav.team')}</Link>
+                <Link to="/business-info" className="hover:text-blue-600">{t('nav.business')}</Link>
+              </div>
             )}
-        </Link>
 
-        <div className="flex items-center gap-3">
-          {/* Public Zone Context Links */}
-          {isPublicZone && (
-            <div className="hidden md:flex items-center gap-4 text-sm font-medium text-gray-600 mr-4">
-              <Link to="/about" className="hover:text-blue-600">{t('nav.about')}</Link>
-              <Link to="/team" className="hover:text-blue-600">{t('nav.team')}</Link>
-              <Link to="/business-info" className="hover:text-blue-600">{t('nav.business')}</Link>
-            </div>
-          )}
+            {!isAdminZone && !isBusinessZone && <MiniWeather />}
 
-          {!isAdminZone && !isBusinessZone && <MiniWeather />}
+            <Button
+              onClick={toggleLanguage}
+              variant="ghost"
+              size="sm"
+              className={`flex items-center gap-2 ${isAdminZone ? 'text-slate-300 hover:text-white hover:bg-slate-800' : ''}`}
+            >
+              <Languages className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {i18n.language === 'he' ? 'EN' : 'עב'}
+              </span>
+            </Button>
 
-          <Button
-            onClick={toggleLanguage}
-            variant="ghost"
-            size="sm"
-            className={`flex items-center gap-2 ${isAdminZone ? 'text-slate-300 hover:text-white hover:bg-slate-800' : ''}`}
-          >
-            <Languages className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {i18n.language === 'he' ? 'EN' : 'עב'}
-            </span>
-          </Button>
-
-          {/* CTA for Public Zone */}
-          {isPublicZone && (
-            <Link to="/dashboard">
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                {t('nav.launch_app')}
-              </Button>
-            </Link>
-          )}
-        </div>
-      </div>
-      </header >
-    );
-};
-
-return (
-  <div className={`min-h-screen flex flex-col ${isAdminZone ? 'bg-slate-950 text-slate-200' : 'bg-gray-50'}`} dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
-    {renderHeader()}
-
-    {/* Main Content */}
-    <main className={`flex-1 ${isAppZone ? 'pb-20' : ''} relative`}>
-      {children}
-    </main>
-
-    {/* role switcher debug tool */}
-    <DebugRoleSwitcher />
-
-    {/* Bottom Navigation - ONLY FOR APP ZONE */}
-    {isAppZone && (
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg safe-area-pb">
-        <div className="max-w-7xl mx-auto px-2">
-          <div className="flex items-center justify-around overflow-x-auto">
-            {appNavItems.map((item) => {
-              const isActive = location.pathname === item.url;
-              return (
-                <Link
-                  key={item.title}
-                  to={item.url}
-                  className={`flex flex-col items-center py-3 px-3 min-w-[64px] transition-colors ${isActive ? 'text-blue-600' : 'text-gray-600'}`}
-                >
-                  <item.icon className={`w-6 h-6 ${isActive ? 'text-blue-600' : 'text-gray-600'}`} />
-                  <span className="text-xs mt-1 font-medium whitespace-nowrap">{item.title}</span>
-                </Link>
-              );
-            })}
+            {/* CTA for Public Zone */}
+            {isPublicZone && (
+              <Link to="/dashboard">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {t('nav.launch_app')}
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
-      </nav>
-    )}
+      </header >
+    );
+  };
 
-    {/* Footer - Only for Public Zone (excluding Landing which is handled separately) / Business */}
-    {((isPublicZone && currentPath !== '/') || isBusinessZone) && (
-      <Footer />
-    )}
-  </div>
-);
+  return (
+    <div className={`min-h-screen flex flex-col ${isAdminZone ? 'bg-slate-950 text-slate-200' : 'bg-gray-50'}`} dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+      {renderHeader()}
+
+      {/* Main Content */}
+      <main className={`flex-1 ${isAppZone ? 'pb-20' : ''} relative`}>
+        {children}
+      </main>
+
+      {/* role switcher debug tool */}
+      <DebugRoleSwitcher />
+
+      {/* Bottom Navigation - ONLY FOR APP ZONE */}
+      {isAppZone && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg safe-area-pb">
+          <div className="max-w-7xl mx-auto px-2">
+            <div className="flex items-center justify-around overflow-x-auto">
+              {appNavItems.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    className={`flex flex-col items-center py-3 px-3 min-w-[64px] transition-colors ${isActive ? 'text-blue-600' : 'text-gray-600'}`}
+                  >
+                    <item.icon className={`w-6 h-6 ${isActive ? 'text-blue-600' : 'text-gray-600'}`} />
+                    <span className="text-xs mt-1 font-medium whitespace-nowrap">{item.title}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+      )}
+
+      {/* Footer - Only for Public Zone (excluding Landing which is handled separately) / Business */}
+      {((isPublicZone && currentPath !== '/') || isBusinessZone) && (
+        <Footer />
+      )}
+    </div>
+  );
 }
 
 export default function Layout({ children }) {

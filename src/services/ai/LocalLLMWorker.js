@@ -11,7 +11,8 @@ self.onmessage = async (e) => {
                 await initializeEngine(payload.modelId, payload.config);
                 break;
             case 'GENERATE':
-                await generateText(payload.prompt, payload.options);
+                // Support payload.input (new) or payload.prompt (legacy)
+                await generateText(payload.input || payload.prompt, payload.options);
                 break;
             case 'RESET':
                 if (engine) {
@@ -44,14 +45,20 @@ async function initializeEngine(modelId, config = {}) {
     self.postMessage({ type: 'INIT_COMPLETE' });
 }
 
-async function generateText(prompt, options = {}) {
+async function generateText(input, options = {}) {
     if (!engine) {
         throw new Error("Engine not initialized");
     }
 
-    const messages = [
-        { role: "user", content: prompt }
-    ];
+    // Support both simple prompt string (legacy) and full messages array (chat)
+    let messages = [];
+    if (Array.isArray(input)) {
+        messages = input;
+    } else {
+        messages = [
+            { role: "user", content: input }
+        ];
+    }
 
     const chunks = await engine.chat.completions.create({
         messages,

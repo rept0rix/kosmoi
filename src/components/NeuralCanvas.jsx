@@ -5,6 +5,7 @@ import { agents } from '@/services/agents/AgentRegistry';
 const NeuralCanvas = () => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
+    const mouseRef = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const container = containerRef.current;
@@ -12,137 +13,141 @@ const NeuralCanvas = () => {
         const ctx = canvas.getContext('2d');
         let animationFrameId;
 
-        // Configuration
-        const NODES = agents.length > 0 ? agents.map((agent) => ({
-            id: agent.id,
-            x: Math.random() * 800,
-            y: Math.random() * 600,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            role: agent.role,
-            color: agent.model.includes('pro') ? '#3b82f6' : '#10b981',
-            pulse: 0
-        })) : Array.from({ length: 15 }).map((_, i) => ({
-            id: `node-${i}`,
-            x: Math.random() * 800,
-            y: Math.random() * 600,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            role: ['worker', 'manager', 'executive'][Math.floor(Math.random() * 3)],
-            color: i % 2 === 0 ? '#3b82f6' : '#10b981',
-            pulse: 0
-        }));
+        // 3D Engine Constants
+        const SPHERE_RADIUS = 200;
+        const PERSPECTIVE = 800;
+        const ROTATION_SPEED = 0.002;
 
-        const EDGES = [];
-        NODES.forEach((node, i) => {
-            NODES.forEach((other, j) => {
-                if (i < j && Math.random() > 0.7) {
-                    EDGES.push({ source: node, target: other, active: false });
-                }
-            });
-        });
+        // 1. Initialize Points (Agents mapped to Sphere Surface)
+        let points = agents.length > 0 ? agents.map((agent, i) => {
+            // Distribute points using Golden Angle for even sphere coverage (Fibonacci Sphere)
+            const phi = Math.acos(1 - 2 * (i + 0.5) / agents.length);
+            const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5);
+
+            return {
+                id: agent.id,
+                x: SPHERE_RADIUS * Math.sin(phi) * Math.cos(theta),
+                y: SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta),
+                z: SPHERE_RADIUS * Math.cos(phi),
+                role: agent.role,
+                layer: agent.layer,
+                color: agent.layer === 'board' ? '#3b82f6' :
+                    agent.layer === 'strategic' ? '#a855f7' :
+                        agent.layer === 'executive' ? '#f97316' : '#10b981'
+            };
+        }) : [];
 
         // Resize Logic
         const updateSize = () => {
-            if (container) {
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight;
-
-                // Keep nodes in bounds
-                NODES.forEach(node => {
-                    if (node.x > canvas.width) node.x = canvas.width - 20;
-                    if (node.y > canvas.height) node.y = canvas.height - 20;
-                });
+            if (container && canvas) {
+                // Handle high-DPI displays
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = container.clientWidth * dpr;
+                canvas.height = container.clientHeight * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.width = `${container.clientWidth}px`;
+                canvas.style.height = `${container.clientHeight}px`;
             }
         };
 
         const resizeObserver = new ResizeObserver(() => updateSize());
-        if (container) {
-            resizeObserver.observe(container);
-        }
+        if (container) resizeObserver.observe(container);
         updateSize();
 
-        // Particles System
-        const PARTICLES = [];
-        const spawnParticle = () => {
-            if (EDGES.length === 0) return;
-            const edge = EDGES[Math.floor(Math.random() * EDGES.length)];
-            PARTICLES.push({
-                x: edge.source.x,
-                y: edge.source.y,
-                targetX: edge.target.x,
-                targetY: edge.target.y,
-                progress: 0,
-                speed: 0.02 + Math.random() * 0.03,
-                color: '#60a5fa'
-            });
-        };
+        let angleX = 0;
+        let angleY = 0;
 
-        // Animation Loop
+        // Render Loop
         const render = () => {
-            ctx.fillStyle = '#020617';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const cx = width / 2;
+            const cy = height / 2;
 
-            // Update Nodes
-            NODES.forEach(node => {
-                node.x += node.vx;
-                node.y += node.vy;
+            // Clear Background
+            ctx.clearRect(0, 0, width, height);
 
-                if (node.x < 10 || node.x > canvas.width - 10) node.vx *= -1;
-                if (node.y < 10 || node.y > canvas.height - 10) node.vy *= -1;
-                node.pulse = Math.max(0, node.pulse - 0.05);
+            // Auto Rotation
+            angleY += ROTATION_SPEED;
+            angleX += ROTATION_SPEED * 0.5;
+
+            // Mouse Interaction Logic (optional tilt)
+            const targetAngleY = (mouseRef.current.x - cx) * 0.0001;
+            const targetAngleX = (mouseRef.current.y - cy) * 0.0001;
+            angleY += targetAngleY;
+            angleX += targetAngleX;
+
+            // Project and Sort Points
+            const projectedPoints = points.map(p => {
+                // Rotate X
+                let y = p.y * Math.cos(angleX) - p.z * Math.sin(angleX);
+                let z = p.y * Math.sin(angleX) + p.z * Math.cos(angleX);
+                let x = p.x;
+
+                // Rotate Y
+                let tempX = x * Math.cos(angleY) - z * Math.sin(angleY);
+                z = x * Math.sin(angleY) + z * Math.cos(angleY);
+                x = tempX;
+
+                // Project 3D -> 2D
+                const scale = PERSPECTIVE / (PERSPECTIVE + z);
+                const x2d = x * scale + cx;
+                const y2d = y * scale + cy;
+
+                return { ...p, x2d, y2d, scale, z };
             });
 
-            // Draw Edges
-            ctx.strokeStyle = '#1e293b';
+            // Draw Connections (Between close neighbors on sphere)
             ctx.lineWidth = 1;
-            EDGES.forEach(edge => {
-                ctx.beginPath();
-                ctx.moveTo(edge.source.x, edge.source.y);
-                ctx.lineTo(edge.target.x, edge.target.y);
-                ctx.stroke();
+            projectedPoints.forEach((p1, i) => {
+                projectedPoints.slice(i + 1).forEach(p2 => {
+                    // Calculate true 3D distance
+                    const dist = Math.sqrt(
+                        Math.pow(p1.x - p2.x, 2) +
+                        Math.pow(p1.y - p2.y, 2) +
+                        Math.pow(p1.z - p2.z, 2)
+                    );
+
+                    // Connect if close enough
+                    if (dist < 100) {
+                        const alpha = (1 - dist / 100) * 0.5 * Math.min(p1.scale, p2.scale);
+                        ctx.strokeStyle = `rgba(59, 130, 246, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x2d, p1.y2d);
+                        ctx.lineTo(p2.x2d, p2.y2d);
+                        ctx.stroke();
+                    }
+                });
             });
 
-            // Particles
-            if (Math.random() > 0.9) spawnParticle();
-            for (let i = PARTICLES.length - 1; i >= 0; i--) {
-                const p = PARTICLES[i];
-                p.progress += p.speed;
-                const cx = p.x + (p.targetX - p.x) * p.progress;
-                const cy = p.y + (p.targetY - p.y) * p.progress;
+            // Draw Nodes (Sorted by Z for depth)
+            projectedPoints.sort((a, b) => b.z - a.z).forEach(p => {
+                const alpha = p.scale; // Fade out back nodes
 
-                ctx.fillStyle = p.color;
+                // Glow
+                const glowSize = 10 * p.scale;
+                const gradient = ctx.createRadialGradient(p.x2d, p.y2d, 0, p.x2d, p.y2d, glowSize);
+                gradient.addColorStop(0, p.color);
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+                ctx.arc(p.x2d, p.y2d, glowSize, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = p.color;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-
-                if (p.progress >= 1) {
-                    PARTICLES.splice(i, 1);
-                    const targetNode = NODES.find(n => Math.abs(n.x - p.targetX) < 1 && Math.abs(n.y - p.targetY) < 1);
-                    if (targetNode) targetNode.pulse = 1;
-                }
-            }
-
-            // Draw Nodes
-            NODES.forEach(node => {
-                if (node.pulse > 0) {
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, 8 + node.pulse * 10, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(59, 130, 246, ${node.pulse})`;
-                    ctx.stroke();
-                }
+                // Core Dot
+                ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(node.x, node.y, 6, 0, Math.PI * 2);
-                ctx.fillStyle = node.color;
+                ctx.arc(p.x2d, p.y2d, 2 * p.scale, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '10px monospace';
-                ctx.fillText(node.role, node.x + 12, node.y + 3);
+
+                // Text Label (only for front nodes)
+                if (p.z > -50) {
+                    ctx.font = `${10 * p.scale}px monospace`;
+                    ctx.fillStyle = `rgba(203, 213, 225, ${alpha})`; // slate-300
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.role, p.x2d, p.y2d + 15 * p.scale);
+                }
             });
 
             animationFrameId = requestAnimationFrame(render);
@@ -150,18 +155,26 @@ const NeuralCanvas = () => {
 
         render();
 
+        // Mouse Move Handler
+        const handleMouseMove = (e) => {
+            const rect = container.getBoundingClientRect();
+            mouseRef.current = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        };
+        container.addEventListener('mousemove', handleMouseMove);
+
         return () => {
             resizeObserver.disconnect();
             cancelAnimationFrame(animationFrameId);
+            container.removeEventListener('mousemove', handleMouseMove);
         };
     }, []);
 
     return (
-        <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-slate-950 rounded-xl">
-            <canvas
-                ref={canvasRef}
-                className="absolute inset-0 block"
-            />
+        <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-slate-950 rounded-xl cursor-move">
+            <canvas ref={canvasRef} className="block" />
         </div>
     );
 };

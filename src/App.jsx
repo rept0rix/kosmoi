@@ -11,8 +11,11 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AgentCommandCenter from '@/pages/AgentCommandCenter';
 import AdminImporter from '@/pages/AdminImporter';
+import { ProtectedAdminRoute, ProtectedUserRoute } from '@/components/RouteGuards';
 
-import VendorSignup from '@/pages/VendorSignup';
+import VendorSignup from './pages/VendorSignup';
+import VendorLite from '@/pages/VendorLite';
+
 import { AppConfigProvider } from '@/components/AppConfigContext';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 import PersistenceTestPage from '@/pages/PersistenceTest';
@@ -108,22 +111,28 @@ const AuthenticatedApp = () => {
             <Route path="/board-room" element={<BoardRoom />} />
 
             {/* Admin Routes (New Layout) */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<CommandCenter />} />
-              <Route path="overview" element={<AdminOverview />} />
-              <Route path="command-center" element={<CommandCenter />} />
-              <Route path="board-room" element={<BoardRoom />} />
+            <Route element={<ProtectedAdminRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<CommandCenter />} />
+                <Route path="overview" element={<AdminOverview />} />
+                <Route path="command-center" element={<CommandCenter />} />
+                <Route path="board-room" element={<BoardRoom />} />
 
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="data" element={<AdminData />} />
-              <Route path="crm" element={<AdminCRM />} />
-              {/* Placeholders for now */}
-              <Route path="logs" element={<div className="p-8 text-slate-400">System Logs Coming Soon...</div>} />
-              <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="data" element={<AdminData />} />
+                <Route path="crm" element={<AdminCRM />} />
+                {/* Placeholders for now */}
+                <Route path="logs" element={<div className="p-8 text-slate-400">System Logs Coming Soon...</div>} />
+                <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
+              </Route>
+              <Route path="/admin-importer" element={<AdminImporter />} />
             </Route>
 
-            <Route path="/admin-importer" element={<AdminImporter />} />
-            <Route path="/vendor-signup" element={<VendorSignup />} />
+            <Route element={<ProtectedUserRoute />}>
+              <Route path="/vendor-signup" element={<VendorSignup />} />
+              <Route path="/vendor" element={<VendorLite />} />
+            </Route>
+
             <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
             <Route path="/test-persistence" element={<PersistenceTestPage />} />
 
