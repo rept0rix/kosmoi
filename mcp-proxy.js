@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const MCP_SERVER_PATH = join(__dirname, 'simple-command-mcp.js');
+const MCP_SERVER_PATH = join(__dirname, 'mcp_server_supabase.js');
 const WS_PORT = 3001;
 
 console.log(`Starting MCP Proxy on port ${WS_PORT}...`);

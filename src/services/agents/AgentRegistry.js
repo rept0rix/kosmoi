@@ -1,9 +1,12 @@
 import { KOSMOI_MANIFESTO } from "./Kosmoi_Manifesto.js";
 import { db } from "../../api/supabaseClient.js";
 import { UX_DESIGNER_AGENT } from "./UXDesignerAgent.js";
+import { SUPABASE_SPECIALIST_AGENT } from "./SupabaseSpecialist.js";
 
 export const agents = [
     UX_DESIGNER_AGENT,
+    SUPABASE_SPECIALIST_AGENT,
+
     // ---------------------------
     // BOARD OF VISION LAYER
     // ---------------------------
