@@ -1,4 +1,5 @@
-import { InvokeLLM } from '../../api/integrations.js';
+import { InvokeLLM, GetEmbedding } from '../../api/integrations.js';
+import { db } from '../../api/supabaseClient.js';
 import { TranslationService } from '../TranslationService.js';
 
 /**
@@ -49,6 +50,31 @@ export async function getAgentReply(agent, messages, context = {}) {
 
     const transcript = translatedTranscript.join('\n');
 
+    // 1.2 Knowledge Retrieval (RAG)
+    let knowledgeContext = "";
+    try {
+      if (agent.role === 'database-specialist' || true) { // Enable for all for now or check config
+        const lastMsg = recentMessages[recentMessages.length - 1];
+        if (lastMsg && lastMsg.agent_id === 'HUMAN_USER') {
+          const embedding = await GetEmbedding({ text: lastMsg.content });
+          if (embedding) {
+            const { data: docs, error } = await db.rpc('match_documents', {
+              query_embedding: embedding,
+              match_threshold: 0.5,
+              match_count: 5
+            });
+
+            if (docs && docs.length > 0) {
+              knowledgeContext = "Relevant Knowledge Base Articles:\n" +
+                docs.map(d => `- ${d.content} (Confidence: ${Math.round(d.similarity * 100)}%)`).join('\n');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("RAG Failed:", e);
+    }
+
     // 2. Construct Prompt
     const prompt = `
 Context:
@@ -56,6 +82,8 @@ Meeting Title: ${context.meetingTitle || 'General Discussion'}
 System State: ${JSON.stringify(context.config || {})}
 Current Tasks: ${JSON.stringify(context.tasks || [])}
 User Language: ${userLang} (You must reply in JSON, but our system will handle translation if needed)
+Knowledge Base:
+${knowledgeContext || "No relevant documents found."}
 
 IMPORTANT: The "System State" above represents the CURRENT reality of the application (Name, Theme, etc.). It overrides any static information in your manifesto. If the System State says the app name is "Super App", then the app name IS "Super App", even if your manifesto says "LEONS".
 
@@ -149,12 +177,23 @@ IMPORTANT: You are a helpful AI agent. You always output valid JSON.`,
       return data; // Returns { message, action, original_en_message? }
     } catch (e) {
       console.warn("Failed to parse JSON from agent:", text);
-      // Fallback: If it looks like JSON but failed, try to salvage the message property regex
-      const msgMatch = text.match(/"message":\s*"([^"]*)"/);
-      if (msgMatch) {
-        return { message: msgMatch[1], action: null };
-      }
       return { message: text, action: null };
+    } finally {
+      // LOGGING
+      try {
+        await db.entities.AgentLogs.create({
+          agent_id: agent.id,
+          user_id: db.auth.isAuthenticated() ? (await db.auth.me())?.id : null,
+          prompt: prompt.slice(0, 1000), // Truncate
+          response: text.slice(0, 2000), // Truncate
+          metadata: {
+            actions: response.toolRequest,
+            context_used: !!knowledgeContext
+          }
+        });
+      } catch (logErr) {
+        console.error("Failed to log agent interaction", logErr);
+      }
     }
 
   } catch (error) {

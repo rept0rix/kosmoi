@@ -9,6 +9,10 @@ import MiniWeather from "@/components/MiniWeather";
 import { Home, Search, User, Map, Languages, Sparkles, LayoutDashboard, Briefcase, ExternalLink, ShieldAlert, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
+import UserMenu from "@/components/UserMenu";
+import PageTransition from "@/components/PageTransition";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 // --- Configuration ---
 // Define which paths belong to which zone
@@ -43,7 +47,7 @@ const LayoutContent = ({ children }) => {
   // --- Navigation Items ---
   // Only for APP Zone
   let appNavItems = [
-    { title: t('nav.home'), url: createPageUrl("App"), icon: Home },
+    { title: t('nav.marketplace'), url: createPageUrl("App"), icon: Home },
     { title: t('nav.search'), url: createPageUrl("ServiceProviders"), icon: Search },
     { title: t('nav.ai'), url: createPageUrl("AIChat"), icon: Sparkles },
     { title: t('nav.map'), url: createPageUrl("MapView"), icon: Map },
@@ -103,11 +107,36 @@ const LayoutContent = ({ children }) => {
           <div className="flex items-center gap-3">
             {/* Public Zone Context Links */}
             {isPublicZone && (
-              <div className="hidden md:flex items-center gap-4 text-sm font-medium text-gray-600 mr-4">
-                <Link to="/about" className="hover:text-blue-600">{t('nav.about')}</Link>
-                <Link to="/team" className="hover:text-blue-600">{t('nav.team')}</Link>
-                <Link to="/business-info" className="hover:text-blue-600">{t('nav.business')}</Link>
-              </div>
+              <>
+                <div className="hidden md:flex items-center gap-4 text-sm font-medium text-gray-600 mr-4">
+                  <Link to="/about" className="hover:text-blue-600">{t('nav.about')}</Link>
+                  <Link to="/team" className="hover:text-blue-600">{t('nav.team')}</Link>
+                  <Link to="/business-info" className="hover:text-blue-600">{t('nav.business')}</Link>
+                </div>
+
+                {/* Mobile Menu */}
+                <div className="md:hidden mr-2">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Menu className="w-5 h-5 text-gray-600" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left">
+                      <SheetHeader>
+                        <SheetTitle className="text-left">Menu</SheetTitle>
+                      </SheetHeader>
+                      <div className="flex flex-col gap-4 mt-6">
+                        <Link to="/about" className="text-lg font-medium">{t('nav.about')}</Link>
+                        <Link to="/team" className="text-lg font-medium">{t('nav.team')}</Link>
+                        <Link to="/business-info" className="text-lg font-medium">{t('nav.business')}</Link>
+                        <hr />
+                        <Link to="/dashboard" className="text-lg font-medium text-blue-600">{t('nav.launch_app')}</Link>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </>
             )}
 
             {!isAdminZone && !isBusinessZone && <MiniWeather />}
@@ -124,14 +153,7 @@ const LayoutContent = ({ children }) => {
               </span>
             </Button>
 
-            {/* CTA for Public Zone */}
-            {isPublicZone && (
-              <Link to="/dashboard">
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  {t('nav.launch_app')}
-                </Button>
-              </Link>
-            )}
+            <UserMenu />
           </div>
         </div>
       </header >
@@ -144,7 +166,9 @@ const LayoutContent = ({ children }) => {
 
       {/* Main Content */}
       <main className={`flex-1 ${isAppZone ? 'pb-20' : ''} relative`}>
-        {children}
+        <PageTransition key={currentPath}>
+          {children}
+        </PageTransition>
       </main>
 
       {/* role switcher debug tool */}

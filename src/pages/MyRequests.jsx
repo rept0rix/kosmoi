@@ -6,9 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, MapPin, Clock, AlertCircle, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function MyRequests() {
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
+    const language = i18n.language;
 
     const { data: user } = useQuery({
         queryKey: ["currentUser"],
@@ -31,28 +34,23 @@ export default function MyRequests() {
     });
 
     const getStatusBadge = (status) => {
+        const statusLabel = t(`status.${status}`) || status;
         switch (status) {
             case 'pending':
-                return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">ממתין</Badge>;
+                return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">{statusLabel}</Badge>;
             case 'in_progress':
-                return <Badge variant="secondary" className="bg-blue-100 text-blue-800">בטיפול</Badge>;
+                return <Badge variant="secondary" className="bg-blue-100 text-blue-800">{statusLabel}</Badge>;
             case 'completed':
-                return <Badge variant="secondary" className="bg-green-100 text-green-800">הושלם</Badge>;
+                return <Badge variant="secondary" className="bg-green-100 text-green-800">{statusLabel}</Badge>;
             case 'cancelled':
-                return <Badge variant="secondary" className="bg-gray-100 text-gray-800">בוטל</Badge>;
+                return <Badge variant="secondary" className="bg-gray-100 text-gray-800">{statusLabel}</Badge>;
             default:
-                return <Badge variant="outline">{status}</Badge>;
+                return <Badge variant="outline">{statusLabel}</Badge>;
         }
     };
 
     const getUrgencyLabel = (urgency) => {
-        const labels = {
-            low: "לא דחוף",
-            medium: "רגיל",
-            high: "דחוף",
-            emergency: "חירום"
-        };
-        return labels[urgency] || urgency;
+        return t(`urgency.${urgency}`) || urgency;
     };
 
     if (isLoading) {
@@ -67,10 +65,10 @@ export default function MyRequests() {
         <div className="min-h-screen bg-gray-50 p-4 pb-20">
             <div className="max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">הבקשות שלי</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('my_requests.title')}</h1>
                     <Button onClick={() => navigate('/RequestService')} className="gap-2">
                         <Plus className="w-4 h-4" />
-                        בקשה חדשה
+                        {t('my_requests.new_request')}
                     </Button>
                 </div>
 
@@ -80,10 +78,10 @@ export default function MyRequests() {
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                 <AlertCircle className="w-8 h-8 text-gray-400" />
                             </div>
-                            <h3 className="text-lg font-medium">אין בקשות פעילות</h3>
-                            <p className="text-gray-500">עדיין לא ביקשת שירות. צריכים עזרה במשהו?</p>
+                            <h3 className="text-lg font-medium">{t('my_requests.no_active')}</h3>
+                            <p className="text-gray-500">{t('my_requests.no_active_desc')}</p>
                             <Button onClick={() => navigate('/RequestService')} variant="outline">
-                                צור בקשה ראשונה
+                                {t('my_requests.create_first')}
                             </Button>
                         </div>
                     </Card>
@@ -95,14 +93,14 @@ export default function MyRequests() {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <CardTitle className="text-lg font-bold mb-1">
-                                                {request.category === 'ac_repair' ? 'תיקון מזגן' : request.category}
+                                                {t(request.category) || request.category}
                                             </CardTitle>
                                             <div className="text-sm text-gray-500 flex items-center gap-2">
                                                 <Calendar className="w-3 h-3" />
-                                                {new Date(request.created_at).toLocaleDateString('he-IL')}
+                                                {new Date(request.created_at).toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US')}
                                                 <span className="mx-1">•</span>
                                                 <Clock className="w-3 h-3" />
-                                                {new Date(request.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(request.created_at).toLocaleTimeString(language === 'he' ? 'he-IL' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
                                         {getStatusBadge(request.status)}
@@ -119,11 +117,11 @@ export default function MyRequests() {
                                         </div>
                                         <div className="flex gap-2 mt-2">
                                             <Badge variant="outline" className="text-xs">
-                                                דחיפות: {getUrgencyLabel(request.urgency)}
+                                                {t('my_requests.urgency')}: {getUrgencyLabel(request.urgency)}
                                             </Badge>
                                             {request.images && request.images.length > 0 && (
                                                 <Badge variant="outline" className="text-xs">
-                                                    {request.images.length} תמונות
+                                                    {request.images.length} {t('my_requests.images')}
                                                 </Badge>
                                             )}
                                         </div>

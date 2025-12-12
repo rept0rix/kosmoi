@@ -71,6 +71,8 @@ Approval ID: ${approvalData.id}`;
     }
 }
 
+import { TokenBucket } from "../utils/TokenBucket.js";
+
 export class AgentService {
     /**
      * @param {Object} agentConfig
@@ -82,6 +84,9 @@ export class AgentService {
         this.userId = options.userId;
         this.history = [];
         this.initialized = false;
+
+        // Rate Limiter: 10 requests burst, 1 refill per 2 seconds (0.5/sec)
+        this.rateLimiter = new TokenBucket(10, 0.5);
     }
 
     /**
@@ -97,6 +102,15 @@ export class AgentService {
      * @param {Object} options 
      */
     async sendMessage(message, options = {}) {
+        if (!this.rateLimiter.take(1)) {
+            return {
+                text: "I'm receiving too many messages at once. Please give me a moment to catch my breath.",
+                raw: null,
+                toolRequest: null,
+                plan: null
+            };
+        }
+
         // 1. Add User Message
         this.history.push({
             agent_id: 'HUMAN_USER',

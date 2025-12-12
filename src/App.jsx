@@ -48,6 +48,7 @@ import NotFound from '@/pages/NotFound';
 import MyBookings from '@/pages/MyBookings';
 import LocalBrain from '@/pages/LocalBrain';
 import SystemMonitor from '@/components/dashboard/SystemMonitor';
+import ProviderProfile from '@/pages/ProviderProfile';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -114,6 +115,8 @@ const AuthenticatedApp = () => {
                 <Route key={path} path={`/${path.toLowerCase()}`} element={<Page />} />
               ))}
 
+            <Route path="/provider/:providerId" element={<ProviderProfile />} />
+
             {/* Admin & Vendor Routes */}
             <Route path="/command-center" element={<CommandCenter />} />
             <Route path="/board-room" element={<BoardRoom />} />
@@ -159,6 +162,7 @@ const AuthenticatedApp = () => {
             <Route path="/contact" element={<Contact />} />
 
             <Route path="/local-brain" element={<LocalBrain />} />
+            <Route path="/health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
