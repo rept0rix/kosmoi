@@ -7,6 +7,15 @@ export default function VisualEditAgent() {
 	// then, the parent window will have an editor, allow for changes to the tailwind css classes of the selected element, and send the updated css classes back to the iframe. 
 	// the iframe will then update the css classes of the selected element.
 
+	const layoutPresets = {
+		'grid-2': 'grid grid-cols-1 md:grid-cols-2 gap-4',
+		'grid-3': 'grid grid-cols-1 md:grid-cols-3 gap-4',
+		'flex-row': 'flex flex-row items-center gap-4',
+		'flex-col': 'flex flex-col gap-4',
+		'card-container': 'p-6 bg-white rounded-xl shadow-sm border border-slate-200',
+		'hero-section': 'py-20 px-4 text-center bg-gradient-to-b from-blue-50 to-white'
+	};
+
 	// State and refs
 	const [isVisualEditMode, setIsVisualEditMode] = useState(false);
 	const isVisualEditModeRef = useRef(false);
@@ -517,6 +526,20 @@ export default function VisualEditAgent() {
 						// Clear hover overlays when dropdown opens
 						if (message.data.isOpen) {
 							clearHoverOverlays();
+						}
+					}
+					break;
+
+				case 'layout-generation':
+					if (message.data && message.data.visualSelectorId) {
+						const targetId = message.data.visualSelectorId;
+						const layoutType = message.data.layoutType;
+
+						// Get classes from preset or use raw classes if provided
+						const layoutClasses = layoutPresets[layoutType] || message.data.classes || '';
+
+						if (layoutClasses) {
+							updateElementClasses(targetId, layoutClasses, false); // merge classes
 						}
 					}
 					break;

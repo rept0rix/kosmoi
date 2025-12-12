@@ -48,7 +48,7 @@ const LiveTerminal = ({ className }) => {
     };
 
     return (
-        <div className={`bg-black border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300 ${isExpanded ? 'fixed inset-4 z-50 h-auto' : 'h-96'} ${className}`}>
+        <div className={`bg-black border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300 ${isExpanded ? 'fixed inset-4 z-50' : 'h-96 max-h-[600px]'} ${className}`}>
 
             {/* Terminal Header */}
             <div className="bg-slate-900 px-4 py-2 flex items-center justify-between border-b border-slate-800">

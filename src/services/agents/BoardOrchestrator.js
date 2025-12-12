@@ -31,10 +31,11 @@ INSTRUCTIONS:
 }
 
 RULES:
-- Do not select the same agent twice in a row unless absolutely necessary.
-- Keep the conversation moving towards the goal.
-- If an agent asks a question, select the agent best equipped to answer it.
-- If an agent proposes a plan, select an executive to approve it.
+- **NO FLUFF**: Do not select an agent just to say "Acknowledged", "I understand", or "Great idea".
+- **ACTION OVER SPEECH**: If the previous agent proposed a plan, the NEXT agent must EXECUTE it (if they have the tool) or CRITIQUE it.
+- **DIRECT HANDOFF**: If an agent says "I will let the Tech Lead handle this", you MUST select the Tech Lead next.
+- **GITHUB DELEGATION**: If the discussion involves creating issues, reviewing PRs, or repository management, you MUST delegate to the 'github-specialist-agent'.
+- **ANTI-LOOP**: If the last 3 messages are just agreements, FORCE the next agent to take a concrete step (write code, search, search GitHub, etc.).
 `
         }, options);
         this.options = options;
@@ -55,46 +56,30 @@ RULES:
      *   }
      * }>}
      */
-    async getNextSpeaker(goal, history, autonomousMode = false, companyState = {}, activeAgentIds = []) {
+    async getNextSpeaker(goal, history, autonomousMode = false, companyState = {}, activeAgentIds = [], activeWorkflowState = null) {
         // 1. CHECK FOR ACTIVE WORKFLOW (MATRIX)
-        // For this MVP, we assume the "documentation_package" workflow if the goal mentions "documentation".
-        // In a real app, we'd select the workflow based on intent classification.
-        const isDocWorkflow = goal.toLowerCase().includes("documentation");
+        // Check if there is a strict active workflow step
+        if (activeWorkflowState && !activeWorkflowState.isComplete) {
+            const currentStep = activeWorkflowState.currentStep;
+            console.log(`[Orchestrator] Active Workflow Step: ${activeWorkflowState.workflow.name} -> ${currentStep.label} (${currentStep.role})`);
 
-        if (isDocWorkflow) {
-            const { WORKFLOWS } = await import('./workflows.js');
-            const workflow = WORKFLOWS.documentation_package;
+            // If the last speaker was the CURRENT role, we might want to advance or wait.
+            // For this implementation, if the current role just spoke, we assume they are done and we should advance (or waiting for user input).
+            // BUT, the `WorkflowService` must be advanced by the main app logic (e.g., in `useBoardRoom.js` after a message).
+            // Here, we just ENFORCE that the next speaker is the one defined in the step.
 
-            // Check progress via Supabase
-            let existingFiles = [];
-            if (this.options.userId) {
-                const { listFilesFromSupabase } = await import('./memorySupabase.js');
-                const remoteFiles = await listFilesFromSupabase(this.options.userId);
-                existingFiles = remoteFiles.map(f => f.path);
-            }
-
-            for (const step of workflow.steps) {
-                // If the expected file for this step DOES NOT exist, this is the current step.
-                // Check exact match or if any file starts with the expected path (directory check)
-                const fileExists = existingFiles.includes(step.expectedFile) ||
-                    existingFiles.some(f => f.startsWith(step.expectedFile.replace('/', '')));
-
-                if (step.expectedFile && !fileExists) {
-                    console.log(`[Orchestrator] Workflow Step Active: ${step.id} (${step.agentId})`);
-                    return {
-                        nextSpeakerId: step.agentId,
-                        reason: `Executing workflow step: ${step.id}. Waiting for file: ${step.expectedFile}`,
-                        instruction: step.instruction
-                    };
-                }
-            }
-
-            // If all steps passed
             return {
-                nextSpeakerId: "TERMINATE",
-                reason: "All workflow steps completed successfully.",
-                instruction: "The documentation package is complete."
+                nextSpeakerId: currentStep.role,
+                reason: `Strict Workflow Enforcement: ${activeWorkflowState.workflow.name} (Step ${activeWorkflowState.progress}%) requires ${currentStep.role} to act.`,
+                instruction: `You are performing the '${currentStep.label}' step of the '${activeWorkflowState.workflow.name}' workflow. Focus ONLY on this task.`
             };
+        }
+
+        // Legacy Documentation Workflow Hack (Optional: Remove if fully replaced by generic above)
+        const isDocWorkflow = goal.toLowerCase().includes("documentation");
+        if (isDocWorkflow && !activeWorkflowState) {
+            const { WORKFLOWS } = await import('./workflows.js');
+            // ... legacy logic ...
         }
 
         // 2. FALLBACK TO LLM ORCHESTRATION (Existing Logic)
@@ -124,11 +109,11 @@ INSTRUCTIONS:
     - If AUTONOMOUS MODE is ON: Select "vision-founder-agent" and instruct them to "Conduct a Strategic Review based on the COMPANY STATE."
     - If AUTONOMOUS MODE is OFF: Output "TERMINATE".
 
-ANTI-LOOP RULES (CRITICAL):
-- Do not select an agent just to say "Acknowledged", "Understood", "Thank you", or "I'm on it".
-- If the previous message was an acknowledgment, the NEXT agent MUST take a CONCRETE ACTION (e.g., write code, search web, save file).
-- If the conversation is stuck in a loop of agreements, FORCE the next agent to actually DO the work.
-- If an agent says "I will do X", the NEXT turn must be them DOING X (or reporting the result), not another agent saying "Great".
+ANTI-LOOP & EFFICIENCY RULES (CRITICAL):
+- **ABSOLUTELY NO "THANK YOU" LOOPS**: If an agent just said "Done" or "Understood", the next agent MUST NOT say "Great" or "Thanks". They must move to the NEXT STEP of the goal.
+- **FORCED PROGRESS**: If the conversation feels stuck, select the 'ceo-agent' or 'board-chairman' to give a direct order.
+- **VERIFICATION**: If code was written, the next step is usually to 'test-agent' or 'tech-lead-agent' to verify it.
+- **SILENCE IS BETTER THAN NOISE**: If the goal is met, just output "TERMINATE". Don't force a "Goodbye".
 
 TEAM MANAGEMENT (CHIEF OF STAFF MODE):
 - You are the "Chief of Staff". You decide who is in the room.

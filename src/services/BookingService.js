@@ -1,29 +1,45 @@
 import { db } from "../api/supabaseClient";
 
 /**
- * Service to handle booking logic, mimicking a Calendar API.
+ * Service to handle booking logic backed by Supabase.
  */
 export const BookingService = {
     /**
      * Get available slots for a specific date and provider.
+     * Checks database for conflicting bookings.
      * @param {Date} date 
      * @param {string} providerId 
-     * @returns {Promise<string[]>} Array of available time slots (e.g., ["10:00", "11:00"])
+     * @returns {Promise<string[]>} Array of available time slots
      */
     getAvailableSlots: async (date, providerId) => {
-        // Mock logic for MVP: Even hours are available
-        const slots = [
-            "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"
+        // 1. Define all possible slots (9am to 6pm)
+        const allSlots = [
+            "09:00", "10:00", "11:00", "12:00",
+            "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
         ];
 
-        // Simulating async API call
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // In a real app, we would query the database for existing bookings
-                // const { data } = await db.from('bookings').select('*')...
-                resolve(slots);
-            }, 500);
-        });
+        // 2. Fetch existing bookings for this provider on this date
+        // Format date to YYYY-MM-DD
+        const dateStr = date instanceof Date ? date.toISOString().split('T')[0] : date;
+
+        const { data: bookings, error } = await db.from('bookings')
+            .select('start_time')
+            .eq('provider_id', providerId)
+            .eq('service_date', dateStr)
+            .in('status', ['pending', 'confirmed']); // Only active bookings block slots
+
+        if (error) {
+            console.error("Error fetching bookings:", error);
+            return allSlots; // Fail safe? Or return empty? Let's return all for now to not block UI, or maybe empty?
+        }
+
+        // 3. Filter out booked slots
+        // Booking start_time comes as "09:00:00" from DB usually
+        const bookedTimes = new Set(bookings.map(b => b.start_time.substring(0, 5)));
+
+        const availableSlots = allSlots.filter(slot => !bookedTimes.has(slot));
+
+        return availableSlots;
     },
 
     /**
@@ -33,17 +49,31 @@ export const BookingService = {
      */
     createBooking: async (bookingDetails) => {
         // details: { date, time, providerId, userId, serviceName }
-        console.log("Creating booking:", bookingDetails);
+        console.log("Creating real booking:", bookingDetails);
 
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    id: `bk_${Date.now()}`,
-                    status: 'confirmed',
-                    ...bookingDetails
-                });
-            }, 800);
-        });
+        // Required: user_id. If missing (guest), we can't book in this strict schema.
+        if (!bookingDetails.userId) {
+            throw new Error("User must be logged in to book.");
+        }
+
+        const payload = {
+            user_id: bookingDetails.userId,
+            provider_id: bookingDetails.providerId,
+            service_date: bookingDetails.date,
+            start_time: bookingDetails.time,
+            end_time: calculateEndTime(bookingDetails.time), // Helper needed or hardcode +1h
+            status: 'confirmed', // Auto-confirm for MVP
+            service_type: bookingDetails.serviceName
+        };
+
+        const { data, error } = await db.from('bookings').insert([payload]).select().single();
+
+        if (error) {
+            console.error("Booking failed:", error);
+            throw error;
+        }
+
+        return data;
     },
 
     /**
@@ -52,6 +82,39 @@ export const BookingService = {
      */
     cancelBooking: async (bookingId) => {
         console.log("Cancelling booking:", bookingId);
-        return Promise.resolve(true);
+        const { error } = await db.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
+        if (error) throw error;
+        return true;
+    },
+
+    /**
+     * Get bookings for a specific user
+     * @param {string} userId 
+     * @returns {Promise<Object[]>}
+     */
+    getUserBookings: async (userId) => {
+        const { data, error } = await db.from('bookings')
+            .select(`
+                *,
+                service_providers (
+                    name,
+                    category
+                )
+            `)
+            .eq('user_id', userId)
+            .order('service_date', { ascending: true }); // Upcoming first?
+
+        if (error) {
+            console.error("Error fetching user bookings:", error);
+            return [];
+        }
+        return data;
     }
 };
+
+// Simple helper to add 1 hour
+function calculateEndTime(startTime) {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const endHours = hours + 1;
+    return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}

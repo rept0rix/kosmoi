@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 
 export default function AdminLayout() {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const location = useLocation();
 
     return (
         <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
@@ -50,11 +51,13 @@ export default function AdminLayout() {
                 <nav className="flex-1 p-4 space-y-1">
                     <NavItem to="/admin/command-center" icon={<LayoutDashboard />} label="Command Center" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/board-room" icon={<Bot />} label="Board Room" onClick={() => setIsMobileOpen(false)} />
+                    <NavItem to="/admin/agents" icon={<Bot />} label="Agent Workforce" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/data" icon={<Database />} label="Data & Businesses" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
                     <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/settings" icon={<Settings />} label="Settings" onClick={() => setIsMobileOpen(false)} />
+                    <NavItem to="/admin/roadmap" icon={<Activity />} label="Dev Log & Roadmap" onClick={() => setIsMobileOpen(false)} />
+                    <NavItem to="/admin/company" icon={<Settings />} label="Company Settings" onClick={() => setIsMobileOpen(false)} />
                 </nav>
 
                 <div className="p-4 border-t border-white/5">
@@ -96,7 +99,7 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-auto p-4 md:p-8">
+                <div className={`flex-1 ${location.pathname.includes('board-room') ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-auto'}`}>
                     <Outlet />
                 </div>
             </main>

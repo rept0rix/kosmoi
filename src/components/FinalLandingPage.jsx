@@ -285,12 +285,6 @@ const FinalLandingPage = () => {
               Start Now
             </button>
           </div>
-          <p
-            className="mt-6 text-slate-400 text-sm cursor-pointer hover:text-white transition"
-            onClick={() => window.open('https://wa.me/66000000000?text=I%20need%20help', '_blank')}
-          >
-            Questions? Message our AI agent on WhatsApp.
-          </p>
         </div>
       </section>
 

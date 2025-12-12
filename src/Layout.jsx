@@ -15,39 +15,30 @@ import Footer from "@/components/Footer";
 const ZONES = {
   PUBLIC: ['/', '/about', '/team', '/pricing', '/business-info', '/legal'],
   BUSINESS: ['/business-registration', '/vendor-dashboard'],
-  ADMIN: ['/board-room', '/command-center', '/admin-importer'],
+  ADMIN: ['/admin', '/board-room', '/command-center', '/admin-importer'],
   // Everything else is considered APP
 };
 
-function LayoutContent({ children }) {
+const LayoutContent = ({ children }) => {
   const location = useLocation();
+  const currentPath = location.pathname;
   const { t, i18n } = useTranslation();
-  const { config } = useAppConfig();
-  const debugRole = config.debugRole || 'user'; // 'user', 'business', 'admin'
+  const { config, debugRole } = useAppConfig();
 
-  // --- Zone Detection ---
-  const currentPath = location.pathname.toLowerCase();
-
-  const isPublicZone = ZONES.PUBLIC.some(path =>
-    path === '/' ? currentPath === '/' : currentPath.startsWith(path)
-  );
-
+  const isPublicZone = ZONES.PUBLIC.some(path => currentPath === path || (path !== '/' && currentPath.startsWith(path)));
   const isBusinessZone = ZONES.BUSINESS.some(path => currentPath.startsWith(path));
-
   const isAdminZone = ZONES.ADMIN.some(path => currentPath.startsWith(path));
 
   // Determine App Zone: Not Public, Business or Admin
   const isAppZone = !isPublicZone && !isBusinessZone && !isAdminZone;
 
+  // If we are in Admin Zone, let the specific AdminLayout handle everything (no double header/nav)
+  if (isAdminZone) {
+    return <div className="min-h-screen bg-slate-950 text-slate-200" dir="ltr">{children}</div>;
+  }
+
   // --- Styles ---
-  const themeColors = {
-    blue: 'text-blue-600',
-    red: 'text-red-600',
-    green: 'text-green-600',
-    purple: 'text-purple-600',
-    orange: 'text-orange-600'
-  };
-  const activeColor = themeColors[config.themeColor] || 'text-blue-600';
+  const themeColors = {}; // Placeholder if needed
 
   // --- Navigation Items ---
   // Only for APP Zone
@@ -60,15 +51,13 @@ function LayoutContent({ children }) {
     { title: t('nav.profile'), url: createPageUrl("Profile"), icon: User },
   ];
 
-  // Inject Admin/Business Links based on Role
+  // Inject Business Links based on Role (Admin links removed from here as requested)
   if (debugRole === 'business') {
     appNavItems.push({ title: t('nav.vendor'), url: '/vendor-dashboard', icon: Briefcase });
   }
 
-  if (debugRole === 'admin') {
-    appNavItems.push({ title: t('nav.board'), url: '/board-room', icon: ShieldAlert });
-    appNavItems.push({ title: t('nav.admin'), url: '/command-center', icon: Monitor });
-  }
+  // Admin links removed from Bottom Nav to declutter
+
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'he' : 'en';

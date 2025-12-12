@@ -2,9 +2,11 @@ import { KOSMOI_MANIFESTO } from "./Kosmoi_Manifesto.js";
 
 export const SUPABASE_SPECIALIST_AGENT = {
     id: "supabase-specialist",
-    layer: "operational",
     role: "database-specialist",
+    name: "Supabase Specialist",
+    layer: "operational",
     model: "gemini-3-pro",
+    icon: "Database",
     systemPrompt: `${KOSMOI_MANIFESTO}
 
     You are the **Supabase Specialist** (Database Guardian).

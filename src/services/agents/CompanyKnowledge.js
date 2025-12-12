@@ -1,71 +1,77 @@
-import { db } from '../../api/supabaseClient.js';
+import { db } from "../../api/supabaseClient.js";
 
 /**
- * Service for managing persistent company knowledge.
- * Acts as a shared brain for all agents.
+ * CompanyKnowledge
+ * Interface for the 'Shared Brain' of the agents.
+ * Connects to 'agent_knowledge' table in Supabase.
  */
 export const CompanyKnowledge = {
-    /**
-     * Retrieve a piece of knowledge by key.
-     * @param {string} key - The unique key (e.g., "staging_url", "brand_colors").
-     * @returns {Promise<any>} The value or null if not found.
-     */
-    async get(key) {
-        try {
-            const record = await db.CompanyKnowledge.get(key);
-            return record ? record.value : null;
-        } catch (error) {
-            console.error(`[CompanyKnowledge] Failed to get key '${key}': `, error);
-            return null;
-        }
-    },
 
     /**
-     * Store a piece of knowledge.
-     * @param {string} key - The unique key.
-     * @param {any} value - The value (will be JSON stringified if object).
-     * @param {string} category - Optional category for grouping (e.g., "config", "credentials").
-     * @param {string} agentId - The ID of the agent updating this knowledge.
+     * Add new knowledge
+     * @param {Object} item - { content, category, tags, metadata, created_by }
      */
-    async set(key, value, category = 'general', agentId = 'system') {
+    async add(item) {
+        console.log("[CompanyKnowledge] Adding:", item);
         try {
-            await db.CompanyKnowledge.upsert({
-                key,
-                value,
-                category,
-                updated_by: agentId,
-                updated_at: new Date().toISOString()
+            // Check if embedding generation is available (Optimistic: Assume No for now, just text)
+            // In a real implementation, we would call an embedding service here.
+
+            const { error } = await db.from('agent_knowledge').insert({
+                content: item.content,
+                category: item.category,
+                tags: item.tags,
+                metadata: item.metadata,
+                created_by: item.created_by
+                // embedding: ... // TODO: Add embedding generation later
             });
-            console.log(`[CompanyKnowledge] Saved '${key}' by ${agentId} `);
-        } catch (error) {
-            console.error(`[CompanyKnowledge] Failed to set key '${key}': `, error);
+
+            if (error) throw error;
+            return true;
+        } catch (e) {
+            console.error("[CompanyKnowledge] Add failed:", e);
+            throw e;
         }
     },
 
     /**
-     * List all knowledge items, optionally filtered by category.
-     * @param {string} [category] - Filter by category.
-     * @returns {Promise<Array>} List of knowledge records.
+     * Search knowledge
+     * @param {string} query 
+     * @returns {Promise<Array>}
      */
-    async list(category) {
+    async search(query) {
+        console.log("[CompanyKnowledge] Searching for:", query);
         try {
-            const records = await db.CompanyKnowledge.list(category);
-            return records || [];
-        } catch (error) {
-            console.error(`[CompanyKnowledge] Failed to list knowledge: `, error);
+            // 1. Text Search (Simple 'ilike' for now)
+            // Ideally we use Supabase textSearch or the vector match function
+
+            const { data, error } = await db.from('agent_knowledge')
+                .select('*')
+                .or(`content.ilike.%${query}%,category.ilike.%${query}%`)
+                .limit(5);
+
+            if (error) throw error;
+            return data;
+        } catch (e) {
+            console.error("[CompanyKnowledge] Search failed:", e);
             return [];
         }
     },
 
-    /**
-     * Delete a knowledge item.
-     * @param {string} key 
-     */
-    async delete(key) {
-        try {
-            await db.CompanyKnowledge.delete(key);
-        } catch (error) {
-            console.error(`[CompanyKnowledge] Failed to delete key '${key}': `, error);
-        }
+    // Legacy support for Key-Value get/set (mapped to 'settings' category or specific lookup)
+    async get(key) {
+        // Try to find a knowledge item where content starts with key or metadata has key
+        // This is a rough approximation for legacy compatibility
+        const results = await this.search(key);
+        return results.length > 0 ? results[0].content : null;
+    },
+
+    async set(key, value, category = 'settings', agentId = 'system') {
+        return await this.add({
+            content: `${key}: ${JSON.stringify(value)}`,
+            category,
+            created_by: agentId,
+            metadata: { type: 'key-value', key }
+        });
     }
 };

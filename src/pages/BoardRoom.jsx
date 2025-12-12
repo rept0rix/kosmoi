@@ -2,6 +2,7 @@ import React from 'react';
 import { useBoardRoom } from '@/hooks/useBoardRoom';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Layout, TriangleAlert } from 'lucide-react';
 
 import BoardRoomHeader from './board/BoardRoomHeader';
@@ -49,7 +50,7 @@ function BoardRoomContent() {
     } = useBoardRoom();
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex h-full w-full bg-gray-50 overflow-hidden font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* DEBUG INFO */}
             <div className="fixed top-0 left-0 bg-black text-white text-xs p-1 z-50 opacity-50 pointer-events-none">
                 App: {config?.appName} | Theme: {config?.themeColor}
@@ -129,36 +130,38 @@ function BoardRoomContent() {
                         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
                     }} />
 
+                    {/* Header Always Visible */}
+                    <BoardRoomHeader
+                        meetings={meetings}
+                        selectedMeeting={selectedMeeting}
+                        setSelectedMeeting={setSelectedMeeting}
+                        handleCreateMeeting={handleCreateMeeting}
+                        activeAgentsCount={selectedAgentIds.length}
+                        autonomousMode={autonomousMode}
+                        setAutonomousMode={setAutonomousMode}
+                        selectedAgentIds={selectedAgentIds}
+                        onManageTeam={() => setIsManageTeamOpen(true)}
+                        onOpenMobileMenu={() => setIsMobileLeftOpen(true)}
+                        onOpenMobileInfo={() => setIsMobileRightOpen(true)}
+                        localBrainEnabled={localBrainEnabled}
+                        setLocalBrainEnabled={setLocalBrainEnabled}
+                        localBrainStatus={{
+                            isReady: localLLM.isReady,
+                            isDownloading: localLLM.isDownloading,
+                            loadingText: localLLM.loadingText
+                        }}
+                        isRTL={isRTL}
+                        handleStartDailyStandup={handleStartDailyStandup}
+                        handleStartOneDollarChallenge={handleStartOneDollarChallenge}
+                        handleStartWorkflow={handleStartWorkflow}
+                        handleCreateTask={handleCreateTask}
+                        boardAgents={boardAgents}
+                        agents={agents}
+                        workflows={Object.values(WORKFLOWS)}
+                    />
+
                     {selectedMeeting ? (
                         <>
-                            <BoardRoomHeader
-                                meetings={meetings}
-                                selectedMeeting={selectedMeeting}
-                                setSelectedMeeting={setSelectedMeeting}
-                                handleCreateMeeting={handleCreateMeeting}
-                                activeAgentsCount={selectedAgentIds.length}
-                                autonomousMode={autonomousMode}
-                                setAutonomousMode={setAutonomousMode}
-                                selectedAgentIds={selectedAgentIds}
-                                onManageTeam={() => setIsManageTeamOpen(true)}
-                                onOpenMobileMenu={() => setIsMobileLeftOpen(true)}
-                                onOpenMobileInfo={() => setIsMobileRightOpen(true)}
-                                localBrainEnabled={localBrainEnabled}
-                                setLocalBrainEnabled={setLocalBrainEnabled}
-                                localBrainStatus={{
-                                    isReady: localLLM.isReady,
-                                    isDownloading: localLLM.isDownloading,
-                                    loadingText: localLLM.loadingText
-                                }}
-                                isRTL={isRTL}
-                                handleStartDailyStandup={handleStartDailyStandup}
-                                handleStartOneDollarChallenge={handleStartOneDollarChallenge}
-                                handleStartWorkflow={handleStartWorkflow}
-                                boardAgents={boardAgents}
-                                agents={agents}
-                                workflows={Object.values(WORKFLOWS)}
-                            />
-
                             <div className="px-6 pt-4">
                                 <CompanyStateDisplay state={companyState} />
                             </div>
@@ -173,6 +176,7 @@ function BoardRoomContent() {
                                     setBookingDetails(details);
                                     setIsBookingOpen(true);
                                 }}
+                                className="max-w-5xl mx-auto w-full border-x border-gray-100 dark:border-slate-800 shadow-sm"
                             />
 
                             <BoardRoomInput
@@ -182,16 +186,25 @@ function BoardRoomContent() {
                                 isRTL={isRTL}
                                 selectedImage={selectedImage}
                                 setSelectedImage={setSelectedImage}
+                                className="max-w-5xl mx-auto w-full"
                             />
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
-                            <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center shadow-inner">
-                                <Layout className="w-10 h-10 opacity-20" />
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-6 scale-110 md:scale-125 transform transition-transform duration-500">
+                            <div className="w-32 h-32 rounded-[2rem] bg-gray-50 flex items-center justify-center shadow-inner mb-2 border border-gray-100">
+                                <Layout className="w-16 h-16 opacity-10 text-gray-500" />
                             </div>
-                            <p className="text-lg font-medium text-gray-500">
-                                {isRTL ? 'בחר או צור פגישה כדי להתחיל' : 'Select or create a meeting to start'}
-                            </p>
+                            <div className="text-center space-y-2">
+                                <p className="text-2xl font-semibold text-gray-600 tracking-tight">
+                                    {isRTL ? 'חדר הישיבות' : 'The Board Room'}
+                                </p>
+                                <p className="text-base text-gray-400 max-w-xs mx-auto">
+                                    {isRTL ? 'בחר או צור פגישה כדי להתחיל לעבוד עם הצוות' : 'Select or create a meeting to start collaborating with your AI team.'}
+                                </p>
+                            </div>
+                            <Button size="lg" className="mt-4 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 py-6 text-lg" onClick={() => setIsCreateMeetingOpen(true)}>
+                                {isRTL ? 'צור פגישה חדשה' : 'Start New Session'}
+                            </Button>
                         </div>
                     )}
                 </div>

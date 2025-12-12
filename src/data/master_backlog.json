@@ -1,0 +1,34 @@
+[
+    {
+        "id": "T-101",
+        "title": "Implement GitHub Integration",
+        "description": "Create a GitHub Specialist agent capable of opening issues and PRs.",
+        "status": "in_progress",
+        "priority": "high",
+        "assigned_to": "tech-lead-agent"
+    },
+    {
+        "id": "T-102",
+        "title": "Refactor Tool System",
+        "description": "Complete the migration to the new ToolRegistry pattern for all remaining tools.",
+        "status": "todo",
+        "priority": "medium",
+        "assigned_to": "tech-lead-agent"
+    },
+    {
+        "id": "T-103",
+        "title": "Analyze Competitor Pricing",
+        "description": "Run a market scan to determine optimal pricing strategy for the SaaS product.",
+        "status": "todo",
+        "priority": "low",
+        "assigned_to": "innovation-researcher-agent"
+    },
+    {
+        "id": "M-201",
+        "title": "Launch Alpha Version",
+        "description": "Prepare the system for the first internal alpha release.",
+        "status": "todo",
+        "priority": "critical",
+        "assigned_to": "ceo-agent"
+    }
+]

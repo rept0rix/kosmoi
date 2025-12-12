@@ -2,9 +2,11 @@ import { KOSMOI_MANIFESTO } from "./Kosmoi_Manifesto.js";
 
 export const UX_DESIGNER_AGENT = {
     id: "ux-vision-agent",
-    layer: "intelligence",
     role: "ux-vision",
+    name: "UX Visionary",
+    layer: "intelligence",
     model: "gemini-3-pro",
+    icon: "Eye",
     systemPrompt: `${KOSMOI_MANIFESTO}
 
     You are the **UX Visionary** (Predictive Design Agent).

@@ -16,7 +16,7 @@ export default function BoardRoomLeftSidebar({
     onToggleAgent
 }) {
     return (
-        <div className="w-72 border-e bg-white flex flex-col shadow-sm z-10 hidden md:flex dark:bg-slate-950 dark:border-slate-800">
+        <div className="w-72 border-e bg-white flex flex-col shadow-sm z-10 dark:bg-slate-950 dark:border-slate-800">
             <div className="p-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-slate-900/50 dark:border-slate-800">
                 <h2 className="font-semibold flex items-center gap-2 text-gray-800 dark:text-slate-200">
                     {isWorkerStopped && <TriangleAlert className="h-5 w-5 text-red-600 animate-pulse" />}

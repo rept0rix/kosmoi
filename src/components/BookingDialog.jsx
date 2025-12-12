@@ -6,11 +6,14 @@ import { BookingService } from '@/services/BookingService';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
+import { useAuth } from "@/lib/AuthContext";
+
 export default function BookingDialog({ open, onOpenChange, providerId, serviceName = "Consultation", onBookingConfirmed }) {
     const [step, setStep] = useState('select'); // select | confirming | success
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+    const { user } = useAuth(); // Get logged in user
 
     const handleSlotSelect = (slot) => {
         setSelectedSlot(slot);
@@ -22,6 +25,7 @@ export default function BookingDialog({ open, onOpenChange, providerId, serviceN
         try {
             const booking = await BookingService.createBooking({
                 providerId,
+                userId: user?.id, // Pass user ID
                 serviceName,
                 date: selectedSlot.date,
                 time: selectedSlot.time

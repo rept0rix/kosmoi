@@ -61,7 +61,7 @@ export default function TeamManagementDialog({
                     />
                 </div>
 
-                <ScrollArea className="flex-1 pr-4">
+                <ScrollArea className="flex-1 pr-4 max-h-[60vh] overflow-y-auto">
                     <div className="space-y-6">
                         {Object.entries(groupedAgents).map(([layer, layerAgents]) => (
                             <div key={layer}>

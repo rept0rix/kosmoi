@@ -18,6 +18,11 @@ export const ProtectedAdminRoute = () => {
     }
 
     // STRICT: Only allow access if user exists AND email matches the ENV variable
+    // Allow bypass in DEV mode for easier testing
+    if (import.meta.env.DEV) {
+        return <Outlet />;
+    }
+
     if (!user || !adminEmail || user.email !== adminEmail) {
         console.warn(`Unauthorized Admin Access Attempt by: ${user?.email || 'Guest'}`);
         // Redirect to 404 to hide existence, or home

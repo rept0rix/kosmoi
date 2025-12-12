@@ -31,9 +31,11 @@ import {
   Truck,
   Wifi,
   User,
+  Calendar, // Imported Calendar icon
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
 import MapProviderCard from "@/components/MapProviderCard";
+import BookingDialog from "@/components/BookingDialog"; // Imported BookingDialog
 import {
   Select,
   SelectContent,
@@ -83,6 +85,10 @@ export default function ServiceProviders() {
   const [sortBy, setSortBy] = useState('rating');
   const [userLocation, setUserLocation] = useState(null);
   const [selectedMapProvider, setSelectedMapProvider] = useState(null);
+
+  // Booking State
+  const [bookingProvider, setBookingProvider] = useState(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   const [filters, setFilters] = useState({
     minRating: parseFloat(urlParams.get('minRating')) || 0,
@@ -225,6 +231,16 @@ export default function ServiceProviders() {
     } catch (error) {
       db.auth.redirectToLogin(window.location.pathname);
     }
+  };
+
+  const handleBook = async (provider) => {
+    const isAuth = await db.auth.isAuthenticated();
+    if (!isAuth) {
+      db.auth.redirectToLogin(window.location.pathname);
+      return;
+    }
+    setBookingProvider(provider);
+    setIsBookingOpen(true);
   };
 
   return (
@@ -535,6 +551,17 @@ export default function ServiceProviders() {
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  handleBook(provider);
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 h-9"
+                                size="sm"
+                              >
+                                <Calendar className="w-4 h-4 mr-2" />
+                                הזמן
+                              </Button>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleCall(provider.phone);
                                 }}
                                 className="bg-blue-600 hover:bg-blue-700 h-9"
@@ -568,6 +595,12 @@ export default function ServiceProviders() {
           </div>
         </div>
       </div>
+      <BookingDialog
+        open={isBookingOpen}
+        onOpenChange={setIsBookingOpen}
+        providerId={bookingProvider?.id}
+        serviceName={bookingProvider?.business_name || "General Service"}
+      />
     </div >
   );
 }

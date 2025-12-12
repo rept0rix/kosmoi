@@ -17,7 +17,7 @@ const MiniTeamGallery = ({ agents, activeAgentIds }) => {
                                 <div className={`w-full h-full rounded-lg overflow-hidden flex items-center justify-center text-xs font-bold text-${agent.color}-600 bg-${agent.color}-50`}>
                                     {agent.avatar ?
                                         <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-                                        : agent.name.charAt(0)
+                                        : (agent.name || '?').charAt(0)
                                     }
                                 </div>
                                 {/* Status Dot */}

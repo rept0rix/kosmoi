@@ -255,7 +255,7 @@ When finished, reply with "TASK_COMPLETED".
             if (response.text.includes("TASK_COMPLETED") || response.text.includes("TERMINATE")) {
                 console.log("✅ Task Completed by Agent.");
                 await db.entities.AgentTasks.update(task.id, {
-                    status: 'completed',
+                    status: 'done',
                     result: response.text
                 });
                 return;
@@ -267,7 +267,7 @@ When finished, reply with "TASK_COMPLETED".
             // Force fail if we are stuck in a loop without actions
             if (turnCount >= 3) {
                 console.error("❌ Task Failed: Agent is not calling tools.");
-                await db.entities.AgentTasks.update(task.id, { status: 'failed', result: "Agent failed to execute tools. Raw response: " + response.text.substring(0, 200) });
+                await db.entities.AgentTasks.update(task.id, { status: 'done', result: "FAILED: Agent failed to execute tools. Raw response: " + response.text.substring(0, 200) });
                 return;
             }
 
@@ -278,7 +278,7 @@ When finished, reply with "TASK_COMPLETED".
 
     if (turnCount >= MAX_TURNS) {
         console.error("❌ Task Timeout: Max turns reached.");
-        await db.entities.AgentTasks.update(task.id, { status: 'failed', result: "Timeout: Max turns reached." });
+        await db.entities.AgentTasks.update(task.id, { status: 'done', result: "FAILED: Timeout: Max turns reached." });
     }
 }
 

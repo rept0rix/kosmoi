@@ -9,7 +9,8 @@ export default function BoardRoomInput({
     onSend,
     isRTL,
     selectedImage,
-    setSelectedImage
+    setSelectedImage,
+    className
 }) {
     const fileInputRef = useRef(null);
 
@@ -26,7 +27,7 @@ export default function BoardRoomInput({
 
     return (
         <div className="p-4 border-t bg-white/80 backdrop-blur-md">
-            <div className="max-w-4xl mx-auto flex gap-3">
+            <div className={`flex gap-3 ${className || 'max-w-4xl mx-auto'}`}>
                 <Input
                     placeholder={isRTL ? "כתוב הודעה לצוות..." : "Type a message to the board..."}
                     value={input}

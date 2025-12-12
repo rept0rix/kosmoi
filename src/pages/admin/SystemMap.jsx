@@ -8,6 +8,7 @@ import {
     useNodesState,
     useEdgesState,
     addEdge,
+    BackgroundVariant,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
@@ -72,7 +73,7 @@ export default function SystemMap() {
             >
                 <Controls />
                 <MiniMap />
-                <Background variant="dots" gap={12} size={1} />
+                <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
 
                 <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, background: 'white', padding: 10, borderRadius: 5, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
                     <h1 className="font-bold text-lg">Kosmoi System Architecture</h1>

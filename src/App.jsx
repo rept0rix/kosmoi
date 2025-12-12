@@ -36,11 +36,17 @@ import CommandCenter from '@/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminUsers from '@/pages/admin/AdminUsers';
+import AdminAgents from '@/pages/admin/AdminAgents';
+import AgentDetail from '@/pages/admin/AgentDetail';
+import AdminCompany from '@/pages/admin/AdminCompany';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
+import AdminRoadmap from '@/pages/admin/AdminRoadmap';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
+import MyBookings from '@/pages/MyBookings';
 import LocalBrain from '@/pages/LocalBrain';
+import SystemMonitor from '@/components/dashboard/SystemMonitor';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -119,10 +125,13 @@ const AuthenticatedApp = () => {
                 <Route path="board-room" element={<BoardRoom />} />
 
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="agents" element={<AdminAgents />} />
+                <Route path="agents/:agentId" element={<AgentDetail />} />
+                <Route path="company" element={<AdminCompany />} />
                 <Route path="data" element={<AdminData />} />
                 <Route path="crm" element={<AdminCRM />} />
-                {/* Placeholders for now */}
-                <Route path="logs" element={<div className="p-8 text-slate-400">System Logs Coming Soon...</div>} />
+                <Route path="roadmap" element={<AdminRoadmap />} />
+                <Route path="logs" element={<SystemMonitor />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
               </Route>
               <Route path="/admin-importer" element={<AdminImporter />} />
@@ -131,6 +140,7 @@ const AuthenticatedApp = () => {
             <Route element={<ProtectedUserRoute />}>
               <Route path="/vendor-signup" element={<VendorSignup />} />
               <Route path="/vendor" element={<VendorLite />} />
+              <Route path="/my-bookings" element={<MyBookings />} />
             </Route>
 
             <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />

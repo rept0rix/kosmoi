@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Users, Bot } from 'lucide-react';
+import { Users, Bot, BrainCircuit } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -11,33 +11,51 @@ export default function BoardRoomMessageList({
     boardAgents,
     isRTL,
     messagesEndRef,
-    onBookingRequest
+    onBookingRequest,
+    className
 }) {
     const getAgentById = (id) => boardAgents.find(a => a.id === id);
 
     return (
         <ScrollArea className="flex-1 p-6">
-            <div className="space-y-6 max-w-4xl mx-auto">
+            <div className={`space-y-6 ${className || 'max-w-4xl mx-auto'}`}>
                 {messages.map((msg) => {
                     const isUser = msg.agent_id === 'HUMAN_USER';
                     const agent = getAgentById(msg.agent_id);
 
                     return (
-                        <div key={msg.id} className={`flex gap-4 ${isUser ? 'flex-row-reverse' : ''} group`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm border-2 border-white ${isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
-                                {isUser ? <Users className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                        <div key={msg.id} className={`flex gap-5 ${isUser ? 'flex-row-reverse' : ''} group`}>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border-2 border-white ${isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
+                                {isUser ? <Users className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
                             </div>
                             <div className={`flex flex-col max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
                                 <div className="flex items-center gap-2 mb-1 px-1">
-                                    <span className="text-xs font-semibold text-gray-700">
+                                    <span className="text-sm font-semibold text-gray-700">
                                         {isUser ? (isRTL ? 'אתה' : 'You') : (agent?.role || msg.agent_id)}
                                     </span>
-                                    <span className="text-[10px] text-gray-400">
+                                    <span className="text-xs text-gray-400">
                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
-                                {msg.content.includes('[BOOK_NOW:') ? (
-                                    <div className={`p-4 rounded-2xl text-sm shadow-sm leading-relaxed ${isUser
+                                {msg.type === 'system_hidden' || (msg.agent_id === 'SYSTEM' && msg.content.includes('[DIRECTIVE]')) ? (
+                                    <div className="p-4 rounded-2xl rounded-tl-none bg-purple-50 border border-purple-200 border-dashed text-purple-900 shadow-sm relative overflow-hidden group/thought">
+                                        <div className="absolute top-2 right-2 opacity-10 group-hover/thought:opacity-20 transition-opacity">
+                                            <BrainCircuit className="w-12 h-12" />
+                                        </div>
+                                        <div className="flex items-start gap-3 relative z-10">
+                                            <div className="mt-1 p-1 bg-purple-100 rounded-lg">
+                                                <BrainCircuit className="w-4 h-4 text-purple-600" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">Chain of Thought</span>
+                                                <div className="text-sm font-medium italic opacity-90 leading-relaxed font-mono">
+                                                    {msg.content.replace('[DIRECTIVE]:', '').trim()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : msg.content.includes('[BOOK_NOW:') ? (
+                                    <div className={`p-5 rounded-2xl text-base shadow-sm leading-relaxed ${isUser
                                         ? 'bg-blue-600 text-white rounded-tr-none'
                                         : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
                                         }`}>
@@ -85,7 +103,7 @@ export default function BoardRoomMessageList({
                                         })()}
                                     </div>
                                 ) : (
-                                    <div className={`p-4 rounded-2xl text-sm shadow-sm leading-relaxed ${isUser
+                                    <div className={`p-5 rounded-2xl text-base shadow-sm leading-relaxed ${isUser
                                         ? 'bg-blue-600 text-white rounded-tr-none'
                                         : msg.type === 'task_created'
                                             ? 'bg-green-50 border-2 border-green-200 text-green-900 rounded-tl-none'
@@ -132,16 +150,16 @@ export default function BoardRoomMessageList({
                 })}
 
                 {typingAgent && (
-                    <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm border-2 border-white bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600">
-                            <Bot className="w-5 h-5" />
+                    <div className="flex gap-5">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border-2 border-white bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600">
+                            <Bot className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col items-start">
                             <div className="flex items-center gap-2 mb-1 px-1">
-                                <span className="text-xs font-semibold text-gray-700">
+                                <span className="text-sm font-semibold text-gray-700">
                                     {typingAgent.role || typingAgent.id}
                                 </span>
-                                <span className="text-[10px] text-gray-400">Typing...</span>
+                                <span className="text-xs text-gray-400">Typing...</span>
                             </div>
                             <div className="p-4 rounded-2xl rounded-tl-none bg-white border border-gray-100 shadow-sm">
                                 <div className="flex gap-1">
