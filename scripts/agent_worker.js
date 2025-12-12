@@ -233,6 +233,23 @@ async function executeTool(toolName, payload) {
                 const issueData = await issueRes.json();
                 if (!issueRes.ok) return `Error: ${JSON.stringify(issueData)}`;
                 return `Issue Created: ${issueData.html_url}`;
+            case 'create_task':
+                const taskData = {
+                    title: payload.title,
+                    description: payload.description,
+                    assigned_to: payload.assignee || 'human',
+                    priority: payload.priority || 'medium',
+                    status: 'open',
+                    created_by: 'tech-lead-agent'
+                };
+                const { data: newTask, error: taskError } = await workerSupabase
+                    .from('agent_tasks')
+                    .insert([taskData])
+                    .select()
+                    .single();
+
+                if (taskError) throw taskError;
+                return `Task Created Successfully: ${newTask.title} (ID: ${newTask.id})`;
             default:
                 return `Tool ${toolName} not supported in Worker Mode.`;
         }
