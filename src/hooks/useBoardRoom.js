@@ -158,13 +158,24 @@ export function useBoardRoom() {
                 setMessages(prev => [...prev, payload.new]);
                 setTypingAgent(null);
             })
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log(`BOARD: Subscribed to messages:${selectedMeeting.id}`);
+                } else if (status === 'CLOSED') {
+                    console.warn(`BOARD: Channel closed for messages:${selectedMeeting.id}`);
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    console.error(`BOARD: Subscription ERROR for messages:${selectedMeeting.id}`, status);
+                    toast({ title: "Connection Lost", description: "Reconnecting to chat...", variant: "destructive" });
+                }
+            });
 
         const taskSub = supabase.channel(`tasks:${selectedMeeting.id}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_tasks', filter: `meeting_id=eq.${selectedMeeting.id}` }, payload => {
                 supabase.from('agent_tasks').select('*').eq('meeting_id', selectedMeeting.id).then(({ data }) => setTasks(data || []));
             })
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'CHANNEL_ERROR') console.error(`BOARD: Task Subscription Error`, status);
+            });
 
         return () => {
             msgSub.unsubscribe();
