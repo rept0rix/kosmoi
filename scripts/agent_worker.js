@@ -98,7 +98,6 @@ import { agents } from '../src/services/agents/AgentRegistry.js';
 import { clearMemory } from '../src/services/agents/memorySupabase.js';
 
 // Config loaded
-import { db, realSupabase } from '../src/api/supabaseClient.js';
 import { createClient } from '@supabase/supabase-js';
 
 // Ensure we use the Service Role Key for the worker operations
