@@ -1,104 +1,124 @@
-/**
- * Service to handle payment logic, mimicking a Fintech API.
- */
+import { realSupabase } from '@/api/supabaseClient';
+
 export const PaymentService = {
     /**
-     * Create a payment link
-     * @param {number} amount 
-     * @param {string} currency 
-     * @param {string} description 
-     * @returns {Promise<Object>} Payment link object
+     * Get or create a wallet for a user
+     * @param {string} userId 
      */
-    createPaymentLink: async (amount, currency = 'USD', description) => {
-        console.log(`Creating payment link: ${amount} ${currency} for ${description}`);
+    getWallet: async (userId) => {
+        if (!userId) throw new Error("User ID required");
 
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const id = `pay_${Date.now()}`;
-                resolve({
-                    id,
-                    url: `https://pay.kosmoi.com/${id}`,
-                    amount,
-                    currency,
-                    description,
-                    status: 'pending'
-                });
-            }, 800);
-        });
-    },
+        // Try to fetch existing
+        const { data, error } = await realSupabase
+            .from('wallets')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
 
-    /**
-     * Get wallet balance for a user.
-     * Persists to localStorage for the "One Dollar Challenge" feel.
-     * @param {string} walletId 
-     * @returns {Promise<Object>} Balance object
-     */
-    getBalance: async (walletId = 'default') => {
-        // Mock persistence
-        const storageKey = `wallet_${walletId}`;
-        let balance = parseFloat(localStorage.getItem(storageKey));
-
-        if (isNaN(balance)) {
-            balance = 1000.00; // Starting credit
-            localStorage.setItem(storageKey, balance.toString());
+        if (error && error.code !== 'PGRST116') { // PGRST116 is 'not found'
+            console.error("Error fetching wallet:", error);
+            return null;
         }
 
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    walletId,
-                    available: balance,
-                    pending: 0.00,
-                    currency: 'USD'
-                });
-            }, 300);
-        });
-    },
+        if (data) return data;
 
-    /**
-     * Add credits to wallet
-     * @param {number} amount 
-     * @param {string} walletId 
-     */
-    addCredits: async (amount, walletId = 'default') => {
-        const storageKey = `wallet_${walletId}`;
-        let balance = parseFloat(localStorage.getItem(storageKey) || "0");
-        balance += amount;
-        localStorage.setItem(storageKey, balance.toString());
-        return { success: true, newBalance: balance };
-    },
+        // Create if not exists
+        const { data: newWallet, error: createError } = await realSupabase
+            .from('wallets')
+            .insert([{ user_id: userId, balance: 0 }])
+            .select()
+            .single();
 
-    /**
-     * Deduct credits from wallet
-     * @param {number} amount 
-     * @param {string} walletId 
-     */
-    deductCredits: async (amount, walletId = 'default') => {
-        const storageKey = `wallet_${walletId}`;
-        let balance = parseFloat(localStorage.getItem(storageKey) || "0");
-
-        if (balance < amount) {
-            throw new Error("Insufficient funds");
+        if (createError) {
+            console.error("Error creating wallet:", createError);
+            throw createError;
         }
 
-        balance -= amount;
-        localStorage.setItem(storageKey, balance.toString());
-        return { success: true, newBalance: balance };
+        return newWallet;
     },
 
     /**
      * Get transaction history
-     * @param {string} walletId 
-     * @returns {Promise<Array>} List of transactions
+     * @param {string} userId 
      */
-    getTransactionHistory: async (walletId) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve([
-                    { id: 'tx_1', date: '2025-10-01', amount: 50, description: 'Service Fee', type: 'credit' },
-                    { id: 'tx_2', date: '2025-10-02', amount: -10, description: 'Platform Fee', type: 'debit' }
-                ]);
-            }, 600);
+    getTransactionHistory: async (userId) => {
+        // First get wallet id
+        const wallet = await PaymentService.getWallet(userId);
+        if (!wallet) return [];
+
+        const { data, error } = await realSupabase
+            .from('transactions')
+            .select(`
+                *,
+                bookings (
+                    service_date,
+                    service_type
+                )
+            `)
+            .eq('wallet_id', wallet.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error("Error fetching transactions:", error);
+            return [];
+        }
+
+        return data;
+    },
+
+    /**
+     * Add credits (Deposit) - Simulation/Stripe Hook
+     * In real app, this is called by server webhook after Stripe success.
+     * @param {string} userId 
+     * @param {number} amount 
+     */
+    addCredits: async (userId, amount) => {
+        // Call the secure RPC
+        const { data, error } = await realSupabase.rpc('deposit_funds', {
+            user_id: userId,
+            amount: amount
         });
+
+        if (error) {
+            console.error("Error adding credits:", error);
+            throw error;
+        }
+        return data;
+    },
+
+    /**
+     * Process payment between users
+     */
+    payForBooking: async (userId, providerId, amount, bookingId, description) => {
+        // 1. Get payer wallet
+        const payerWallet = await PaymentService.getWallet(userId);
+        if (!payerWallet) throw new Error("Payer wallet missing");
+
+        // 2. Get provider wallet (need to find wallet by provider's user_id)
+        // Check if providerId is a profile ID or separate provider table ID.
+        // in 'service_providers' table, we likely have 'id' (provider id) and 'owner_id' (user id).
+        // We need the OWNER ID used for auth/wallet.
+
+        const { data: provider } = await realSupabase
+            .from('service_providers')
+            .select('owner_id')
+            .eq('id', providerId)
+            .single();
+
+        if (!provider || !provider.owner_id) throw new Error("Provider owner not found");
+
+        const receiverWallet = await PaymentService.getWallet(provider.owner_id);
+
+        // 3. Call RPC
+        const { data, error } = await realSupabase.rpc('process_payment', {
+            payer_wallet_id: payerWallet.id,
+            receiver_wallet_id: receiverWallet.id,
+            amount: amount,
+            booking_id: bookingId,
+            description: description
+        });
+
+        if (error) throw error;
+        return data;
     }
 };

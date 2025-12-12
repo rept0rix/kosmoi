@@ -31,5 +31,27 @@ export const StripeService = {
         console.log(`[Stripe Mock] Sending invoice to ${email}: ${link}`);
         await new Promise(resolve => setTimeout(resolve, 500));
         return true;
+    },
+
+    /**
+     * Process a Mock Payment (Top-up)
+     * @param {string} userId
+     * @param {number} amount
+     */
+    processMockPayment: async (userId, amount) => {
+        console.log(`[Stripe Mock] Processing payment of ${amount} for user ${userId}`);
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing
+
+        // Success! Now fund the wallet.
+        try {
+            // Dynamic import to avoid circular dependency if any, 
+            // though PaymentService doesn't import StripeService so it's fine.
+            const { PaymentService } = await import('./PaymentService');
+            await PaymentService.addCredits(userId, amount);
+            return { success: true, transactionId: 'tx_' + Math.random().toString(36).substr(2, 9) };
+        } catch (error) {
+            console.error("Mock payment failed:", error);
+            throw error;
+        }
     }
 };

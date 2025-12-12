@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Bell, DollarSign, Calendar, Star } from 'lucide-react';
 import VendorJobCard from '@/components/vendor/VendorJobCard';
 import { BookingService } from '@/services/BookingService';
+import { PaymentService } from '@/services/PaymentService';
+import { db } from '@/api/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from "@/components/ui/button";
 
@@ -18,21 +20,31 @@ export default function VendorLite() {
 
     // Mock provider ID for MVP - in real app would come from auth context
     const PROVIDER_ID = 'e6eb8c2e-41d3-45c1-9657-236274438136';
+    // We need the ACTUAL user ID for the wallet.
+    // For this demo to work visually, we'll fetch the current user's wallet.
+    // If we are 'demoing' as a provider, we assume the logged in user IS the provider.
 
     useEffect(() => {
-        fetchJobs();
+        fetchData();
     }, []);
 
-    const fetchJobs = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch bookings for the hardcoded provider or finding one
-            // Ideally we'd list providers and pick one, but for now let's try to get one dynamically if possible
-            // or just use a known one. Since we don't know IDs, let's fetch ALL for debug if providerId is not set?
-            // "getProviderBookings" requires an ID.
-            // Let's implement a fallback to fetch *any* bookings if we are in "demo" mode?
-            // Or better, let the user know this is a demo view.
+            // 1. Fetch Bookings
+            // setJobs([]);
 
+            // 2. Fetch Wallet
+            // We need the current user ID
+            const { data: { user } } = await db.auth.getUser();
+            if (user) {
+                const wallet = await PaymentService.getWallet(user.id);
+                if (wallet) {
+                    setStats(prev => ({ ...prev, todayEarnings: wallet.balance }));
+                }
+            }
+
+            // REAL IMPLEMENTATION TODO: Get provider_id from logged in user profile.
             // For now, let's just use an empty list if we don't have an ID, or try to fetch one.
             // Actually, let's just fetch all bookings from the DB for the purpose of the demo dashboard if we can't find a provider.
             // But we can't.
@@ -42,8 +54,6 @@ export default function VendorLite() {
             // But I can't easily do that here without importing another service.
 
             setJobs([]); // Default to empty
-
-            // REAL IMPLEMENTATION TODO: Get provider_id from logged in user profile.
 
         } catch (error) {
             console.error(error);
@@ -156,7 +166,7 @@ export default function VendorLite() {
                 </div>
 
                 <div className="mt-8">
-                    <Button variant="outline" className="w-full" onClick={fetchJobs}>Refresh Jobs</Button>
+                    <Button variant="outline" className="w-full" onClick={fetchData}>Refresh Jobs</Button>
                 </div>
             </div>
 
