@@ -342,7 +342,7 @@ When finished, reply with "TASK_COMPLETED".
             }
 
             // Try to nudge the agent
-            currentMessage = "You have not executed the command yet. Please use the 'execute_command' tool now.";
+            currentMessage = "Action not detected. If you have finished the task, please explicitly reply with 'TASK_COMPLETED'. Otherwise, select the appropriate tool to proceed.";
         }
     }
 
