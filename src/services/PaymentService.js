@@ -1,4 +1,4 @@
-import { realSupabase } from '@/api/supabaseClient';
+import { realSupabase } from '../api/supabaseClient.js';
 
 export const PaymentService = {
     /**
