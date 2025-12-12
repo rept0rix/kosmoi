@@ -151,32 +151,45 @@ You are running as a WORKER on the target machine.
 
 // Clear memory to avoid "refusal loops" from previous runs
 console.log("🧹 Clearing Agent Memory for fresh start...");
-const WORKER_UUID = '87fbda0b-46d9-44e9-a460-395ca941fd31';
-await clearMemory(agentConfig.id, WORKER_UUID);
+
+// 1. DYNAMIC TYPE: Fetch a real user ID to use as the Worker Identity
+// This fixes the 409 Foreign Key error.
+let WORKER_UUID = '87fbda0b-46d9-44e9-a460-395ca941fd31'; // fallback
+const { data: userData } = await workerSupabase.from('users').select('id').limit(1).single();
+if (userData) {
+    WORKER_UUID = userData.id;
+    console.log(`🆔 Worker Identity: Using existing User ID: ${WORKER_UUID}`);
+} else {
+    console.warn("⚠️ No users found in DB. Worker might fail to write memory.");
+}
+
+try {
+    await clearMemory(agentConfig.id, WORKER_UUID);
+} catch (e) {
+    console.warn("⚠️ Clear memory failed (non-fatal):", e.message);
+}
 
 // Initialize Agent Service
-const agent = new AgentService(agentConfig, { userId: WORKER_UUID }); // Use a static ID for the worker
+const agent = new AgentService(agentConfig, { userId: WORKER_UUID });
 
 async function executeTool(toolName, payload) {
     console.log(`🛠️ Executing Tool: ${toolName}`, payload);
+    if (!toolName) return "Error: No tool name provided.";
 
     try {
         switch (toolName) {
+            // ... (rest of switch)
+            // We don't need to change the switch, just the caller.
             case 'sanitize_json':
                 try {
-                    // "Smart Model" Validation Simulation
-                    // In a real dual-model setup, this would call GPT-4o with "Structured Output".
-                    // Here, we use strict parsing and error correction.
                     const raw = payload.raw_data;
                     let clean = raw.trim();
-                    // Attempt to extract JSON from markdown code blocks if present
                     const jsonMatch = clean.match(/```json\n([\s\S]*?)\n```/) || clean.match(/```([\s\S]*?)```/);
                     if (jsonMatch) clean = jsonMatch[1];
-
                     const parsed = JSON.parse(clean);
                     return JSON.stringify({ status: "success", sanitized: parsed });
                 } catch (e) {
-                    return JSON.stringify({ status: "error", message: "Sanitization Failed: " + e.message, hint: "Raw data was not valid JSON." });
+                    return JSON.stringify({ status: "error", message: "Sanitization Failed: " + e.message });
                 }
             case 'execute_command':
                 return new Promise((resolve) => {
@@ -184,102 +197,51 @@ async function executeTool(toolName, payload) {
                         if (error) {
                             resolve(`Error: ${error.message}\nStderr: ${stderr}`);
                         } else {
-                            resolve(stdout || stderr || "Command executed successfully (no output).");
+                            resolve(stdout || stderr || "Command executed successfully.");
                         }
                     });
                 });
-
             case 'write_file':
             case 'write_code':
-                const filePath = path.resolve(PROJECT_ROOT, payload.path || payload.title); // Handle both formats
+                const filePath = path.resolve(PROJECT_ROOT, payload.path || payload.title);
                 const content = payload.content || payload.code;
-
-                // Ensure dir exists
                 const dir = path.dirname(filePath);
-                if (!fs.existsSync(dir)) {
-                    fs.mkdirSync(dir, { recursive: true });
-                }
-
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
                 fs.writeFileSync(filePath, content);
                 return `File written to ${filePath}`;
-
             case 'read_file':
                 const readPath = path.resolve(PROJECT_ROOT, payload.path);
-                if (fs.existsSync(readPath)) {
-                    return fs.readFileSync(readPath, 'utf-8');
-                } else {
-                    return `Error: File not found at ${readPath}`;
-                }
-
+                return fs.existsSync(readPath) ? fs.readFileSync(readPath, 'utf-8') : `Error: File not found at ${readPath}`;
             case 'list_files':
+            case 'list_dir':
                 return new Promise((resolve) => {
-                    exec('ls -R', { cwd: PROJECT_ROOT }, (error, stdout) => {
-                        resolve(stdout);
+                    exec('ls -R ' + (payload.path || ''), { cwd: PROJECT_ROOT }, (error, stdout) => {
+                        resolve(stdout || "Directory listed.");
                     });
                 });
-
             case 'github_create_issue':
-                // Use fetch instead of gh CLI (No brew dependency!)
-                const token = process.env.GITHUB_TOKEN; // Ensure this is set in .env!
-                if (!token) return "Error: GITHUB_TOKEN not set in .env";
-
-                const repo = "rept0rix/kosmoi"; // Hardcoded for now, or pass in payload
+                const token = process.env.GITHUB_TOKEN;
+                if (!token) return "Error: GITHUB_TOKEN not set";
+                const repo = "rept0rix/kosmoi";
                 const issueRes = await fetch(`https://api.github.com/repos/${repo}/issues`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        title: payload.title,
-                        body: payload.body
-                    })
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: payload.title, body: payload.body })
                 });
-
                 const issueData = await issueRes.json();
-                if (!issueRes.ok) return `Error creating issue: ${JSON.stringify(issueData)}`;
-                return `Issue Created Successfully! URL: ${issueData.html_url}`;
-
-            case 'github_create_pr':
-                return "PR creation via API requires more complex git setup. Please install 'gh' for PRs or use the web interface.";
-
-
-            case 'list_dir': // Alias for list_files because agents sometimes use this name
-                return executeTool('execute_command', { command: `ls -R ${payload.path || ''}` });
-
+                if (!issueRes.ok) return `Error: ${JSON.stringify(issueData)}`;
+                return `Issue Created: ${issueData.html_url}`;
             default:
-                return `Tool ${toolName} not supported in Worker Mode yet. Valid tools: execute_command, write_code, list_files, github_create_issue.`;
+                return `Tool ${toolName} not supported in Worker Mode.`;
         }
-    } catch (e) {
-        return `Tool Execution Failed: ${e.message}`;
-    }
+    } catch (e) { return `Tool Execution Failed: ${e.message}`; }
 }
 
 async function processTask(task) {
     console.log(`\n📋 Processing Task: ${task.title}`);
-
-    // 1. Mark as In Progress (and tag worker)
-    // We append the worker name to the task description temporarily or just log it?
-    // Better: Update the status to 'in_progress' and maybe we can use a metadata field if exists.
-    // For now, let's just log it to the console which goes to the file.
     console.log(`[${workerName}] Claiming task...`);
     await db.entities.AgentTasks.update(task.id, { status: 'in_progress' });
 
-    // Announce in chat/memory
-    try {
-        await realSupabase.from('agent_memory').insert([{
-            agent_id: agentRole,
-            user_id: WORKER_UUID,
-            message: `🤖 [${workerName}] I am starting task: "${task.title}"`,
-            context: { taskId: task.id },
-            type: 'status_update'
-        }]);
-    } catch (announceError) {
-        console.warn("⚠️ Failed to announce task start (non-critical):", announceError.message);
-    }
-
-    // 2. Send to Agent
     const prompt = `
 You have been assigned a task:
 TITLE: ${task.title}
@@ -300,46 +262,57 @@ When finished, reply with "TASK_COMPLETED".
         turnCount++;
         console.log(`\n🔄 Turn ${turnCount}...`);
 
-        // Call Agent (simulateTools: false so we handle them)
         const response = await agent.sendMessage(currentMessage, { simulateTools: false });
-        console.log(`🗣️ Agent Raw Response:\n${response.text}\n---End Response---`);
+        // console.log(`🗣️ Agent Raw Output:`, response); // Debug if needed
 
-        // Check for Tool Call (JSON action or parsed toolRequest)
+        // 2. ROBUST ACTION PARSING
         let action = response.toolRequest;
 
-        // Also check for the new JSON action format from AgentBrain
-        if (!action && response.raw) {
-            try {
-                // AgentBrain returns { message, action }
-                // But AgentService.sendMessage returns { text, raw, toolRequest, plan }
-                // We might need to parse the text again if AgentService didn't catch the new format
-                // The new format is inside the text as JSON.
-                const jsonMatch = response.text.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    const data = JSON.parse(jsonMatch[0]);
-                    if (data.action && data.action.type === 'tool_call') {
-                        action = { name: data.action.name, payload: data.action.payload };
-                    } else if (data.action && (data.action.type === 'write_code' || data.action.type === 'create_task')) {
-                        // Map legacy actions to tools
-                        if (data.action.type === 'write_code') {
-                            action = { name: 'write_code', payload: { path: data.action.title, content: data.action.code } };
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn("⚠️ Failed to parse manual JSON:", e.message);
+        // Ensure we map 'type' to 'name' if name is missing (handling AgentBrain JSON output)
+        if (action && !action.name && action.type) {
+            // Map JSON actions to Tool Names
+            if (action.type === 'tool_call') {
+                action.name = action.name; // should work if structure is right
+                action.payload = action.payload;
+            } else if (action.type === 'write_code') {
+                action.name = 'write_code';
+                action.payload = { path: action.title, content: action.code };
+            } else if (action.type === 'create_task') {
+                action.name = 'create_task';
+                action.payload = action;
+            } else if (action.type === 'execute_command') { // In case it uses type instead of tool_call
+                action.name = 'execute_command';
+                // payload usually OK
             }
         }
 
-        if (action) {
+        // Fallback: Check manual JSON in text if parsing failed earlier
+        if (!action && response.text) {
+            try {
+                const jsonMatch = response.text.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0]);
+                    if (data.action) {
+                        action = data.action;
+                        // Map again
+                        if (action.type === 'write_code') {
+                            action = { name: 'write_code', payload: { path: action.title, content: action.code } };
+                        } else if (action.type === 'tool_call') {
+                            action = { name: action.name, payload: action.payload };
+                        }
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        if (action && action.name) {
             console.log(`✅ Detected Tool Action: ${action.name}`);
             const result = await executeTool(action.name, action.payload);
-            console.log(`✅ Tool Result:`, result.slice(0, 100) + "...");
-
-
-
-            // Feed result back to agent
+            console.log(`✅ Tool Result:`, result.substring(0, 100) + "...");
             currentMessage = `Tool '${action.name}' output:\n${result}\n\nWhat is the next step?`;
+        } else if (action && !action.name) {
+            console.warn("⚠️ Detected action but NAME is undefined:", action);
+            currentMessage = "Error: Tool action detected but tool name is missing. Please check your JSON structure.";
         } else {
             // No tool call. Check if done.
             if (response.text.includes("TASK_COMPLETED") || response.text.includes("TERMINATE")) {
