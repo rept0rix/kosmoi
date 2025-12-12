@@ -324,10 +324,15 @@ When finished, reply with "TASK_COMPLETED".
             // No tool call. Check if done.
             if (response.text.includes("TASK_COMPLETED") || response.text.includes("TERMINATE")) {
                 console.log("✅ Task Completed by Agent.");
-                await db.entities.AgentTasks.update(task.id, {
-                    status: 'done',
-                    result: response.text
-                });
+                try {
+                    await db.entities.AgentTasks.update(task.id, {
+                        status: 'done',
+                        result: response.text
+                    });
+                } catch (dbError) {
+                    console.warn("⚠️ Failed to update result (column might be missing), updating status only:", dbError.message);
+                    await db.entities.AgentTasks.update(task.id, { status: 'done' });
+                }
                 return;
             }
 
@@ -342,7 +347,11 @@ When finished, reply with "TASK_COMPLETED".
             }
 
             // Try to nudge the agent
-            currentMessage = "Action not detected. If you have finished the task, please explicitly reply with 'TASK_COMPLETED'. Otherwise, select the appropriate tool to proceed.";
+            if (response.text.toLowerCase().includes("complete") || response.text.toLowerCase().includes("finished")) {
+                currentMessage = "System Notification: You have indicated the task is complete. Please strictly reply with the exact text 'TASK_COMPLETED' to finalize the process.";
+            } else {
+                currentMessage = "Action not detected. If you have finished the task, please explicitly reply with 'TASK_COMPLETED'. Otherwise, select the appropriate tool to proceed.";
+            }
         }
     }
 
