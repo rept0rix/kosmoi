@@ -210,7 +210,9 @@ async function executeTool(toolName, payload) {
                 fs.writeFileSync(filePath, content);
                 return `File written to ${filePath}`;
             case 'read_file':
-                const readPath = path.resolve(PROJECT_ROOT, payload.path);
+                const rawPath = payload.path || payload.filename || payload.target_file || payload.file;
+                if (!rawPath) return "Error: No path provided for read_file.";
+                const readPath = path.resolve(PROJECT_ROOT, rawPath);
                 return fs.existsSync(readPath) ? fs.readFileSync(readPath, 'utf-8') : `Error: File not found at ${readPath}`;
             case 'list_files':
             case 'list_dir':
@@ -279,7 +281,12 @@ When finished, reply with "TASK_COMPLETED".
                 action.payload = { path: action.title, content: action.code };
             } else if (action.type === 'create_task') {
                 action.name = 'create_task';
-                action.payload = action;
+                action.payload = {
+                    title: action.title,
+                    description: action.description,
+                    assignee: action.assignee,
+                    priority: action.priority
+                };
             } else if (action.type === 'execute_command') { // In case it uses type instead of tool_call
                 action.name = 'execute_command';
                 // payload usually OK
