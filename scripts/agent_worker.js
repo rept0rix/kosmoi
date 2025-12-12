@@ -322,7 +322,8 @@ When finished, reply with "TASK_COMPLETED".
             currentMessage = "Error: Tool action detected but tool name is missing. Please check your JSON structure.";
         } else {
             // No tool call. Check if done.
-            if (response.text.includes("TASK_COMPLETED") || response.text.includes("TERMINATE")) {
+            // No tool call. Check if done.
+            if (response.text.toUpperCase().includes("TASK_COMPLETED") || response.text.toUpperCase().includes("TERMINATE")) {
                 console.log("✅ Task Completed by Agent.");
                 try {
                     await db.entities.AgentTasks.update(task.id, {
@@ -339,10 +340,14 @@ When finished, reply with "TASK_COMPLETED".
             // If no tool and no completion, just continue conversation or stop?
             console.log("⚠️ No tool called and not completed. Agent might be confused.");
 
-            // Force fail if we are stuck in a loop without actions
-            if (turnCount >= 3) {
+            // Force fail if we are stuck in a loop without actions (RELAXED LIMIT)
+            if (turnCount >= MAX_TURNS) {
                 console.error("❌ Task Failed: Agent is not calling tools.");
-                await db.entities.AgentTasks.update(task.id, { status: 'done', result: "FAILED: Agent failed to execute tools. Raw response: " + response.text.substring(0, 200) });
+                try {
+                    await db.entities.AgentTasks.update(task.id, { status: 'done', result: "FAILED: Agent failed to execute tools." });
+                } catch (e) {
+                    await db.entities.AgentTasks.update(task.id, { status: 'done' });
+                }
                 return;
             }
 
@@ -391,8 +396,26 @@ function setupChatConsole() {
 }
 // ----------------------------
 
+async function checkDbSchema() {
+    try {
+        // Attempt to add 'result' column if it doesn't exist
+        const { error } = await workerSupabase.rpc('exec_sql', {
+            sql: "ALTER TABLE agent_tasks ADD COLUMN IF NOT EXISTS result TEXT; ALTER TABLE agent_tasks ADD COLUMN IF NOT EXISTS input_context JSONB;"
+        });
+
+        if (error && !error.message.includes('already exists')) {
+            console.warn("⚠️ Failed to patch DB schema via RPC (ignoring):", error.message);
+        } else {
+            console.log("✅ verified 'agent_tasks' schema columns.");
+        }
+    } catch (e) {
+        console.warn("⚠️ DB Schema check skipped:", e.message);
+    }
+}
+
 async function main() {
     setupChatConsole(); // <--- Enable Chat
+    await checkDbSchema(); // <--- Verify DB
     await checkForUpdates();
     console.log("🚀 Worker Loop Started. Polling for tasks...");
     console.log("💡 TIP: You can type here to send commands to the Board Room!");
