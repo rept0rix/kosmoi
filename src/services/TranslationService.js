@@ -1,5 +1,5 @@
 
-import { AgentService } from "./agents/AgentService";
+import { AgentService } from "./agents/AgentService.js";
 
 /**
  * TranslationService
