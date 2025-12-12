@@ -3,6 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
+import readline from 'readline'; // Import readline
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 global.localStorage = {
     _data: {},
@@ -17,6 +22,44 @@ if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
     global.localStorage.setItem('sb-access-token', process.env.VITE_SUPABASE_SERVICE_ROLE_KEY);
     console.log("🔑 Worker running with Service Role Privileges");
 }
+
+// --- OTA AUTO-UPDATE LOGIC ---
+async function checkForUpdates() {
+    console.log("📡 Checking for updates...");
+    const { data, error } = await realSupabase
+        .from('company_knowledge')
+        .select('*')
+        .eq('key', 'WORKER_CODE_LATEST')
+        .single();
+
+    if (error || !data || !data.value) {
+        console.log("✅ No updates found or registry empty.");
+        return;
+    }
+
+    const remoteVersion = new Date(data.value.version).getTime();
+    const localStats = fs.statSync(__filename);
+    const localVersion = localStats.mtime.getTime();
+
+    if (remoteVersion > localVersion) {
+        console.log("🚀 New version detected! Downloading update...");
+        console.log(`   Remote: ${data.value.version}`);
+        console.log(`   Local:  ${localStats.mtime.toISOString()}`);
+
+        // Backup current version just in case
+        fs.copyFileSync(__filename, `${__filename}.bak`);
+
+        // Overwrite Self
+        fs.writeFileSync(__filename, data.value.code);
+
+        console.log("✅ Update applied. Restarting worker...");
+        process.exit(0); // Exit to let the runner loop restart it, or if manual, user must restart.
+        // Ideally we should spawn a new process, but for now exit is safest signal.
+    } else {
+        console.log("✅ Worker is up to date.");
+    }
+}
+// -----------------------------
 
 // --- LOGGING OVERRIDE ---
 const logFile = path.join(process.cwd(), 'worker.log');
@@ -49,9 +92,8 @@ import { AgentService } from '../src/services/agents/AgentService.js';
 import { agents } from '../src/services/agents/AgentRegistry.js';
 import { clearMemory } from '../src/services/agents/memorySupabase.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '..');
+// Config loaded
+import { db, realSupabase } from '../src/api/supabaseClient.js';
 
 // Parse CLI args
 const args = process.argv.slice(2);
@@ -158,8 +200,29 @@ async function executeTool(toolName, payload) {
                     });
                 });
 
+            case 'github_create_issue':
+                // payload: { title, body }
+                // Escape quotes simply for now. Ideally use spawn with args array but exec is simpler for this POC.
+                const title = payload.title.replace(/"/g, '\\"');
+                const body = payload.body.replace(/"/g, '\\"');
+                return executeTool('execute_command', {
+                    command: `gh issue create --title "${title}" --body "${body}"`
+                });
+
+            case 'github_create_pr':
+                // payload: { title, body, head, base }
+                const prTitle = payload.title.replace(/"/g, '\\"');
+                const prBody = payload.body.replace(/"/g, '\\"');
+                const base = payload.base || 'main'; // default
+                return executeTool('execute_command', {
+                    command: `gh pr create --title "${prTitle}" --body "${prBody}" --base "${base}"`
+                });
+
+            case 'list_dir': // Alias for list_files because agents sometimes use this name
+                return executeTool('execute_command', { command: `ls -R ${payload.path || ''}` });
+
             default:
-                return `Tool ${toolName} not supported in Worker Mode yet.`;
+                return `Tool ${toolName} not supported in Worker Mode yet. Valid tools: execute_command, write_code, list_files, github_create_issue.`;
         }
     } catch (e) {
         return `Tool Execution Failed: ${e.message}`;
@@ -282,8 +345,41 @@ When finished, reply with "TASK_COMPLETED".
     }
 }
 
+// --- CHAT CONSOLE FEATURE ---
+function setupChatConsole() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: '' // No prompt to avoid cluttering logs
+    });
+
+    rl.on('line', async (line) => {
+        const text = line.trim();
+        if (!text) return;
+
+        console.log(`\n📨 Sending message to Board Room: "${text}"`);
+
+        try {
+            // Insert as a message from the "User (Remote)"
+            await realSupabase.from('messages').insert([{
+                content: `[Remote Worker] ${text}`,
+                role: 'user', // Treat as user input so Orchestrator responds!
+                user_id: WORKER_UUID, // Use the worker's ID or the user's ID if available
+                created_at: new Date().toISOString()
+            }]);
+            console.log("✅ Message sent!");
+        } catch (e) {
+            console.error("❌ Failed to send message:", e.message);
+        }
+    });
+}
+// ----------------------------
+
 async function main() {
+    setupChatConsole(); // <--- Enable Chat
+    await checkForUpdates();
     console.log("🚀 Worker Loop Started. Polling for tasks...");
+    console.log("💡 TIP: You can type here to send commands to the Board Room!");
 
     while (true) {
         try {
@@ -303,12 +399,15 @@ async function main() {
                 .in('status', ['open', 'pending', 'in_progress'])
                 .limit(1);
 
-            if (error) throw error;
+            if (error) console.error("Polling Error:", error);
 
             if (tasks && tasks.length > 0) {
+                console.log(`\n👀 Found ${tasks.length} tasks! First ID: ${tasks[0].id}`);
                 await processTask(tasks[0]);
             } else {
-                process.stdout.write('.');
+                if (error) console.error("Polling Error:", error);
+                // process.stdout.write('.'); // Comment out dot for now
+                console.log(`[${new Date().toISOString().split('T')[1]}] Polling for ${agentConfig.id}... No tasks.`);
             }
 
         } catch (e) {
