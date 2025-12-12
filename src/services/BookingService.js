@@ -1,4 +1,4 @@
-import { db } from "../api/supabaseClient";
+import { db } from "../api/supabaseClient.js";
 
 /**
  * Service to handle booking logic backed by Supabase.
@@ -109,6 +109,41 @@ export const BookingService = {
             return [];
         }
         return data;
+    },
+
+    /**
+     * Get bookings for a specific provider
+     * @param {string} providerId 
+     * @returns {Promise<Object[]>}
+     */
+    getProviderBookings: async (providerId) => {
+        const { data, error } = await db.from('bookings')
+            .select(`
+                *,
+                profiles:user_id (
+                    full_name,
+                    email
+                )
+            `)
+            .eq('provider_id', providerId)
+            .order('service_date', { ascending: true });
+
+        if (error) {
+            console.error("Error fetching provider bookings:", error);
+            return [];
+        }
+        return data;
+    },
+
+    /**
+     * Update booking status
+     * @param {string} bookingId 
+     * @param {string} status 'confirmed' | 'cancelled' | 'completed'
+     */
+    updateBookingStatus: async (bookingId, status) => {
+        const { error } = await db.from('bookings').update({ status }).eq('id', bookingId);
+        if (error) throw error;
+        return true;
     }
 };
 

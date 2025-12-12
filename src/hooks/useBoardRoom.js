@@ -330,7 +330,10 @@ export function useBoardRoom() {
             }
 
         } catch (error) {
-            console.error("BOARD: Agent reply error for", selectedAgent?.id, error);
+            console.error("BOARD: Agent reply error for", selectedAgent?.id);
+            console.error("BOARD: Full Error Details:", error);
+            // Verify if error is from Supabase or Network
+            if (error.status === 401) console.error("BOARD: Supabase Auth Error (401) - Check RLS or keys");
             await supabase.from('board_messages').insert([{ meeting_id: selectedMeeting.id, agent_id: 'SYSTEM', content: `**Error**: ${error.message || 'Unknown agent error'}`, type: 'system' }]);
             setTypingAgent(null);
         }

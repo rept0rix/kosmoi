@@ -23,21 +23,23 @@ async function deployWorker() {
         console.log(`   Size: ${stats.size} bytes`);
         console.log(`   Version: ${version}`);
 
-        // 2. Upload to Supabase 'company_knowledge'
+        // 2. Upload to Supabase 'agent_tasks' (Workaround for Schema Cache)
+        // We use a specific ID based on the key to act as a "Singleton"
+        const UPDATE_ID = '00000000-0000-0000-0000-000000000001'; // Reserved UUID
+
         const payload = {
-            version: version,
-            code: code,
-            deployed_at: new Date().toISOString()
+            id: UPDATE_ID,
+            title: 'SYSTEM_WORKER_UPDATE',
+            description: JSON.stringify({ version, code }), // Store code in description
+            assigned_to: 'system',
+            status: 'done', // Don't let agents pick it up
+            priority: 'low',
+            created_at: new Date().toISOString()
         };
 
         const { error } = await realSupabase
-            .from('company_knowledge')
-            .upsert({
-                key: 'WORKER_CODE_LATEST',
-                value: payload,
-                category: 'system_deployment',
-                updated_at: new Date().toISOString()
-            });
+            .from('agent_tasks')
+            .upsert(payload);
 
         if (error) throw error;
 

@@ -1,95 +1,138 @@
 /**
- * MCP Client Helper
- * Centralizes communication with the local MCP Proxy via WebSocket.
+ * MCP Client Helper (Optimized Singleton)
+ * Manages persistent WebSocket connection to local MCP Proxy.
  */
 export const MCPClient = {
+    ws: null,
+    isConnected: false,
+    pendingRequests: new Map(),
+    nextMessageId: 1,
+    reconnectTimer: null,
+    connectPromise: null,
+
+    /**
+     * Initialize connection if not active.
+     * @returns {Promise<void>}
+     */
+    async connect() {
+        if (this.isConnected) return;
+        if (this.connectPromise) return this.connectPromise;
+
+        this.connectPromise = new Promise((resolve, reject) => {
+            console.log("[MCP Client] Connecting...");
+            this.ws = new WebSocket('ws://localhost:3001');
+
+            this.ws.onopen = () => {
+                console.log("[MCP Client] Connected.");
+                this.isConnected = true;
+                this.reconnectTimer = null;
+
+                // Send Initialize
+                this.sendInternal({
+                    method: "initialize",
+                    params: {
+                        protocolVersion: "2024-11-05",
+                        capabilities: {},
+                        clientInfo: { name: "samui-client", version: "1.0.0" }
+                    }
+                }).then(() => {
+                    // Send Notif
+                    this.ws.send(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
+                    resolve();
+                }).catch(err => {
+                    console.error("[MCP Client] Init Failed:", err);
+                    reject(err);
+                });
+            };
+
+            this.ws.onmessage = (event) => this.handleMessage(event);
+
+            this.ws.onerror = (err) => {
+                console.error("[MCP Client] Connection Error:", err);
+                if (!this.isConnected) reject(err); // Reject initial connect
+            };
+
+            this.ws.onclose = () => {
+                console.log("[MCP Client] Disconnected.");
+                this.isConnected = false;
+                this.connectPromise = null;
+                // Auto-reconnect if it was an unexpected close?
+                // For now, next callTool will try to reconnect.
+            };
+        });
+
+        return this.connectPromise;
+    },
+
+    handleMessage(event) {
+        try {
+            const response = JSON.parse(event.data);
+
+            // Handle Responses to pending requests
+            if (response.id && this.pendingRequests.has(response.id)) {
+                const { resolve, reject, timer } = this.pendingRequests.get(response.id);
+                clearTimeout(timer);
+                this.pendingRequests.delete(response.id);
+
+                if (response.error) {
+                    reject(new Error(response.error.message));
+                } else {
+                    resolve(response.result);
+                }
+            } else {
+                // Handle Notifications or Logs from Server?
+                console.log("[MCP Client] RX:", response);
+            }
+        } catch (e) {
+            console.error("[MCP Client] Parse Error:", e);
+        }
+    },
+
+    sendInternal(payload) {
+        return new Promise((resolve, reject) => {
+            const id = this.nextMessageId++;
+            const json = JSON.stringify({ jsonrpc: "2.0", id, ...payload });
+
+            // Timeout safety
+            const timer = setTimeout(() => {
+                if (this.pendingRequests.has(id)) {
+                    this.pendingRequests.delete(id);
+                    reject(new Error("Timeout waiting for MCP response"));
+                }
+            }, 30000); // 30s timeout
+
+            this.pendingRequests.set(id, { resolve, reject, timer });
+            this.ws.send(json);
+        });
+    },
+
     /**
      * Call a tool on the MCP Server.
-     * @param {string} toolName - Name of the tool (e.g. 'execute_command', 'write_file')
-     * @param {Object} args - Arguments for the tool
-     * @param {number} [timeoutMs=15000] - Timeout in milliseconds
-     * @returns {Promise<string>} - The result content or error message
+     * @param {string} toolName 
+     * @param {Object} args 
+     * @returns {Promise<string>}
      */
-    async callTool(toolName, args, timeoutMs = 15000) {
-        console.log(`[MCP Client] Calling ${toolName} with args:`, args);
-
-        // Safety check
-        if (toolName === 'execute_command' && !args.command) {
-            return `[Error] Command is required for execute_command.`;
-        }
-
+    async callTool(toolName, args) {
         try {
-            const ws = new WebSocket('ws://localhost:3001');
+            await this.connect();
 
-            return await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    ws.close();
-                    resolve(`[Error] Tool '${toolName}' timed out after ${timeoutMs}ms.`);
-                }, timeoutMs);
-
-                const INIT_ID = 1;
-                const CALL_ID = 3;
-
-                ws.onopen = () => {
-                    ws.send(JSON.stringify({
-                        jsonrpc: "2.0",
-                        id: INIT_ID,
-                        method: "initialize",
-                        params: {
-                            protocolVersion: "2024-11-05",
-                            capabilities: {},
-                            clientInfo: { name: "samui-client", version: "1.0.0" }
-                        }
-                    }));
-                };
-
-                ws.onerror = (err) => {
-                    // @ts-ignore
-                    const msg = err.message || "Connection failed";
-                    resolve(`[Error] MCP Proxy Connection Failed: ${msg}. Is 'node mcp-proxy.js' running?`);
-                };
-
-                ws.onclose = () => {
-                    // Handled by timeout/error if premature
-                };
-
-                ws.onmessage = (event) => {
-                    try {
-                        const response = JSON.parse(event.data);
-
-                        if (response.id === INIT_ID) {
-                            // Initialized, send notifications and call tool
-                            ws.send(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
-
-                            // Call the tool directly
-                            ws.send(JSON.stringify({
-                                jsonrpc: "2.0",
-                                id: CALL_ID,
-                                method: "tools/call",
-                                params: {
-                                    name: toolName,
-                                    arguments: args
-                                }
-                            }));
-                        } else if (response.id === CALL_ID) {
-                            clearTimeout(timeout);
-                            ws.close();
-
-                            if (response.error) {
-                                resolve(`[Error] MCP Tool Failed: ${response.error.message}`);
-                            } else {
-                                const content = response.result?.content?.[0]?.text || JSON.stringify(response.result);
-                                resolve(content);
-                            }
-                        }
-                    } catch (e) {
-                        console.error("MCP Parse Error:", e);
-                        resolve(`[Error] Failed to parse MCP response: ${e.message}`);
-                    }
-                };
+            const result = await this.sendInternal({
+                method: "tools/call",
+                params: {
+                    name: toolName,
+                    arguments: args
+                }
             });
+
+            // Parse common content format
+            if (result && result.content && Array.isArray(result.content)) {
+                return result.content.map(c => c.text).join('\n');
+            }
+
+            return JSON.stringify(result);
+
         } catch (e) {
-            return `[Error] MCP Client Exception: ${e.message}`;
+            return `[Error] MCP Tool '${toolName}' failed: ${e.message}`;
         }
     }
 };

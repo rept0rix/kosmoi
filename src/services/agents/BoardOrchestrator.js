@@ -82,6 +82,30 @@ RULES:
             // ... legacy logic ...
         }
 
+        // 3. ERROR RECOVERY (TestOps Integration)
+        // Check if the last message indicates a failure
+        const lastMsg = history[history.length - 1];
+        if (lastMsg) {
+            const content = lastMsg.content;
+            // Detect structured errors or explicit error mentions
+            const isError = content.includes('[Error]') ||
+                (content.toLowerCase().includes('error:') && content.length < 500) ||
+                content.includes('Exception:');
+
+            // Avoid looping: If the QA specialist just spoke, don't pick them again immediately unless it's a new error?
+            // Actually, if QA just spoke, we expect them to have proposed a fix or assigned a task.
+            const wasQA = lastMsg.agentId === 'qa-specialist-agent';
+
+            if (isError && !wasQA) {
+                console.log("[Orchestrator] Error detected! Summoning QA Specialist.");
+                return {
+                    nextSpeakerId: "qa-specialist-agent",
+                    reason: "An error was detected in the previous message. QA Specialist must analyze it.",
+                    instruction: "Analyze the error reported in the last message using your 'analyze_failure' tool. Propose a fix or create a ticket."
+                };
+            }
+        }
+
         // 2. FALLBACK TO LLM ORCHESTRATION (Existing Logic)
         const formattedHistory = history.map(msg => {
             const speaker = msg.role === 'user' ? 'User' : (msg.agentId || 'Unknown Agent');

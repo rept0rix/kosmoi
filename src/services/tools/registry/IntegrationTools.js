@@ -2,6 +2,7 @@ import { ToolRegistry } from "../ToolRegistry.js";
 import { BookingService } from "../../BookingService.js";
 import { PaymentService } from "../../PaymentService.js";
 import { GenerateImage, CreatePaymentLink } from "../../../api/integrations.js";
+import { db } from "../../../api/supabaseClient.js"; // Needed for delegating tasks
 
 // --- CREATIVE TOOLS ---
 ToolRegistry.register("generate_image", async (payload) => {
@@ -27,7 +28,8 @@ ToolRegistry.register("calendar-api", async (payload) => {
     try {
         if (action === "get_slots") {
             const slots = await BookingService.getAvailableSlots(payload.date, payload.providerId);
-            return `[Calendar] Available slots for ${payload.date}: ${slots.join(", ")}`;
+            return `[Calendar] Available slots for ${payload.date}: ${slots.join(", ")}
+[BOOK_NOW:Meeting|${payload.providerId}]`;
         } else if (action === "create_booking") {
             const booking = await BookingService.createBooking(payload.details);
             return `[Calendar] Booking Confirmed! ID: ${booking.id}.`;
@@ -66,3 +68,36 @@ ToolRegistry.register("payment-gateway", async (payload) => {
     // ... other legacy actions can be mapped if needed
     return "[Error] Use create_payment_link tool directly.";
 });
+
+
+// --- GITHUB TOOLS (REMOTE DELEGATION) ---
+// These tools create a task for the Distributed Worker to execute.
+const delegateToWorker = async (toolName, payload) => {
+    try {
+        const taskData = {
+            title: `GitHub Action: ${toolName}`,
+            description: JSON.stringify(payload), // Send payload as description for now
+            // Or better: store in a 'metadata' field if created, but description works for worker parser
+            assigned_to: 'github-specialist-agent',
+            status: 'pending',
+            priority: 'high',
+            created_at: new Date().toISOString()
+        };
+
+        // Use the proper "create task" logic if available, or direct DB insert
+        // Using direct DB insert for simplicity and speed
+        const { data, error } = await db.entities.AgentTasks.create(taskData);
+
+        if (error) throw error;
+        return `[System] 🚀 Task Delegated to Distributed Worker!
+Type: ${toolName}
+Worker: github-specialist-agent
+Status: Pending`;
+    } catch (e) {
+        return `[Error] Failed to delegate task: ${e.message}`;
+    }
+};
+
+ToolRegistry.register("github_create_issue", async (payload) => delegateToWorker("github_create_issue", payload));
+ToolRegistry.register("github_create_pr", async (payload) => delegateToWorker("github_create_pr", payload));
+ToolRegistry.register("github_list_issues", async (payload) => delegateToWorker("list_dir", payload)); // Mapping list to list for test, or implement specific list logic in worker

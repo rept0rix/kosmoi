@@ -8,7 +8,8 @@
 export function findMentionedAgent(content, activeAgents) {
     if (!content || !activeAgents) return null;
 
-    const mentionMatch = content.match(/@([a-zA-Z0-9_-]+)/);
+    // Supports: @User, @User.Name, @User_Name, @User-Name
+    const mentionMatch = content.match(/@([a-zA-Z0-9_.-]+)/);
     if (mentionMatch) {
         const mentionedName = mentionMatch[1].toLowerCase();
 

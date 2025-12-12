@@ -164,3 +164,18 @@ export const syncAgentsWithDatabase = async () => {
         console.error("Error syncing agents:", err);
     }
 };
+
+/**
+ * Groups agents by their 'layer' property.
+ * @returns {Record<string, Array>}
+ */
+export const groupAgentsByLayer = () => {
+    return agents.reduce((acc, agent) => {
+        const layer = agent.layer || 'Other';
+        if (!acc[layer]) {
+            acc[layer] = [];
+        }
+        acc[layer].push(agent);
+        return acc;
+    }, {});
+};

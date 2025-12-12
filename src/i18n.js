@@ -6,7 +6,7 @@ const resources = {
   en: {
     translation: {
       "app.title": "Kosmoi",
-      "nav.home": "Home",
+      "nav.home": "Marketplace",
       "nav.about": "About",
       "nav.services": "Services",
       "nav.contact": "Contact",
@@ -111,7 +111,7 @@ const resources = {
   he: {
     translation: {
       "app.title": "Kosmoi",
-      "nav.home": "בית",
+      "nav.home": "שוק",
       "nav.about": "אודות",
       "nav.services": "שירותים",
       "nav.contact": "צור קשר",

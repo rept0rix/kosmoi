@@ -1,26 +1,47 @@
+
 import 'dotenv/config';
-import { db } from '../src/api/supabaseClient.js';
+import { createClient } from '@supabase/supabase-js';
 
-async function dispatchGitHubTask() {
-    console.log("🚀 Dispatching GitHub Task to Worker Node...");
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-    const task = {
-        title: "Test GitHub Integration",
-        description: "Create a test issue in the repository to verify the worker's gh CLI integration. Title: 'Worker Integration Test', Body: 'This issue was created by the distributed worker node.'",
-        assigned_to: "github-specialist-agent",
-        status: "pending", // Correct status for polling
-        priority: "high",
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("❌ Missing VITE_SUPABASE_URL or VITE_SUPABASE_SERVICE_ROLE_KEY in .env");
+    process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+async function createTestTask() {
+    console.log("🚀 Creating Test GitHub Task...");
+
+    const payload = {
+        title: "Test Issue from Worker",
+        body: "This is a test issue created by the distributed worker to verify API integration."
+    };
+
+    const taskData = {
+        title: "GitHub Action: github_create_issue",
+        description: JSON.stringify(payload),
+        assigned_to: 'github-specialist-agent', // Match the role user is running!
+        status: 'pending',
+        priority: 'high',
         created_at: new Date().toISOString()
     };
 
-    const { data, error } = await db.entities.AgentTasks.create(task);
+    const { data, error } = await supabase
+        .from('agent_tasks')
+        .insert([taskData])
+        .select();
 
     if (error) {
-        console.error("❌ Failed to create task:", error);
+        console.error("❌ Failed to create task:", error.message);
     } else {
-        console.log("✅ GitHub Task Created!", data);
-        console.log(`\n👀 watcher instructions:\n1. Ensure Worker is RUNNING on Machine 2.\n2. Watch for '[Worker] Claiming task...'\n3. Watch for 'Executing Tool: github_create_issue' -> 'gh issue create...'`);
+        console.log("✅ Task Created Successfully!");
+        console.log(`   ID: ${data[0].id}`);
+        console.log(`   Assigned To: ${data[0].assigned_to}`);
+        console.log("\n👉 Now RESTART your worker node. It should pick this up immediately.");
     }
 }
 
-dispatchGitHubTask();
+createTestTask();

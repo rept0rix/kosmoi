@@ -6,7 +6,7 @@ import { TranslationService } from '../TranslationService.js';
  * @param {Object} agent - The agent object from AgentRegistry.
  * @param {Array} messages - The list of previous messages in the meeting.
  * @param {Object} context - Additional context (e.g., meeting title, tasks).
- * @returns {Promise<{message: string, action: Object|null, original_en_message?: string}>}
+ * @returns {Promise<{message: string, action: Object|null, original_en_message?: string, thought_process?: string}>}
  */
 export async function getAgentReply(agent, messages, context = {}) {
   try {

@@ -25,38 +25,43 @@ if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
 
 // --- OTA AUTO-UPDATE LOGIC ---
 async function checkForUpdates() {
-    console.log("📡 Checking for updates...");
+    console.log("📡 Checking for updates (via agent_tasks)...");
+    const UPDATE_ID = '00000000-0000-0000-0000-000000000001';
+
     const { data, error } = await realSupabase
-        .from('company_knowledge')
+        .from('agent_tasks')
         .select('*')
-        .eq('key', 'WORKER_CODE_LATEST')
+        .eq('id', UPDATE_ID)
         .single();
 
-    if (error || !data || !data.value) {
-        console.log("✅ No updates found or registry empty.");
+    if (error || !data) {
+        console.log("✅ No updates found.");
         return;
     }
 
-    const remoteVersion = new Date(data.value.version).getTime();
-    const localStats = fs.statSync(__filename);
-    const localVersion = localStats.mtime.getTime();
+    try {
+        const updateData = JSON.parse(data.description);
+        const remoteVersion = new Date(updateData.version).getTime();
+        const localStats = fs.statSync(__filename);
+        const localVersion = localStats.mtime.getTime();
 
-    if (remoteVersion > localVersion) {
-        console.log("🚀 New version detected! Downloading update...");
-        console.log(`   Remote: ${data.value.version}`);
-        console.log(`   Local:  ${localStats.mtime.toISOString()}`);
+        if (remoteVersion > localVersion) {
+            console.log("🚀 New version detected! Downloading update...");
+            console.log(`   Remote: ${updateData.version}`);
 
-        // Backup current version just in case
-        fs.copyFileSync(__filename, `${__filename}.bak`);
+            // Backup
+            fs.copyFileSync(__filename, `${__filename}.bak`);
 
-        // Overwrite Self
-        fs.writeFileSync(__filename, data.value.code);
+            // Overwrite
+            fs.writeFileSync(__filename, updateData.code);
 
-        console.log("✅ Update applied. Restarting worker...");
-        process.exit(0); // Exit to let the runner loop restart it, or if manual, user must restart.
-        // Ideally we should spawn a new process, but for now exit is safest signal.
-    } else {
-        console.log("✅ Worker is up to date.");
+            console.log("✅ Update applied. Restarting worker...");
+            process.exit(0);
+        } else {
+            console.log("✅ Worker is up to date.");
+        }
+    } catch (e) {
+        console.error("❌ Failed to parse update payload:", e.message);
     }
 }
 // -----------------------------
@@ -94,6 +99,20 @@ import { clearMemory } from '../src/services/agents/memorySupabase.js';
 
 // Config loaded
 import { db, realSupabase } from '../src/api/supabaseClient.js';
+import { createClient } from '@supabase/supabase-js';
+
+// Ensure we use the Service Role Key for the worker operations
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const workerSupabase = supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey)
+    : realSupabase;
+
+if (supabaseServiceKey) {
+    console.log("🔐 Worker Supabase Client initialized with Service Role Key independently.");
+} else {
+    console.warn("⚠️ Service Role Key not found in env. Worker using default client (potentially limited).");
+}
 
 // Parse CLI args
 const args = process.argv.slice(2);
@@ -201,22 +220,31 @@ async function executeTool(toolName, payload) {
                 });
 
             case 'github_create_issue':
-                // payload: { title, body }
-                // Escape quotes simply for now. Ideally use spawn with args array but exec is simpler for this POC.
-                const title = payload.title.replace(/"/g, '\\"');
-                const body = payload.body.replace(/"/g, '\\"');
-                return executeTool('execute_command', {
-                    command: `gh issue create --title "${title}" --body "${body}"`
+                // Use fetch instead of gh CLI (No brew dependency!)
+                const token = process.env.GITHUB_TOKEN; // Ensure this is set in .env!
+                if (!token) return "Error: GITHUB_TOKEN not set in .env";
+
+                const repo = "rept0rix/kosmoi"; // Hardcoded for now, or pass in payload
+                const issueRes = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: payload.title,
+                        body: payload.body
+                    })
                 });
 
+                const issueData = await issueRes.json();
+                if (!issueRes.ok) return `Error creating issue: ${JSON.stringify(issueData)}`;
+                return `Issue Created Successfully! URL: ${issueData.html_url}`;
+
             case 'github_create_pr':
-                // payload: { title, body, head, base }
-                const prTitle = payload.title.replace(/"/g, '\\"');
-                const prBody = payload.body.replace(/"/g, '\\"');
-                const base = payload.base || 'main'; // default
-                return executeTool('execute_command', {
-                    command: `gh pr create --title "${prTitle}" --body "${prBody}" --base "${base}"`
-                });
+                return "PR creation via API requires more complex git setup. Please install 'gh' for PRs or use the web interface.";
+
 
             case 'list_dir': // Alias for list_files because agents sometimes use this name
                 return executeTool('execute_command', { command: `ls -R ${payload.path || ''}` });
@@ -361,7 +389,7 @@ function setupChatConsole() {
 
         try {
             // Insert as a message from the "User (Remote)"
-            await realSupabase.from('messages').insert([{
+            await workerSupabase.from('messages').insert([{
                 content: `[Remote Worker] ${text}`,
                 role: 'user', // Treat as user input so Orchestrator responds!
                 user_id: WORKER_UUID, // Use the worker's ID or the user's ID if available
@@ -384,22 +412,33 @@ async function main() {
     while (true) {
         try {
             // Report Heartbeat / Status
-            await realSupabase.from('company_knowledge').upsert({
-                key: 'WORKER_STATUS',
-                value: { status: 'RUNNING', last_seen: new Date().toISOString(), worker: workerName },
-                category: 'system',
-                updated_at: new Date().toISOString()
-            });
+            // Report Heartbeat / Status (Non-blocking)
+            try {
+                await workerSupabase.from('company_knowledge').upsert({
+                    key: 'WORKER_STATUS',
+                    value: { status: 'RUNNING', last_seen: new Date().toISOString(), worker: workerName },
+                    category: 'system',
+                    updated_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.warn("⚠️ Heartbeat failed (non-fatal):", err.message);
+            }
 
             // Poll for tasks...
-            const { data: tasks, error } = await realSupabase
+            // DEBUG: Diagnostic Query
+            // const { count, error: countError } = await workerSupabase.from('agent_tasks').select('*', { count: 'exact', head: true });
+            // console.log(`[DEBUG] Total tasks in agent_tasks: ${count} (Error: ${countError?.message})`);
+
+            console.log(`[DEBUG] Polling Query Params: AssignedTo='${agentConfig.id}', Status=['open','pending','in_progress']`);
+
+            const { data: tasks, error } = await workerSupabase
                 .from('agent_tasks')
                 .select('*')
                 .eq('assigned_to', agentConfig.id)
                 .in('status', ['open', 'pending', 'in_progress'])
                 .limit(1);
 
-            if (error) console.error("Polling Error:", error);
+            if (error) console.error("Polling Error Details:", JSON.stringify(error, null, 2));
 
             if (tasks && tasks.length > 0) {
                 console.log(`\n👀 Found ${tasks.length} tasks! First ID: ${tasks[0].id}`);
@@ -414,7 +453,7 @@ async function main() {
             console.error("\n❌ Error in Polling Loop:", e.message);
 
             // Report Error State
-            await realSupabase.from('company_knowledge').upsert({
+            await workerSupabase.from('company_knowledge').upsert({
                 key: 'WORKER_STATUS',
                 value: { status: 'STOPPED', error: e.message, last_seen: new Date().toISOString(), worker: workerName },
                 category: 'system',

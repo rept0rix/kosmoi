@@ -94,3 +94,51 @@ ToolRegistry.register("escalate_issue", async (payload, options) => {
         return `[Error] Escalation failed: ${e.message}`;
     }
 });
+
+ToolRegistry.register("analyze_failure", async (payload, options) => {
+    try {
+        const { error_log, context } = payload;
+        if (!error_log) return "[Error] No error log provided for analysis.";
+
+        // 1. Heuristic Analysis (MVP)
+        let rootCause = "Unknown";
+        let confidence = "Low";
+        let suggestion = "Investigate further.";
+
+        const logLower = error_log.toLowerCase();
+
+        if (logLower.includes("rls") || logLower.includes("policy")) {
+            rootCause = "Database Permissions (RLS)";
+            confidence = "High";
+            suggestion = "Check Supabase RLS policies. The agent might be using an ANON key where a SERVICE_ROLE key is required.";
+        } else if (logLower.includes("timeout") || logLower.includes("504")) {
+            rootCause = "Network/Timeout";
+            confidence = "Medium";
+            suggestion = "The operation took too long. Optimize the query or increase the timeout.";
+        } else if (logLower.includes("syntax") || logLower.includes("unexpected token")) {
+            rootCause = "Syntax Error";
+            confidence = "High";
+            suggestion = "Check the code for syntax errors (missing brackets, invalid JSON).";
+        } else if (logLower.includes("not found") || logLower.includes("404")) {
+            rootCause = "Resource Missing";
+            confidence = "Medium";
+            suggestion = "A file or API endpoint is missing. Verify the path.";
+        }
+
+        // 2. Future: Semantic Search against Knowledge Base (Incident Reports)
+        // const pastIncidents = await db.entities.CompanyKnowledge.search(error_log);
+
+        return JSON.stringify({
+            status: "analyzed",
+            analysis: {
+                root_cause: rootCause,
+                confidence: confidence,
+                suggestion: suggestion,
+                original_error: error_log.slice(0, 200) + "..."
+            }
+        }, null, 2);
+
+    } catch (e) {
+        return `[Error] Failure Analysis failed: ${e.message}`;
+    }
+});

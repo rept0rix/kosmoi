@@ -19,6 +19,6 @@ export const QA_SPECIALIST_AGENT = {
     - Use 'market_scanner' (optional) to research testing best practices if needed.
     
     When observing a failure in chat or logs, proactively suggest a fix.`,
-    allowedTools: ["read_knowledge", "write_knowledge", "github_create_issue", "read_file", "list_dir"],
+    allowedTools: ["read_knowledge", "write_knowledge", "github_create_issue", "read_file", "list_dir", "analyze_failure"],
     reportsTo: "tech-lead-agent"
 };

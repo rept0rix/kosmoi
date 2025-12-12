@@ -1,5 +1,4 @@
-
-import { db } from '../api/supabaseClient.js';
+import { realSupabase as supabase } from '../api/supabaseClient.js';
 
 /**
  * AdminService
@@ -9,10 +8,11 @@ export const AdminService = {
 
     /**
      * Get all users (Signups)
+     * Note: This fetches from 'profiles' public table which should mirror auth.users
      */
     getUsers: async () => {
         try {
-            const { data, error } = await db.entities.Profile.select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
 
             if (error) {
                 console.warn("AdminService: Users fetch failed", error);
@@ -30,7 +30,7 @@ export const AdminService = {
      */
     getBusinesses: async () => {
         try {
-            const { data, error } = await db.entities.ServiceProvider.select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabase.from('service_providers').select('*').order('created_at', { ascending: false });
             if (error) {
                 console.warn("AdminService: Business fetch failed", error);
                 return [];
@@ -48,7 +48,7 @@ export const AdminService = {
     getStats: async () => {
         try {
             // Try calling the RPC function first for speed
-            const { data, error } = await db.rpc('get_admin_stats');
+            const { data, error } = await supabase.rpc('get_admin_stats');
 
             if (!error && data) {
                 return data;
@@ -81,7 +81,7 @@ export const AdminService = {
      */
     toggleUserBan: async (userId) => {
         try {
-            const { error } = await db.rpc('admin_ban_user', { target_user_id: userId });
+            const { error } = await supabase.rpc('admin_ban_user', { target_user_id: userId });
             if (error) throw error;
             return true;
         } catch (e) {
@@ -95,7 +95,7 @@ export const AdminService = {
      */
     toggleBusinessVerification: async (businessId) => {
         try {
-            const { error } = await db.rpc('admin_verify_business', { target_business_id: businessId });
+            const { error } = await supabase.rpc('admin_verify_business', { target_business_id: businessId });
             if (error) throw error;
             return true;
         } catch (e) {

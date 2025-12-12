@@ -161,6 +161,8 @@ export default function ServiceProviders() {
       const matchesSearch = !searchQuery ||
         provider.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         provider.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        provider.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        provider.super_category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         provider.contact_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesSuperCategory = filters.superCategory === 'all' || provider.super_category === filters.superCategory;
