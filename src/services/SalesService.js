@@ -18,7 +18,7 @@ export const SalesService = {
         // and mocking their CRM status based on existing fields.
 
         try {
-            const { data: businesses, error } = await db.entities.ServiceProvider.select('*');
+            const { data: businesses, error } = await db.entities.ServiceProvider.list();
             if (error) throw error;
 
             // Mock categorization into pipeline stages

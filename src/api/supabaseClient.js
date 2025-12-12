@@ -10,7 +10,7 @@ const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && im
 const supabaseAnonKey = (typeof process !== 'undefined' && process.env && process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)
     ? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     : ((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || process.env.VITE_SUPABASE_ANON_KEY);
-const supabaseServiceKey = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY')
+
 
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 //     auth: {
@@ -482,6 +482,16 @@ export const supabaseHelpers = {
             },
             async list(userId) {
                 return fetchSupabase(`agent_approvals?user_id=eq.${userId}&status=eq.pending&order=created_at.desc`);
+            }
+        },
+
+        AgentLogs: {
+            async create(data) {
+                const result = await fetchSupabase('agent_logs', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                return result[0];
             }
         }
     },

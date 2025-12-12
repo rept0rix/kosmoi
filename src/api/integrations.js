@@ -241,6 +241,23 @@ export const Core = {
             console.error("Stripe Error:", error);
             return { error: error.message };
         }
+    },
+    GetEmbedding: async ({ text }) => {
+        try {
+            const { GoogleGenerativeAI } = await import("@google/generative-ai");
+            const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) ||
+                (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GEMINI_API_KEY : process.env.VITE_GEMINI_API_KEY);
+
+            if (!apiKey) return null;
+
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+            const result = await model.embedContent(text);
+            return result.embedding.values;
+        } catch (error) {
+            console.error("Embedding Error:", error);
+            return null;
+        }
     }
 };
 
@@ -259,4 +276,6 @@ export const GenerateImage = Core.GenerateImage;
 export const ExtractDataFromUploadedFile = Core.ExtractDataFromUploadedFile;
 
 export const CreatePaymentLink = Core.CreatePaymentLink;
+
+export const GetEmbedding = Core.GetEmbedding;
 

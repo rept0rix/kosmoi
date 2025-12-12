@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Users, Bot, BrainCircuit } from 'lucide-react';
+import { Users, Bot, BrainCircuit, ThumbsUp, ThumbsDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -138,10 +138,18 @@ export default function BoardRoomMessageList({
                                     </div>
                                 )}
                                 {!isUser && agent && (
-                                    <div className="mt-1 px-1">
+                                    <div className="mt-1 px-1 flex items-center justify-between w-full">
                                         <Badge variant="outline" className="text-[10px] h-5 bg-gray-50/50 border-gray-200 text-gray-500">
                                             {agent.role}
                                         </Badge>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-green-600 transition-colors">
+                                                <ThumbsUp className="w-3 h-3" />
+                                            </button>
+                                            <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-red-500 transition-colors">
+                                                <ThumbsDown className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -173,6 +181,6 @@ export default function BoardRoomMessageList({
                 )}
                 <div ref={messagesEndRef} />
             </div>
-        </ScrollArea>
+        </ScrollArea >
     );
 }

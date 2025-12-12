@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { BookingService } from '@/services/BookingService';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function MyBookings() {
     const { user } = useAuth();
@@ -14,6 +15,8 @@ export default function MyBookings() {
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
+    const language = i18n.language;
 
     useEffect(() => {
         if (user) {
@@ -30,22 +33,22 @@ export default function MyBookings() {
             setBookings(data || []);
         } catch (error) {
             console.error(error);
-            toast({ title: "Error", description: "Failed to load bookings", variant: "destructive" });
+            toast({ title: t('error'), description: t('my_bookings.load_error'), variant: "destructive" });
         } finally {
             setLoading(false);
         }
     };
 
     const handleCancel = async (bookingId) => {
-        if (!confirm("Are you sure you want to cancel this booking?")) return;
+        if (!confirm(t('my_bookings.cancel_confirm'))) return;
 
         try {
             await BookingService.cancelBooking(bookingId);
-            toast({ title: "Booking Cancelled" });
+            toast({ title: t('my_bookings.cancel_success') });
             fetchBookings(); // Refresh list
         } catch (error) {
             console.error(error);
-            toast({ title: "Error", description: "Failed to cancel booking", variant: "destructive" });
+            toast({ title: t('error'), description: t('my_bookings.cancel_error'), variant: "destructive" });
         }
     };
 
@@ -53,28 +56,28 @@ export default function MyBookings() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <AlertCircle className="w-12 h-12 text-amber-500" />
-                <h2 className="text-xl font-semibold">Please Log In</h2>
-                <p className="text-gray-500">You need to be logged in to view your bookings.</p>
-                <Button onClick={() => navigate('/login')}>Log In</Button>
+                <h2 className="text-xl font-semibold">{t('favorites.loginRequired')}</h2>
+                <p className="text-gray-500">{t('my_bookings.login_desc') || t('my_reviews.login_desc')}</p>
+                <Button onClick={() => navigate('/login')}>{t('login')}</Button>
             </div>
         );
     }
 
     if (loading) {
-        return <div className="p-8 text-center text-gray-500">Loading bookings...</div>;
+        return <div className="p-8 text-center text-gray-500">{t('loading')}</div>;
     }
 
     return (
         <div className="container mx-auto py-8 px-4 max-w-4xl">
-            <h1 className="text-3xl font-bold mb-2">My Bookings</h1>
-            <p className="text-gray-500 mb-8">Manage your upcoming appointments and history.</p>
+            <h1 className="text-3xl font-bold mb-2">{t('my_bookings.title')}</h1>
+            <p className="text-gray-500 mb-8">{t('my_bookings.subtitle')}</p>
 
             {bookings.length === 0 ? (
                 <Card className="text-center py-12 bg-slate-50 border-dashed">
                     <CardContent className="flex flex-col items-center gap-4">
                         <Calendar className="w-12 h-12 text-gray-300" />
-                        <p className="text-lg font-medium text-gray-600">No bookings found</p>
-                        <Button variant="outline" onClick={() => navigate('/board-room')}>Book an Appointment</Button>
+                        <p className="text-lg font-medium text-gray-600">{t('my_bookings.no_bookings')}</p>
+                        <Button variant="outline" onClick={() => navigate('/board-room')}>{t('my_bookings.book_appointment')}</Button>
                     </CardContent>
                 </Card>
             ) : (
@@ -82,35 +85,35 @@ export default function MyBookings() {
                     {bookings.map((booking) => (
                         <Card key={booking.id} className="overflow-hidden">
                             <div className="flex flex-col md:flex-row">
-                                <div className="bg-slate-100 dark:bg-slate-800 p-6 flex flex-col items-center justify-center min-w-[150px] border-r border-slate-200 dark:border-slate-700">
+                                <div className="bg-slate-100 dark:bg-slate-800 p-6 flex flex-col items-center justify-center min-w-[150px] border-e border-slate-200 dark:border-slate-700">
                                     <span className="text-2xl font-bold">{new Date(booking.service_date).getDate()}</span>
                                     <span className="text-sm font-medium uppercase text-gray-500">
-                                        {new Date(booking.service_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                        {new Date(booking.service_date).toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', { month: 'short', year: 'numeric' })}
                                     </span>
                                 </div>
                                 <div className="flex-1 p-6">
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
-                                            <h3 className="text-lg font-semibold">{booking.service_type || 'Service Appointment'}</h3>
+                                            <h3 className="text-lg font-semibold">{booking.service_type || t('my_bookings.service_appointment')}</h3>
                                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
                                                 <Clock className="w-4 h-4" />
                                                 <span>{booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
                                                 <MapPin className="w-4 h-4" />
-                                                <span>{booking.service_providers?.name || 'Service Provider'}</span>
+                                                <span>{booking.service_providers?.name || t('my_bookings.service_provider')}</span>
                                             </div>
                                         </div>
                                         <Badge variant={booking.status === 'confirmed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'} className="capitalize">
-                                            {booking.status}
+                                            {t(`status.${booking.status}`) || booking.status}
                                         </Badge>
                                     </div>
                                 </div>
-                                <div className="p-6 flex items-center border-l border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                                <div className="p-6 flex items-center border-s border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                                     {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                                         <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleCancel(booking.id)}>
-                                            <XCircle className="w-4 h-4 mr-2" />
-                                            Cancel
+                                            <XCircle className="w-4 h-4 me-2" />
+                                            {t('cancel')}
                                         </Button>
                                     )}
                                 </div>

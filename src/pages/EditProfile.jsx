@@ -8,14 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Save, User } from "lucide-react";
-import { useLanguage } from "@/components/LanguageContext";
-import { getTranslation } from "@/components/translations";
+import { useTranslation } from "react-i18next";
 
 export default function EditProfile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { language } = useLanguage();
-  const t = (key) => getTranslation(language, key);
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -77,9 +76,9 @@ export default function EditProfile() {
         <Button
           variant="ghost"
           onClick={() => navigate(createPageUrl("Profile"))}
-          className="mb-4"
+          className="mb-4 gap-2"
         >
-          <ArrowRight className="w-4 h-4 ml-2" />
+          <ArrowRight className="w-4 h-4" />
           {t('back')}
         </Button>
 
@@ -93,7 +92,7 @@ export default function EditProfile() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label>תמונת פרופיל</Label>
+                <Label>{t('profile.photo_label')}</Label>
                 <div className="flex items-center gap-4 mt-2">
                   {formData.profile_image ? (
                     <img
@@ -119,7 +118,7 @@ export default function EditProfile() {
                       htmlFor="profile-image-upload"
                       className="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer text-sm"
                     >
-                      {uploading ? t('loading') : 'העלה תמונה'}
+                      {uploading ? t('loading') : t('action.upload_photo')}
                     </label>
                   </div>
                 </div>

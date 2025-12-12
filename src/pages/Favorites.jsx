@@ -8,13 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Phone, MessageCircle, Heart, Trash2 } from "lucide-react";
-import { useLanguage } from "@/components/LanguageContext";
-import { getTranslation } from "@/components/translations";
+import { useTranslation } from "react-i18next";
 
 export default function Favorites() {
   const navigate = useNavigate();
-  const { language } = useLanguage();
-  const t = (key) => getTranslation(language, key);
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -73,10 +72,10 @@ export default function Favorites() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 text-center">
           <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h2 className="text-2xl font-bold mb-2">נדרשת התחברות</h2>
-          <p className="text-gray-600 mb-6">התחבר כדי לראות את המעודפים שלך</p>
+          <h2 className="text-2xl font-bold mb-2">{t('favorites.loginRequired')}</h2>
+          <p className="text-gray-600 mb-6">{t('favorites.login_desc')}</p>
           <Button onClick={() => db.auth.redirectToLogin()} className="w-full">
-            התחבר
+            {t('login')}
           </Button>
         </Card>
       </div>
@@ -89,20 +88,20 @@ export default function Favorites() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-            המעודפים שלי
+            {t('favorites.title')}
           </h1>
-          <p className="text-gray-600 mt-2">ספקי השירות שסימנת כמועדפים</p>
+          <p className="text-gray-600 mt-2">{t('favorites.subtitle')}</p>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12 text-gray-500">טוען...</div>
+          <div className="text-center py-12 text-gray-500">{t('loading')}</div>
         ) : favorites.length === 0 ? (
           <Card className="p-12 text-center">
             <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">אין עדיין מעודפים</h3>
-            <p className="text-gray-500 mb-6">התחל להוסיף ספקי שירות למעודפים</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('favorites.empty_title')}</h3>
+            <p className="text-gray-500 mb-6">{t('favorites.empty_desc')}</p>
             <Button onClick={() => navigate(createPageUrl("ServiceProviders"))}>
-              חפש ספקים
+              {t('favorites.search_providers')}
             </Button>
           </Card>
         ) : (
@@ -150,7 +149,7 @@ export default function Favorites() {
                           </span>
                         </div>
                         <span className="text-xs text-gray-500">
-                          ({provider.total_reviews || 0} ביקורות)
+                          ({provider.total_reviews || 0} {t('reviews')})
                         </span>
                       </div>
 
@@ -190,7 +189,7 @@ export default function Favorites() {
                           className="h-9"
                           size="sm"
                         >
-                          פרטים
+                          {t('action.details')}
                         </Button>
                       </div>
                     </div>

@@ -8,8 +8,7 @@ import { db } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useLanguage } from "@/components/LanguageContext";
-import { getTranslation } from "@/components/translations";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   MapPin,
@@ -56,8 +55,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { language } = useLanguage();
-  const t = (key) => getTranslation(language, key);
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [locationPermission, setLocationPermission] = useState('pending');
@@ -120,7 +119,7 @@ export default function Dashboard() {
       try {
         const location = JSON.parse(savedLocation);
         setUserLocation(location);
-        setSelectedLocationName(savedLocationName || 'המיקום שלי');
+        setSelectedLocationName(savedLocationName || t('dashboard.my_location'));
         setLocationAddressEn(savedLocationAddressEn);
         setLocationAddressTh(savedLocationAddressTh);
         setLocationPermission('granted');
@@ -142,7 +141,7 @@ export default function Dashboard() {
   const checkLocation = async () => {
     if (!navigator.geolocation) {
       setLocationPermission('denied');
-      setLocationError('הדפדפן שלך לא תומך בשירותי מיקום');
+      setLocationError(t('dashboard.location_error_api'));
       return;
     }
 
@@ -183,11 +182,11 @@ export default function Dashboard() {
         // console.log("Location access error:", error);
         setLocationPermission('denied');
         if (error.code === error.PERMISSION_DENIED) {
-          setLocationError('נדרשת הרשאה למיקום');
+          setLocationError(t('dashboard.location_error_denied'));
         } else if (error.code === error.POSITION_UNAVAILABLE) {
-          setLocationError('לא ניתן לקבל את המיקום');
+          setLocationError(t('dashboard.location_error_unavailable'));
         } else {
-          setLocationError('שגיאה בקבלת מיקום');
+          setLocationError(t('dashboard.location_error_generic'));
         }
       },
       {
@@ -369,9 +368,9 @@ export default function Dashboard() {
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   onFocus={() => searchQuery && setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="text-base h-12 bg-gray-50 border-gray-300 focus:bg-white transition-colors text-lg pr-12"
+                  className="text-base h-12 bg-gray-50 border-gray-300 focus:bg-white transition-colors text-lg pe-12 ps-12"
                 />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-auto">
                     {suggestions.map((provider) => (
@@ -501,19 +500,19 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle>{t('selectLocation')}</DialogTitle>
             <DialogDescription>
-              חפש מיקום או בחר מתוך האפשרויות
+              {t('dashboard.search_location_description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Input
-                  placeholder="חפש מיקום..."
+                  placeholder={t('dashboard.search_location_placeholder')}
                   value={locationSearchQuery}
                   onChange={(e) => setLocationSearchQuery(e.target.value)}
-                  className="text-base h-12 pr-10"
+                  className="text-base h-12 pe-10 ps-10"
                 />
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
               <Button
                 onClick={handleUseCurrentLocation}
@@ -533,7 +532,7 @@ export default function Dashboard() {
                     variant="outline"
                     className="w-full justify-start h-12"
                   >
-                    <MapPin className={`w-4 h-4 ${language === 'he' ? 'ml-2' : 'mr-2'} text-gray-500`} />
+                    <MapPin className="w-4 h-4 me-2 text-gray-500" />
                     {location.name}
                   </Button>
                 ))}
@@ -559,7 +558,7 @@ export default function Dashboard() {
             className="w-full border-dashed border-gray-400 text-gray-700 bg-yellow-50 hover:bg-yellow-100 h-12 text-lg"
             onClick={() => navigate(createPageUrl("AdminImporter"))}
           >
-            🛠️ כלי ייבוא עסקים (לחץ כאן לייבוא מגוגל)
+            {t('dashboard.import_tool')}
           </Button>
         </div>
 
@@ -602,10 +601,10 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-5 h-5 animate-pulse" />
-                      <span className="text-lg font-bold">גלה עוד אפשרויות עם הצאט AI</span>
+                      <span className="text-lg font-bold">{t('dashboard.ai_chat_button')}</span>
                     </div>
                     <span className="text-xs text-indigo-100 opacity-90 group-hover:opacity-100">
-                      קבל המלצות מותאמות אישית
+                      {t('dashboard.ai_chat_subtext')}
                     </span>
                   </Button>
                 </div>
@@ -616,7 +615,7 @@ export default function Dashboard() {
             {!selectedSuperCategory && (
               <div className="mt-12 text-center opacity-70">
                 <p className="text-sm text-gray-400">
-                  Select a category to explore Koh Samui
+                  {t('dashboard.select_category_prompt')}
                 </p>
               </div>
             )}

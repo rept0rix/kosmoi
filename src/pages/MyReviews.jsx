@@ -7,14 +7,13 @@ import { createPageUrl } from "@/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, MessageSquare, Calendar } from "lucide-react";
-import { useLanguage } from "@/components/LanguageContext";
-import { getTranslation } from "@/components/translations";
+import { useTranslation } from "react-i18next";
 import moment from "moment";
 
 export default function MyReviews() {
   const navigate = useNavigate();
-  const { language } = useLanguage();
-  const t = (key) => getTranslation(language, key);
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -48,10 +47,10 @@ export default function MyReviews() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 text-center">
           <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h2 className="text-2xl font-bold mb-2">נדרשת התחברות</h2>
-          <p className="text-gray-600 mb-6">התחבר כדי לראות את הביקורות שלך</p>
+          <h2 className="text-2xl font-bold mb-2">{t('favorites.loginRequired')}</h2>
+          <p className="text-gray-600 mb-6">{t('my_reviews.login_desc')}</p>
           <Button onClick={() => db.auth.redirectToLogin()} className="w-full">
-            התחבר
+            {t('login')}
           </Button>
         </Card>
       </div>
@@ -64,20 +63,20 @@ export default function MyReviews() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <MessageSquare className="w-8 h-8 text-blue-600" />
-            הביקורות שלי
+            {t('myReviews')}
           </h1>
-          <p className="text-gray-600 mt-2">כל הביקורות שכתבת על ספקי שירות</p>
+          <p className="text-gray-600 mt-2">{t('my_reviews.subtitle')}</p>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12 text-gray-500">טוען...</div>
+          <div className="text-center py-12 text-gray-500">{t('loading')}</div>
         ) : reviews.length === 0 ? (
           <Card className="p-12 text-center">
             <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">אין עדיין ביקורות</h3>
-            <p className="text-gray-500 mb-6">התחל לכתוב ביקורות על ספקי שירות</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('noReviews')}</h3>
+            <p className="text-gray-500 mb-6">{t('my_reviews.empty_desc')}</p>
             <Button onClick={() => navigate(createPageUrl("ServiceProviders"))}>
-              חפש ספקים
+              {t('favorites.search_providers')}
             </Button>
           </Card>
         ) : (
@@ -117,8 +116,8 @@ export default function MyReviews() {
                                 <Star
                                   key={star}
                                   className={`w - 4 h - 4 ${star <= review.rating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
                                     } `}
                                 />
                               ))}
@@ -136,7 +135,7 @@ export default function MyReviews() {
 
                       {review.service_type && (
                         <div className="text-sm text-gray-600 mb-2">
-                          סוג שירות: <span className="font-medium">{review.service_type}</span>
+                          {t('serviceType')}: <span className="font-medium">{review.service_type}</span>
                         </div>
                       )}
 
@@ -159,14 +158,14 @@ export default function MyReviews() {
 
                       {review.would_recommend && (
                         <div className="text-xs text-green-600 font-medium">
-                          ✓ ממליץ על ספק זה
+                          {t('my_reviews.recommend')}
                         </div>
                       )}
 
                       {review.response && (
                         <div className="mt-3 bg-blue-50 rounded-lg p-3 border-r-4 border-blue-500">
                           <div className="text-xs font-semibold text-blue-900 mb-1">
-                            תגובת ספק השירות:
+                            {t('my_reviews.provider_response')}
                           </div>
                           <p className="text-sm text-blue-800">{review.response}</p>
                         </div>
