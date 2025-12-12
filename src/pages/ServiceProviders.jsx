@@ -46,8 +46,7 @@ import {
 import SearchFiltersPanel from "../components/SearchFiltersPanel";
 import SuperCategories from "../components/SuperCategories";
 import SubCategorySelector from "../components/SubCategorySelector";
-import { useLanguage } from "@/components/LanguageContext";
-import { getTranslation } from "@/components/translations";
+import { useTranslation } from 'react-i18next';
 import { getCategoryIcon } from "@/utils/mapIcons";
 import { getSubCategoryLabel } from "../components/subCategories";
 
@@ -76,8 +75,9 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
  */
 export default function ServiceProviders() {
   const navigate = useNavigate();
-  const { language } = useLanguage();
-  const t = (key) => getTranslation(language, key);
+  const { t, i18n } = useTranslation();
+  const language = i18n.language; // Keep language var for other usages
+
   const urlParams = new URLSearchParams(window.location.search);
 
   const [searchQuery, setSearchQuery] = useState(urlParams.get('search') || '');
@@ -253,7 +253,7 @@ export default function ServiceProviders() {
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Input
-                placeholder="חפש שירות, עסק, קטגוריה..."
+                placeholder={t('search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -261,9 +261,9 @@ export default function ServiceProviders() {
                 }}
                 onFocus={() => searchQuery && setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="text-base pr-10"
+                className="text-base pe-10"
               />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-auto">
@@ -328,7 +328,7 @@ export default function ServiceProviders() {
               onClick={() => setIsOpenNow(!isOpenNow)}
               className="text-xs"
             >
-              פתוח עכשיו
+              {t('search.open_now')}
             </Button>
           </div>
         </div>
@@ -369,7 +369,7 @@ export default function ServiceProviders() {
             {/* Results Header */}
             <div className="mb-4 flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                נמצאו <span className="font-semibold text-gray-900">{filteredProviders.length}</span> ספקי שירות
+                {t('search.results_found', { count: filteredProviders.length })}
               </div>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-40">
@@ -379,20 +379,20 @@ export default function ServiceProviders() {
                   <SelectItem value="rating">
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4" />
-                      דירוג
+                      {t('search.sort_rating')}
                     </div>
                   </SelectItem>
                   <SelectItem value="reviews">
                     <div className="flex items-center gap-2">
                       <MessageCircle className="w-4 h-4" />
-                      ביקורות
+                      {t('search.sort_reviews')}
                     </div>
                   </SelectItem>
                   {userLocation && (
                     <SelectItem value="distance">
                       <div className="flex items-center gap-2">
                         <Navigation className="w-4 h-4" />
-                        מרחק
+                        {t('search.sort_distance')}
                       </div>
                     </SelectItem>
                   )}
@@ -435,9 +435,9 @@ export default function ServiceProviders() {
                   <div className="w-24 h-24 mx-auto mb-4 bg-blue-50 rounded-full flex items-center justify-center">
                     <Search className="w-12 h-12 text-blue-300" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">לא נמצאו תוצאות עבור החיפוש</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{t('search.no_results_title')}</h3>
                   <p className="text-gray-500 mb-6">
-                    נסה לשנות את הפילטרים, להרחיב את טווח החיפוש או לחפש מונחים אחרים
+                    {t('search.no_results_desc')}
                   </p>
                   {activeFiltersCount > 0 && (
                     <Button
@@ -457,8 +457,8 @@ export default function ServiceProviders() {
                       }}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      <X className="w-4 h-4 ml-2" />
-                      נקה את כל הפילטרים
+                      <X className="w-4 h-4 ms-2" />
+                      {t('search.clear_filters')}
                     </Button>
                   )}
                 </div>
@@ -558,8 +558,8 @@ export default function ServiceProviders() {
                                 className="bg-blue-600 hover:bg-blue-700 h-9"
                                 size="sm"
                               >
-                                <Calendar className="w-4 h-4 mr-2" />
-                                הזמן
+                                <Calendar className="w-4 h-4 me-2" />
+                                {t('action.book')}
                               </Button>
                               <Button
                                 onClick={(e) => {
@@ -569,8 +569,8 @@ export default function ServiceProviders() {
                                 className="bg-blue-600 hover:bg-blue-700 h-9"
                                 size="sm"
                               >
-                                <Phone className="w-4 h-4 mr-2" />
-                                חייג
+                                <Phone className="w-4 h-4 me-2" />
+                                {t('action.call')}
                               </Button>
                               {provider.whatsapp && (
                                 <Button
@@ -581,8 +581,8 @@ export default function ServiceProviders() {
                                   className="bg-green-600 hover:bg-green-700 h-9"
                                   size="sm"
                                 >
-                                  <MessageCircle className="w-4 h-4 mr-2" />
-                                  וואטסאפ
+                                  <MessageCircle className="w-4 h-4 me-2" />
+                                  {t('action.whatsapp')}
                                 </Button>
                               )}
                             </div>
