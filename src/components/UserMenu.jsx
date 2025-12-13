@@ -79,8 +79,8 @@ export default function UserMenu() {
 
                 {isAdmin && (
                     <DropdownMenuItem asChild>
-                        <Link to="/admin" className="cursor-pointer text-red-600 focus:text-red-600">
-                            <ShieldAlert className="mr-2 h-4 w-4" />
+                        <Link to="/admin" className="cursor-pointer font-medium">
+                            <Settings className="mr-2 h-4 w-4" />
                             <span>Admin Console</span>
                         </Link>
                     </DropdownMenuItem>

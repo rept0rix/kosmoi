@@ -6,8 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Bot, Sparkles } from 'lucide-react';
 import { agents as initialAgents } from '@/services/agents/AgentRegistry';
 
@@ -130,76 +137,70 @@ export default function AdminAgents() {
                 </Dialog>
             </div>
 
-            <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Active Units ({agents.length})</CardTitle>
-                        <div className="relative w-64">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search agents..."
-                                className="pl-8 bg-slate-50 dark:bg-slate-800"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[100px]">Identity</TableHead>
-                                <TableHead>Name / Role</TableHead>
-                                <TableHead>Model Core</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredAgents.map((agent) => (
-                                <TableRow key={agent.id}>
-                                    <TableCell>
-                                        <Avatar className={`h-10 w-10 border-2 ${colorMap[agent.color]?.border || 'border-slate-200'}`}>
-                                            <AvatarImage src={agent.avatar} />
-                                            <AvatarFallback className={`${colorMap[agent.color]?.bg || 'bg-slate-100'} ${colorMap[agent.color]?.text || 'text-slate-700'}`}>
-                                                {agent.name.charAt(0)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold">{agent.name}</span>
-                                            <span className="text-xs text-muted-foreground">{agent.role}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="font-mono text-xs">
-                                            <Sparkles className="w-3 h-3 mr-1" />
-                                            GPT-4o
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge className="bg-green-500/15 text-green-700 hover:bg-green-500/25 border-0">
-                                            Active
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="icon" title="Edit Configuration" onClick={() => navigate(`/admin/agents/${agent.id}`)}>
-                                                <Edit className="w-4 h-4 text-slate-500" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" title="Decommission" onClick={() => handleDelete(agent.id)}>
-                                                <Trash2 className="w-4 h-4 text-red-400" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredAgents.map((agent) => (
+                    <Card key={agent.id} className={`overflow-hidden transition-all hover:shadow-md border-t-4 ${colorMap[agent.color]?.border || 'border-slate-200'}`}>
+                        <CardHeader className="pb-4">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className={`h-12 w-12 border-2 ${colorMap[agent.color]?.border || 'border-slate-200'}`}>
+                                        <AvatarImage src={agent.avatar} />
+                                        <AvatarFallback className={`${colorMap[agent.color]?.bg || 'bg-slate-100'} ${colorMap[agent.color]?.text || 'text-slate-700'}`}>
+                                            {agent.name.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <CardTitle className="text-lg">{agent.name}</CardTitle>
+                                        <CardDescription>{agent.role}</CardDescription>
+                                    </div>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <span className="sr-only">Open menu</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => navigate(`/admin/agents/${agent.id}`)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            Configure Agent
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => handleDelete(agent.id)} className="text-red-600">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Decommission
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        GPT-4o
+                                    </Badge>
+                                    <Badge className="bg-green-500/15 text-green-700 hover:bg-green-500/25 border-0">
+                                        Active
+                                    </Badge>
+                                </div>
+                                {agent.description && (
+                                    <p className="text-xs text-muted-foreground line-clamp-2">
+                                        {agent.description}
+                                    </p>
+                                )}
+                                <div className="pt-2 flex justify-between items-center text-xs text-muted-foreground border-t">
+                                    <span>Tasks: 0</span>
+                                    <span>Success: 100%</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
         </div>
     );
 }

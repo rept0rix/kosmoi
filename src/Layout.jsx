@@ -38,7 +38,7 @@ const LayoutContent = ({ children }) => {
 
   // If we are in Admin Zone, let the specific AdminLayout handle everything (no double header/nav)
   if (isAdminZone) {
-    return <div className="min-h-screen bg-slate-950 text-slate-200" dir="ltr">{children}</div>;
+    return children;
   }
 
   // --- Styles ---

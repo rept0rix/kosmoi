@@ -138,8 +138,8 @@ const AuthenticatedApp = () => {
                 <Route path="roadmap" element={<AdminRoadmap />} />
                 <Route path="logs" element={<SystemMonitor />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
+                <Route path="importer" element={<AdminImporter />} />
               </Route>
-              <Route path="/admin-importer" element={<AdminImporter />} />
             </Route>
 
             <Route element={<ProtectedUserRoute />}>
