@@ -6,22 +6,32 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${YELLOW}🔄 Checking for updates from Main Computer...${NC}"
+# AUTO-RESTART LOOP
+while true; do
+    echo -e "${YELLOW}🔄 Checking for updates from Main Computer...${NC}"
+    
+    git fetch origin
+    
+    # Check if behind
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse @{u})
+    
+    if [ $LOCAL = $REMOTE ]; then
+        echo -e "${GREEN}✅ Up to date.${NC}"
+    else
+        echo -e "${YELLOW}⬇️ Updates detected! Pulling...${NC}"
+        git stash save "worker_auto_stash_$(date +%s)"
+        git pull origin main
+        echo -e "${YELLOW}📦 Refreshing dependencies...${NC}"
+        npm install
+    fi
 
-git fetch origin
-
-# FORCE SYNC: Always stash and pull to clean the mess
-echo -e "${YELLOW}📦 Auto-Stashing any local changes (worker_backup)...${NC}"
-git stash save "worker_auto_stash_$(date +%s)"
-
-echo -e "${YELLOW}⬇️ Force Pulling latest code...${NC}"
-git pull origin main
-
-echo -e "${YELLOW}📦 Refreshing dependencies...${NC}"
-npm install
-
-echo -e "${GREEN}✅ Update Complete!${NC}"
-echo -e "${GREEN}🚀 Starting Agent Worker...${NC}"
-echo -e "${YELLOW}(Press Ctrl+C to stop)${NC}"
-
-node scripts/agent_worker.js
+    echo -e "${GREEN}🚀 Starting Agent Worker...${NC}"
+    # Pass arguments if any
+    node scripts/agent_worker.js "$@"
+    
+    EXIT_CODE=$?
+    echo -e "${RED}⚠️ Agent Worker stopped (Exit Code: $EXIT_CODE).${NC}"
+    echo -e "${YELLOW}⏳ Restarting in 5 seconds... (Press Ctrl+C to abort)${NC}"
+    sleep 5
+done

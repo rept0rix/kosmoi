@@ -8,11 +8,11 @@ export const AdminService = {
 
     /**
      * Get all users (Signups)
-     * Note: This fetches from 'profiles' public table which should mirror auth.users
+     * Note: This fetches from 'users' public table which mirrors auth.users
      */
     getUsers: async () => {
         try {
-            const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
 
             if (error) {
                 console.warn("AdminService: Users fetch failed", error);

@@ -10,6 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save, Terminal, Code, Brain, Bot } from 'lucide-react';
 import { agents as initialAgents } from '@/services/agents/AgentRegistry';
 
+const colorMap = {
+    blue: { border: 'border-blue-100', bg: 'bg-blue-100', text: 'text-blue-700', badge: 'text-blue-500 border-blue-200' },
+    green: { border: 'border-green-100', bg: 'bg-green-100', text: 'text-green-700', badge: 'text-green-500 border-green-200' },
+    purple: { border: 'border-purple-100', bg: 'bg-purple-100', text: 'text-purple-700', badge: 'text-purple-500 border-purple-200' },
+    red: { border: 'border-red-100', bg: 'bg-red-100', text: 'text-red-700', badge: 'text-red-500 border-red-200' },
+    amber: { border: 'border-amber-100', bg: 'bg-amber-100', text: 'text-amber-700', badge: 'text-amber-500 border-amber-200' },
+};
+
 export default function AgentDetail() {
     const { agentId } = useParams();
     const navigate = useNavigate();
@@ -38,6 +46,8 @@ export default function AgentDetail() {
 
     if (!agent) return <div className="p-10">Loading agent data...</div>;
 
+    const theme = colorMap[agent.color] || colorMap.blue;
+
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-10">
             <div className="flex items-center gap-4">
@@ -47,7 +57,7 @@ export default function AgentDetail() {
                 <div>
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         {agent.name}
-                        <Badge variant="outline" className={`ml-2 text-${agent.color || 'blue'}-500 border-${agent.color || 'blue'}-200`}>
+                        <Badge variant="outline" className={`ml-2 ${theme.badge}`}>
                             {agent.role}
                         </Badge>
                     </h1>
@@ -166,7 +176,7 @@ export default function AgentDetail() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-center p-4">
-                                <div className={`w-24 h-24 rounded-full bg-${agent.color || 'blue'}-100 flex items-center justify-center text-4xl border-4 border-${agent.color || 'blue'}-200`}>
+                                <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl border-4 ${theme.bg} ${theme.text} ${theme.border}`}>
                                     {agent.name?.[0]}
                                 </div>
                             </div>
