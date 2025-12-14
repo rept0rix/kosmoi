@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/api/supabaseClient';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { motion } from 'framer-motion';
