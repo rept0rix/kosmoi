@@ -1,0 +1,113 @@
+{
+  "system_name": "Samui Service Hub (Kosmoi)",
+  "version": "1.0.0",
+  "scan_timestamp": "2025-12-10T04:15:47-960Z",
+  "core_framework": "React + Vite",
+  "backend": "Supabase (PostgreSQL + PostGIS)",
+  "architecture": {
+    "modules": [
+      {
+        "id": "consumer_portal",
+        "name": "Consumer Portal",
+        "description": "Main interface for end-users to find and book services.",
+        "routes": [
+          { "path": "/", "component": "Home", "description": "Landing page" },
+          { "path": "/mapview", "component": "MapView", "description": "Interactive map of service providers" },
+          { "path": "/serviceproviders", "component": "ServiceProviders", "description": "List/Grid view of providers" },
+          { "path": "/provider/:providerId", "component": "ProviderProfile", "description": "Detailed provider view" },
+          { "path": "/trip-planner", "component": "TripPlanner", "description": "AI-assisted trip planning" },
+          { "path": "/ai-chat", "component": "AIChat", "description": "Direct AI concierge chat" },
+          { "path": "/favorites", "component": "Favorites", "description": "User saved providers" },
+          { "path": "/my-reviews", "component": "MyReviews", "description": "User submitted reviews" }
+        ]
+      },
+      {
+        "id": "vendor_portal",
+        "name": "Vendor/Business Portal",
+        "description": "Interface for service providers to manage their profile and bookings.",
+        "routes": [
+          { "path": "/business", "component": "BusinessLanding", "description": "Business landing/info page" },
+          { "path": "/vendor-signup", "component": "VendorSignup", "description": "Registration flow for new vendors", "guard": "ProtectedUserRoute" },
+          { "path": "/vendor", "component": "VendorLite", "description": "Simplified vendor dashboard", "guard": "ProtectedUserRoute" },
+          { "path": "/my-bookings", "component": "MyBookings", "description": "Booking management", "guard": "ProtectedUserRoute" },
+          { "path": "/business-registration", "component": "BusinessRegistration", "description": "Full registration" }
+        ]
+      },
+      {
+        "id": "admin_portal",
+        "name": "Admin Command Center",
+        "description": "Back-office operations, monitoring, and management.",
+        "routes": [
+          { "path": "/command-center", "component": "CommandCenter", "description": "Main operational dashboard" },
+          { "path": "/board-room", "component": "BoardRoom", "description": "High-level strategy and metrics" },
+          {
+            "path": "/admin",
+            "component": "AdminLayout",
+            "guard": "ProtectedAdminRoute",
+            "children": [
+              { "path": "overview", "component": "AdminOverview" },
+              { "path": "users", "component": "AdminUsers" },
+              { "path": "claims", "component": "AdminClaims" },
+              { "path": "agents", "component": "AdminAgents" },
+              { "path": "company", "component": "AdminCompany" },
+              { "path": "data", "component": "AdminData" },
+              { "path": "crm", "component": "AdminCRM" },
+              { "path": "evolution", "component": "AdminEvolution" },
+              { "path": "roadmap", "component": "AdminRoadmap" },
+              { "path": "logs", "component": "SystemMonitor" },
+              { "path": "importer", "component": "AdminImporter" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "trust_and_legal",
+        "name": "Trust & Content",
+        "routes": [
+          { "path": "/about", "component": "AboutUs" },
+          { "path": "/use-cases", "component": "UseCases" },
+          { "path": "/pricing", "component": "Pricing" },
+          { "path": "/legal/terms", "component": "Terms" },
+          { "path": "/legal/privacy", "component": "Privacy" },
+          { "path": "/blog", "component": "Blog" }
+        ]
+      }
+    ]
+  },
+  "data_entities": [
+    {
+      "name": "service_providers",
+      "type": "Table",
+      "fields": ["id", "business_name", "location", "latitude", "longitude", "category", "rating", "status"],
+      "rls_policies": ["Public read (active)", "Owner write"]
+    },
+    {
+      "name": "reviews",
+      "type": "Table",
+      "fields": ["id", "service_provider_id", "rating", "comment", "user_id"],
+      "triggers": ["update_provider_rating"]
+    },
+    {
+      "name": "favorites",
+      "type": "Table",
+      "fields": ["user_id", "service_provider_id"]
+    },
+    {
+      "name": "search_history",
+      "type": "Table",
+      "fields": ["user_id", "search_query", "filters"]
+    }
+  ],
+  "key_files": {
+    "entry": "src/main.jsx",
+    "router": "src/App.jsx",
+    "config": "src/pages.config.js",
+    "schema": "supabase_schema.sql",
+    "auth_context": "src/lib/AuthContext.jsx",
+    "api_client": "src/api/supabaseClient.js"
+  },
+  "missing_or_incomplete": [
+    "src/pages/admin/AdminSettings (placeholder in router)",
+    "Detailed payment flow integration (implied by Pricing but not explicit in main schema scan)"
+  ]
+}
