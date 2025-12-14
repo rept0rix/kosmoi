@@ -32,17 +32,21 @@ import Privacy from '@/pages/legal/Privacy';
 import Accessibility from '@/pages/legal/Accessibility';
 import BusinessInfo from '@/pages/BusinessInfo';
 import Contact from '@/pages/Contact';
+import Blog from '@/pages/Blog';
 
 import CommandCenter from '@/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminUsers from '@/pages/admin/AdminUsers';
+import AdminClaims from '@/pages/admin/AdminClaims';
 import AdminAgents from '@/pages/admin/AdminAgents';
 import AgentDetail from '@/pages/admin/AgentDetail';
 import AdminCompany from '@/pages/admin/AdminCompany';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
+import AdminEvolution from './pages/admin/AdminEvolution';
 import AdminRoadmap from '@/pages/admin/AdminRoadmap';
+import AdminCanvas from '@/pages/admin/AdminCanvas';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
 import MyBookings from '@/pages/MyBookings';
@@ -109,6 +113,9 @@ const AuthenticatedApp = () => {
             {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
             <Route path="/mapview" element={null} />
 
+            {/* Explicit Business Route for clarity, though dynamic loop handles it too */}
+            <Route path="/business" element={<Pages.Business />} />
+
             {Object.entries(Pages)
               .filter(([path]) => path !== 'MapView') // Exclude MapView from standard routing
               .map(([path, Page]) => (
@@ -130,13 +137,16 @@ const AuthenticatedApp = () => {
                 <Route path="board-room" element={<BoardRoom />} />
 
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="claims" element={<AdminClaims />} />
                 <Route path="agents" element={<AdminAgents />} />
                 <Route path="agents/:agentId" element={<AgentDetail />} />
                 <Route path="company" element={<AdminCompany />} />
                 <Route path="data" element={<AdminData />} />
                 <Route path="crm" element={<AdminCRM />} />
+                <Route path="evolution" element={<AdminEvolution />} />
                 <Route path="roadmap" element={<AdminRoadmap />} />
                 <Route path="logs" element={<SystemMonitor />} />
+                <Route path="canvas" element={<AdminCanvas />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
                 <Route path="importer" element={<AdminImporter />} />
               </Route>
@@ -160,6 +170,7 @@ const AuthenticatedApp = () => {
             <Route path="/legal/accessibility" element={<Accessibility />} />
             <Route path="/business-info" element={<BusinessInfo />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/blog" element={<Blog />} />
 
             <Route path="/local-brain" element={<LocalBrain />} />
             <Route path="/health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />

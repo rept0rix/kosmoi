@@ -3,6 +3,8 @@ import { useBoardRoom } from '@/hooks/useBoardRoom';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { motion } from 'framer-motion';
 import { Layout, TriangleAlert } from 'lucide-react';
 
 import BoardRoomHeader from './board/BoardRoomHeader';
@@ -190,21 +192,42 @@ function BoardRoomContent() {
                             />
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-6 scale-110 md:scale-125 transform transition-transform duration-500">
-                            <div className="w-32 h-32 rounded-[2rem] bg-gray-50 flex items-center justify-center shadow-inner mb-2 border border-gray-100">
-                                <Layout className="w-16 h-16 opacity-10 text-gray-500" />
-                            </div>
-                            <div className="text-center space-y-2">
-                                <p className="text-2xl font-semibold text-gray-600 tracking-tight">
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-6">
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="relative"
+                            >
+                                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                                <GlassCard className="w-32 h-32 flex items-center justify-center relative z-10 glass-shine">
+                                    <Layout className="w-16 h-16 opacity-50 text-foreground" />
+                                </GlassCard>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="text-center space-y-2 z-10"
+                            >
+                                <h2 className="text-3xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50">
                                     {isRTL ? 'חדר הישיבות' : 'The Board Room'}
-                                </p>
-                                <p className="text-base text-gray-400 max-w-xs mx-auto">
+                                </h2>
+                                <p className="text-base text-muted-foreground/80 max-w-xs mx-auto">
                                     {isRTL ? 'בחר או צור פגישה כדי להתחיל לעבוד עם הצוות' : 'Select or create a meeting to start collaborating with your AI team.'}
                                 </p>
-                            </div>
-                            <Button size="lg" className="mt-4 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 py-6 text-lg" onClick={() => setIsCreateMeetingOpen(true)}>
-                                {isRTL ? 'צור פגישה חדשה' : 'Start New Session'}
-                            </Button>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                <Button size="lg" className="shadow-neon hover:shadow-glass-hover bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-lg transition-all duration-300 transform hover:scale-105" onClick={() => setIsCreateMeetingOpen(true)}>
+                                    {isRTL ? 'צור פגישה חדשה' : 'Start New Session'}
+                                </Button>
+                            </motion.div>
                         </div>
                     )}
                 </div>

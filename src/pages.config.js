@@ -1,4 +1,5 @@
-import LandingPage from './components/FinalLandingPage'; // Updated to use FinalLandingPage from components
+import Home from './pages/Home';
+import BusinessLanding from './pages/BusinessLanding';
 import Dashboard from './pages/Dashboard';
 import ServiceProviders from './pages/ServiceProviders';
 import ServiceProviderDetails from './pages/ServiceProviderDetails';
@@ -27,10 +28,11 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": LandingPage, // Root is now Landing Page
+    "Home": Home,       // Root / (Consumer)
+    "Business": BusinessLanding, // /business (Provider)
     "App": Dashboard,    // Main App Dashboard
     "Dashboard": Dashboard, // Keep alias for backward compat if needed
-    "Welcome": LandingPage,
+    "Welcome": BusinessLanding, // Keeping Welcome as Business for now, or maybe alias to Home? Let's alias to Business as that was the old Welcome context.
     "BusinessInfo": BusinessInfo, // Added
     "Team": Team, // Added
     "ServiceProviders": ServiceProviders,

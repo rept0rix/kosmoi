@@ -9,6 +9,14 @@ vi.mock("@/components/LanguageContext", () => ({
     useLanguage: () => ({ language: 'en' })
 }));
 
+vi.mock("@/lib/AuthContext", () => ({
+    useAuth: () => ({
+        user: { id: 'test-user', email: 'test@example.com' },
+        isAuthenticated: true,
+        logout: vi.fn()
+    })
+}));
+
 describe('BoardRoomHeader', () => {
     const mockMeetings = [
         { id: '1', title: 'Meeting A', created_at: new Date().toISOString(), status: 'active' },
@@ -33,6 +41,7 @@ describe('BoardRoomHeader', () => {
         handleStartDailyStandup: vi.fn(),
         handleStartOneDollarChallenge: vi.fn(),
         handleStartWorkflow: vi.fn(),
+        handleCreateTask: vi.fn(),
         workflows: [],
         isRTL: false,
         boardAgents: [],

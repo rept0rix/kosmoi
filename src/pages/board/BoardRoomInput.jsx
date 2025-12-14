@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { GlassButton } from "@/components/ui/GlassButton";
 import { Send, Image as ImageIcon, X } from 'lucide-react';
 
 export default function BoardRoomInput({
@@ -26,14 +26,14 @@ export default function BoardRoomInput({
     };
 
     return (
-        <div className="p-4 border-t bg-white/80 backdrop-blur-md">
+        <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-md">
             <div className={`flex gap-3 ${className || 'max-w-4xl mx-auto'}`}>
                 <Input
                     placeholder={isRTL ? "כתוב הודעה לצוות..." : "Type a message to the board..."}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && onSend()}
-                    className="shadow-sm border-gray-200 focus:border-blue-400 focus:ring-blue-400 bg-white"
+                    className="shadow-inner border-white/10 focus:border-primary/50 focus:ring-primary/20 bg-white/5 text-foreground placeholder:text-muted-foreground backdrop-blur-sm"
                 />
                 <input
                     type="file"
@@ -42,25 +42,25 @@ export default function BoardRoomInput({
                     accept="image/*"
                     onChange={handleImageUpload}
                 />
-                <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} className={selectedImage ? "text-blue-600 border-blue-200 bg-blue-50" : "text-gray-400"}>
+                <GlassButton variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className={selectedImage ? "text-primary border-primary/20 bg-primary/10" : "text-muted-foreground"}>
                     <ImageIcon className="w-4 h-4" />
-                </Button>
-                <Button onClick={onSend} className="shadow-sm bg-blue-600 hover:bg-blue-700 text-white px-6">
+                </GlassButton>
+                <GlassButton variant="primary" onClick={onSend} className="px-6">
                     <Send className="w-4 h-4" />
-                </Button>
+                </GlassButton>
             </div>
             {selectedImage && (
                 <div className="max-w-4xl mx-auto mt-2 flex items-center gap-2">
                     <div className="relative group">
-                        <img src={selectedImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border border-gray-200" />
+                        <img src={selectedImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border border-white/10" />
                         <button
                             onClick={() => setSelectedImage(null)}
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                             <X className="w-3 h-3" />
                         </button>
                     </div>
-                    <span className="text-xs text-gray-400">Image attached</span>
+                    <span className="text-xs text-muted-foreground">Image attached</span>
                 </div>
             )}
         </div>

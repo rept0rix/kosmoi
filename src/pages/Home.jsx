@@ -1,0 +1,169 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MapPin, ArrowRight, Hotel, Utensils, Car, Hammer, ShoppingBag, Sparkles, Briefcase } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import SEO from '@/components/SEO';
+
+export default function Home() {
+    const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
+    const isRTL = i18n.dir() === 'rtl';
+
+    // Samui Background Image (High Quality Night Market / Street Vibe)
+    // Source: Unsplash (Thailand Street)
+    const BG_IMAGE = "https://images.unsplash.com/photo-1535189043414-47a3c49a0bed?q=80&w=2832&auto=format&fit=crop";
+
+    const handleInteraction = () => {
+        // Force redirect to App (which handles Auth)
+        navigate('/app');
+    };
+
+    const categories = [
+        { id: 'hotels', label: isRTL ? 'מלונות ווילות' : 'Hotels & Villas', icon: Hotel, color: 'text-rose-400' },
+        { id: 'food', label: isRTL ? 'מסעדות ואוכל' : 'Food & Dining', icon: Utensils, color: 'text-orange-400' },
+        { id: 'transport', label: isRTL ? 'מוניות והשכרות' : 'Taxis & Rentals', icon: Car, color: 'text-blue-400' },
+        { id: 'pro', label: isRTL ? 'בעלי מקצוע' : 'Professionals', icon: Hammer, color: 'text-yellow-400' },
+        { id: 'secondhand', label: isRTL ? 'יד שנייה' : 'Second Hand', icon: ShoppingBag, color: 'text-green-400' },
+        { id: 'ai', label: isRTL ? 'שאל את ה-AI' : 'Ask AI Anything', icon: Sparkles, color: 'text-purple-400' },
+    ];
+
+    return (
+        <div className="min-h-screen relative overflow-hidden font-sans text-white">
+            <SEO
+                title={isRTL ? 'קוסמוי - המדריך החכם' : 'Kosmoi - Samui Intelligent Guide'}
+                description={isRTL ? 'תכננו את החופשה המושלמת בקוסמוי עם המדריך החכם שלנו.' : 'Plan your perfect trip to Koh Samui with our intelligent AI concierge.'}
+            />
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={BG_IMAGE}
+                    alt="Samui Background"
+                    className="w-full h-full object-cover"
+                />
+                {/* Dark Gradient Overlay for readability */}
+                <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/50"></div>
+            </div>
+
+            {/* Header / Logo */}
+            <nav className="absolute top-0 left-0 right-0 z-50 p-6 flex justify-between items-center">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+                    <img
+                        src="/kosmoi_logo_white.svg"
+                        alt="Kosmoi Logo"
+                        className="h-10 w-auto object-contain"
+                        onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/kosmoi-logo.png"; // Fallback
+                        }}
+                    />
+                    {/* <span className="text-2xl font-bold tracking-tight text-white">Kosmoi</span> */}
+                </div>
+
+                {/* Optional: Login button for direct access if needed */}
+                <Button
+                    variant="ghost"
+                    className="text-white hover:bg-white/10"
+                    onClick={() => navigate('/login')}
+                >
+                    {isRTL ? 'כניסה' : 'Login'}
+                </Button>
+            </nav>
+
+            {/* Main Content */}
+            <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
+
+                {/* Hero Headings */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="text-center space-y-6 max-w-4xl mx-auto"
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-slate-200">
+                        <MapPin className="w-4 h-4 text-rose-500" />
+                        <span>{isRTL ? 'המדריך החכם של קוסמוי' : 'Samui\'s Intelligent City Guide'}</span>
+                    </div>
+
+                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+                        {isRTL ? 'מה אתם מחפשים' : 'What are you looking for'} <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                            {isRTL ? 'היום?' : 'right now?'}
+                        </span>
+                    </h1>
+
+                    <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+                        {isRTL
+                            ? 'הכל במקום אחד. מלונות, מסעדות, בעלי מקצוע, ויד-2. הכל מבוסס AI.'
+                            : 'Everything in one place. Hotels, food, pros, and marketplace. Powered by AI.'}
+                    </p>
+                </motion.div>
+
+                {/* Input Field (Fake Input that redirects) */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="w-full max-w-2xl mt-12"
+                >
+                    <div
+                        onClick={handleInteraction}
+                        className="group relative flex items-center gap-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 backdrop-blur-xl rounded-2xl p-4 cursor-pointer transition-all shadow-2xl hover:shadow-blue-500/20"
+                    >
+                        <Search className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
+                        <div className="flex-1 text-left">
+                            <span className="text-xl text-slate-400 font-light group-hover:text-slate-200">
+                                {isRTL ? 'אני צריך...' : 'I need help with...'}
+                            </span>
+                        </div>
+                        <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
+                            <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Categories Grid */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.6 }}
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-12 w-full max-w-5xl"
+                >
+                    {categories.map((cat, idx) => (
+                        <button
+                            key={cat.id}
+                            onClick={handleInteraction}
+                            className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group"
+                        >
+                            <cat.icon className={`w-6 h-6 mb-3 ${cat.color} opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all`} />
+                            <span className="text-sm font-medium text-slate-300 group-hover:text-white">{cat.label}</span>
+                        </button>
+                    ))}
+                </motion.div>
+
+                {/* Business CTA - Bottom */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 1 }}
+                    className="absolute bottom-8 text-center"
+                >
+                    <p className="text-slate-400 text-sm mb-3">
+                        {isRTL ? 'יש לך עסק בקוסמוי?' : 'Do you run a business in Samui?'}
+                    </p>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/business')}
+                        className="rounded-full border-white/20 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm px-6"
+                    >
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        {isRTL ? 'הצטרף ל-City OS' : 'Join the City OS'}
+                    </Button>
+                </motion.div>
+
+            </div>
+        </div>
+    );
+}

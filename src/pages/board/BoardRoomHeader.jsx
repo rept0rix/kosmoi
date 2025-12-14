@@ -101,7 +101,7 @@ const BoardRoomHeader = ({
     };
 
     return (
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 md:p-6 border-b bg-white dark:bg-slate-950 dark:border-slate-800 sticky top-0 z-10 gap-4 md:gap-6 shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 md:p-6 border-b border-white/10 bg-white/80 dark:bg-black/40 backdrop-blur-xl sticky top-0 z-10 gap-4 md:gap-6 shadow-sm">
 
             {/* Left Section: Mobile Menu & Logo & Meeting Select */}
             <div className="flex items-center gap-5 flex-1 w-full md:w-auto overflow-x-auto no-scrollbar max-w-5xl mx-auto">
@@ -121,7 +121,7 @@ const BoardRoomHeader = ({
                     value={selectedMeeting?.id}
                     onValueChange={(val) => setSelectedMeeting(meetings.find(m => m.id === val))}
                 >
-                    <SelectTrigger className="w-[240px] md:w-[320px] h-12 font-bold text-xl border-2 border-indigo-100 bg-indigo-50/50 hover:bg-white transition-colors dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800 rounded-xl">
+                    <SelectTrigger className="w-[240px] md:w-[320px] h-12 font-bold text-xl border-white/10 bg-white/5 hover:bg-white/10 transition-colors dark:bg-white/5 dark:border-white/10 text-foreground dark:text-foreground dark:hover:bg-white/10 rounded-xl backdrop-blur-sm">
                         <SelectValue placeholder="Select Meeting Strategy..." />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] dark:bg-slate-900 dark:border-slate-800">
@@ -158,7 +158,7 @@ const BoardRoomHeader = ({
                 <Button
                     variant="outline"
                     size="default"
-                    className="h-10 px-4 gap-2 text-base font-medium bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 whitespace-nowrap dark:bg-amber-900/10 dark:text-amber-400 dark:border-amber-900/30 dark:hover:bg-amber-900/20 rounded-lg shadow-sm"
+                    className="h-10 px-4 gap-2 text-base font-medium bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20 whitespace-nowrap dark:text-amber-400 rounded-lg shadow-sm backdrop-blur-sm"
                     onClick={handleStartDailyStandup}
                 >
                     <Sparkles className="w-4 h-4" />
@@ -168,7 +168,7 @@ const BoardRoomHeader = ({
                 <Button
                     variant="outline"
                     size="default"
-                    className="h-10 px-4 gap-2 text-base font-medium bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 whitespace-nowrap dark:bg-purple-900/10 dark:text-purple-400 dark:border-purple-900/30 dark:hover:bg-purple-900/20 rounded-lg shadow-sm"
+                    className="h-10 px-4 gap-2 text-base font-medium bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 whitespace-nowrap dark:text-purple-400 rounded-lg shadow-sm backdrop-blur-sm"
                     onClick={handleStartOneDollarChallenge}
                 >
                     <Zap className="w-4 h-4" />
@@ -178,7 +178,7 @@ const BoardRoomHeader = ({
                 <Button
                     variant="outline"
                     size="default"
-                    className="h-10 px-4 gap-2 text-base font-medium bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 whitespace-nowrap dark:bg-blue-900/10 dark:text-blue-400 dark:border-blue-900/30 dark:hover:bg-blue-900/20 rounded-lg shadow-sm"
+                    className="h-10 px-4 gap-2 text-base font-medium bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 whitespace-nowrap dark:text-blue-400 rounded-lg shadow-sm backdrop-blur-sm"
                     onClick={handleSyncLinear}
                 >
                     <Activity className="w-4 h-4" />
