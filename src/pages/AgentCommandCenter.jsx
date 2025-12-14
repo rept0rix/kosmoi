@@ -6,8 +6,9 @@ import { ApprovalQueue } from "@/components/agents/ApprovalQueue";
 import { AgentService } from '../services/agents/AgentService';
 import GroupChatWindow from '../components/agents/GroupChatWindow';
 import { useAuth } from '@/lib/AuthContext';
-import { LayoutDashboard, Users, Cpu } from 'lucide-react';
+import { LayoutDashboard, Users, Cpu, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TaskMonitor } from '@/components/admin/TaskMonitor';
 
 export default function AgentCommandCenter() {
     const [selectedAgentId, setSelectedAgentId] = useState(null);
@@ -92,6 +93,15 @@ export default function AgentCommandCenter() {
                             <Users className="w-4 h-4" />
                             Board Meeting
                         </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setViewMode('operations'); setSelectedAgentId(null); }}
+                            className={`gap-2 ${viewMode === 'operations' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <Activity className="w-4 h-4" />
+                            Operations
+                        </Button>
                     </div>
                 </div>
 
@@ -99,7 +109,11 @@ export default function AgentCommandCenter() {
                 <ApprovalQueue userId={user?.id} />
 
                 {/* Content Area */}
-                {viewMode === 'group' ? (
+                {viewMode === 'operations' ? (
+                    <div className="h-[calc(100vh-200px)]">
+                        <TaskMonitor />
+                    </div>
+                ) : viewMode === 'group' ? (
                     <GroupChatWindow userId={user?.id} />
                 ) : (
                     /* Individual View Logic */

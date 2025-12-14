@@ -33,14 +33,14 @@ import {
   Languages,
   Building2,
   Utensils,
-  ShoppingBag
+  ShoppingBag,
+  ArrowRight
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageContext";
 import { getSubCategoryLabel } from "@/components/subCategories";
 import AuthGate from "@/components/AuthGate";
 
 const categoryIcons = {
-  // Fix
   handyman: Wrench,
   carpenter: Hammer,
   electrician: Zap,
@@ -53,51 +53,22 @@ const categoryIcons = {
   pest_control: Bug,
   pool_cleaning: Waves,
   solar_energy: Sun,
-
-  // Get Service
   laundry: Shirt,
   housekeeping: Home,
   internet_tech: Wifi,
   visa_services: FileText,
-
-  // Transport
   moving: Truck,
   car_mechanic: Wrench,
   motorcycle_mechanic: Wrench,
   taxi_service: Car,
   car_rental: Car,
   bike_rental: Bike,
-
-  // Other
   translator: Languages,
   real_estate_agent: Building2,
   restaurants: Utensils,
   fashion: ShoppingBag
 };
 
-/**
- * @typedef {Object} ServiceProvider
- * @property {string} id - The provider's ID
- * @property {string} category - The service category
- * @property {string} business_name - name of the business
- * @property {string} [contact_name] - contact person name
- * @property {number} [average_rating] - average rating
- * @property {number} [total_reviews] - total number of reviews
- * @property {string[]} [images] - array of image URLs
- * @property {boolean} [verified] - whether the provider is verified
- * @property {string} [phone] - phone number
- * @property {string} [location] - location string
- * @property {number} [distance] - distance from user in km
- */
-
-/**
- * Card component to display service provider information.
- *
- * @param {Object} props
- * @param {ServiceProvider} props.provider - The provider data object
- * @param {(phone: string) => void} props.onCall - Callback function for call button
- * @param {boolean} [props.showDistance=false] - Whether to show distance from user
- */
 export default function ProviderCard({ provider, onCall, showDistance = false }) {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -105,106 +76,107 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
 
   return (
     <Card
-      className="hover:shadow-lg transition-shadow border border-gray-200 cursor-pointer"
+      className="group relative overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl"
       onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
     >
-      {provider.images && provider.images.length > 0 ? (
-        <div className="h-40 overflow-hidden bg-gray-200 relative">
+      {/* Image / Hero Section */}
+      <div className="h-48 relative overflow-hidden bg-slate-100">
+        {provider.images && provider.images.length > 0 ? (
           <img
             src={provider.images[0]}
             alt={provider.business_name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
-          {provider.verified && (
-            <div className="absolute top-2 left-2 bg-white rounded-md px-2 py-1 shadow-md flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs font-semibold text-green-600">מוסמך</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="h-40 bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center justify-center relative">
-          <CategoryIcon className="w-16 h-16 text-blue-600 mb-2" />
-          {provider.verified && (
-            <div className="absolute top-2 left-2 bg-white rounded-md px-2 py-1 shadow-md flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs font-semibold text-green-600">מוסמך</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      <CardContent className="p-4">
-        <div className="flex items-start gap-2 mb-2">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-            <CategoryIcon className="w-5 h-5 text-blue-600" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+            <CategoryIcon className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-2" />
           </div>
-          <div className="flex-1 min-w-0">
-            <Badge className="bg-blue-600 text-white hover:bg-blue-600 mb-1 text-xs">
+        )}
+
+        {/* Badges Overlay */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {provider.verified && (
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1.5 border border-emerald-100 dark:border-emerald-900/30">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500/10" />
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">Verified</span>
+            </div>
+          )}
+        </div>
+
+        {/* Rating Badge (Bottom Right of Image) */}
+        <div className="absolute bottom-3 right-3">
+          <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded-lg shadow-lg flex items-center gap-1 border border-slate-100 dark:border-slate-800">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{provider.average_rating?.toFixed(1) || 'NEW'}</span>
+            {provider.total_reviews > 0 && (
+              <span className="text-[10px] text-slate-400">({provider.total_reviews})</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <CardContent className="p-4 pt-5">
+        {/* Category & Name */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-0 text-[10px] uppercase tracking-wider font-semibold px-2">
               {getSubCategoryLabel(provider.category, language)}
             </Badge>
-            <h4 className="font-bold text-gray-900 text-lg">
-              {provider.business_name}
-            </h4>
+            {showDistance && provider.distance !== null && (
+              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                <NavigationIcon className="w-3 h-3 text-blue-500" />
+                <span>{provider.distance.toFixed(1)} km</span>
+              </div>
+            )}
           </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight group-hover:text-blue-600 transition-colors">
+            {provider.business_name}
+          </h3>
         </div>
 
-        {provider.contact_name && (
-          <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
-            <User className="w-3 h-3" />
-            <span>איש קשר: {provider.contact_name}</span>
-          </div>
-        )}
+        {/* Metadata */}
+        <div className="space-y-2 mb-4">
+          {provider.location && (
+            <div className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+              <span className="line-clamp-1">{provider.location}</span>
+            </div>
+          )}
 
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold text-sm">
-              {provider.average_rating?.toFixed(1) || '0.0'}
-            </span>
-          </div>
-          <span className="text-xs text-gray-500">
-            ({provider.total_reviews || 0} ביקורות)
-          </span>
+          {provider.contact_name && (
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <User className="w-4 h-4 text-slate-400" />
+              <span>{provider.contact_name}</span>
+            </div>
+          )}
         </div>
 
-        {showDistance && provider.distance !== null && provider.distance !== undefined && (
-          <div className="flex items-center gap-1 text-xs text-blue-600 mb-2 font-medium">
-            <NavigationIcon className="w-3 h-3" />
-            <span>{provider.distance.toFixed(1)} ק"מ ממך</span>
-          </div>
-        )}
-
-        {provider.location && (
-          <div className="flex items-center gap-1 text-xs text-gray-600 mb-3">
-            <MapPin className="w-3 h-3" />
-            <span>{provider.location}</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
+        {/* Actions */}
+        <div className="grid grid-cols-2 gap-2 mt-auto">
           <AuthGate>
             <Button
               onClick={(e) => {
                 e.stopPropagation();
                 onCall(provider.phone);
               }}
-              className="bg-blue-600 hover:bg-blue-700 w-full"
+              variant="outline"
+              className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-900/30"
               size="sm"
             >
-              <Phone className="w-4 h-4 ml-1" />
-              התקשר
+              <Phone className="w-3.5 h-3.5 mr-1.5" />
+              Call
             </Button>
           </AuthGate>
           <Button
             onClick={(e) => {
-              e.stopPropagation(); // Prevent card's onClick from firing
+              e.stopPropagation();
               navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`);
             }}
-            variant="outline"
+            className="w-full bg-slate-900 text-white hover:bg-blue-600 shadow-md shadow-slate-200 dark:shadow-none transition-all"
             size="sm"
           >
-            פרטים נוספים
+            Details
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5 opacity-70" />
           </Button>
         </div>
       </CardContent>

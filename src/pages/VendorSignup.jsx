@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { db } from '../api/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Store, Image as ImageIcon, BadgeCheck, Loader2, Upload, Link as LinkIcon, FileText, Mail } from 'lucide-react';
+import { Store, Image as ImageIcon, BadgeCheck, Loader2, Upload, Link as LinkIcon, FileText, Mail, MapPin, User, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 export default function VendorSignup() {
@@ -28,7 +27,7 @@ export default function VendorSignup() {
     const [verificationMethod, setVerificationMethod] = useState('document'); // 'document' | 'social' | 'email'
     const [claimerName, setClaimerName] = useState('');
     const [claimerContact, setClaimerContact] = useState('');
-    const [verificationProof, setVerificationProof] = useState(''); // URL or File name mock
+    const [verificationProof, setVerificationProof] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -63,10 +62,9 @@ export default function VendorSignup() {
     const handleSearch = async () => {
         if (!claimSearch) return;
         setLoading(true);
-        // Mock search or real DB search
         const { data, error } = await db.from('service_providers')
             .select('id, business_name, location, category')
-            .ilike('business_name', `% ${claimSearch}% `)
+            .ilike('business_name', `%${claimSearch}%`) // Corrected logic
             .limit(5);
 
         if (data) setSearchResults(data);
@@ -77,7 +75,6 @@ export default function VendorSignup() {
         if (!selectedBusiness || !claimerName || !claimerContact) return;
         setLoading(true);
         try {
-            // Submit claim to database
             const { error } = await db.from('business_claims').insert({
                 business_id: selectedBusiness.id,
                 claimer_name: claimerName,
@@ -99,22 +96,22 @@ export default function VendorSignup() {
 
     if (success) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-                <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-500">
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100 mb-6">
-                        <BadgeCheck className="h-10 w-10 text-green-600" />
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
+                <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-500 border border-slate-200 dark:border-slate-700">
+                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-6">
+                        <BadgeCheck className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
                         {mode === 'create' ? 'בקשתך התקבלה!' : 'בקשת הבעלות נשלחה!'}
                     </h2>
-                    <p className="text-gray-500 mb-6">
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
                         {mode === 'create'
                             ? 'אחד מסוכני ה-AI שלנו יבדוק את העסק שלך ויוסיף אותו למאגר.'
                             : 'כדי לאמת שאתה הבעלים, נציג (או בוט) ייצור איתך קשר במספר המופיע במאגר.'}
                         <br />
                         תודה שבחרת ב-Kosmoi Hub.
                     </p>
-                    <Button onClick={() => navigate('/')} className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg">
+                    <Button onClick={() => navigate('/')} className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 h-12 text-lg rounded-xl">
                         חזרה למסך הראשי
                     </Button>
                 </div>
@@ -123,34 +120,38 @@ export default function VendorSignup() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-12">
-                    <img src="/kosmoi_logo_blue.svg" alt="Kosmoi" className="h-12 w-auto mx-auto mb-6" />
-                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+            <div className="max-w-3xl mx-auto space-y-8">
+
+                {/* Header */}
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-4">
+                        <span className="font-bold text-white text-xl">K</span>
+                    </div>
+                    <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                         Partner with Kosmoi
                     </h1>
-                    <p className="text-lg text-gray-600">
-                        פלטפורמת ה-AI שדואגת לעסק שלך.
+                    <p className="text-lg text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+                        פלטפורמת ה-AI שצומחת איתך. נהל את העסק שלך חכם יותר.
                     </p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden border border-white/50">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
 
                     {/* Tabs */}
-                    <div className="flex border-b border-gray-200">
+                    <div className="flex border-b border-slate-200 dark:border-slate-800">
                         <button
-                            className={`flex - 1 py - 4 text - center font - medium transition ${mode === 'create' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-700'} `}
+                            className={`flex-1 py-4 text-center font-medium text-sm transition-all focus:outline-none ${mode === 'create' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                             onClick={() => setMode('create')}
                         >
-                            <Store className="inline-block w-5 h-5 mb-1 ml-2" />
+                            <Store className="inline-block w-4 h-4 mb-0.5 ml-2" />
                             רשום עסק חדש
                         </button>
                         <button
-                            className={`flex - 1 py - 4 text - center font - medium transition ${mode === 'claim' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-700'} `}
+                            className={`flex-1 py-4 text-center font-medium text-sm transition-all focus:outline-none ${mode === 'claim' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                             onClick={() => setMode('claim')}
                         >
-                            <BadgeCheck className="inline-block w-5 h-5 mb-1 ml-2" />
+                            <BadgeCheck className="inline-block w-4 h-4 mb-0.5 ml-2" />
                             תבוע בעלות על עסק קיים
                         </button>
                     </div>
@@ -159,83 +160,94 @@ export default function VendorSignup() {
                         {mode === 'create' ? (
                             <form onSubmit={handleCreateSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">שם העסק</label>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">שם העסק</label>
                                         <input
                                             type="text"
                                             name="business_name"
                                             required
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white/50"
-                                            placeholder="Coco Tam's"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                            placeholder="לדוגמה: קפה בוקר טוב"
                                             value={formData.business_name}
                                             onChange={handleChange}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">קטגוריה</label>
-                                        <select
-                                            name="category"
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white/50"
-                                            value={formData.category}
-                                            onChange={handleChange}
-                                        >
-                                            <option value="Restaurant">מסעדה / Restaurant</option>
-                                            <option value="Activity">אטרקציה / Activity</option>
-                                            <option value="Service">שירותים / Services</option>
-                                            <option value="Hotel">מלון / Hotel</option>
-                                            <option value="Transport">תחבורה / Transport</option>
-                                        </select>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">קטגוריה</label>
+                                        <div className="relative">
+                                            <select
+                                                name="category"
+                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none appearance-none"
+                                                value={formData.category}
+                                                onChange={handleChange}
+                                            >
+                                                <option value="Restaurant">מסעדה / Restaurant</option>
+                                                <option value="Activity">אטרקציה / Activity</option>
+                                                <option value="Service">שירותים / Services</option>
+                                                <option value="Hotel">מלון / Hotel</option>
+                                                <option value="Transport">תחבורה / Transport</option>
+                                            </select>
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                <ArrowRight className="w-4 h-4 rotate-90" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">תיאור העסק</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">תיאור העסק</label>
                                     <textarea
                                         name="description"
                                         required
                                         rows={4}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white/50"
-                                        placeholder="ספר לנו על המקום המיוחד שלך..."
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none resize-none"
+                                        placeholder="ספר לנו בכמה מילים על המפעל שלך, מה עושה אותו מיוחד?"
                                         value={formData.description}
                                         onChange={handleChange}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">מיקום (אזור / כתובת)</label>
-                                        <input
-                                            type="text"
-                                            name="location"
-                                            required
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white/50"
-                                            placeholder="Fisherman's Village, Bophut"
-                                            value={formData.location}
-                                            onChange={handleChange}
-                                        />
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">מיקום</label>
+                                        <div className="relative">
+                                            <MapPin className="absolute right-4 top-3.5 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                name="location"
+                                                required
+                                                className="w-full pr-12 pl-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                                placeholder="כתובת או אזור"
+                                                value={formData.location}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">איש קשר (בשבילנו)</label>
-                                        <input
-                                            type="text"
-                                            name="owner_name"
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white/50"
-                                            placeholder="שם בעל העסק"
-                                            value={formData.owner_name}
-                                            onChange={handleChange}
-                                        />
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">שם בעל העסק</label>
+                                        <div className="relative">
+                                            <User className="absolute right-4 top-3.5 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                name="owner_name"
+                                                className="w-full pr-12 pl-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                                placeholder="השם המלא שלך"
+                                                value={formData.owner_name}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className={`w - full py - 6 text - lg bg - gradient - to - r from - blue - 600 to - indigo - 600 hover: from - blue - 700 hover: to - indigo - 700 shadow - lg hover: shadow - xl transition - all transform hover: scale - [1.02]`}
+                                    className="w-full py-6 text-base font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 shadow-lg transition-all rounded-xl mt-4"
                                 >
                                     {loading ? (
                                         <span className="flex items-center gap-2">
                                             <Loader2 className="animate-spin h-5 w-5" />
-                                            Processing...
+                                            מעבד בקשה...
                                         </span>
                                     ) : (
                                         'הגש בקשה להצטרפות'
@@ -246,19 +258,25 @@ export default function VendorSignup() {
                             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                                 {/* STEP 1: SEARCH */}
                                 <div className="space-y-4">
-                                    <div className="text-center">
-                                        <h3 className="text-xl font-semibold text-gray-900">איתור העסק שלך</h3>
-                                        <p className="text-sm text-gray-500">חפש את העסק במאגר שלנו כדי להתחיל בתהליך האימות</p>
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
+                                        <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg shrink-0">
+                                            <BadgeCheck className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-medium text-blue-900 dark:text-blue-100">איתור עסקים מהיר</h3>
+                                            <p className="text-sm text-blue-700 dark:text-blue-300/80 mt-1">חפש את העסק שלך במאגר שלנו כדי לקצר את תהליך ההרשמה ולאמת בעלות.</p>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-2 relative">
+
+                                    <div className="flex gap-3 relative">
                                         <input
                                             type="text"
-                                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-right transition-all outline-none"
-                                            placeholder="הקלד שם עסק..."
+                                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            placeholder="הקלד שם עסק לחיפוש..."
                                             value={claimSearch}
                                             onChange={(e) => setClaimSearch(e.target.value)}
                                         />
-                                        <Button onClick={handleSearch} disabled={loading} className="bg-blue-600 hover:bg-blue-700 h-full aspect-square rounded-xl">
+                                        <Button onClick={handleSearch} disabled={loading} className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 h-auto px-6 rounded-xl font-medium">
                                             חפש
                                         </Button>
                                     </div>
@@ -266,20 +284,18 @@ export default function VendorSignup() {
 
                                 {/* RESULTS */}
                                 {searchResults.length > 0 && !selectedBusiness && (
-                                    <div className="border border-gray-100 rounded-xl divide-y divide-gray-100 bg-white shadow-sm overflow-hidden">
+                                    <div className="border border-slate-100 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                                         {searchResults.map((biz) => (
                                             <div
                                                 key={biz.id}
-                                                className="p-4 flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-colors group"
+                                                className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
                                                 onClick={() => setSelectedBusiness(biz)}
                                             >
                                                 <div className="text-right">
-                                                    <div className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">{biz.business_name}</div>
-                                                    <div className="text-sm text-gray-400">{biz.category} • {biz.location}</div>
+                                                    <div className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 transition-colors">{biz.business_name}</div>
+                                                    <div className="text-sm text-slate-400">{biz.category} • {biz.location}</div>
                                                 </div>
-                                                <div className="h-8 w-8 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
-                                                    <BadgeCheck className="w-4 h-4" />
-                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-all opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0" />
                                             </div>
                                         ))}
                                     </div>
@@ -287,37 +303,40 @@ export default function VendorSignup() {
 
                                 {/* STEP 2: VERIFICATION */}
                                 {selectedBusiness && (
-                                    <div className="bg-white border boundary-blue-100 rounded-xl p-6 shadow-sm space-y-6 animate-in slide-in-from-bottom-4 fade-in duration-300">
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-6 animate-in slide-in-from-bottom-4 fade-in duration-300">
 
                                         {/* Selected Business Header */}
-                                        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                                            <Button variant="ghost" size="sm" onClick={() => setSelectedBusiness(null)} className="text-gray-400 hover:text-red-500">
-                                                החלף עסק
+                                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                                            <Button variant="ghost" size="sm" onClick={() => setSelectedBusiness(null)} className="text-slate-400 hover:text-red-500">
+                                                בטל בחירה
                                             </Button>
                                             <div className="text-right">
-                                                <div className="text-xs text-gray-400 uppercase tracking-wider">עסק נבחר</div>
-                                                <div className="font-bold text-lg text-blue-700 flex items-center gap-2 justify-end">
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">עסק נבחר לאימות</div>
+                                                <div className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2 justify-end">
                                                     {selectedBusiness.business_name}
-                                                    <BadgeCheck className="w-5 h-5" />
+                                                    <BadgeCheck className="w-5 h-5 text-blue-500" />
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Identity Form */}
                                         <div className="space-y-4">
-                                            <h4 className="font-medium text-gray-900 text-right">פרטי מבקש הבעלות</h4>
+                                            <h4 className="font-medium text-slate-900 dark:text-white text-right flex items-center justify-end gap-2">
+                                                פרטים אישיים
+                                                <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-xs flex items-center justify-center text-slate-500">1</span>
+                                            </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <input
                                                     type="text"
                                                     placeholder="טלפון ליצירת קשר"
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 text-right bg-gray-50 focus:bg-white transition-all outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-all outline-none focus:ring-2 focus:ring-blue-500 text-right"
                                                     value={claimerContact}
                                                     onChange={(e) => setClaimerContact(e.target.value)}
                                                 />
                                                 <input
                                                     type="text"
                                                     placeholder="שם מלא"
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 text-right bg-gray-50 focus:bg-white transition-all outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-all outline-none focus:ring-2 focus:ring-blue-500 text-right"
                                                     value={claimerName}
                                                     onChange={(e) => setClaimerName(e.target.value)}
                                                 />
@@ -325,41 +344,37 @@ export default function VendorSignup() {
                                         </div>
 
                                         {/* Verification Method Selector */}
-                                        <div className="space-y-3">
-                                            <h4 className="font-medium text-gray-900 text-right">בחר שיטת אימות</h4>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <button
-                                                    onClick={() => setVerificationMethod('document')}
-                                                    className={`p - 3 rounded - lg border text - sm font - medium flex flex - col items - center gap - 2 transition - all ${verificationMethod === 'document' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-blue-300 text-gray-600'} `}
-                                                >
-                                                    <FileText className="w-5 h-5" />
-                                                    מסמך רשמי
-                                                </button>
-                                                <button
-                                                    onClick={() => setVerificationMethod('social')}
-                                                    className={`p - 3 rounded - lg border text - sm font - medium flex flex - col items - center gap - 2 transition - all ${verificationMethod === 'social' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-blue-300 text-gray-600'} `}
-                                                >
-                                                    <LinkIcon className="w-5 h-5" />
-                                                    מדיה חברתית
-                                                </button>
-                                                <button
-                                                    onClick={() => setVerificationMethod('email')}
-                                                    className={`p - 3 rounded - lg border text - sm font - medium flex flex - col items - center gap - 2 transition - all ${verificationMethod === 'email' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-blue-300 text-gray-600'} `}
-                                                >
-                                                    <Mail className="w-5 h-5" />
-                                                    דוא״ל עסקי
-                                                </button>
+                                        <div className="space-y-4">
+                                            <h4 className="font-medium text-slate-900 dark:text-white text-right flex items-center justify-end gap-2">
+                                                שיטת אימות
+                                                <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-xs flex items-center justify-center text-slate-500">2</span>
+                                            </h4>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {[
+                                                    { id: 'document', label: 'מסמך רשמי', icon: FileText },
+                                                    { id: 'social', label: 'מדיה חברתית', icon: LinkIcon },
+                                                    { id: 'email', label: 'דוא״ל עסקי', icon: Mail }
+                                                ].map((method) => (
+                                                    <button
+                                                        key={method.id}
+                                                        onClick={() => setVerificationMethod(method.id)}
+                                                        className={`p-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-3 transition-all ${verificationMethod === method.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-sm ring-1 ring-blue-500' : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                    >
+                                                        <method.icon className={`w-6 h-6 ${verificationMethod === method.id ? 'text-blue-600' : 'text-slate-400'}`} />
+                                                        {method.label}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
 
                                         {/* Dynamic Input based on Method */}
-                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
                                             {verificationMethod === 'document' && (
-                                                <div className="text-center space-y-3">
-                                                    <p className="text-sm text-gray-500">אנא צרף צילום של רישיון עסק, חשבונית ארנונה או תעודה מזהה של בעל העסק.</p>
-                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:bg-white transition-colors cursor-pointer group">
-                                                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-blue-500" />
-                                                        <span className="text-sm text-gray-400 group-hover:text-gray-600">לחץ להעלאת קובץ (או גרור לכאן)</span>
+                                                <div className="text-center space-y-4">
+                                                    <p className="text-sm text-slate-500">אנא צרף צילום של רישיון עסק, חשבונית ארנונה או תעודה מזהה של בעל העסק.</p>
+                                                    <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer group relative">
+                                                        <Upload className="w-10 h-10 text-slate-300 group-hover:text-blue-500 mx-auto mb-3 transition-colors" />
+                                                        <span className="block text-sm font-medium text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300">לחץ להעלאת קובץ (או גרור לכאן)</span>
                                                         <input
                                                             type="file"
                                                             className="hidden"
@@ -368,16 +383,21 @@ export default function VendorSignup() {
                                                         />
                                                         <label htmlFor="file-upload" className="absolute inset-0 cursor-pointer"></label>
                                                     </div>
-                                                    {verificationProof && <div className="text-sm text-green-600 font-medium">{verificationProof}</div>}
+                                                    {verificationProof && (
+                                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 text-sm font-medium rounded-full border border-green-100">
+                                                            <CheckCircle2 className="w-4 h-4" />
+                                                            {verificationProof}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                             {verificationMethod === 'social' && (
                                                 <div className="space-y-3">
-                                                    <p className="text-sm text-gray-500 text-right">אנא צרף קישור לעמוד העסקי (פייסבוק/אינסטגרם) שבו אתה מוגדר כמנהל, או שלח לנו הודעה מהעמוד הזה.</p>
+                                                    <p className="text-sm text-slate-500 text-right">אנא צרף קישור לעמוד העסקי (פייסבוק/אינסטגרם) שבו אתה מוגדר כמנהל.</p>
                                                     <input
                                                         type="url"
                                                         placeholder="https://facebook.com/..."
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 text-right"
+                                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500 text-right"
                                                         value={verificationProof}
                                                         onChange={(e) => setVerificationProof(e.target.value)}
                                                     />
@@ -385,11 +405,11 @@ export default function VendorSignup() {
                                             )}
                                             {verificationMethod === 'email' && (
                                                 <div className="space-y-3">
-                                                    <p className="text-sm text-gray-500 text-right">נשלח קוד אימות לכתובת הדוא״ל המופיעה באתר הרשמי של העסק.</p>
+                                                    <p className="text-sm text-slate-500 text-right">נשלח קוד אימות לכתובת הדוא״ל המופיעה באתר הרשמי של העסק.</p>
                                                     <input
                                                         type="email"
                                                         placeholder="כתובת הדוא״ל העסקית שלך"
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 text-right"
+                                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500 text-right"
                                                         value={verificationProof}
                                                         onChange={(e) => setVerificationProof(e.target.value)}
                                                     />
@@ -399,7 +419,7 @@ export default function VendorSignup() {
 
                                         <Button
                                             onClick={handleClaimSubmit}
-                                            className="w-full py-6 text-lg bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg transition-all"
+                                            className="w-full py-6 text-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition-all rounded-xl mt-4"
                                             disabled={loading || !claimerName || !claimerContact}
                                         >
                                             {loading ? (
@@ -420,4 +440,24 @@ export default function VendorSignup() {
             </div>
         </div>
     );
+}
+
+function CheckCircle2(props) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <circle cx="12" cy="12" r="10" />
+            <path d="m9 12 2 2 4-4" />
+        </svg>
+    )
 }

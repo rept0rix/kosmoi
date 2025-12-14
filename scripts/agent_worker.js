@@ -288,7 +288,7 @@ When finished, reply with "TASK_COMPLETED".
 
     let currentMessage = prompt;
     let turnCount = 0;
-    const MAX_TURNS = 10;
+    const MAX_TURNS = 30; // Increased to allow for complex data generation tasks
 
     while (turnCount < MAX_TURNS) {
         turnCount++;

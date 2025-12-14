@@ -33,6 +33,9 @@ import Accessibility from '@/pages/legal/Accessibility';
 import BusinessInfo from '@/pages/BusinessInfo';
 import Contact from '@/pages/Contact';
 import Blog from '@/pages/Blog';
+import BlogPostDetail from '@/pages/BlogPostDetail';
+import CalendarView from '@/pages/vendor/CalendarView';
+import MyBookings from '@/pages/MyBookings';
 
 import CommandCenter from '@/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -49,7 +52,7 @@ import AdminRoadmap from '@/pages/admin/AdminRoadmap';
 import AdminCanvas from '@/pages/admin/AdminCanvas';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
-import MyBookings from '@/pages/MyBookings';
+
 import LocalBrain from '@/pages/LocalBrain';
 import SystemMonitor from '@/components/dashboard/SystemMonitor';
 import ProviderProfile from '@/pages/ProviderProfile';
@@ -155,6 +158,7 @@ const AuthenticatedApp = () => {
             <Route element={<ProtectedUserRoute />}>
               <Route path="/vendor-signup" element={<VendorSignup />} />
               <Route path="/vendor" element={<VendorLite />} />
+              <Route path="/vendor/calendar" element={<CalendarView />} />
               <Route path="/my-bookings" element={<MyBookings />} />
             </Route>
 
@@ -171,6 +175,7 @@ const AuthenticatedApp = () => {
             <Route path="/business-info" element={<BusinessInfo />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPostDetail />} />
 
             <Route path="/local-brain" element={<LocalBrain />} />
             <Route path="/health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />

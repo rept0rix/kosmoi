@@ -13,7 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User, Settings, LogOut, LayoutDashboard, Briefcase, ShieldAlert } from 'lucide-react';
+import { User, Settings, LogOut, LayoutDashboard, Briefcase, ShieldAlert, Calendar } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserMenu() {
@@ -74,6 +74,13 @@ export default function UserMenu() {
                     <Link to="/profile" className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
                         <span>{t('nav.profile') || 'Profile'}</span>
+                    </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                    <Link to="/my-bookings" className="cursor-pointer">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        <span>{t('nav.my_bookings') || 'My Bookings'}</span>
                     </Link>
                 </DropdownMenuItem>
 
