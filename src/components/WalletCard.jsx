@@ -4,17 +4,33 @@ import { Button } from "@/components/ui/button";
 import { PaymentService } from '@/services/PaymentService';
 import { Wallet, Plus, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function WalletCard() {
     const [balance, setBalance] = useState({ available: 0, currency: 'USD' });
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
+    const { user } = useAuth(); // Need useAuth
+
     const fetchBalance = async () => {
+        if (!user) return; // Guard
         setLoading(true);
         try {
-            const data = await PaymentService.getBalance();
-            setBalance(data);
+            const data = await PaymentService.getBalance(user.id); // Pass user ID if getBalance needs it, or getWallet uses it
+            // Wait, getBalance in PaymentService isn't shown in my view, I should check it.
+            // Looking at previous view_file of PaymentService line 9: getWallet(userId).
+            // But WalletCard calls PaymentService.getBalance(). 
+            // I need to check if getBalance exists or if I should use getWallet.
+            // Re-reading PaymentService view: 
+            // It has `getWallet`, `getTransactionHistory`, `addCredits`, `payForBooking`. 
+            // It DOES NOT have specific `getBalance`.
+            // So I should use `getWallet` and extract balance.
+
+            const wallet = await PaymentService.getWallet(user.id);
+            if (wallet) {
+                setBalance({ available: wallet.balance, currency: wallet.currency });
+            }
         } catch (e) {
             console.error("Failed to fetch balance", e);
         } finally {
@@ -23,18 +39,25 @@ export default function WalletCard() {
     };
 
     useEffect(() => {
-        fetchBalance();
+        if (user) fetchBalance();
 
-        // Listen for custom event 'wallet_updated' to refresh balance from other components
-        const handleWalletUpdate = () => fetchBalance();
+        const handleWalletUpdate = () => { if (user) fetchBalance(); };
         window.addEventListener('wallet_updated', handleWalletUpdate);
         return () => window.removeEventListener('wallet_updated', handleWalletUpdate);
-    }, []);
+    }, [user]);
 
     const handleAddFunds = async () => {
-        await PaymentService.addCredits(100);
-        toast({ title: "Funds Added", description: "$100 added to your wallet." });
-        fetchBalance();
+        if (!user) return;
+        setLoading(true);
+        try {
+            await PaymentService.addCredits(user.id, 100);
+            toast({ title: "Funds Added", description: "$100 added to your wallet." });
+            fetchBalance();
+        } catch (e) {
+            toast({ title: "Error", description: "Could not add funds.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

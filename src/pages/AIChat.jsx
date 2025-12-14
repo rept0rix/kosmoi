@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, Sparkles, Key, MapPin, Phone, MessageCircle, Navigation, X, Star, Compass, Map as MapIcon, Info, User, Maximize2, Minimize2 } from 'lucide-react';
+import { Bot, Send, Sparkles, Key, MapPin, Phone, MessageCircle, Navigation, X, Star, Compass, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '@/api/supabaseClient';
 import GoogleMap from "@/components/GoogleMap";
@@ -13,6 +13,8 @@ import { getCategoryIcon } from "@/utils/mapIcons";
 import MapProviderCard from "@/components/MapProviderCard";
 import { useWeather, getWeatherDescription } from '@/hooks/useWeather';
 import { samuiKnowledge } from '@/data/samuiKnowledge';
+import { CONCIERGE_AGENT } from '@/services/agents/registry/ConciergeAgent';
+import SEO from '@/components/SEO';
 
 const categories = [
     { value: "all", label: "All" },
@@ -140,7 +142,7 @@ export default function AIChat() {
                     setMapZoom(15); // Zoom in when location is found
                 },
                 (error) => {
-                    // console.log("Location access denied");
+                    // Location access denied - silent fail
                 }
             );
         }
@@ -176,43 +178,20 @@ export default function AIChat() {
 
 
             const systemInstruction = `
-You are the "Samui Service Hub Concierge", an expert local guide and AI assistant for Koh Samui.
+${CONCIERGE_AGENT.systemPrompt}
 
-YOUR GOAL:
-Help users plan trips, find services, and navigate the island. You have access to a database of verified local service providers AND a deep knowledge base about the island.
+**DYNAMIC CONTEXT:**
 
-CAPABILITIES:
-1. **Trip Planning**: Create detailed, day-by-day itineraries based on user preferences (relaxing, adventure, family, nightlife).
-2. **Service Recommendations**: Recommend specific businesses from your database. ALWAYS prefer verified providers.
-3. **Local Knowledge**: Answer questions about beaches, weather, transport, and culture using the provided KNOWLEDGE BASE.
-4. **Weather Aware**: Use the provided weather data to suggest appropriate activities (e.g., indoor activities if raining).
-5. **Rich Interactions**: Use images, choice chips, and cards to make the conversation engaging.
-
-RESPONSE FORMAT:
-You must respond in JSON format ONLY:
-{
-    "message": "Your natural language response here.",
-    "image": "https://example.com/image.jpg", // Optional: Image URL to display
-    "choices": ["Option 1", "Option 2"], // Optional: Quick reply choices for the user
-    "card": { // Optional: A card to display a place/service
-        "title": "Place Name",
-        "description": "Short description",
-        "image": "https://example.com/place.jpg",
-        "action": { "type": "add_to_trip", "data": { ... }, "label": "Add to Trip" }
-    },
-    "action": { "type": "navigate", "path": "/Route", "label": "Button Label" } // Optional: Legacy action
-}
-
-KNOWLEDGE BASE (Use this to answer general questions):
+KNOWLEDGE BASE:
 ${JSON.stringify(samuiKnowledge, null, 2)}
 
 CURRENT WEATHER:
 ${weatherContext}
 
-AVAILABLE PROVIDERS (Use these for recommendations):
+AVAILABLE PROVIDERS (Prioritize these):
 ${providersContext}
 
-AVAILABLE APP ROUTES (Use these for navigation actions):
+AVAILABLE APP ROUTES:
     - /ServiceProviders?category=plumber
     - /ServiceProviders?category=taxi
     - /ServiceProviders?category=restaurant
@@ -222,21 +201,18 @@ AVAILABLE APP ROUTES (Use these for navigation actions):
     - /RequestService
     - /MyRequests
 
-RESPONSE FORMAT:
-You must respond in JSON format ONLY:
-{
-    "message": "Your natural language response here. Use Markdown for formatting (bold, lists, etc.).",
-    "action": { "type": "navigate", "path": "/Route", "label": "Button Label" } // Optional
+TRIP PLANNER INSTRUCTIONS:
+If suggesting an itinerary, you can return a "card" with an "add_to_trip" action.
+Action Data Format (Single or Array): 
+{ 
+  "title": "Place Name", 
+  "address": "Location Name", 
+  "category": "sightseeing", 
+  "time": "10:00", 
+  "notes": "Short tip",
+  "location": { "lat": 9.53, "lng": 100.05 } // REQUIRED for map placement
 }
-
-GUIDELINES:
-- **Be Proactive**: If a user asks for a plan, ask clarifying questions (dates, interests, budget) if needed, then build the plan.
-- **Be Specific**: When recommending a place, mention its name from the provider list if available.
-- **Thai Hospitality**: Be warm and polite ("Sawadee krup/ka").
-
-TRIP PLANNER INTEGRATION:
-If the user wants to add a specific place to their trip, or if you suggest a specific place as part of an itinerary, use the "add_to_trip" action.
-Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "address": "Location", "category": "category_key", "time": "10:00", "notes": "AI notes" }, "label": "Add to Trip" }
+Use known coordinates from the 'providers' list if available, or estimate reasonable Samui coordinates.
 `;
 
             // 2. Prepare Conversation History
@@ -254,7 +230,7 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
 
             const contents = [...history, currentMessage];
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -332,12 +308,31 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
             const savedTrip = localStorage.getItem('currentTrip');
             let trip = savedTrip ? JSON.parse(savedTrip) : { itinerary: [] };
 
-            const newItem = {
-                id: Date.now(),
-                ...action.data
-            };
-
-            trip.itinerary.push(newItem);
+            if (Array.isArray(action.data)) {
+                // Handle Batch Add (Array)
+                const newItems = action.data.map((item, idx) => ({
+                    id: Date.now() + idx,
+                    ...item
+                }));
+                trip.itinerary.push(...newItems);
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: `Added ${newItems.length} items to your trip!`,
+                    isSystem: true
+                }]);
+            } else {
+                // Handle Single Add (Object)
+                const newItem = {
+                    id: Date.now(),
+                    ...action.data
+                };
+                trip.itinerary.push(newItem);
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: `Added "${action.data.title}" to your trip!`,
+                    isSystem: true
+                }]);
+            }
             localStorage.setItem('currentTrip', JSON.stringify(trip));
 
             setMessages(prev => [...prev, {
@@ -469,6 +464,11 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
 
     return (
         <div className="flex flex-col h-[calc(100vh-56px)] bg-gray-50">
+            <SEO
+                title="Concierge | Kosmoi"
+                description="Your AI local expert for Koh Samui. Ask about trips, food, and services."
+                url="https://kosmoi.com/AIChat"
+            />
             {/* Map Section - Top 23% */}
             <div className={`relative w-full transition-all duration-300 ease-in-out ${isMapExpanded ? 'h-[80%]' : 'h-[23%]'}`}>
                 <GoogleMap
@@ -528,46 +528,71 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
                         </div>
                     </div>
 
+                    {/* Chat Header / Mode Badge */}
+                    <div className="flex justify-center py-2 shrink-0">
+                        <div className="bg-white/80 backdrop-blur-md border border-indigo-100 rounded-full px-4 py-1.5 shadow-sm flex items-center gap-2">
+                            <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            </span>
+                            <span className="text-xs font-semibold text-indigo-900 uppercase tracking-wider">
+                                {messages.some(m => m.card?.action?.type === 'add_to_trip') ? '🏝️ Trip Planning Mode' : '🛎️ Concierge Active'}
+                            </span>
+                        </div>
+                    </div>
+
                     {messages.map((msg, idx) => (
-                        <div key={idx} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div key={idx} className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
 
                             {/* Bot Avatar */}
                             {msg.role === 'assistant' && (
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
-                                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-md ring-2 ring-white">
+                                    <Sparkles className="w-4 h-4 text-white" />
                                 </div>
                             )}
 
-                            <div className={`max-w-[85%] rounded-2xl p-3 text-sm shadow-sm ${msg.role === 'user'
-                                ? 'bg-blue-600 text-white rounded-br-none'
+                            <div className={`max-w-[85%] rounded-2xl p-4 text-sm shadow-sm transition-all duration-200 ${msg.role === 'user'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none shadow-blue-200'
                                 : msg.isSystem
-                                    ? 'bg-yellow-50 border border-yellow-200 text-yellow-800'
-                                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
+                                    ? 'bg-amber-50 border border-amber-100 text-amber-900'
+                                    : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none shadow-gray-100'
                                 }`}>
                                 <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
 
                                 {/* Image Attachment */}
                                 {msg.image && (
-                                    <img src={msg.image} alt="Attachment" className="mt-2 rounded-lg w-full h-40 object-cover" />
+                                    <div className="mt-3 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                                        <img src={msg.image} alt="Attachment" className="w-full h-40 object-cover hover:scale-105 transition-transform duration-500" />
+                                    </div>
                                 )}
 
-                                {/* Rich Card */}
+                                {/* Premium Card (Glassmorphism) */}
                                 {msg.card && (
-                                    <div className="mt-3 bg-gray-50 rounded-xl p-3 border border-gray-200">
+                                    <div className="mt-4 overflow-hidden rounded-xl border border-white/50 bg-white/60 backdrop-blur-md shadow-lg ring-1 ring-black/5">
                                         {msg.card.image && (
-                                            <img src={msg.card.image} alt={msg.card.title} className="w-full h-32 object-cover rounded-lg mb-2" />
+                                            <div className="relative h-32 w-full overflow-hidden">
+                                                <img src={msg.card.image} alt={msg.card.title} className="h-full w-full object-cover transition-transform duration-700 hover:scale-110" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                <div className="absolute bottom-2 left-2 right-2">
+                                                    <h4 className="font-bold text-white text-lg shadow-black/50 drop-shadow-md">{msg.card.title}</h4>
+                                                </div>
+                                            </div>
                                         )}
-                                        <h4 className="font-bold text-gray-900">{msg.card.title}</h4>
-                                        <p className="text-xs text-gray-500 mb-2">{msg.card.description}</p>
-                                        {msg.card.action && (
-                                            <Button
-                                                size="sm"
-                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                                                onClick={() => handleActionClick(msg.card.action)}
-                                            >
-                                                {msg.card.action.label}
-                                            </Button>
-                                        )}
+                                        <div className="p-4">
+                                            {!msg.card.image && <h4 className="font-bold text-gray-900 mb-1">{msg.card.title}</h4>}
+                                            <p className="text-xs text-gray-600 mb-4 leading-relaxed">{msg.card.description}</p>
+
+                                            {msg.card.action && (
+                                                <Button
+                                                    size="sm"
+                                                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 font-semibold group"
+                                                    onClick={() => handleActionClick(msg.card.action)}
+                                                >
+                                                    {msg.card.action.label || "Select Option"}
+                                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -576,7 +601,7 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
                                     <Button
                                         variant="secondary"
                                         size="sm"
-                                        className="mt-3 w-full bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-medium text-sm h-9"
+                                        className="mt-3 w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 font-medium text-sm h-9"
                                         onClick={() => handleActionClick(msg.action)}
                                     >
                                         {msg.action.label}
@@ -589,7 +614,7 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
                                         {msg.choices.map((choice, i) => (
                                             <button
                                                 key={i}
-                                                className="px-3 py-1.5 bg-white border border-blue-200 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-50 transition-colors"
+                                                className="px-3 py-1.5 bg-white border border-indigo-100 text-indigo-600 rounded-full text-xs font-semibold hover:bg-indigo-50 hover:border-indigo-200 transition-all shadow-sm"
                                                 onClick={() => {
                                                     setInput(choice);
                                                     processMessage(choice);
@@ -604,8 +629,8 @@ Action Format: { "type": "add_to_trip", "data": { "title": "Place Name", "addres
 
                             {/* User Avatar */}
                             {msg.role === 'user' && (
-                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                                    <User className="w-3.5 h-3.5 text-gray-500" />
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+                                    <User className="w-4 h-4 text-gray-500" />
                                 </div>
                             )}
                         </div>

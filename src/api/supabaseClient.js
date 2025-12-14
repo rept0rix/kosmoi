@@ -6,10 +6,19 @@ const getEnv = (key) => {
     return undefined;
 };
 
+
+console.log("[DEBUG] supabaseClient Env Check:");
+console.log("VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "Exits" : "Missing");
+console.log("VITE_SUPABASE_SERVICE_ROLE_KEY:", process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? "Exists" : "Missing");
+console.log("VITE_SUPABASE_ANON_KEY:", process.env.VITE_SUPABASE_ANON_KEY ? "Exists" : "Missing");
+
 const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_URL) || process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = (typeof process !== 'undefined' && process.env && process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)
     ? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     : ((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || process.env.VITE_SUPABASE_ANON_KEY);
+
+console.log("[DEBUG] Final URLs:", { supabaseUrl, keyLength: supabaseAnonKey?.length });
+
 
 
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

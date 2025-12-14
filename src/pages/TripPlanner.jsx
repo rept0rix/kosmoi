@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
 import { getCategoryIcon } from "@/utils/mapIcons";
+import SEO from '@/components/SEO';
 
 export default function TripPlanner() {
     const navigate = useNavigate();
@@ -75,7 +76,12 @@ export default function TripPlanner() {
     })).filter(m => m.lat && m.lng);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-56px)] bg-gray-50">
+        <div className="h-[calc(100vh-64px)] flex flex-col md:flex-row bg-white relative">
+            <SEO
+                title="Trip Planner | Kosmoi"
+                description="Build and manage your perfect Koh Samui itinerary."
+                url="https://kosmoi.com/TripPlanner"
+            />
             {/* Header */}
             <div className="bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm z-10">
                 <div className="flex items-center gap-3">

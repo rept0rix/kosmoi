@@ -1,6 +1,7 @@
 import { InvokeLLM, GetEmbedding } from '../../api/integrations.js';
 import { db } from '../../api/supabaseClient.js';
 import { TranslationService } from '../TranslationService.js';
+import { KnowledgeService } from '../ai/KnowledgeService.js';
 
 /**
  * Generates a reply from a specific agent based on the conversation history.
@@ -53,22 +54,12 @@ export async function getAgentReply(agent, messages, context = {}) {
     // 1.2 Knowledge Retrieval (RAG)
     let knowledgeContext = "";
     try {
-      if (agent.role === 'database-specialist' || true) { // Enable for all for now or check config
-        const lastMsg = recentMessages[recentMessages.length - 1];
-        if (lastMsg && lastMsg.agent_id === 'HUMAN_USER') {
-          const embedding = await GetEmbedding({ text: lastMsg.content });
-          if (embedding) {
-            const { data: docs, error } = await db.rpc('match_documents', {
-              query_embedding: embedding,
-              match_threshold: 0.5,
-              match_count: 5
-            });
-
-            if (docs && docs.length > 0) {
-              knowledgeContext = "Relevant Knowledge Base Articles:\n" +
-                docs.map(d => `- ${d.content} (Confidence: ${Math.round(d.similarity * 100)}%)`).join('\n');
-            }
-          }
+      // Use the KnowledgeService to retrieve relevant context
+      const lastMsg = recentMessages[recentMessages.length - 1];
+      if (lastMsg && lastMsg.agent_id === 'HUMAN_USER') {
+        const retreivedText = await KnowledgeService.retrieveContext(lastMsg.content);
+        if (retreivedText) {
+          knowledgeContext = `Relevant Knowledge Base Articles:\n${retreivedText}`;
         }
       }
     } catch (e) {

@@ -31,7 +31,7 @@ export const SUPABASE_SPECIALIST_AGENT = {
 
     **MANTRA:**
     "Data is sacred. Security is non-negotiable."`,
-    allowedTools: ["read_table", "execute_sql", "get_schema", "request_management_api", "browser", "notepad"],
+    allowedTools: ["read_table", "execute_sql", "get_schema", "request_management_api", "browser", "notepad", "search_providers", "check_availability", "create_booking"],
     memory: { type: "longterm", ttlDays: 365 },
     maxRuntimeSeconds: 3600
 };

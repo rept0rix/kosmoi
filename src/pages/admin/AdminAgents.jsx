@@ -41,10 +41,24 @@ export default function AdminAgents() {
     });
 
     useEffect(() => {
-        // In a real app, fetch from API. Here we load from registry or localStorage
+        // Load from registry, but check if we have overrides or new additions in localStorage
         const stored = localStorage.getItem('kosmoi_admin_agents');
         if (stored) {
-            setAgents(JSON.parse(stored));
+            const storedAgents = JSON.parse(stored);
+
+            // Merge logic: valid stored agents + any new system agents from registry not present in storage
+            // We use 'id' as the unique key
+            const storedIds = new Set(storedAgents.map(a => a.id));
+            const newSystemAgents = initialAgents.filter(a => !storedIds.has(a.id));
+
+            if (newSystemAgents.length > 0) {
+                const merged = [...storedAgents, ...newSystemAgents];
+                setAgents(merged);
+                // Optional: valid to update storage immediately or wait for user action? 
+                // Let's rely on 'saveAgents' for explicit saves, but here we just update view.
+            } else {
+                setAgents(storedAgents);
+            }
         } else {
             setAgents(initialAgents);
         }
@@ -74,10 +88,12 @@ export default function AdminAgents() {
         }
     };
 
-    const filteredAgents = agents.filter(agent =>
-        agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        agent.role.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredAgents = (agents || [])
+        .filter(a => a && a.name) // Filter out undefined/null agents
+        .filter(agent =>
+            (agent.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (agent.role || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -163,12 +179,12 @@ export default function AdminAgents() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => navigate(`/admin/agents/${agent.id}`)}>
+                                        <DropdownMenuItem onSelect={() => navigate(`/admin/agents/${agent.id}`)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Configure Agent
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => handleDelete(agent.id)} className="text-red-600">
+                                        <DropdownMenuItem onSelect={() => handleDelete(agent.id)} className="text-red-600">
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             Decommission
                                         </DropdownMenuItem>

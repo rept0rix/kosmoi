@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Logger } from '../../services/utils/Logger';
+import { realSupabase as supabase } from '@/api/supabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Server, Database, Brain, Clock, XCircle, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -39,33 +40,70 @@ export default function SystemMonitor() {
     const scrollRef = useRef(null);
 
     useEffect(() => {
-        // Initial load
-        setLogs(Logger.getLogs());
+        // Fetch initial logs from Supabase
+        const fetchLogs = async () => {
+            const { data, error } = await supabase
+                .from('audit_logs')
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(100);
 
-        // Subscribe to real-time logs
-        const unsubscribe = Logger.subscribe((newLog) => {
+            if (data) {
+                // Transform DB logs to UI format if needed
+                const formatted = data.map(l => ({
+                    id: l.id,
+                    timestamp: l.timestamp,
+                    level: l.level || 'info', // Default if missing
+                    source: l.action || 'System',
+                    message: l.details ? JSON.stringify(l.details) : 'Event occurred',
+                    metadata: l.user_id ? { user: l.user_id } : {}
+                }));
+                // Merge with memory logs if any, but prioritized DB
+                setLogs(formatLogs(formatted));
+            }
+        };
+
+        fetchLogs();
+
+        // Subscribe to real-time additions
+        const channel = supabase
+            .channel('public:audit_logs')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
+                const newLog = payload.new;
+                setLogs(prev => [formatLog(newLog), ...prev].slice(0, 500));
+            })
+            .subscribe();
+
+        // Also keep Memory Logger for non-persisted clientside debugs
+        const unsubscribeLogger = Logger.subscribe((newLog) => {
             if (newLog) {
                 setLogs(prev => [newLog, ...prev].slice(0, 500));
-
-                // Update simple metrics
-                if (newLog.level === 'error') setMetrics(m => ({ ...m, errors: m.errors + 1 }));
-                if (newLog.level === 'warn') setMetrics(m => ({ ...m, warnings: m.warnings + 1 }));
-                setMetrics(m => ({ ...m, requests: m.requests + 1 }));
-            } else {
-                setLogs([]); // Clear
             }
         });
 
+        // Mock uptime / stats updater
         const timer = setInterval(() => {
-            // Mock uptime
             setMetrics(m => ({ ...m, uptime: new Date().toLocaleTimeString() }));
         }, 1000);
 
         return () => {
-            unsubscribe();
+            supabase.removeChannel(channel);
+            unsubscribeLogger();
             clearInterval(timer);
         };
     }, []);
+
+    const formatLog = (l) => ({
+        id: l.id || Date.now(),
+        timestamp: l.timestamp || new Date().toISOString(),
+        level: l.level || 'info',
+        source: l.action || 'System',
+        message: typeof l.details === 'object' ? JSON.stringify(l.details) : (l.details || 'Event'),
+        metadata: {}
+    });
+
+    // Helper to safety check list
+    const formatLogs = (list) => list.map(formatLog);
 
     return (
         <div className="h-full flex flex-col gap-4 p-4 md:p-6 max-h-screen">

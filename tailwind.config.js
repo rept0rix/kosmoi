@@ -62,7 +62,21 @@ module.exports = {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				'primary-glass': 'rgba(255, 255, 255, 0.1)',
+				'surface-glass': 'rgba(255, 255, 255, 0.05)',
+			},
+			backgroundImage: {
+				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+				'glass-shine': 'linear-gradient(135deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 60%)',
+			},
+			boxShadow: {
+				'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+				'glass-hover': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+				'neon': '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.2)',
+			},
+			backdropBlur: {
+				'xs': '2px',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -80,11 +94,21 @@ module.exports = {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' },
+				},
+				'breathe': {
+					'0%, 100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.5)' },
+					'50%': { boxShadow: '0 0 40px rgba(59, 130, 246, 0.8)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 6s ease-in-out infinite',
+				'breathe': 'breathe 4s ease-in-out infinite',
 			}
 		}
 	},

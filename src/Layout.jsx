@@ -13,6 +13,7 @@ import UserMenu from "@/components/UserMenu";
 import PageTransition from "@/components/PageTransition";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 // --- Configuration ---
 // Define which paths belong to which zone
@@ -63,10 +64,7 @@ const LayoutContent = ({ children }) => {
   // Admin links removed from Bottom Nav to declutter
 
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'he' : 'en';
-    i18n.changeLanguage(newLang);
-  };
+
 
   // Render Header (Different for zones?)
   const renderHeader = () => {
@@ -141,17 +139,8 @@ const LayoutContent = ({ children }) => {
 
             {!isAdminZone && !isBusinessZone && <MiniWeather />}
 
-            <Button
-              onClick={toggleLanguage}
-              variant="ghost"
-              size="sm"
-              className={`flex items-center gap-2 ${isAdminZone ? 'text-slate-300 hover:text-white hover:bg-slate-800' : ''}`}
-            >
-              <Languages className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {i18n.language === 'he' ? 'EN' : 'עב'}
-              </span>
-            </Button>
+            {/* Replaced legacy toggle with new component */}
+            <LanguageSwitcher />
 
             <UserMenu />
           </div>

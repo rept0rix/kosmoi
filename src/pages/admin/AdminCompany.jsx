@@ -15,8 +15,8 @@ export default function AdminCompany() {
         name: 'Kosmoi',
         tagline: 'Connect. Solve. Thrive.',
         logoUrl: '/kosmoi_logo_white.svg',
-        vision: 'To create a digital ecosystem where every service is one click away, reliable, and fair.',
-        mission: 'Empowering local businesses and simplifying life for residents and tourists alike.',
+        vision: 'Creating a decentralized city operating system where every interaction is seamless.',
+        mission: 'Empower local businesses and residents with AI-driven tools for efficient city living.',
         budget: 1000,
         currency: 'USD',
         oneDollarChallenge: false

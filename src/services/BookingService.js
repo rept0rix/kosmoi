@@ -56,6 +56,29 @@ export const BookingService = {
             throw new Error("User must be logged in to book.");
         }
 
+        // 0. RACE CONDITION CHECK: Check if slot is still free
+        //Ideally this should be a DB constraint or stored proc, but for MVP client-side check is better than nothing.
+        const activeBookings = await BookingService.getAvailableSlots(new Date(bookingDetails.date), bookingDetails.providerId);
+        // getAvailableSlots returns *available* slots. If our time is NOT in there, it's taken.
+        // Wait, getAvailableSlots logic: returns allSlots - bookedSlots.
+        // So checking if 'time' is in the returned array is the correct check.
+
+        // However, getAvailableSlots takes a Date object or string.
+        // Let's reuse the existing logic but we need to be careful about date format.
+
+        // Re-implementing specific check for speed and clarity
+        const { data: existing } = await db.from('bookings')
+            .select('id')
+            .eq('provider_id', bookingDetails.providerId)
+            .eq('service_date', bookingDetails.date) // ensure date string format matches
+            .eq('start_time', bookingDetails.time) // "09:00" or "09:00:00"
+            .in('status', ['pending', 'confirmed'])
+            .maybeSingle();
+
+        if (existing) {
+            throw new Error("This slot is already booked. Please choose another time.");
+        }
+
         const payload = {
             user_id: bookingDetails.userId,
             provider_id: bookingDetails.providerId,

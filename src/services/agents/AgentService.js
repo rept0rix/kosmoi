@@ -13,6 +13,7 @@ import "../tools/registry/DevTools.js";
 import "../tools/registry/IntegrationTools.js";
 import "../tools/registry/KnowledgeTools.js";
 import "../tools/registry/GrowthTools.js";
+import "../tools/registry/ServiceTools.js";
 
 console.log("AgentService Module Loaded. Tools Registered:", ToolRegistry.getToolNames());
 

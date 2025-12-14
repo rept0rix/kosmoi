@@ -74,9 +74,12 @@ export const PaymentService = {
      */
     addCredits: async (userId, amount) => {
         // Call the secure RPC
-        const { data, error } = await realSupabase.rpc('deposit_funds', {
-            user_id: userId,
-            amount: amount
+        const { data, error } = await realSupabase.rpc('process_wallet_transaction', {
+            p_user_id: userId,
+            p_amount: amount,
+            p_type: 'credit',
+            p_description: 'Deposit via Stripe (Mock)',
+            p_reference_id: 'dep_' + Math.random().toString(36).substr(2, 9)
         });
 
         if (error) {
@@ -95,10 +98,6 @@ export const PaymentService = {
         if (!payerWallet) throw new Error("Payer wallet missing");
 
         // 2. Get provider wallet (need to find wallet by provider's user_id)
-        // Check if providerId is a profile ID or separate provider table ID.
-        // in 'service_providers' table, we likely have 'id' (provider id) and 'owner_id' (user id).
-        // We need the OWNER ID used for auth/wallet.
-
         const { data: provider } = await realSupabase
             .from('service_providers')
             .select('owner_id')

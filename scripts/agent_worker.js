@@ -116,26 +116,28 @@ if (supabaseServiceKey) {
 // Parse CLI args
 const args = process.argv.slice(2);
 const roleArg = args.find(arg => arg.startsWith('--role='));
-const agentRole = roleArg ? roleArg.split('=')[1] : null;
+let agentRole = roleArg ? roleArg.split('=')[1] : null;
 
 const nameArg = args.find(arg => arg.startsWith('--name='));
 const workerName = nameArg ? nameArg.split('=')[1] : `Worker-${Math.floor(Math.random() * 1000)}`;
 
+// Universal Worker Mode Flag
+const isUniversal = !agentRole;
 
-if (!agentRole) {
-    console.error("❌ Please specify an agent role using --role=<role_id>");
-    console.log("Available agents:", agents.map(a => a.id).join(', '));
-    process.exit(1);
+if (isUniversal) {
+    console.log(`🤖 Starting Universal Worker: ${workerName}`);
+    console.log("🌍 Mode: Universal (Will pick up tasks for ANY agent)");
+} else {
+    // Validate specific role if provided
+    const agentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
+    if (!agentConfig) {
+        console.error(`❌ Agent with role '${agentRole}' not found.`);
+        console.log("Available agents:", agents.map(a => a.id).join(', '));
+        process.exit(1);
+    }
+    console.log(`🤖 Starting Dedicated Worker for: ${agentConfig.role} (${agentConfig.id})`);
 }
 
-const agentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
-
-if (!agentConfig) {
-    console.error(`❌ Agent with role '${agentRole}' not found.`);
-    process.exit(1);
-}
-
-console.log(`🤖 Starting Worker for Agent: ${agentConfig.role} (${agentConfig.id})`);
 console.log(`📂 Project Root: ${PROJECT_ROOT}`);
 
 // Override System Prompt for Worker Mode
@@ -256,10 +258,15 @@ async function executeTool(toolName, payload) {
     } catch (e) { return `Tool Execution Failed: ${e.message}`; }
 }
 
-async function processTask(task) {
+async function processTask(task, agentService, agentConfigOverride) {
     console.log(`\n📋 Processing Task: ${task.title}`);
     console.log(`[${workerName}] Claiming task...`);
     await db.entities.AgentTasks.update(task.id, { status: 'in_progress' });
+
+    // Use the override config if provided (Universal Mode), otherwise fallback to global (Dedicated Mode)
+    // Actually, in Universal Mode step we pass both. In dedicated mode (old code) we rely on global.
+    // Let's assume we always pass agentService now.
+    const activeAgent = agentService || agent;
 
     const prompt = `
 You have been assigned a task:
@@ -281,7 +288,7 @@ When finished, reply with "TASK_COMPLETED".
         turnCount++;
         console.log(`\n🔄 Turn ${turnCount}...`);
 
-        const response = await agent.sendMessage(currentMessage, { simulateTools: false });
+        const response = await activeAgent.sendMessage(currentMessage, { simulateTools: false });
         // console.log(`🗣️ Agent Raw Output:`, response); // Debug if needed
 
         // 2. ROBUST ACTION PARSING
@@ -453,28 +460,68 @@ async function main() {
             }
 
             // Poll for tasks...
-            // DEBUG: Diagnostic Query
-            // const { count, error: countError } = await workerSupabase.from('agent_tasks').select('*', { count: 'exact', head: true });
-            // console.log(`[DEBUG] Total tasks in agent_tasks: ${count} (Error: ${countError?.message})`);
+            console.log(`[DEBUG] Polling Query Params: Universal=${isUniversal}, AssignedTo=${isUniversal ? 'ANY' : agentRole}, Status=['pending','in_progress']`);
 
-            console.log(`[DEBUG] Polling Query Params: AssignedTo='${agentConfig.id}', Status=['open','pending','in_progress']`);
-
-            const { data: tasks, error } = await workerSupabase
+            let query = workerSupabase
                 .from('agent_tasks')
                 .select('*')
-                .eq('assigned_to', agentConfig.id)
-                .in('status', ['open', 'pending', 'in_progress'])
+                .in('status', ['pending', 'in_progress']) // Removed 'open' as it is invalid
                 .limit(1);
+
+            // If dedicated worker, filter by role. If universal, grab anything (or specifically where assigned_to matches a known agent)
+            if (!isUniversal) {
+                query = query.eq('assigned_to', agentRole);
+            }
+            // For Universal, we could optionally filter for unassigned or specific pools, but "grab anything pending" is best for now.
+
+            const { data: tasks, error } = await query;
 
             if (error) console.error("Polling Error Details:", JSON.stringify(error, null, 2));
 
             if (tasks && tasks.length > 0) {
-                console.log(`\n👀 Found ${tasks.length} tasks! First ID: ${tasks[0].id}`);
-                await processTask(tasks[0]);
+                const task = tasks[0];
+                console.log(`\n👀 Found Task: "${task.title}" (ID: ${task.id})`);
+                console.log(`   Assigned To: ${task.assigned_to}`);
+
+                // Determine Agent Logic
+                let currentAgentConfig;
+                if (!isUniversal) {
+                    currentAgentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
+                } else {
+                    // Dynamic Load
+                    currentAgentConfig = agents.find(a => a.id === task.assigned_to) || agents.find(a => a.role === 'tech-lead-agent'); // Fallback
+                    if (!currentAgentConfig) {
+                        console.warn(`⚠️ Unknown agent type '${task.assigned_to}'. Using default Tech Lead.`);
+                        currentAgentConfig = agents.find(a => a.role === 'tech-lead-agent'); // Super fallback
+                    }
+                    console.log(`🎭 Universal Worker adapting persona: ${currentAgentConfig.role}`);
+
+                    // Inject Worker Mode Prompt Dynamically
+                    if (!currentAgentConfig.systemPrompt.includes("WORKER MODE ACTIVE")) {
+                        currentAgentConfig.systemPrompt += `
+\n\n
+=== WORKER MODE ACTIVE ===
+You are running as a WORKER on the target machine.
+1. You ARE allowed and EXPECTED to use 'execute_command', 'write_code', 'read_file' directly.
+2. Ignore any previous instructions about delegating tasks or using 'create_task'.
+3. EXECUTE the task description immediately using the appropriate tool.
+4. Do not ask for permission. Just do it.
+`;
+                    }
+                }
+
+                // Initialize Service with this config
+                // We re-instantiate AgentService here because the persona changes per task in Universal Mode
+                const dynamicAgent = new AgentService(currentAgentConfig, { userId: WORKER_UUID });
+
+                // Hack: We need to pass this dynamic agent to processTask, but processTask uses the global 'agent'.
+                // Let's refactor processTask slightly to accept 'agentService' as arg, or update global.
+                // Since processTask calls 'agent.sendMessage', let's pass it.
+                await processTask(task, dynamicAgent, currentAgentConfig);
             } else {
                 if (error) console.error("Polling Error:", error);
                 // process.stdout.write('.'); // Comment out dot for now
-                console.log(`[${new Date().toISOString().split('T')[1]}] Polling for ${agentConfig.id}... No tasks.`);
+                console.log(`[${new Date().toISOString().split('T')[1]}] Polling... No tasks.`);
             }
 
         } catch (e) {
