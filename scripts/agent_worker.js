@@ -140,19 +140,7 @@ if (isUniversal) {
 
 console.log(`📂 Project Root: ${PROJECT_ROOT}`);
 
-// Override System Prompt for Worker Mode
-agentConfig.systemPrompt += `
-\n\n
-=== WORKER MODE ACTIVE ===
-You are running as a WORKER on the target machine.
-1. You ARE allowed and EXPECTED to use 'execute_command', 'write_code', 'read_file' directly.
-2. Ignore any previous instructions about delegating tasks or using 'create_task'.
-3. EXECUTE the task description immediately using the appropriate tool.
-4. Do not ask for permission. Just do it.
-`;
-
-// Clear memory to avoid "refusal loops" from previous runs
-console.log("🧹 Clearing Agent Memory for fresh start...");
+let agent; // Declare global agent variable
 
 // 1. DYNAMIC TYPE: Fetch a real user ID to use as the Worker Identity
 // This fixes the 409 Foreign Key error.
@@ -165,14 +153,32 @@ if (userData) {
     console.warn("⚠️ No users found in DB. Worker might fail to write memory.");
 }
 
-try {
-    await clearMemory(agentConfig.id, WORKER_UUID);
-} catch (e) {
-    console.warn("⚠️ Clear memory failed (non-fatal):", e.message);
-}
+if (!isUniversal && agentConfig) {
+    // Override System Prompt for Worker Mode (Dedicated)
+    agentConfig.systemPrompt += `
+\n\n
+=== WORKER MODE ACTIVE ===
+You are running as a WORKER on the target machine.
+1. You ARE allowed and EXPECTED to use 'execute_command', 'write_code', 'read_file' directly.
+2. Ignore any previous instructions about delegating tasks or using 'create_task'.
+3. EXECUTE the task description immediately using the appropriate tool.
+4. Do not ask for permission. Just do it.
+`;
 
-// Initialize Agent Service
-const agent = new AgentService(agentConfig, { userId: WORKER_UUID });
+    // Clear memory to avoid "refusal loops" from previous runs
+    console.log("🧹 Clearing Agent Memory for fresh start...");
+
+    try {
+        await clearMemory(agentConfig.id, WORKER_UUID);
+    } catch (e) {
+        console.warn("⚠️ Clear memory failed (non-fatal):", e.message);
+    }
+
+    // Initialize Agent Service
+    agent = new AgentService(agentConfig, { userId: WORKER_UUID });
+} else {
+    console.log("🌍 Universal Mode: Agent initialized dynamically per task.");
+}
 
 async function executeTool(toolName, payload) {
     console.log(`🛠️ Executing Tool: ${toolName}`, payload);
@@ -460,12 +466,12 @@ async function main() {
             }
 
             // Poll for tasks...
-            console.log(`[DEBUG] Polling Query Params: Universal=${isUniversal}, AssignedTo=${isUniversal ? 'ANY' : agentRole}, Status=['pending','in_progress']`);
+            console.log(`[DEBUG] Polling Query Params: Universal=${isUniversal}, AssignedTo=${isUniversal ? 'ANY' : agentRole}, Status=['open', 'pending','in_progress']`);
 
             let query = workerSupabase
                 .from('agent_tasks')
                 .select('*')
-                .in('status', ['pending', 'in_progress']) // Removed 'open' as it is invalid
+                .in('status', ['open', 'pending', 'in_progress'])
                 .limit(1);
 
             // If dedicated worker, filter by role. If universal, grab anything (or specifically where assigned_to matches a known agent)
