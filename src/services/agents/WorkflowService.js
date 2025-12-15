@@ -1,5 +1,5 @@
 
-import { db } from '../../api/supabaseClient.js';
+import { realSupabase as db } from '../../api/supabaseClient.js';
 
 export const WORKFLOWS = {
     QUICK_FIX: {

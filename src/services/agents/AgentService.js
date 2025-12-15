@@ -214,3 +214,9 @@ export async function approveToolCall(approvalId, userId) {
 export async function rejectToolCall(approvalId) {
     await db.entities.AgentApprovals.update(approvalId, { status: 'rejected' });
 }
+
+AgentService.wakeUp = async (agentId) => {
+    console.log(`[AgentService] ⏰ Waking up ${agentId}...`);
+    Logger.info("AgentService", `WakeUp Signal Sent`, { agentId });
+    return true;
+};

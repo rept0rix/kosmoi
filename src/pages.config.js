@@ -1,4 +1,5 @@
 import Home from './pages/Home';
+import WalletPage from './pages/WalletPage';
 import BusinessLanding from './pages/BusinessLanding';
 import Dashboard from './pages/Dashboard';
 import ServiceProviders from './pages/ServiceProviders';
@@ -30,6 +31,7 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "Home": Home,       // Root / (Consumer)
+    "Wallet": WalletPage, // /wallet (Kosmoi Pay)
     "Business": BusinessLanding, // /business (Provider)
     "App": Dashboard,    // Main App Dashboard
     "Dashboard": Dashboard, // Keep alias for backward compat if needed

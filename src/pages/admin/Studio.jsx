@@ -193,7 +193,7 @@ const StudioFlow = () => {
 
             // 3. Redirect to Board Room to watch it happen
             setTimeout(() => {
-                navigate('/admin/board');
+                navigate('/admin/board-room');
             }, 1000);
 
         } catch (error) {
