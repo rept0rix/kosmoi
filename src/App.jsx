@@ -36,6 +36,7 @@ import Blog from '@/pages/Blog';
 import BlogPostDetail from '@/pages/BlogPostDetail';
 import CalendarView from '@/pages/vendor/CalendarView';
 import MyBookings from '@/pages/MyBookings';
+import Marketplace from '@/pages/Marketplace';
 
 import CommandCenter from '@/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -50,6 +51,7 @@ import AdminCRM from '@/pages/admin/AdminCRM';
 import AdminEvolution from './pages/admin/AdminEvolution';
 import AdminRoadmap from '@/pages/admin/AdminRoadmap';
 import AdminCanvas from '@/pages/admin/AdminCanvas';
+import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
 
@@ -150,6 +152,7 @@ const AuthenticatedApp = () => {
                 <Route path="roadmap" element={<AdminRoadmap />} />
                 <Route path="logs" element={<SystemMonitor />} />
                 <Route path="canvas" element={<AdminCanvas />} />
+                <Route path="studio" element={<Studio />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
                 <Route path="importer" element={<AdminImporter />} />
               </Route>
@@ -160,6 +163,7 @@ const AuthenticatedApp = () => {
               <Route path="/vendor" element={<VendorLite />} />
               <Route path="/vendor/calendar" element={<CalendarView />} />
               <Route path="/my-bookings" element={<MyBookings />} />
+              <Route path="/marketplace" element={<Marketplace />} />
             </Route>
 
             <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />

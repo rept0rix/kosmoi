@@ -65,6 +65,37 @@ async function checkForUpdates() {
     }
 }
 // -----------------------------
+// --- GIT SYNC LOGIC ---
+async function gitSync(taskTitle) {
+    if (!process.env.Git_Sync_Enabled) return;
+
+    console.log("💾 Git Sync: Committing changes...");
+    try {
+        const commitMsg = `feat(worker): Auto-Task: ${taskTitle.replace(/"/g, '\\"')}`;
+
+        await new Promise((resolve, reject) => {
+            exec('git add .', { cwd: PROJECT_ROOT }, (err) => err ? reject(err) : resolve());
+        });
+
+        await new Promise((resolve, reject) => {
+            exec(`git commit -m "${commitMsg}"`, { cwd: PROJECT_ROOT }, (err) => {
+                // Ignore "nothing to commit" errors
+                if (err && err.message.includes('nothing to commit')) resolve();
+                else if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        await new Promise((resolve, reject) => {
+            exec('git push', { cwd: PROJECT_ROOT }, (err) => err ? reject(err) : resolve());
+        });
+
+        console.log("✅ Git Sync: Changes pushed to repo.");
+    } catch (e) {
+        console.error("❌ Git Sync Failed:", e.message);
+    }
+}
+// -----------------------------
 
 // --- LOGGING OVERRIDE ---
 const logFile = path.join(process.cwd(), 'worker.log');
@@ -123,13 +154,14 @@ const workerName = nameArg ? nameArg.split('=')[1] : `Worker-${Math.floor(Math.r
 
 // Universal Worker Mode Flag
 const isUniversal = !agentRole;
+let agentConfig = null;
 
 if (isUniversal) {
     console.log(`🤖 Starting Universal Worker: ${workerName}`);
     console.log("🌍 Mode: Universal (Will pick up tasks for ANY agent)");
 } else {
     // Validate specific role if provided
-    const agentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
+    agentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
     if (!agentConfig) {
         console.error(`❌ Agent with role '${agentRole}' not found.`);
         console.log("Available agents:", agents.map(a => a.id).join(', '));
@@ -524,6 +556,9 @@ You are running as a WORKER on the target machine.
                 // Let's refactor processTask slightly to accept 'agentService' as arg, or update global.
                 // Since processTask calls 'agent.sendMessage', let's pass it.
                 await processTask(task, dynamicAgent, currentAgentConfig);
+
+                // 3. AUTO-COMMIT WORK
+                await gitSync(task.title);
             } else {
                 if (error) console.error("Polling Error:", error);
                 // process.stdout.write('.'); // Comment out dot for now
