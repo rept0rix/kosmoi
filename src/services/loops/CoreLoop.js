@@ -95,8 +95,10 @@ export const CoreLoop = {
                 agentId: assignedAgent
             });
             console.log(`🧠 Brain Assigned Task ${task.id} to ${assignedAgent}`);
-            // Trigger Agent Wakeup (This would call the AgentBrain)
-            // TODO: Connect to AgentService.wakeUp(assignedAgent)
+
+            // Trigger Agent Wakeup dynamically
+            const { AgentService } = await import('../agents/AgentService.js');
+            await AgentService.wakeUp(assignedAgent);
         }
     }
 };
