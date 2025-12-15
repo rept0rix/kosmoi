@@ -43,7 +43,11 @@ import {
   Languages,
   Building2,
   Utensils,
-  ShoppingBag
+  ShoppingBag,
+  Leaf,
+  Bug,
+  Wifi,
+  Truck
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
 import { getCategoryIcon } from "@/utils/mapIcons";

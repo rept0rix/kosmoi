@@ -7,36 +7,37 @@ import { fileURLToPath } from 'url';
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_SERVICE_ROLE_KEY");
+if (!supabaseUrl || !supabaseKey) {
+    console.error("Missing Supabase credentials");
     process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function createWorkerTask() {
-    console.log("Creating test task for worker...");
+async function createTestTask() {
+    console.log("Creating test task for Universal Worker...");
+
     const { data, error } = await supabase
         .from('agent_tasks')
         .insert([
             {
-                title: "System Diagnostics Check",
-                description: "Run a full diagnostic: 1. Check Node version. 2. List files in current directory. 3. Say 'Hello from the Worker' in the results.",
-                assigned_to: "tech-lead-agent",
-                priority: "high",
-                status: "open"
+                title: "Test Universal Worker Capability - Task 2",
+                description: "This is a test task. Please use the 'write_file' tool to create a file named 'universal_proof.txt' in the root directory with the content 'Universal Worker is alive!'. Then reply with 'TASK_COMPLETED'.",
+                assigned_to: "agent_universal_test", // Intentionally unknown role to force fallback
+                status: "pending",
+                priority: "high"
             }
         ])
-        .select();
+        .select()
+        .single();
 
     if (error) {
         console.error("Error creating task:", error);
     } else {
-        console.log("✅ Task created successfully:", data[0].id);
-        console.log("👉 Check your OTHER computer. It should pick this up in ~5 seconds.");
+        console.log("Task created successfully:", data);
     }
 }
 
-createWorkerTask();
+createTestTask();

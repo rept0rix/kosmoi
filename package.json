@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "worker": "node scripts/agent_worker.js",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "worker:universal": "node scripts/agent_worker.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.3",

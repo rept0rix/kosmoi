@@ -511,6 +511,7 @@ async function main() {
                 query = query.eq('assigned_to', agentRole);
             }
             // For Universal, we could optionally filter for unassigned or specific pools, but "grab anything pending" is best for now.
+            // But we should prioritize tasks assigned to "known agents" over generic garbage
 
             const { data: tasks, error } = await query;
 
@@ -526,17 +527,32 @@ async function main() {
                 if (!isUniversal) {
                     currentAgentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
                 } else {
-                    // Dynamic Load
-                    currentAgentConfig = agents.find(a => a.id === task.assigned_to) || agents.find(a => a.role === 'tech-lead-agent'); // Fallback
+                    // Dynamic Load - Robust Matching Strategy
+                    // 1. Try Exact ID Match (e.g. 'agent_cmo')
+                    currentAgentConfig = agents.find(a => a.id === task.assigned_to);
+
+                    // 2. Try Role Match (e.g. 'cmo-agent')
+                    if (!currentAgentConfig) {
+                        currentAgentConfig = agents.find(a => a.role === task.assigned_to);
+                    }
+
+                    // 3. Try Fuzzy Role Match
+                    if (!currentAgentConfig && task.assigned_to) {
+                        currentAgentConfig = agents.find(a => a.role.toLowerCase().includes(task.assigned_to.toLowerCase()));
+                    }
+
+                    // 4. Default Fallback
                     if (!currentAgentConfig) {
                         console.warn(`⚠️ Unknown agent type '${task.assigned_to}'. Using default Tech Lead.`);
-                        currentAgentConfig = agents.find(a => a.role === 'tech-lead-agent'); // Super fallback
+                        currentAgentConfig = agents.find(a => a.id === 'tech-lead-agent');
                     }
-                    console.log(`🎭 Universal Worker adapting persona: ${currentAgentConfig.role}`);
+                }
+                console.log(`🎭 Universal Worker adapting persona: ${currentAgentConfig.role}`);
 
-                    // Inject Worker Mode Prompt Dynamically
-                    if (!currentAgentConfig.systemPrompt.includes("WORKER MODE ACTIVE")) {
-                        currentAgentConfig.systemPrompt += `
+                // Inject Worker Mode Prompt Dynamically
+                // Inject Worker Mode Prompt Dynamically
+                if (!currentAgentConfig.systemPrompt.includes("WORKER MODE ACTIVE")) {
+                    currentAgentConfig.systemPrompt += `
 \n\n
 === WORKER MODE ACTIVE ===
 You are running as a WORKER on the target machine.
@@ -545,16 +561,12 @@ You are running as a WORKER on the target machine.
 3. EXECUTE the task description immediately using the appropriate tool.
 4. Do not ask for permission. Just do it.
 `;
-                    }
                 }
 
                 // Initialize Service with this config
-                // We re-instantiate AgentService here because the persona changes per task in Universal Mode
                 const dynamicAgent = new AgentService(currentAgentConfig, { userId: WORKER_UUID });
 
-                // Hack: We need to pass this dynamic agent to processTask, but processTask uses the global 'agent'.
-                // Let's refactor processTask slightly to accept 'agentService' as arg, or update global.
-                // Since processTask calls 'agent.sendMessage', let's pass it.
+                // Process Task
                 await processTask(task, dynamicAgent, currentAgentConfig);
 
                 // 3. AUTO-COMMIT WORK

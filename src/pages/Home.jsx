@@ -134,7 +134,13 @@ export default function Home() {
                     {categories.map((cat, idx) => (
                         <button
                             key={cat.id}
-                            onClick={handleInteraction}
+                            onClick={() => {
+                                if (cat.id === 'ai') {
+                                    navigate('/marketplace');
+                                } else {
+                                    handleInteraction();
+                                }
+                            }}
                             className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group"
                         >
                             <cat.icon className={`w-6 h-6 mb-3 ${cat.color} opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all`} />

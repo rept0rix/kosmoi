@@ -24,6 +24,7 @@ import BoardRoom from './pages/BoardRoom';
 import BusinessInfo from './pages/BusinessInfo';
 import Team from './pages/Team';
 import CommandCenter from './pages/CommandCenter';
+import AgentChat from './pages/AgentChat';
 import __Layout from './Layout.jsx';
 
 
@@ -51,6 +52,7 @@ export const PAGES = {
     "MyRequests": MyRequests,
     "LeadBoard": LeadBoard,
     "AIChat": AIChat,
+    "AgentChat": AgentChat, // Public Agent Chat
     "SeedData": SeedData,
     "Diagnostics": Diagnostics,
     "TripPlanner": TripPlanner,

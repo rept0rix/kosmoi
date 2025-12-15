@@ -128,6 +128,7 @@ const AuthenticatedApp = () => {
               ))}
 
             <Route path="/provider/:providerId" element={<ProviderProfile />} />
+            <Route path="/chat/:workflowId" element={<Pages.AgentChat />} />
 
             {/* Admin & Vendor Routes */}
             <Route path="/command-center" element={<CommandCenter />} />
