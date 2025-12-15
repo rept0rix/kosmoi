@@ -71,7 +71,8 @@ export function useBoardRoom() {
     // Logic Refs & State
     const messagesEndRef = useRef(null);
     const [companyState, setCompanyState] = useState(initialCompanyState);
-    const [activeWorkflowState, setActiveWorkflowState] = useState(null);
+    // Initialize with potentially active workflow (e.g. from Studio)
+    const [activeWorkflowState, setActiveWorkflowState] = useState(workflowService.getState());
 
     const { handleMessage: handlePitchMode } = usePitchMode({
         addMessage: (msg) => setMessages(prev => [...prev, msg])
@@ -388,6 +389,30 @@ export function useBoardRoom() {
         const interval = setInterval(tick, 30000);
         return () => clearInterval(interval);
     }, [autonomousMode]);
+
+    // Workflow Auto-Start Effect
+    // When a workflow is loaded (e.g. from Studio), if the first step is an Agent, trigger it.
+    useEffect(() => {
+        if (!activeWorkflowState || !selectedMeeting) return;
+
+        // Prevent double triggers if already typing
+        if (typingAgent) return;
+
+        // Check if we need to auto-start
+        const currentRole = activeWorkflowState.currentStep.role;
+        if (currentRole !== 'user') {
+            // Check if we already have a message for this step?
+            // For simplicity, we just trigger. The triggerAgentReply has checks or we rely on user patience.
+            // Better: Check if the last message matches the current step? 
+            // Actually, for "Start", we usually want the agent to introduce themselves or do the task.
+
+            // We use a small timeout to let the UI settle
+            const timer = setTimeout(() => {
+                triggerAgentReply();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [activeWorkflowState, selectedMeeting]);
 
     // Handlers
     const handleSendMessage = async () => {

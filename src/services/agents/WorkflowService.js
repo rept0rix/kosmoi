@@ -1,4 +1,6 @@
 
+import { db } from '../../api/supabaseClient.js';
+
 export const WORKFLOWS = {
     QUICK_FIX: {
         id: 'quick_fix',
@@ -52,6 +54,69 @@ export class WorkflowService {
         this.context = initialContext;
 
         return this.getState();
+    }
+
+    async saveWorkflow(name, nodes, edges, id = null) {
+        // Import transformer dynamically
+        const { WorkflowTransformer } = await import('./WorkflowSchema');
+        const executable = WorkflowTransformer.toLinearWorkflow(nodes, edges);
+        executable.name = name;
+
+        const payload = {
+            name: name,
+            graph_data: { nodes, edges },
+            workflow_schema: executable,
+            deployment_status: 'draft', // Always save as draft first
+            updated_at: new Date().toISOString()
+        };
+
+        let result;
+        if (id) {
+            // Update existing
+            const { data, error } = await db.from('workflows')
+                .update(payload)
+                .eq('id', id)
+                .select();
+            if (error) throw error;
+            result = data[0];
+        } else {
+            // Insert new
+            const { data, error } = await db.from('workflows').insert([payload]).select();
+            if (error) throw error;
+            result = data[0];
+        }
+        return result;
+    }
+
+    async publishWorkflow(id) {
+        const { data: current } = await db.from('workflows').select('version').eq('id', id).single();
+        const nextVersion = (current?.version || 0) + 1;
+
+        const { data, error } = await db.from('workflows')
+            .update({
+                deployment_status: 'published',
+                published_at: new Date().toISOString(),
+                version: nextVersion
+            })
+            .eq('id', id)
+            .select();
+
+        if (error) throw error;
+        return data[0];
+    }
+
+    async listWorkflows() {
+        const { data, error } = await db.from('workflows')
+            .select('id, name, created_at, deployment_status, version')
+            .order('updated_at', { ascending: false });
+        if (error) throw error;
+        return data;
+    }
+
+    async loadWorkflow(id) {
+        const { data, error } = await db.from('workflows').select('*').eq('id', id).single();
+        if (error) throw error;
+        return data;
     }
 
     startCustomWorkflow(customWorkflowJson, initialContext = {}) {

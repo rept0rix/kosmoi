@@ -19,23 +19,35 @@ const CATEGORIES = [
 
 const Marketplace = () => {
     const [providers, setProviders] = useState([]);
+    const [agents, setAgents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('agents'); // 'agents' or 'providers'
     const [selectedCategory, setSelectedCategory] = useState("All");
 
     useEffect(() => {
-        fetchProviders();
+        fetchData();
     }, []);
 
-    const fetchProviders = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            let query = supabase.from('service_providers').select('*').eq('status', 'active');
-            const { data, error } = await query;
-            if (error) throw error;
-            setProviders(data || []);
+            // Fetch Service Providers
+            const { data: providersData } = await supabase.from('service_providers').select('*').eq('status', 'active');
+            setProviders(providersData || []);
+
+            // Fetch Published AI Agents
+            const { data: agentsData } = await supabase.from('workflows')
+                .select('*')
+                .eq('deployment_status', 'published')
+                .order('version', { ascending: false });
+
+            // Deduplicate: Keep only latest version of each workflow (by ID ideally, but distinct on name/id)
+            // For now, simpler list
+            setAgents(agentsData || []);
+
         } catch (error) {
-            console.error("Error fetching providers:", error);
+            console.error("Error fetching marketplace data:", error);
         } finally {
             setLoading(false);
         }
@@ -49,15 +61,19 @@ const Marketplace = () => {
         return matchesSearch && matchesCategory;
     });
 
+    const filteredAgents = agents.filter(a =>
+        a.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
             {/* Header */}
             <div className="bg-slate-900 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-500 rounded-full opacity-20 filter blur-3xl"></div>
                 <div className="relative z-10 max-w-7xl mx-auto">
-                    <h1 className="text-4xl font-extrabold mb-4">Find Local Pros</h1>
+                    <h1 className="text-4xl font-extrabold mb-4">Marketplace</h1>
                     <p className="text-xl text-slate-300 max-w-2xl">
-                        Connect with trusted service providers in Koh Samui. Book instantly.
+                        Find local pros or chat with intelligent agents.
                     </p>
 
                     {/* Search Bar */}
@@ -66,95 +82,135 @@ const Marketplace = () => {
                             <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                             <Input
                                 type="text"
-                                placeholder="What do you need help with?"
+                                placeholder="Search..."
                                 className="pl-10 bg-transparent border-none text-white placeholder:text-slate-400 focus-visible:ring-0"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg px-8">
-                            Search
-                        </Button>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
-                {/* Filters */}
-                <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-                    {CATEGORIES.map(cat => (
+
+                {/* Tabs */}
+                <div className="flex justify-center mb-8">
+                    <div className="bg-white p-1 rounded-full shadow-lg border border-slate-100 inline-flex">
                         <button
-                            key={cat}
-                            onClick={() => setSelectedCategory(cat)}
-                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                    : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-400'
-                                }`}
+                            onClick={() => setActiveTab('agents')}
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'agents' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
                         >
-                            {cat}
+                            Start AI Chat
                         </button>
-                    ))}
+                        <button
+                            onClick={() => setActiveTab('providers')}
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'providers' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
+                        >
+                            Human Pros
+                        </button>
+                    </div>
                 </div>
 
-                {/* Grid */}
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="h-64 bg-slate-200 rounded-2xl animate-pulse"></div>
-                        ))}
-                    </div>
-                ) : filteredProviders.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                        {filteredProviders.map(provider => (
-                            <Link key={provider.id} to={`/provider/${provider.id}`} className="group">
-                                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-                                    <div className="h-40 bg-slate-100 relative overflow-hidden">
-                                        {provider.images && provider.images[0] ? (
-                                            <img src={provider.images[0]} alt={provider.business_name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300">
-                                                <MapPin className="w-12 h-12" />
-                                            </div>
-                                        )}
-                                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-900 flex items-center gap-1">
-                                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                                            {provider.average_rating || 'New'}
-                                        </div>
-                                    </div>
-                                    <div className="p-5 flex-grow flex flex-col">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <Badge variant="outline" className="text-xs uppercase tracking-wider text-slate-500 border-slate-200">
-                                                {provider.category || 'Service'}
-                                            </Badge>
-                                            {provider.verified && (
-                                                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none text-[10px]">Verified</Badge>
-                                            )}
-                                        </div>
-                                        <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-                                            {provider.business_name}
-                                        </h3>
-                                        <p className="text-slate-500 text-sm line-clamp-2 mb-4 flex-grow">
-                                            {provider.description || 'No description provided.'}
-                                        </p>
-
-                                        <div className="space-y-2 pt-4 border-t border-slate-50">
-                                            <div className="flex items-center text-slate-500 text-xs">
-                                                <MapPin className="w-3 h-3 mr-1" />
-                                                {provider.location || 'Samui'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-20">
-                        <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-8 h-8 text-slate-400" />
+                {activeTab === 'providers' && (
+                    <>
+                        {/* Filters */}
+                        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-4">
+                            {CATEGORIES.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-400'
+                                        }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900">No providers found</h3>
-                        <p className="text-slate-500">Try adjusting your search or category.</p>
+
+                        {/* Providers Grid */}
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-200 rounded-2xl animate-pulse"></div>)}
+                            </div>
+                        ) : filteredProviders.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredProviders.map(provider => (
+                                    <Link key={provider.id} to={`/provider/${provider.id}`} className="group">
+                                        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                                            {/* Existing Provider Card Content */}
+                                            <div className="h-40 bg-slate-100 relative items-center justify-center flex">
+                                                <MapPin className="w-12 h-12 text-slate-300" />
+                                            </div>
+                                            <div className="p-5 flex-grow flex flex-col">
+                                                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                                                    {provider.business_name}
+                                                </h3>
+                                                <Button className="w-full mt-4">View Profile</Button>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-20 text-slate-500">No providers found.</div>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'agents' && (
+                    <div className="mt-4">
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[1, 2, 3].map(i => <div key={i} className="h-48 bg-slate-200 rounded-2xl animate-pulse"></div>)}
+                            </div>
+                        ) : filteredAgents.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredAgents.map(agent => (
+                                    <Link key={agent.id} to={`/chat/${agent.id}`} className="group">
+                                        <div className="bg-white rounded-2xl border border-slate-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                <Star className="w-24 h-24 rotate-12" />
+                                            </div>
+
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                                                    <Star className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                                                        {agent.name}
+                                                    </h3>
+                                                    <Badge variant="outline" className="mt-1 border-green-200 text-green-700 bg-green-50 text-[10px]">
+                                                        v{agent.version} • Published
+                                                    </Badge>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-slate-500 text-sm mb-6 line-clamp-2 min-h-[40px]">
+                                                {agent.description || "An intelligent service agent ready to assist you."}
+                                            </p>
+
+                                            <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 group-hover:scale-[1.02] transition-transform">
+                                                Start Chat <ArrowRight className="w-4 h-4 ml-2" />
+                                            </Button>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-20">
+                                <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Star className="w-8 h-8 text-slate-400" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900">No Agents Published Yet</h3>
+                                <p className="text-slate-500 max-w-sm mx-auto mt-2">
+                                    Go to the Studio to build and publish your first Service Agent!
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

@@ -33,7 +33,18 @@ const SidebarItem = ({ type, label, icon: Icon, color }) => {
     );
 };
 
-export default function StudioSidebar() {
+
+
+export default function StudioSidebar({ onLoadWorkflow, onImportGraph }) {
+    const [savedWorkflows, setSavedWorkflows] = React.useState([]);
+
+    React.useEffect(() => {
+        // Dynamic import to avoid circular dep issues in some bundlers, though unlikely here
+        import('../../../services/agents/WorkflowService').then(({ workflowService }) => {
+            workflowService.listWorkflows().then(setSavedWorkflows).catch(console.error);
+        });
+    }, []);
+
     return (
         <aside className="w-72 bg-slate-950 border-r border-slate-800 flex flex-col h-full z-20">
             <div className="p-4 border-b border-slate-800">
@@ -45,6 +56,74 @@ export default function StudioSidebar() {
 
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-6">
+
+                    {/* Magic Input */}
+                    <div className="mb-6 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-3 rounded-xl border border-indigo-500/30">
+                        <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2 mb-2">
+                            <Zap size={12} /> Magic Build
+                        </h3>
+                        {/* Only show input if handler is provided */}
+                        {onImportGraph && (
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="e.g. 'Build a blog agent'..."
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-3 pr-8 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const p = e.target.value;
+                                            if (!p.trim()) return;
+                                            import('../../../services/agents/MagicGraph').then(async ({ generateGraphFromPrompt }) => {
+                                                const btn = e.target;
+                                                const originalPlaceholder = btn.placeholder;
+                                                btn.disabled = true;
+                                                btn.value = "Thinking...";
+
+                                                try {
+                                                    const graph = await generateGraphFromPrompt(p);
+                                                    onImportGraph(graph);
+                                                } catch (err) {
+                                                    console.error("Magic Build Failed:", err);
+                                                    // Optional: toast.error("Magic Build Failed");
+                                                } finally {
+                                                    btn.disabled = false;
+                                                    btn.value = '';
+                                                    btn.placeholder = originalPlaceholder;
+                                                    btn.focus();
+                                                }
+                                            });
+                                        }
+                                    }}
+                                />
+                                <Bot size={14} className="absolute right-2 top-2.5 text-indigo-400 opacity-50" />
+                            </div>
+                        )}
+                        {!onImportGraph && <p className="text-[10px] text-slate-500">Magic Build unavailable in this mode.</p>}
+                    </div>
+
+                    {/* Saved Workflows */}
+                    {savedWorkflows.length > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <Layers size={12} /> My Workflows
+                            </h3>
+                            {savedWorkflows.map(wf => (
+                                <div
+                                    key={wf.id}
+                                    onClick={() => onLoadWorkflow(wf.id)}
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/30 cursor-pointer hover:bg-slate-800 hover:border-indigo-500/50 transition-all"
+                                >
+                                    <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-400">
+                                        <Layers size={14} />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-semibold text-slate-200">{wf.name}</div>
+                                        <div className="text-[10px] text-slate-500">{new Date(wf.created_at).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Blueprints */}
                     <div className="space-y-3">

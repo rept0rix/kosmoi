@@ -18,8 +18,14 @@ import StudioSidebar from './studio/StudioSidebar';
 import StudioNode from './studio/StudioNode';
 import StudioInspector from './studio/StudioInspector';
 import { Button } from '@/components/ui/button';
-import { Play, Save, Settings } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Play, Save, Settings, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+
+// Backend Integration
+import { WorkflowTransformer } from '../../services/agents/WorkflowSchema';
+import { workflowService } from '../../services/agents/WorkflowService';
 
 const nodeTypes = {
     studioNode: StudioNode,
@@ -39,10 +45,14 @@ const getId = () => `dndnode_${id++}`;
 
 const StudioFlow = () => {
     const reactFlowWrapper = useRef(null);
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const { screenToFlowPosition } = useReactFlow();
     const [selectedNode, setSelectedNode] = useState(null);
+    const [currentWorkflowId, setCurrentWorkflowId] = useState(null);
+    const [workflowStatus, setWorkflowStatus] = useState('draft');
+    const [workflowVersion, setWorkflowVersion] = useState(1);
+    const navigate = useNavigate();
 
     const onConnect = useCallback(
         (params) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#6366f1' } }, eds)),
@@ -108,54 +118,102 @@ const StudioFlow = () => {
         toast.info("Node deleted");
     };
 
-    const handleSave = () => {
-        toast.success("Workflow saved!", { description: "Your agent graph has been updated." });
-        console.log("Nodes:", nodes);
-        console.log("Edges:", edges);
+    const handleSave = async () => {
+        const name = prompt("Name your workflow:", "My New Agent Flow");
+        if (!name) return;
+
+        toast.info("Saving Draft...", { description: "Persisting to Supabase..." });
+        try {
+            // Pass currentWorkflowId to update existing or create new
+            const saved = await workflowService.saveWorkflow(name, nodes, edges, currentWorkflowId);
+            setCurrentWorkflowId(saved.id);
+            setWorkflowStatus(saved.deployment_status);
+            setWorkflowVersion(saved.version);
+
+            toast.success("Draft Saved!", { description: `v${saved.version} stored safely.` });
+        } catch (e) {
+            console.error(e);
+            toast.error("Save Failed", { description: e.message });
+        }
     }
+
+    const handlePublish = async () => {
+        if (!currentWorkflowId) {
+            toast.error("Save First", { description: "Please save a draft before publishing." });
+            return;
+        }
+
+        toast.info("Publishing...", { description: "Promoting to Production... 🚀" });
+        try {
+            const published = await workflowService.publishWorkflow(currentWorkflowId);
+            setWorkflowStatus(published.deployment_status);
+            setWorkflowVersion(published.version);
+            toast.success("GO LIVE SUCCESSFUL!", { description: `Workflow is now PUBLISHED (v${published.version})` });
+        } catch (e) {
+            console.error(e);
+            toast.error("Publish Failed", { description: e.message });
+        }
+    }
+
+    const handleLoadWorkflow = async (id) => {
+        toast.info("Loading...", { description: "Fetching saved workflow..." });
+        try {
+            const row = await workflowService.loadWorkflow(id);
+            if (row && row.graph_data) {
+                setNodes(row.graph_data.nodes || []);
+                setEdges(row.graph_data.edges || []);
+                setCurrentWorkflowId(row.id);
+                setWorkflowStatus(row.deployment_status);
+                setWorkflowVersion(row.version);
+                toast.success("Loaded!", { description: `Workflow '${row.name}' ready.` });
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error("Load Failed", { description: e.message });
+        }
+    };
 
     const handleRun = () => {
-        toast.info("Starting Workflow...", { description: "Initializing agents..." });
+        toast.info("Compiling Workflow...", { description: "Transforming Graph to Execution Plan..." });
 
-        // Visual Simulation: Light up edges and nodes sequentially
-        setNodes((nds) => nds.map(node => ({
-            ...node,
-            data: { ...node.data, status: 'active' }
-        })));
+        try {
+            // 1. Transform Graph to Linear Workflow
+            const executableWorkflow = WorkflowTransformer.toLinearWorkflow(nodes, edges);
+            console.log("Executable Workflow:", executableWorkflow);
 
-        // Animate edges (mock)
-        const newEdges = edges.map(edge => ({
-            ...edge,
-            animated: true,
-            style: { stroke: '#22c55e', strokeWidth: 2 }
-        }));
-        setEdges(newEdges);
+            if (executableWorkflow.steps.length === 0) {
+                toast.error("Workflow Empty", { description: "Please add and connect agent nodes." });
+                return;
+            }
 
-        setTimeout(() => {
-            setNodes((nds) => nds.map(node => ({
-                ...node,
-                data: { ...node.data, status: 'success' }
-            })));
-            toast.success("Workflow Complete");
+            // 2. Inject into WorkflowService (Global Singleton)
+            workflowService.startCustomWorkflow(executableWorkflow, { source: 'studio_run' });
 
-            // Revert styles after delay
+            toast.success("Workflow Started!", { description: "Redirecting to Board Room for execution..." });
+
+            // 3. Redirect to Board Room to watch it happen
             setTimeout(() => {
-                setNodes((nds) => nds.map(node => ({
-                    ...node,
-                    data: { ...node.data, status: 'idle' }
-                })));
-                setEdges((eds) => eds.map(edge => ({
-                    ...edge,
-                    style: { stroke: '#6366f1' }
-                })));
-            }, 2000);
+                navigate('/admin/board');
+            }, 1000);
 
-        }, 3000);
+        } catch (error) {
+            console.error(error);
+            toast.error("Compilation Failed", { description: error.message });
+        }
     }
+
+    const handleImportGraph = ({ nodes, edges }) => {
+        setNodes(nodes);
+        setEdges(edges);
+        setCurrentWorkflowId(null); // Reset ID because this is a new generated graph
+        setWorkflowStatus('draft');
+        setWorkflowVersion(1);
+        toast.success("Magic Graph Generated!", { description: "You can now edit and save this workflow." });
+    };
 
     return (
         <div className="flex flex-row h-[calc(100vh-64px)] overflow-hidden bg-slate-950 relative">
-            <StudioSidebar />
+            <StudioSidebar onLoadWorkflow={handleLoadWorkflow} onImportGraph={handleImportGraph} />
 
             <div className="flex-1 h-full relative" ref={reactFlowWrapper}>
                 <ReactFlow
@@ -178,15 +236,43 @@ const StudioFlow = () => {
                     <Controls className="!bg-slate-800 !border-slate-700 !fill-white" />
 
                     <Panel position="top-right" className="flex gap-2">
-                        <Button onClick={handleRun} size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-2">
-                            <Play size={16} fill="currentColor" /> Run Pipeline
-                        </Button>
-                        <Button onClick={handleSave} size="sm" variant="outline" className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800 gap-2">
-                            <Save size={16} /> Save
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white">
-                            <Settings size={16} />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            {workflowStatus === 'published' ? (
+                                <Badge variant="default" className="bg-green-500/10 text-green-400 border-green-500/50 hover:bg-green-500/20">
+                                    LIVE v{workflowVersion}
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline" className="border-amber-500/50 text-amber-400">
+                                    DRAFT v{workflowVersion}
+                                </Badge>
+                            )}
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-300 gap-2"
+                                onClick={handleSave}
+                            >
+                                <Save size={14} /> Save Draft
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-indigo-900/20 border-indigo-500/50 hover:bg-indigo-500/30 text-indigo-300 gap-2"
+                                onClick={handlePublish}
+                            >
+                                <Zap size={14} /> Publish
+                            </Button>
+
+                            <Button
+                                size="sm"
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20 gap-2 transition-all hover:scale-105"
+                                onClick={handleRun}
+                            >
+                                <Play size={14} /> Run Pipeline
+                            </Button>
+                        </div>
                     </Panel>
                 </ReactFlow>
             </div>
