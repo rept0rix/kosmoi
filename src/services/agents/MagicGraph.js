@@ -26,19 +26,19 @@ const generateHeuristicGraph = (prompt) => {
                 id: researcherId,
                 type: 'studioNode',
                 position: { x: 100, y: 100 },
-                data: { label: 'Trend Researcher', type: 'agent_dev', subLabel: 'Agent', status: 'idle', systemPrompt: 'You are an expert researcher. Find trending topics.' }
+                data: { label: 'Trend Researcher', type: 'marketing-intelligence-agent', subLabel: 'Agent', status: 'idle', systemPrompt: 'You are an expert researcher. Find trending topics.' }
             },
             {
                 id: writerId,
                 type: 'studioNode',
                 position: { x: 400, y: 100 },
-                data: { label: 'Content Writer', type: 'agent_cmo', subLabel: 'Agent', status: 'idle', systemPrompt: 'You are a skilled copywriter. Write engaging content based on research.' }
+                data: { label: 'Content Writer', type: 'content-agent', subLabel: 'Agent', status: 'idle', systemPrompt: 'You are a skilled copywriter. Write engaging content based on research.' }
             },
             {
                 id: editorId,
                 type: 'studioNode',
                 position: { x: 700, y: 100 },
-                data: { label: 'Chief Editor', type: 'agent_ceo', subLabel: 'Agent', status: 'idle', systemPrompt: 'Review the content for tone, grammar and style.' }
+                data: { label: 'Chief Editor', type: 'ceo-agent', subLabel: 'Agent', status: 'idle', systemPrompt: 'Review the content for tone, grammar and style.' }
             }
         ];
 
@@ -58,19 +58,19 @@ const generateHeuristicGraph = (prompt) => {
                 id: pmId,
                 type: 'studioNode',
                 position: { x: 250, y: 50 },
-                data: { label: 'Product Manager', type: 'agent_ceo', subLabel: 'Agent', status: 'idle', systemPrompt: 'Define the MVP specs.' }
+                data: { label: 'Product Manager', type: 'project-manager-agent', subLabel: 'Agent', status: 'idle', systemPrompt: 'Define the MVP specs.' }
             },
             {
                 id: devId,
                 type: 'studioNode',
                 position: { x: 100, y: 250 },
-                data: { label: 'Tech Lead', type: 'agent_dev', subLabel: 'Agent', status: 'idle', systemPrompt: 'Write the code.' }
+                data: { label: 'Tech Lead', type: 'tech-lead-agent', subLabel: 'Agent', status: 'idle', systemPrompt: 'Write the code.' }
             },
             {
                 id: designId,
                 type: 'studioNode',
                 position: { x: 400, y: 250 },
-                data: { label: 'UX Designer', type: 'agent_marketing', subLabel: 'Agent', status: 'idle', systemPrompt: 'Design the interface.' }
+                data: { label: 'UX Designer', type: 'ux-agent', subLabel: 'Agent', status: 'idle', systemPrompt: 'Design the interface.' }
             }
         ];
 
@@ -86,7 +86,7 @@ const generateHeuristicGraph = (prompt) => {
                 id: workerId,
                 type: 'studioNode',
                 position: { x: 250, y: 200 },
-                data: { label: 'Universal Agent', type: 'agent_dev', subLabel: 'Agent', status: 'idle', systemPrompt: `You are a helpful agent. Task: ${prompt}` }
+                data: { label: 'Universal Agent', type: 'tech-lead-agent', subLabel: 'Agent', status: 'idle', systemPrompt: `You are a helpful agent. Task: ${prompt}` }
             }
         ];
     }
@@ -123,7 +123,7 @@ Structure:
 }
 
 Rules:
-1. Use ONLY the Agent IDs provided in the list for the "type" field. If unsure, use 'agent_dev' or 'agent_ceo'.
+1. Use ONLY the Agent IDs provided in the list for the "type" field. If unsure, use 'tech-lead-agent' or 'ceo-agent'.
 2. The "systemPrompt" should be specific to the task at hand.
 3. Create a logical flow (e.g., Researcher -> Writer -> Editor).
 4. Return ONLY valid JSON.
@@ -147,7 +147,7 @@ Rules:
             position: { x: 100 + (index * 250), y: 100 + (index % 2 === 0 ? 0 : 150) }, // Simple staggered layout
             data: {
                 label: n.label,
-                type: n.type || 'agent_dev',
+                type: n.type || 'tech-lead-agent',
                 subLabel: 'Agent',
                 status: 'idle',
                 systemPrompt: n.systemPrompt
