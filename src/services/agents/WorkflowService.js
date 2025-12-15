@@ -54,6 +54,19 @@ export class WorkflowService {
         return this.getState();
     }
 
+    startCustomWorkflow(customWorkflowJson, initialContext = {}) {
+        if (!customWorkflowJson || !customWorkflowJson.steps) {
+            throw new Error("Invalid custom workflow JSON");
+        }
+
+        this.activeWorkflow = customWorkflowJson;
+        this.currentStepIndex = 0;
+        this.context = initialContext;
+
+        console.log("[WorkflowService] Started Custom Workflow:", this.activeWorkflow.name);
+        return this.getState();
+    }
+
     nextStep() {
         if (!this.activeWorkflow) return null;
 
