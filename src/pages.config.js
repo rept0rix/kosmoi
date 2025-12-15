@@ -1,5 +1,8 @@
 import Home from './pages/Home';
 import WalletPage from './pages/WalletPage';
+import ProviderDashboard from './pages/ProviderDashboard';
+import RealEstateHub from './pages/RealEstateHub';
+import ExperiencesHub from './pages/ExperiencesHub';
 import BusinessLanding from './pages/BusinessLanding';
 import Dashboard from './pages/Dashboard';
 import ServiceProviders from './pages/ServiceProviders';
@@ -32,6 +35,9 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "Home": Home,       // Root / (Consumer)
     "Wallet": WalletPage, // /wallet (Kosmoi Pay)
+    "ProviderDashboard": ProviderDashboard, // /provider-dashboard (Drivers)
+    "RealEstate": RealEstateHub, // /real-estate (Zillow Style)
+    "Experiences": ExperiencesHub, // /experiences (GetYourGuide Style)
     "Business": BusinessLanding, // /business (Provider)
     "App": Dashboard,    // Main App Dashboard
     "Dashboard": Dashboard, // Keep alias for backward compat if needed
