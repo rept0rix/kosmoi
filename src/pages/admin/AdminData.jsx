@@ -93,44 +93,52 @@ const AdminData = () => {
     return (
         <div className="p-8 bg-slate-900 text-white min-h-screen overflow-y-auto">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-8">
-                Data & Analytics
+                Platform Analytics
             </h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* MRR Chart */}
                 <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
                     <h3 className="text-xl font-semibold mb-4 text-slate-200">Revenue Trend (30 Days)</h3>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={mrrData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="date" stroke="#94a3b8" />
-                                <YAxis stroke="#94a3b8" />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                                />
-                                <Legend />
-                                <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} activeDot={{ r: 8 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {mrrData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={mrrData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                    <XAxis dataKey="date" stroke="#94a3b8" />
+                                    <YAxis stroke="#94a3b8" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                                    />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} activeDot={{ r: 8 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-slate-500 text-sm">No revenue data available yet.</div>
+                        )}
                     </div>
                 </div>
 
                 {/* User Growth */}
                 <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
                     <h3 className="text-xl font-semibold mb-4 text-slate-200">New Signups</h3>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={userGrowthData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="date" stroke="#94a3b8" />
-                                <YAxis stroke="#94a3b8" />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                                />
-                                <Bar dataKey="users" fill="#3b82f6" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {userGrowthData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={userGrowthData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                    <XAxis dataKey="date" stroke="#94a3b8" />
+                                    <YAxis stroke="#94a3b8" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                                    />
+                                    <Bar dataKey="users" fill="#3b82f6" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-slate-500 text-sm">No signup data available yet.</div>
+                        )}
                     </div>
                 </div>
             </div>

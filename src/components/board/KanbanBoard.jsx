@@ -8,9 +8,9 @@ import { agents } from '@/services/agents/AgentRegistry';
 import { cn } from "@/lib/utils";
 
 const TASK_STATUSES = {
-    'todo': { label: 'To Do', color: 'bg-slate-100 border-slate-200' },
+    'pending': { label: 'To Do', color: 'bg-slate-100 border-slate-200' },
     'in_progress': { label: 'In Progress', color: 'bg-blue-50 border-blue-200' },
-    'in_review': { label: 'In Review', color: 'bg-purple-50 border-purple-200' },
+    'review': { label: 'In Review', color: 'bg-purple-50 border-purple-200' },
     'done': { label: 'Done', color: 'bg-green-50 border-green-200' }
 };
 
@@ -18,9 +18,9 @@ export default function KanbanBoard({ tasks, onUpdateTaskStatus, isRTL }) {
 
     const columns = useMemo(() => {
         const cols = {
-            todo: [],
+            pending: [],
             in_progress: [],
-            in_review: [],
+            review: [],
             done: []
         };
         tasks.forEach(task => {
@@ -28,7 +28,7 @@ export default function KanbanBoard({ tasks, onUpdateTaskStatus, isRTL }) {
                 cols[task.status].push(task);
             } else {
                 // Fallback for unknown statuses
-                cols.todo.push(task);
+                cols.pending.push(task);
             }
         });
         return cols;
@@ -88,7 +88,7 @@ export default function KanbanBoard({ tasks, onUpdateTaskStatus, isRTL }) {
                                                                 {task.title}
                                                             </span>
                                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-red-500' :
-                                                                    task.priority === 'medium' ? 'bg-yellow-500' : 'bg-slate-300'
+                                                                task.priority === 'medium' ? 'bg-yellow-500' : 'bg-slate-300'
                                                                 }`} />
                                                         </div>
                                                     </CardHeader>

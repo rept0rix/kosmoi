@@ -35,6 +35,17 @@ export const WORKFLOWS = {
             { role: 'product-vision', label: 'Roadmap Update' },
             { role: 'ceo', label: 'Execution Plan' }
         ]
+    },
+    ONE_DOLLAR_CHALLENGE: {
+        id: 'one_dollar_challenge',
+        name: '💸 The One Dollar Challenge',
+        description: 'Autonomous Revenue Generation Protocol',
+        steps: [
+            { role: 'ceo', label: 'Ideation: Invent a $1 Product' },
+            { role: 'tech-lead', label: 'Infrastructure: Create Stripe Link' },
+            { role: 'sales-pitch', label: 'Execution: Send Sales Email' },
+            { role: 'qa', label: 'Verification: Confirm Payment' }
+        ]
     }
 };
 

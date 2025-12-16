@@ -34,6 +34,8 @@ export default function VendorSignup() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
+    const [isWaitingForVerification, setIsWaitingForVerification] = useState(false);
+
     // --- Create Logic ---
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -51,8 +53,9 @@ export default function VendorSignup() {
 
             if (authError) throw authError;
 
-            // 2. Create the Service Provider linked to the new user
-            if (authData.user) {
+            // Check if we have a session (Auto-confirm ON) or just a user (Email verification ON)
+            if (authData.session) {
+                // 2. Create the Service Provider linked to the new user
                 const { error: providerError } = await db.entities.ServiceProvider.create({
                     business_name: formData.business_name,
                     category: formData.category,
@@ -70,7 +73,13 @@ export default function VendorSignup() {
 
                 setSuccess(true);
                 setTimeout(() => navigate('/'), 3000);
+            } else if (authData.user) {
+                // User created but no session -> Email verification required
+                setIsWaitingForVerification(true);
+                setSuccess(true);
+                // Don't navigate away immediately so they can read the message
             }
+
         } catch (error) {
             console.error("Signup failed:", error);
             alert(`Failed to submit application: ${error.message}`);
@@ -123,12 +132,16 @@ export default function VendorSignup() {
                         <BadgeCheck className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                        {mode === 'create' ? 'בקשתך התקבלה!' : 'בקשת הבעלות נשלחה!'}
+                        {isWaitingForVerification
+                            ? 'נרשמת בהצלחה!'
+                            : (mode === 'create' ? 'בקשתך התקבלה!' : 'בקשת הבעלות נשלחה!')}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                        {mode === 'create'
-                            ? 'אחד מסוכני ה-AI שלנו יבדוק את העסק שלך ויוסיף אותו למאגר.'
-                            : 'כדי לאמת שאתה הבעלים, נציג (או בוט) ייצור איתך קשר במספר המופיע במאגר.'}
+                        {isWaitingForVerification
+                            ? 'שלחנו לך מייל לאימות החשבון. אנא לחץ על הלינק במייל כדי להשלים את ההרשמה ולהקים את העסק.'
+                            : (mode === 'create'
+                                ? 'אחד מסוכני ה-AI שלנו יבדוק את העסק שלך ויוסיף אותו למאגר.'
+                                : 'כדי לאמת שאתה הבעלים, נציג (או בוט) ייצור איתך קשר במספר המופיע במאגר.')}
                         <br />
                         תודה שבחרת ב-Kosmoi Hub.
                     </p>

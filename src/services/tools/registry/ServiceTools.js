@@ -18,9 +18,21 @@ ToolRegistry.register("check_availability", async (payload) => {
     return await AgentTools.checkAvailability(payload.providerId, payload.date);
 }, "Check provider availability. Params: { providerId: 'uuid', date: 'YYYY-MM-DD' }");
 
+import { StripeService } from "../../StripeService.js";
+
 ToolRegistry.register("create_booking", async (payload) => {
     // payload: { userId, providerId, serviceType, date, startTime, endTime }
     return await AgentTools.createBooking(payload);
 }, "Create a new booking. Params: { userId, providerId, serviceType, date, startTime, endTime }");
+
+ToolRegistry.register("create_payment_link", async (payload) => {
+    // payload: { businessName, productName, amount, currency }
+    return await StripeService.createPaymentLink(
+        payload.businessName || "Kosmoi Inc",
+        payload.productName,
+        payload.amount,
+        payload.currency
+    );
+}, "Create a Stripe payment link. Params: { productName, amount, currency, businessName? }");
 
 console.log("✅ ServiceTools Registered");

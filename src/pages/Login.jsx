@@ -34,9 +34,9 @@ export default function Login() {
                 }
             }
 
-            // Check if already authenticated
-            const isAuth = await db.auth.isAuthenticated();
-            if (isAuth) {
+            // Check if already authenticated using official client checks
+            const { data: { session } } = await db.auth.getSession();
+            if (session) {
                 try {
                     const url = new URL(returnUrl, window.location.origin);
                     if (url.origin === window.location.origin) {
@@ -52,6 +52,37 @@ export default function Login() {
         handleAuthCallback();
     }, [navigate, returnUrl]);
 
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleEmailLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error } = await db.auth.signInWithPassword({
+                email,
+                password
+            });
+            if (error) throw error;
+
+            // Successful login will trigger onAuthStateChange
+            // We can rely on that or force redirect if needed.
+            // But strict redirect is safer here:
+            const url = new URL(returnUrl, window.location.origin);
+            if (url.origin === window.location.origin) {
+                navigate(url.pathname + url.search + url.hash);
+            } else {
+                window.location.href = returnUrl;
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError(err.message || 'אירעה שגיאה בהתחברות. אנא נסה שוב.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleGoogleLogin = async () => {
         try {
             setLoading(true);
@@ -60,8 +91,11 @@ export default function Login() {
             const currentOrigin = window.location.origin;
             const redirectUrl = `${currentOrigin}/login?returnUrl=${encodeURIComponent(returnUrl)}`;
 
-            await db.auth.signInWithOAuth('google', {
-                redirectTo: redirectUrl
+            await db.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl
+                }
             });
         } catch (err) {
             console.error('Login error:', err);
@@ -140,6 +174,50 @@ export default function Login() {
                     )}
 
                     <div className="space-y-4 pt-4">
+                        <form onSubmit={handleEmailLogin} className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">דוא״ל</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                    placeholder="name@company.com"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">סיסמה</label>
+                                    <a href="#" className="text-sm text-blue-600 hover:text-blue-500">שכחת סיסמה?</a>
+                                </div>
+                                <input
+                                    type="password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-6 text-base font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 shadow-lg transition-all rounded-xl"
+                            >
+                                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'התחבר'}
+                            </Button>
+                        </form>
+
+                        <div className="relative py-2">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-slate-200 dark:border-slate-800" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-slate-50 dark:bg-slate-900 px-2 text-slate-500">או המשך עם</span>
+                            </div>
+                        </div>
+
                         <Button
                             onClick={handleGoogleLogin}
                             disabled={loading}
@@ -170,15 +248,6 @@ export default function Login() {
                             )}
                             המשך באמצעות Google
                         </Button>
-
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-slate-200 dark:border-slate-800" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-slate-50 dark:bg-slate-900 px-2 text-slate-500">או</span>
-                            </div>
-                        </div>
 
                         <div className="text-center">
                             <Button variant="ghost" className="text-slate-500 hover:text-slate-900 dark:hover:text-white" onClick={() => navigate('/vendor-signup')}>

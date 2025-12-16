@@ -17,7 +17,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import LivePreview from '@/components/LivePreview';
 import { useLanguage } from "@/components/LanguageContext";
 import UXHeatmapOverlay from '@/components/board/UXHeatmapOverlay';
-import { Plus, Trash2, BookOpen, CheckSquare, Settings, Archive, Database, PlayCircle, ScanEye } from 'lucide-react';
+import KanbanBoard from '@/components/board/KanbanBoard';
+import { Plus, Trash2, BookOpen, CheckSquare, Settings, Archive, Database, PlayCircle, ScanEye, LayoutTemplate } from 'lucide-react';
 
 export default function BoardRoomRightSidebar({
     activeRightTab,
@@ -36,6 +37,7 @@ export default function BoardRoomRightSidebar({
 
     // Local state for Create Task Dialog
     const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+    const [isBoardOpen, setIsBoardOpen] = useState(false);
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [newTaskDescription, setNewTaskDescription] = useState('');
     const [newTaskPriority, setNewTaskPriority] = useState('medium');
@@ -141,6 +143,14 @@ export default function BoardRoomRightSidebar({
                                 >
                                     <Plus className="w-3 h-3 mr-1" />
                                     {isRTL ? 'הוסף משימה' : 'Add New Task'}
+                                </Button>
+                                <Button
+                                    onClick={() => setIsBoardOpen(true)}
+                                    variant="outline"
+                                    className="w-full h-8 text-xs mb-2 border-dashed dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                >
+                                    <LayoutTemplate className="w-3 h-3 mr-1" />
+                                    {isRTL ? 'תצוגת לוח' : 'Board View'}
                                 </Button>
 
                                 {tasks.length === 0 && (
@@ -248,6 +258,25 @@ export default function BoardRoomRightSidebar({
                     </TabsContent>
                 </div>
             </Tabs>
+
+            {/* Kanban Board Dialog */}
+            <Dialog open={isBoardOpen} onOpenChange={setIsBoardOpen}>
+                <DialogContent className="max-w-[90vw] h-[80vh] flex flex-col p-0 gap-0 dark:bg-slate-950 dark:border-slate-800">
+                    <DialogHeader className="p-4 border-b dark:border-slate-800">
+                        <DialogTitle className="flex items-center gap-2 dark:text-slate-100">
+                            <LayoutTemplate className="w-5 h-5 text-blue-600" />
+                            {isRTL ? 'לוח משימות' : 'Task Board'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-hidden p-4 bg-gray-50/50 dark:bg-slate-900/50">
+                        <KanbanBoard
+                            tasks={tasks}
+                            onUpdateTaskStatus={handleUpdateTaskStatus}
+                            isRTL={isRTL}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Create Task Dialog */}
             <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>

@@ -15,7 +15,7 @@
     "worker:universal": "node scripts/agent_worker.js"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.3",
+    "@base44/sdk": "^0.8.4",
     "@google/generative-ai": "^0.24.1",
     "@googlemaps/markerclusterer": "^2.6.2",
     "@hello-pangea/dnd": "^17.0.0",

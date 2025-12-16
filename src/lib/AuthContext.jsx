@@ -17,7 +17,8 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth state changes
     const { data: authListener } = db.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const currentUser = await db.auth.me();
+        // Use standard getUser()
+        const { data: { user: currentUser } } = await db.auth.getUser();
         setUser(currentUser);
         setIsAuthenticated(true);
       } else if (event === 'SIGNED_OUT') {
@@ -58,7 +59,8 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
-      const currentUser = await db.auth.me();
+      // Use standard getUser()
+      const { data: { user: currentUser } } = await db.auth.getUser();
       if (currentUser) {
         setUser(currentUser);
         setIsAuthenticated(true);
@@ -75,18 +77,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async (shouldRedirect = true) => {
-    await db.auth.logout();
+    await db.auth.signOut();
     setUser(null);
     setIsAuthenticated(false);
 
     if (shouldRedirect) {
-      // db.auth.logout already handles sign out, but if we need to redirect:
-      // window.location.href = '/login'; // Or let the caller handle it
+      // Manual redirect
+      window.location.href = '/login';
     }
   };
 
   const navigateToLogin = () => {
-    db.auth.redirectToLogin(window.location.href);
+    // Manual redirect
+    window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.href)}`;
   };
 
   return (

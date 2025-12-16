@@ -1,10 +1,10 @@
 import React from 'react';
-import EvolutionTree from '@/components/admin/evolution/EvolutionTree';
+import SchemaMap from '@/components/admin/evolution/SchemaMap';
 
-export default function AdminEvolution() {
+export default function AdminSchema() {
     return (
         <div className="h-[calc(100vh-64px)] w-full flex flex-col bg-slate-950">
-            <EvolutionTree />
+            <SchemaMap />
         </div>
     );
 }

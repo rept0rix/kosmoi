@@ -8,17 +8,26 @@ export const StripeService = {
     /**
      * Generate a Mock Payment Link
      * @param {string} businessName 
+     * @param {string} productName
+     * @param {number} amount
+     * @param {string} currency
      * @param {string} planType 'basic' | 'pro' | 'enterprise'
      */
-    createPaymentLink: async (businessName, planType = 'pro') => {
+    createPaymentLink: async (businessName, productName = 'Product', amount = 100, currency = 'usd', planType = 'pro') => {
         // Mock delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
         // In production, this would call your backend to generate a real Stripe Checkout Session
-        const mockLink = `https://checkout.stripe.com/pay/${planType}_${btoa(businessName).slice(0, 5)}`;
+        // Encoding params into URL for mock verification
+        const mockLink = `https://checkout.stripe.com/pay/${planType}_${btoa(businessName).slice(0, 5)}?product=${encodeURIComponent(productName)}&amount=${amount}&currency=${currency}`;
+
         return {
             url: mockLink,
-            status: 'active'
+            start_url: mockLink, // For consistency
+            status: 'active',
+            product: productName,
+            amount: amount,
+            currency: currency
         };
     },
 

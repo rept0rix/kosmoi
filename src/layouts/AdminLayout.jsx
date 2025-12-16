@@ -10,7 +10,9 @@ import {
     Menu,
     X,
     Activity,
-    Target
+    Target,
+    Server,
+    Store
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,17 +50,33 @@ export default function AdminLayout() {
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1">
-                    <NavItem to="/admin/command-center" icon={<LayoutDashboard />} label="Command Center" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/board-room" icon={<Bot />} label="Board Room" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/agents" icon={<Bot />} label="Agent Workforce" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/data" icon={<Database />} label="Data & Businesses" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/evolution" icon={<Activity />} label="Evolution Tree" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/studio" icon={<Activity />} label="Kosmoi Studio" onClick={() => setIsMobileOpen(false)} />
-                    <NavItem to="/admin/company" icon={<Settings />} label="Company Settings" onClick={() => setIsMobileOpen(false)} />
+                <nav className="flex-1 p-4 overflow-y-auto">
+                    <NavGroup title="Overview">
+                        <NavItem to="/admin/command-center" icon={<LayoutDashboard />} label="Command Center" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/board-room" icon={<Bot />} label="Board Room" onClick={() => setIsMobileOpen(false)} />
+                    </NavGroup>
+
+                    <NavGroup title="Operations">
+                        <NavItem to="/admin/tasks" icon={<Activity />} label="Task Board" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/agents" icon={<Bot />} label="Agent Workforce" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/businesses" icon={<Store />} label="Businesses" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/data" icon={<Database />} label="Platform Analytics" onClick={() => setIsMobileOpen(false)} />
+                    </NavGroup>
+
+                    <NavGroup title="Intelligence">
+                        <NavItem to="/admin/evolution" icon={<Activity />} label="Evolution Tree" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/schema" icon={<Activity />} label="Brain Structure" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/memory" icon={<Activity />} label="Subconscious" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/studio" icon={<Activity />} label="Kosmoi Studio" onClick={() => setIsMobileOpen(false)} />
+                    </NavGroup>
+
+                    <NavGroup title="System">
+                        <NavItem to="/admin/infrastructure" icon={<Server />} label="Infrastructure" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/company" icon={<Settings />} label="Company Settings" onClick={() => setIsMobileOpen(false)} />
+                    </NavGroup>
                 </nav>
 
                 <div className="p-4 border-t border-white/5">
@@ -100,7 +118,7 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Page Content */}
-                <div className={`flex-1 ${location.pathname.includes('board-room') ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-auto'}`}>
+                <div className={`flex-1 flex flex-col h-full ${location.pathname.includes('board-room') ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-auto'}`}>
                     <Outlet />
                 </div>
             </main>
@@ -124,5 +142,18 @@ function NavItem({ to, icon, label, end = false, onClick }) {
             {React.cloneElement(icon, { className: "w-4 h-4" })}
             {label}
         </NavLink>
+    );
+}
+
+function NavGroup({ title, children }) {
+    return (
+        <div className="mb-6">
+            <h3 className="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                {title}
+            </h3>
+            <div className="space-y-1">
+                {children}
+            </div>
+        </div>
     );
 }

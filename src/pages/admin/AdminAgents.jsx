@@ -42,7 +42,7 @@ export default function AdminAgents() {
 
     useEffect(() => {
         // Load from registry, but check if we have overrides or new additions in localStorage
-        const stored = localStorage.getItem('kosmoi_admin_agents');
+        const stored = localStorage.getItem('kosmoi_admin_agents_v2');
         if (stored) {
             const storedAgents = JSON.parse(stored);
 
@@ -66,7 +66,7 @@ export default function AdminAgents() {
 
     const saveAgents = (updatedAgents) => {
         setAgents(updatedAgents);
-        localStorage.setItem('kosmoi_admin_agents', JSON.stringify(updatedAgents));
+        localStorage.setItem('kosmoi_admin_agents_v2', JSON.stringify(updatedAgents));
     };
 
     const handleAddAgent = () => {
