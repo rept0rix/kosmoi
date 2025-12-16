@@ -130,7 +130,7 @@ export default function AgentChat() {
                 try {
                     // Create Task in Supabase (Watched by Worker)
                     const { error } = await supabase.from('agent_tasks').insert([{
-                        meeting_id: `chat-${workflowId}`, // Virtual Meeting ID for Chat
+                        meeting_id: null, // Chat sessions technically don't have a Board Meeting ID yet
                         title: response.action.title,
                         description: response.action.description,
                         assigned_to: response.action.assignee || 'Unassigned',

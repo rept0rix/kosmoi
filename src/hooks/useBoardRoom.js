@@ -293,7 +293,9 @@ export function useBoardRoom() {
                 meetingTitle: selectedMeeting.title,
                 tasks: tasks,
                 images: selectedImage ? [{ base64: selectedImage, mimeType: 'image/png' }] : [],
-                config: config
+                config: config,
+                workflow: activeWorkflowState?.workflow,
+                workflowStep: activeWorkflowState?.currentStep
             });
 
             // Action Handling

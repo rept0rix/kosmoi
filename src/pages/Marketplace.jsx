@@ -33,7 +33,7 @@ const Marketplace = () => {
         setLoading(true);
         try {
             // Fetch Service Providers
-            const { data: providersData } = await supabase.from('service_providers').select('*').eq('status', 'active');
+            const { data: providersData } = await supabase.from('service_providers').select('*').in('status', ['active', 'new_lead']);
             setProviders(providersData || []);
 
             // Fetch Published AI Agents
@@ -140,9 +140,16 @@ const Marketplace = () => {
                                 {filteredProviders.map(provider => (
                                     <Link key={provider.id} to={`/provider/${provider.id}`} className="group">
                                         <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-                                            {/* Existing Provider Card Content */}
-                                            <div className="h-40 bg-slate-100 relative items-center justify-center flex">
-                                                <MapPin className="w-12 h-12 text-slate-300" />
+                                            {/* Provider Card Image */}
+                                            <div className="h-40 bg-slate-100 relative items-center justify-center flex overflow-hidden">
+                                                {provider.image_url ? (
+                                                    <img src={provider.image_url} alt={provider.business_name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                                ) : (
+                                                    <MapPin className="w-12 h-12 text-slate-300" />
+                                                )}
+                                                {provider.status === 'new_lead' && (
+                                                    <Badge className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 border-yellow-500/20">New</Badge>
+                                                )}
                                             </div>
                                             <div className="p-5 flex-grow flex flex-col">
                                                 <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">

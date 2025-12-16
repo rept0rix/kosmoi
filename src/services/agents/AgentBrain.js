@@ -73,10 +73,17 @@ Meeting Title: ${context.meetingTitle || 'General Discussion'}
 System State: ${JSON.stringify(context.config || {})}
 Current Tasks: ${JSON.stringify(context.tasks || [])}
 User Language: ${userLang} (You must reply in JSON, but our system will handle translation if needed)
+activeWorkflow: ${context.workflow ? JSON.stringify(context.workflow) : 'None'}
+activeWorkflowStep: ${context.workflowStep ? JSON.stringify(context.workflowStep) : 'None'}
 Knowledge Base:
 ${knowledgeContext || "No relevant documents found."}
 
 IMPORTANT: The "System State" above represents the CURRENT reality of the application (Name, Theme, etc.). It overrides any static information in your manifesto. If the System State says the app name is "Super App", then the app name IS "Super App", even if your manifesto says "LEONS".
+
+WORKFLOW INSTRUCTION:
+${context.workflow ? `You are participating in the "${context.workflow.name}" workflow.
+Current Step: ${context.workflowStep.label} (${context.workflowStep.role}).
+Your Goal: Execute this step precisely. Do not deviate. Determine if you are the active role.` : ''}
 
 Conversation Transcript (Translated to English for your convenience):
 ${transcript}
@@ -174,7 +181,7 @@ IMPORTANT: You are a helpful AI agent. You always output valid JSON.`,
       try {
         await db.entities.AgentLogs.create({
           agent_id: agent.id,
-          user_id: db.auth.isAuthenticated() ? (await db.auth.me())?.id : null,
+          user_id: (await db.auth.getSession()).data.session?.user?.id || null,
           prompt: prompt.slice(0, 1000), // Truncate
           response: text.slice(0, 2000), // Truncate
           metadata: {

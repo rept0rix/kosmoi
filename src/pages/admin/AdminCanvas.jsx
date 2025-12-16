@@ -42,58 +42,77 @@ export default function AdminCanvas() {
         }
     };
 
+    // Controls for the canvas
+    const Controls = ({ zoomIn, zoomOut, resetTransform }) => (
+        <div className="absolute top-4 left-4 z-50 flex gap-2 bg-white p-2 rounded-lg shadow-md max-w-[90vw] flex-wrap">
+            <Button onClick={runCapture} disabled={loading} size="sm">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4 mr-2" />}
+                <span className="hidden sm:inline">Capture</span>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setLastUpdate(Date.now())} title="Refresh Images">
+                <RefreshCw className="w-4 h-4" />
+            </Button>
+            <div className="w-px h-6 bg-gray-200 mx-1"></div>
+            <Button variant="outline" size="sm" onClick={() => zoomIn()} title="Zoom In">+</Button>
+            <Button variant="outline" size="sm" onClick={() => zoomOut()} title="Zoom Out">-</Button>
+            <Button variant="outline" size="sm" onClick={() => resetTransform()} title="Reset">x</Button>
+        </div>
+    );
+
     return (
         <div className="w-full h-[calc(100vh-64px)] bg-gray-100 overflow-hidden relative">
-
-            {/* Toolbar */}
-            <div className="absolute top-4 left-4 z-50 flex gap-2 bg-white p-2 rounded-lg shadow-md">
-                <Button onClick={runCapture} disabled={loading} size="sm">
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4 mr-2" />}
-                    Capture Screens
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setLastUpdate(Date.now())}>
-                    <RefreshCw className="w-4 h-4" />
-                </Button>
-            </div>
-
             <TransformWrapper
                 initialScale={0.2}
                 minScale={0.1}
-                maxScale={2}
+                maxScale={4}
                 centerOnInit
+                wheel={{ step: 0.1 }}
             >
-                <TransformComponent wrapperClass="w-full h-full" contentClass="w-full h-full">
-                    <div
-                        className="relative bg-gray-100"
-                        style={{ width: '5000px', height: '4000px' }} // Canvas Size
-                    >
-                        {SCREENS.map((screen) => (
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                    <>
+                        <Controls zoomIn={zoomIn} zoomOut={zoomOut} resetTransform={resetTransform} />
+                        <TransformComponent wrapperClass="w-full h-full" contentClass="w-full h-full">
                             <div
-                                key={screen.name}
-                                className="absolute bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-200"
-                                style={{
-                                    left: screen.x,
-                                    top: screen.y,
-                                    width: '1440px',
-                                    height: '900px', // Aspect ratio of screenshot
-                                }}
+                                className="relative bg-gray-100 flex flex-wrap gap-8 p-10 origin-top-left"
+                                style={{ width: '5000px', height: '4000px' }}
                             >
-                                <div className="bg-gray-800 text-white text-xs px-4 py-2 font-mono uppercase tracking-wider">
-                                    {screen.name}
-                                </div>
-                                <img
-                                    src={`/screens/${screen.name}.png?t=${lastUpdate}`}
-                                    alt={screen.name}
-                                    className="w-full h-full object-contain bg-gray-50"
-                                    onError={(e) => {
-                                        e.currentTarget.onerror = null;
-                                        e.currentTarget.src = "https://placehold.co/1440x900?text=Pending+Capture";
-                                    }}
-                                />
+                                {SCREENS.map((screen) => (
+                                    <div
+                                        key={screen.name}
+                                        className="absolute bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-200 transition-shadow hover:shadow-orange-500/20"
+                                        style={{
+                                            left: screen.x,
+                                            top: screen.y,
+                                            width: '1440px',
+                                            height: '900px',
+                                        }}
+                                    >
+                                        <div className="bg-slate-800 text-white text-xs px-4 py-2 font-mono uppercase tracking-wider flex justify-between items-center">
+                                            <span>{screen.name}</span>
+                                            <span className="opacity-50">1440x900</span>
+                                        </div>
+                                        <div className="w-full h-full bg-slate-50 relative group">
+                                            <img
+                                                src={`/screens/${screen.name}.png?t=${lastUpdate}`}
+                                                alt={screen.name}
+                                                className="w-full h-full object-contain"
+                                                loading="lazy"
+                                                onError={(e) => {
+                                                    // Prevent infinite loop if placeholder fails
+                                                    e.currentTarget.onerror = null;
+                                                    // Use a simple colored div fallback if needed, or placehold.co
+                                                    e.currentTarget.src = `https://placehold.co/1440x900/e2e8f0/475569?text=${screen.name}`;
+                                                }}
+                                            />
+                                            {/* Overlay for interaction hint */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </TransformComponent>
+                        </TransformComponent>
+                    </>
+                )}
             </TransformWrapper>
         </div>
     );
