@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Clock, CreditCard, Power } from 'lucide-react';
 import GoogleMap from '@/components/GoogleMap';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/api/supabaseClient';
 
 // Mock Incoming Job
 const MOCK_JOB = {
@@ -40,20 +41,101 @@ export default function ProviderDashboard() {
         }
     }, []);
 
-    // 2. Simulate Incoming Job when Online
+    // 2. Subscribe to Incoming Jobs (Realtime)
     useEffect(() => {
-        let timeout;
+        let channel;
+
+        const subscribeToJobs = async () => {
+            if (!isOnline) return;
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Get provider ID first (assuming 1:1 mapping for simplicity or user_id check)
+            // Ideally we subscribe to "service_requests" where provider_id matches ours
+            // But strict RLS might prevent seeing "INSERT" if we are not the creator?
+            // Actually, if row is inserted with our provider_id, and RLS allows select, we might get it.
+            // For "Uber-like" broadcast, typically requests are "broadcast" to all nearby.
+            // But here we implement "Assigned" model for simplicity as per plan.
+
+            console.log("Subscribing to service_requests...");
+
+            channel = supabase
+                .channel('dispatch-channel')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'service_requests',
+                        filter: `status=eq.pending` // Listen for any pending request (Broadcast mode would need ignoring provider_id initially)
+                    },
+                    (payload) => {
+                        console.log('New Job Received:', payload);
+                        const job = payload.new;
+                        setIncomingJob({
+                            id: job.id,
+                            customer: 'New Customer', // We'd need to fetch name
+                            service: job.service_type || 'General Service',
+                            distance: 'Calculating...',
+                            estTime: '5 mins',
+                            price: `${job.price || 0} THB`,
+                            location: { lat: job.location_lat, lng: job.location_lng },
+                            status: 'pending'
+                        });
+                        toast({
+                            title: "New Job Request! 🔔",
+                            description: `${job.service_type || 'Service'} nearby.`
+                        });
+                    }
+                )
+                .subscribe();
+        };
+
         if (isOnline) {
-            toast({ title: "You are Online 🟢", description: "Waiting for requests..." });
-            timeout = setTimeout(() => {
-                setIncomingJob(MOCK_JOB);
-                // Play notification sound here in real app
-            }, 3000);
-        } else {
-            setIncomingJob(null);
+            subscribeToJobs();
         }
-        return () => clearTimeout(timeout);
+
+        return () => {
+            if (channel) supabase.removeChannel(channel);
+        };
     }, [isOnline]);
+
+    const toggleOnlineStatus = async (val) => {
+        // Optimistic UI update
+        setIsOnline(val);
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return; // Should be protected route anyway
+
+            // Update DB
+            const { error } = await supabase
+                .from('service_providers')
+                .update({
+                    is_online: val,
+                    last_seen: new Date().toISOString(),
+                    // Optionally update location if available
+                    ...(userLocation ? {
+                        current_lat: userLocation.lat,
+                        current_lng: userLocation.lng
+                    } : {})
+                })
+                .eq('user_id', user.id);
+
+            if (error) {
+                console.error("Failed to update status", error);
+                toast({ variant: "destructive", title: "Connection Error", description: "Could not sync status." });
+                setIsOnline(!val); // Revert
+            } else {
+                if (val) toast({ title: "You are Online 🟢", description: "Waiting for requests..." });
+                else toast({ title: "You are Offline ⚫", description: "You will not receive jobs." });
+            }
+        } catch (e) {
+            console.error(e);
+            setIsOnline(!val);
+        }
+    };
 
     const handleAcceptJob = () => {
         toast({
@@ -76,7 +158,7 @@ export default function ProviderDashboard() {
                         </span>
                         <Switch
                             checked={isOnline}
-                            onCheckedChange={setIsOnline}
+                            onCheckedChange={toggleOnlineStatus}
                             className="data-[state=checked]:bg-green-500"
                         />
                     </div>

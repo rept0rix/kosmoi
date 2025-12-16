@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bot, Send, Sparkles, Key, MapPin, Phone, MessageCircle, Navigation, X, Star, Compass, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext';
 import { db } from '@/api/supabaseClient';
 import GoogleMap from "@/components/GoogleMap";
 import { useQuery } from "@tanstack/react-query";
@@ -108,6 +109,7 @@ export default function AIChat() {
 
     // Logic for context:
     const { state } = useLocation();
+    const { user } = useAuth(); // Already using useAuth, ensure user is extracted
 
     useEffect(() => {
         scrollToBottom();
@@ -177,42 +179,45 @@ export default function AIChat() {
 
 
 
+            // NEW SYSTEM PROMPT FOR RICH UI
             const systemInstruction = `
 ${CONCIERGE_AGENT.systemPrompt}
 
-**DYNAMIC CONTEXT:**
+**RESPONSE GUIDELINES:**
+1. **NO LISTS IN TEXT**: Do NOT write numbered lists of places in the "message" field.
+2. **USE CAROUSEL**: You MUST return a "carousel" array for recommendations.
+3. **MANDATORY**: If you recommend places, they MUST be in the "carousel" JSON field.
+4. **IMAGES**: Use placeholders if real images are missing (e.g. "https://placehold.co/600x400?text=Place").
 
+**DYNAMIC CONTEXT:**
 KNOWLEDGE BASE:
 ${JSON.stringify(samuiKnowledge, null, 2)}
 
 CURRENT WEATHER:
 ${weatherContext}
 
-AVAILABLE PROVIDERS (Prioritize these):
+AVAILABLE PROVIDERS:
 ${providersContext}
 
-AVAILABLE APP ROUTES:
-    - /ServiceProviders?category=plumber
-    - /ServiceProviders?category=taxi
-    - /ServiceProviders?category=restaurant
-    - /ServiceProviders?category=tour_guide
-    - /ServiceProviders?category=cleaning
-    - /ServiceProviders?category=handyman
-    - /RequestService
-    - /MyRequests
-
-TRIP PLANNER INSTRUCTIONS:
-If suggesting an itinerary, you can return a "card" with an "add_to_trip" action.
-Action Data Format (Single or Array): 
-{ 
-  "title": "Place Name", 
-  "address": "Location Name", 
-  "category": "sightseeing", 
-  "time": "10:00", 
-  "notes": "Short tip",
-  "location": { "lat": 9.53, "lng": 100.05 } // REQUIRED for map placement
+**JSON OUTPUT FORMAT (STRICT):**
+{
+  "message": "Short conversational text...",
+  "card": { // OPTIONAL: Use for a SINGLE highlight
+    "title": "Place Name",
+    "description": "Short bio",
+    "image": "https://url...", 
+    "action": { "type": "navigate", "label": "Go There", "path": "/url" }
+  },
+  "carousel": [ // OPTIONAL: Use for MULTIPLE choices
+    {
+      "title": "Place 1",
+      "description": "Short bio",
+      "image": "https://url...",
+      "action": { "type": "navigate", "label": "View Details", "path": "/url" }
+    }
+  ],
+  "choices": ["Option 1", "Option 2"] // OPTIONAL: Bubble buttons
 }
-Use known coordinates from the 'providers' list if available, or estimate reasonable Samui coordinates.
 `;
 
             // 2. Prepare Conversation History
@@ -230,7 +235,7 @@ Use known coordinates from the 'providers' list if available, or estimate reason
 
             const contents = [...history, currentMessage];
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -252,21 +257,36 @@ Use known coordinates from the 'providers' list if available, or estimate reason
             // Parse JSON response
             let parsedResponse;
             try {
-                const cleanJson = responseText.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                parsedResponse = JSON.parse(cleanJson);
+                let jsonStr = responseText;
+
+                // Robust extraction: Find the first '{' and last '}'
+                const firstOpen = jsonStr.indexOf('{');
+                const lastClose = jsonStr.lastIndexOf('}');
+
+                if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+                    jsonStr = jsonStr.substring(firstOpen, lastClose + 1);
+                    parsedResponse = JSON.parse(jsonStr);
+                } else {
+                    // No valid JSON object found, treat as plain text message
+                    parsedResponse = {
+                        message: responseText.trim() || "I didn't get a clear answer, could you rephrase?",
+                        action: null
+                    };
+                }
             } catch (e) {
                 console.error("JSON Parse Error:", e);
-                // Attempt to extract JSON if mixed with text
-                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    try {
-                        parsedResponse = JSON.parse(jsonMatch[0]);
-                    } catch (e2) {
-                        parsedResponse = { message: responseText, action: null };
-                    }
-                } else {
-                    parsedResponse = { message: responseText, action: null };
-                }
+                // Fallback: Use raw text as message
+                parsedResponse = {
+                    message: responseText.trim() || e.message,
+                    action: null
+                };
+            }
+
+            // Fallback if message is empty but we have cards/choices
+            if (!parsedResponse.message && (parsedResponse.card || parsedResponse.carousel || parsedResponse.choices)) {
+                parsedResponse.message = "Here are some recommendations:";
+            } else if (!parsedResponse.message) {
+                parsedResponse.message = "I found some info but couldn't display it properly.";
             }
 
             setMessages(prev => [...prev, {
@@ -275,7 +295,8 @@ Use known coordinates from the 'providers' list if available, or estimate reason
                 action: parsedResponse.action,
                 image: parsedResponse.image,
                 choices: parsedResponse.choices,
-                card: parsedResponse.card
+                card: parsedResponse.card,
+                carousel: parsedResponse.carousel // New support
             }]);
 
         } catch (error) {
@@ -348,41 +369,11 @@ Use known coordinates from the 'providers' list if available, or estimate reason
 
     const handleQuickAction = (action) => {
         if (action.category) {
-            // Find nearest provider
-            if (!userLocation) {
-                // If no location, just ask
-                const userMessage = { role: 'user', content: `I'm looking for a ${action.label}.` };
-                setMessages(prev => [...prev, userMessage]);
-                processMessage(`I'm looking for a ${action.label}.`);
-                return;
-            }
-
-            const categoryProviders = providers.filter(p => p.category === action.category && p.latitude && p.longitude);
-
-            if (categoryProviders.length > 0) {
-                // Sort by distance
-                categoryProviders.sort((a, b) => {
-                    const distA = calculateDistance(userLocation.lat, userLocation.lng, a.latitude, a.longitude);
-                    const distB = calculateDistance(userLocation.lat, userLocation.lng, b.latitude, b.longitude);
-                    return distA - distB;
-                });
-
-                const nearest = categoryProviders[0];
-                const distance = calculateDistance(userLocation.lat, userLocation.lng, nearest.latitude, nearest.longitude).toFixed(1);
-
-                setSelectedProvider(nearest);
-                setMapCenter({ lat: nearest.latitude, lng: nearest.longitude });
-                setMapZoom(16); // Zoom in on provider
-
-                const prompt = `I'm looking for a ${action.label}. I see "${nearest.business_name}" is ${distance}km away. Can you tell me about it or other options?`;
-                const userMessage = { role: 'user', content: prompt };
-                setMessages(prev => [...prev, userMessage]);
-                processMessage(prompt);
-            } else {
-                const userMessage = { role: 'user', content: `I'm looking for a ${action.label}.` };
-                setMessages(prev => [...prev, userMessage]);
-                processMessage(`I'm looking for a ${action.label}.`);
-            }
+            // UPDATED UX: Just ask for the category, don't pre-select the nearest one.
+            const prompt = `Show me recommended ${action.label} options in Koh Samui.`;
+            const userMessage = { role: 'user', content: prompt };
+            setMessages(prev => [...prev, userMessage]);
+            processMessage(prompt, userLocation ? `My location is Lat: ${userLocation.lat}, Lng: ${userLocation.lng}` : "");
 
         } else if (action.prompt) {
             const userMessage = { role: 'user', content: action.label };
@@ -403,30 +394,20 @@ Use known coordinates from the 'providers' list if available, or estimate reason
 
     const handleCall = async (phone, e) => {
         e.stopPropagation();
-        try {
-            const isAuth = await db.auth.isAuthenticated();
-            if (!isAuth) {
-                db.auth.redirectToLogin(window.location.pathname);
-                return;
-            }
-            window.location.href = `tel:${phone}`;
-        } catch (error) {
-            db.auth.redirectToLogin(window.location.pathname);
+        if (!user) {
+            navigate('/Login');
+            return;
         }
+        window.location.href = `tel:${phone}`;
     };
 
     const handleWhatsApp = async (phone, e) => {
         e.stopPropagation();
-        try {
-            const isAuth = await db.auth.isAuthenticated();
-            if (!isAuth) {
-                db.auth.redirectToLogin(window.location.pathname);
-                return;
-            }
-            window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
-        } catch (error) {
-            db.auth.redirectToLogin(window.location.pathname);
+        if (!user) {
+            navigate('/Login');
+            return;
         }
+        window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
     };
 
     const handleNavigate = (provider, e) => {
@@ -563,6 +544,40 @@ Use known coordinates from the 'providers' list if available, or estimate reason
                                 {msg.image && (
                                     <div className="mt-3 rounded-xl overflow-hidden shadow-sm border border-gray-100">
                                         <img src={msg.image} alt="Attachment" className="w-full h-40 object-cover hover:scale-105 transition-transform duration-500" />
+                                    </div>
+                                )}
+
+                                {/* Carousel (Horizontal Scroll) */}
+                                {msg.carousel && (
+                                    <div className="mt-4 flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-2 px-2">
+                                        {msg.carousel.map((card, idx) => (
+                                            <div key={idx} className="snap-center shrink-0 w-64 bg-white/80 backdrop-blur-md rounded-xl border border-white/50 shadow-lg overflow-hidden flex flex-col">
+                                                {card.image && (
+                                                    <div className="h-32 w-full overflow-hidden relative">
+                                                        <img src={card.image} alt={card.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                        <div className="absolute bottom-2 left-2">
+                                                            <h4 className="font-bold text-white text-sm shadow-black/50 drop-shadow-md truncate w-full">{card.title}</h4>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className="p-3 flex flex-col flex-1">
+                                                    {!card.image && <h4 className="font-bold text-gray-900 mb-1 text-sm">{card.title}</h4>}
+                                                    <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed flex-1">{card.description}</p>
+
+                                                    {card.action && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            className="w-full text-xs h-8 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100"
+                                                            onClick={() => handleActionClick(card.action)}
+                                                        >
+                                                            {card.action.label || "View Details"}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 

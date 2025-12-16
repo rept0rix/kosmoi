@@ -29,6 +29,9 @@ import BusinessInfo from './pages/BusinessInfo';
 import Team from './pages/Team';
 import CommandCenter from './pages/CommandCenter';
 import AgentChat from './pages/AgentChat';
+import CRMDashboard from './pages/admin/CRMDashboard'; // Added CRMDashboard import
+import Blog from './pages/Blog';
+import BlogPostDetail from './pages/BlogPostDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +69,8 @@ export const PAGES = {
     "TripPlanner": TripPlanner,
     "BoardRoom": BoardRoom,
     "CommandCenter": CommandCenter,
+    "Blog": Blog,
+    "BlogPostDetail": BlogPostDetail,
 }
 
 export const pagesConfig = {

@@ -13,7 +13,7 @@ console.log("VITE_SUPABASE_SERVICE_ROLE_KEY:", getEnv("VITE_SUPABASE_SERVICE_ROL
 console.log("VITE_SUPABASE_ANON_KEY:", getEnv("VITE_SUPABASE_ANON_KEY") ? "Exists" : "Missing");
 
 const supabaseUrl = getEnv('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY') || getEnv('VITE_SUPABASE_ANON_KEY');
+const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY');
 
 console.log("[DEBUG] Final URLs:", { supabaseUrl, keyLength: supabaseAnonKey?.length });
 
@@ -29,23 +29,8 @@ console.log("[DEBUG] Final URLs:", { supabaseUrl, keyLength: supabaseAnonKey?.le
 // })
 
 // Dummy client to prevent import errors while we use direct fetch
-export const supabase = {
-    from: () => ({
-        select: () => ({
-            eq: () => ({
-                single: () => Promise.resolve({ data: null, error: null }),
-                maybeSingle: () => Promise.resolve({ data: null, error: null })
-            })
-        })
-    }),
-    auth: {
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
-        signInWithPassword: () => Promise.resolve({ data: {}, error: { message: "Use db.auth.signIn" } }),
-        signOut: () => Promise.resolve({ error: null })
-    }
-};
+// Client is initialized at the bottom of the file
+// export const supabase ...
 
 // Token management
 const TOKEN_KEY = 'sb-access-token';
@@ -685,14 +670,26 @@ export const supabaseHelpers = {
     }
 }
 
-// Export db object with all helpers
-export const db = supabaseHelpers
+// Export REAL Supabase client for all standard usage
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true, // Enable persistence
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    }
+});
+
+// Export db object with all helpers (Legacy / Custom implementation)
+export const db = {
+    ...supabaseHelpers,
+    auth: supabase.auth // Use the real auth client in the helper too, to avoid sync issues
+};
 
 // Export supabaseAdmin for AdminImporter
-export const supabaseAdmin = supabaseHelpers.asServiceRole
+export const supabaseAdmin = supabaseHelpers.asServiceRole;
 
-// Export REAL Supabase client for Realtime and standard usage
-export const realSupabase = createClient(supabaseUrl, supabaseAnonKey);
+// Backward compatibility for files importing realSupabase
+export const realSupabase = supabase;
 
 // Default export
-export default supabase
+export default supabase;

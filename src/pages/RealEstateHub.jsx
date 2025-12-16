@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/api/supabaseClient';
+import { supabase } from '@/api/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -59,24 +60,42 @@ export default function RealEstateHub() {
 
     // Fetch Real Properties from DB
     const { data: realProperties, isLoading } = useQuery({
-        queryKey: ['properties'],
+        queryKey: ['properties', activeTab, searchTerm, priceRange],
         queryFn: async () => {
-            const { data, error } = await db.from('properties')
-                .select('*, property_images(url)');
+            let query = supabase.from('properties')
+                .select('*, images:property_images(url)')
+                .eq('type', activeTab === 'buy' ? 'sale' : 'rent');
+
+            if (searchTerm) {
+                query = query.or(`title.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%`);
+            }
+
+            // Price filtering logic (Custom Range handling)
+            if (priceRange !== 'all') {
+                if (priceRange === 'under-5m') query = query.lt('price', 5000000);
+                if (priceRange === '5m-15m') query = query.gte('price', 5000000).lte('price', 15000000);
+                if (priceRange === '15m-plus') query = query.gt('price', 15000000);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             return data;
-        }
+        },
+        placeholderData: keepPreviousData
     });
 
     // Merge Mock Data if DB is empty (for demo)
-    const properties = (realProperties && realProperties.length > 0) ? realProperties : MOCK_PROPERTIES;
-
-    const filteredProperties = properties.filter(p => {
+    // Note: Filtering on mock data is removed in favor of DB truth, 
+    // but if we want fallback, we'd need complex logic. 
+    // For now, we assume DB usage or fallback to full mock if DB is empty.
+    const properties = (realProperties && realProperties.length > 0) ? realProperties : MOCK_PROPERTIES.filter(p => {
         const matchesTab = p.type === (activeTab === 'buy' ? 'sale' : 'rent');
         const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.location.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesTab && matchesSearch;
     });
+
+    // const filteredProperties = properties; // No longer needed as 'properties' is the result
 
     const formatPrice = (price, type) => {
         return new Intl.NumberFormat('en-TH', {
@@ -154,7 +173,7 @@ export default function RealEstateHub() {
 
                 {/* Property Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredProperties.map((property) => (
+                    {properties.map((property) => (
                         <Card key={property.id} className="group overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300">
                             <div className="relative h-64 overflow-hidden">
                                 <img

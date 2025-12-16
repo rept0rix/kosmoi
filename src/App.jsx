@@ -6,7 +6,7 @@ import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { usePageDirection } from '@/hooks/usePageDirection';
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { setupIframeMessaging } from './lib/iframe-messaging';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -38,6 +38,7 @@ import CalendarView from '@/pages/vendor/CalendarView';
 import MyBookings from '@/pages/MyBookings';
 import Marketplace from '@/pages/Marketplace';
 
+import RealEstateHub from '@/pages/RealEstateHub';
 import CommandCenter from '@/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
@@ -122,10 +123,17 @@ const AuthenticatedApp = () => {
             <Route path="/business" element={<Pages.Business />} />
 
             {Object.entries(Pages)
-              .filter(([path]) => path !== 'MapView') // Exclude MapView from standard routing
+              .filter(([path]) => path !== 'MapView')
+              .filter(([path]) => !['Wallet', 'ProviderDashboard', 'RealEstate', 'Experiences'].includes(path)) // Exclude Super App pages for manual routing
               .map(([path, Page]) => (
                 <Route key={path} path={`/${path.toLowerCase()}`} element={<Page />} />
               ))}
+
+            {/* Public Super App Routes */}
+            <Route path="/real-estate" element={<RealEstateHub />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/vendor-signup" element={<VendorSignup />} />
+            <Route path="/experiences" element={<Pages.Experiences />} />
 
             <Route path="/provider/:providerId" element={<ProviderProfile />} />
             <Route path="/chat/:workflowId" element={<Pages.AgentChat />} />
@@ -135,23 +143,21 @@ const AuthenticatedApp = () => {
             <Route path="/board-room" element={<BoardRoom />} />
 
             {/* Admin Routes (New Layout) */}
+            {/* Admin Routes (New Layout) */}
             <Route element={<ProtectedAdminRoute />}>
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<CommandCenter />} />
-                <Route path="overview" element={<AdminOverview />} />
+                <Route index element={<Navigate to="/admin/command-center" replace />} />
                 <Route path="command-center" element={<CommandCenter />} />
                 <Route path="board-room" element={<BoardRoom />} />
-
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="claims" element={<AdminClaims />} />
                 <Route path="agents" element={<AdminAgents />} />
                 <Route path="agents/:agentId" element={<AgentDetail />} />
                 <Route path="company" element={<AdminCompany />} />
                 <Route path="data" element={<AdminData />} />
-                <Route path="crm" element={<AdminCRM />} />
+                <Route path="crm" element={<Pages.CRMDashboard />} />
                 <Route path="evolution" element={<AdminEvolution />} />
                 <Route path="roadmap" element={<AdminRoadmap />} />
-                <Route path="logs" element={<SystemMonitor />} />
                 <Route path="canvas" element={<AdminCanvas />} />
                 <Route path="studio" element={<Studio />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
@@ -159,12 +165,13 @@ const AuthenticatedApp = () => {
               </Route>
             </Route>
 
+
             <Route element={<ProtectedUserRoute />}>
-              <Route path="/vendor-signup" element={<VendorSignup />} />
-              <Route path="/vendor" element={<VendorLite />} />
+              <Route path="/wallet" element={<Pages.Wallet />} />
+              <Route path="/provider-dashboard" element={<Pages.ProviderDashboard />} />
               <Route path="/vendor/calendar" element={<CalendarView />} />
               <Route path="/my-bookings" element={<MyBookings />} />
-              <Route path="/marketplace" element={<Marketplace />} />
+
             </Route>
 
             <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
@@ -189,7 +196,7 @@ const AuthenticatedApp = () => {
         </div>
 
       </div>
-    </LayoutWrapper>
+    </LayoutWrapper >
   );
 };
 

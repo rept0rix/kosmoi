@@ -1,48 +1,169 @@
-import React, { useEffect, useState } from 'react';
-import { AdminService } from '../../services/AdminService';
-import { StripeService } from '../../services/StripeService';
-import BusinessTable from '../../components/admin/BusinessTable';
-import { toast } from "@/components/ui/use-toast"; // Assuming toast exists, otherwise use alert
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../api/supabaseClient';
+import {
+    LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
-export default function AdminData() {
-    const [businesses, setBusinesses] = useState([]);
+const AdminData = () => {
     const [loading, setLoading] = useState(true);
+    const [mrrData, setMrrData] = useState([]);
+    const [userGrowthData, setUserGrowthData] = useState([]);
+    const [eventDistribution, setEventDistribution] = useState([]);
 
-    const loadBusinesses = async () => {
+    useEffect(() => {
+        fetchAnalytics();
+    }, []);
+
+    const fetchAnalytics = async () => {
         setLoading(true);
         try {
-            const data = await AdminService.getBusinesses();
-            setBusinesses(data);
-        } catch (e) {
-            console.error("Businesses Load Failed", e);
+            // Fetch all events for last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const { data, error } = await supabase
+                .from('analytics_events')
+                .select('*')
+                .gte('created_at', thirtyDaysAgo.toISOString())
+                .order('created_at');
+
+            if (error) throw error;
+
+            processCharts(data);
+
+        } catch (error) {
+            console.error("Error fetching analytics:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        loadBusinesses();
-    }, []);
+    const processCharts = (events) => {
+        // 1. Process MRR (Purchases)
+        const revenueByDay = {};
+        // 2. Process User Growth (Signups)
+        const signupsByDay = {};
+        // 3. Event Distribution
+        const eventCounts = {};
 
-    const handleAction = async (type, biz) => {
-        if (type === 'verify') {
-            await AdminService.toggleBusinessVerification(biz.id);
-            await loadBusinesses();
-        }
-        if (type === 'send_invoice') {
-            const linkData = await StripeService.createPaymentLink(biz.business_name, 'pro');
-            await StripeService.sendInvoice(biz.owner_email, linkData.url);
-            alert(`Invoice sent to ${biz.owner_email}\nLink: ${linkData.url}`);
-        }
+        events.forEach(event => {
+            const date = new Date(event.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            // MRR
+            if (event.event_name === 'purchase') {
+                const amount = event.properties?.value || 0;
+                revenueByDay[date] = (revenueByDay[date] || 0) + amount;
+            }
+
+            // Growth
+            if (event.event_name === 'signup') {
+                signupsByDay[date] = (signupsByDay[date] || 0) + 1;
+            }
+
+            // Dist
+            eventCounts[event.event_name] = (eventCounts[event.event_name] || 0) + 1;
+        });
+
+        // Convert to Arrays for Recharts
+        const mrrArray = Object.keys(revenueByDay).map(date => ({
+            date,
+            revenue: revenueByDay[date]
+        }));
+
+        const growthArray = Object.keys(signupsByDay).map(date => ({
+            date,
+            users: signupsByDay[date]
+        }));
+
+        const distArray = Object.keys(eventCounts).map(name => ({
+            name,
+            value: eventCounts[name]
+        }));
+
+        setMrrData(mrrArray);
+        setUserGrowthData(growthArray);
+        setEventDistribution(distArray);
     };
 
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+    if (loading) return <div className="p-10 text-center text-white">Loading Analytics Agent...</div>;
+
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-white">Data & Businesses</h1>
-                <p className="text-slate-400">Manage service providers and subscriptions.</p>
+        <div className="p-8 bg-slate-900 text-white min-h-screen overflow-y-auto">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-8">
+                Data & Analytics
+            </h1>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* MRR Chart */}
+                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+                    <h3 className="text-xl font-semibold mb-4 text-slate-200">Revenue Trend (30 Days)</h3>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={mrrData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                <XAxis dataKey="date" stroke="#94a3b8" />
+                                <YAxis stroke="#94a3b8" />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                                />
+                                <Legend />
+                                <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} activeDot={{ r: 8 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* User Growth */}
+                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+                    <h3 className="text-xl font-semibold mb-4 text-slate-200">New Signups</h3>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={userGrowthData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                <XAxis dataKey="date" stroke="#94a3b8" />
+                                <YAxis stroke="#94a3b8" />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                                />
+                                <Bar dataKey="users" fill="#3b82f6" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
             </div>
-            <BusinessTable businesses={businesses} onAction={handleAction} />
+
+            {/* Pie Chart */}
+            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg max-w-2xl mx-auto">
+                <h3 className="text-xl font-semibold mb-4 text-slate-200">Event Distribution</h3>
+                <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={eventDistribution}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                            >
+                                {eventDistribution.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         </div>
     );
-}
+};
+
+export default AdminData;

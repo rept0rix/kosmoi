@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { db } from '../api/supabaseClient';
+import { db, supabase } from '../api/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Store, Image as ImageIcon, BadgeCheck, Loader2, Upload, Link as LinkIcon, FileText, Mail, MapPin, User, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ export default function VendorSignup() {
         description: '',
         location: '',
         contact_info: '',
-        owner_name: ''
+        owner_name: '',
+        email: '',
+        password: ''
     });
 
     // Claim Form State
@@ -41,18 +43,37 @@ export default function VendorSignup() {
         e.preventDefault();
         setLoading(true);
         try {
-            const { error } = await db.entities.ServiceProvider.create({
-                ...formData,
-                status: 'new_lead',
-                average_rating: 0,
-                review_count: 0
+            // 1. Sign up the user
+            const { data: authData, error: authError } = await db.auth.signUp({
+                email: formData.email,
+                password: formData.password,
             });
-            if (error) throw error;
-            setSuccess(true);
-            setTimeout(() => navigate('/'), 3000);
+
+            if (authError) throw authError;
+
+            // 2. Create the Service Provider linked to the new user
+            if (authData.user) {
+                const { error: providerError } = await db.entities.ServiceProvider.create({
+                    business_name: formData.business_name,
+                    category: formData.category,
+                    description: formData.description,
+                    location: formData.location,
+                    owner_name: formData.owner_name,
+                    contact_info: formData.contact_info || formData.email, // Fallback to email if contact info is empty
+                    created_by: authData.user.id,
+                    status: 'new_lead',
+                    average_rating: 0,
+                    review_count: 0
+                });
+
+                if (providerError) throw providerError;
+
+                setSuccess(true);
+                setTimeout(() => navigate('/'), 3000);
+            }
         } catch (error) {
             console.error("Signup failed:", error);
-            alert("Failed to submit application.");
+            alert(`Failed to submit application: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -62,7 +83,7 @@ export default function VendorSignup() {
     const handleSearch = async () => {
         if (!claimSearch) return;
         setLoading(true);
-        const { data, error } = await db.from('service_providers')
+        const { data, error } = await supabase.from('service_providers')
             .select('id, business_name, location, category')
             .ilike('business_name', `%${claimSearch}%`) // Corrected logic
             .limit(5);
@@ -75,7 +96,7 @@ export default function VendorSignup() {
         if (!selectedBusiness || !claimerName || !claimerContact) return;
         setLoading(true);
         try {
-            const { error } = await db.from('business_claims').insert({
+            const { error } = await supabase.from('business_claims').insert({
                 business_id: selectedBusiness.id,
                 claimer_name: claimerName,
                 claimer_contact: claimerContact,
@@ -223,6 +244,7 @@ export default function VendorSignup() {
                                             />
                                         </div>
                                     </div>
+
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">שם בעל העסק</label>
                                         <div className="relative">
@@ -236,6 +258,36 @@ export default function VendorSignup() {
                                                 onChange={handleChange}
                                             />
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">אימייל</label>
+                                        <div className="relative">
+                                            <Mail className="absolute right-4 top-3.5 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                required
+                                                className="w-full pr-12 pl-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                                placeholder="your@email.com"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">סיסמה</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            required
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                            placeholder="בחר סיסמה חזקה"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                        />
                                     </div>
                                 </div>
 

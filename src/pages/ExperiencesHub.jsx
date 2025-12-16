@@ -54,14 +54,37 @@ const EXPERIENCES = [
     },
 ];
 
+import { supabase } from '@/api/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+
 export default function ExperiencesHub() {
     const [activeCategory, setActiveCategory] = useState('All');
 
     const categories = ['All', 'Adventure', 'Relaxation', 'Culture', 'Nature', 'Water Sports'];
 
+    // Fetch from DB
+    const { data: realExperiences, isLoading } = useQuery({
+        queryKey: ['experiences'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('experiences')
+                .select('*, image:image_url, reviews:reviews_count')
+                .eq('category', activeCategory === 'All' ? '*' : activeCategory);
+            // Note: simple filtering here, or client side. 
+            // Let's fetch ALL for client side filtering to match current behavior for simplicity
+
+            const { data: allData, error: allError } = await supabase.from('experiences')
+                .select('*, image:image_url, reviews:reviews_count');
+
+            if (allError) throw allError;
+            return allData;
+        }
+    });
+
+    const experiences = (realExperiences && realExperiences.length > 0) ? realExperiences : EXPERIENCES;
+
     const filteredExperiences = activeCategory === 'All'
-        ? EXPERIENCES
-        : EXPERIENCES.filter(e => e.category === activeCategory);
+        ? experiences
+        : experiences.filter(e => e.category === activeCategory);
 
     return (
         <div className="min-h-screen bg-white font-sans flex flex-col">
