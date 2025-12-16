@@ -55,6 +55,7 @@ import {
     TRANSLATOR_AGENT, GROWTH_AGENT, BUILD_AGENT, TEST_AGENT,
     SHIP_AGENT, OBSERVE_AGENT, IMPROVE_AGENT
 } from "./registry/AutomationAgents.js";
+import { OPTIMIZER_AGENT } from "./registry/OptimizerAgent.js";
 
 /**
  * The Central Registry of All Agents
@@ -123,7 +124,8 @@ export const agents = [
     TEST_AGENT,
     SHIP_AGENT,
     OBSERVE_AGENT,
-    IMPROVE_AGENT
+    IMPROVE_AGENT,
+    OPTIMIZER_AGENT
 ];
 
 // Helper to get agent by ID
@@ -162,6 +164,35 @@ export const syncAgentsWithDatabase = async () => {
         console.log("Agent sync complete.");
     } catch (err) {
         console.error("Error syncing agents:", err);
+    }
+};
+
+// Load dynamic prompts from database (The Plastic Brain)
+export const loadDynamicPrompts = async () => {
+    console.log("Loading dynamic prompts from database...");
+    try {
+        const { data, error } = await db.entities.AgentConfigs.select('*');
+        if (error) throw error;
+
+        let updateCount = 0;
+        if (data) {
+            data.forEach(config => {
+                const agent = agents.find(a => a.id === config.agent_id);
+                if (agent && config.system_prompt) {
+                    // OVERRIDE: Update the in-memory agent object
+                    if (agent.systemPrompt !== config.system_prompt) {
+                        agent.systemPrompt = config.system_prompt;
+                        console.log(`🧠 Neuro-Plasticity: Updated prompt for ${agent.name}`);
+                        updateCount++;
+                    }
+                }
+            });
+        }
+        console.log(`Dynamic prompt loading complete. ${updateCount} agents updated.`);
+        return updateCount;
+    } catch (err) {
+        console.error("Error loading dynamic prompts:", err);
+        return 0;
     }
 };
 
