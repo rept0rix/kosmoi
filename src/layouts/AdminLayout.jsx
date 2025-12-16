@@ -12,7 +12,8 @@ import {
     Activity,
     Target,
     Server,
-    Store
+    Store,
+    Map
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ export default function AdminLayout() {
                     <NavGroup title="System">
                         <NavItem to="/admin/infrastructure" icon={<Server />} label="Infrastructure" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/sitemap" icon={<Map />} label="Site Map / QA" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/company" icon={<Settings />} label="Company Settings" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>
                 </nav>

@@ -44,15 +44,13 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       // Allow all hosts - essential for Modal tunnel URLs
       allowedHosts: true,
+      cors: true,
       watch: {
         // Enable polling for better file change detection in containers
         usePolling: true,
         interval: 100, // Check every 100ms for responsive HMR
       },
-      hmr: {
-        protocol: 'wss',
-        clientPort: 443
-      }
+      // Removed forced HMR clientPort to allow auto-detection (better for hybrid local/ngrok)
     },
     resolve: {
       alias: {
