@@ -125,7 +125,8 @@ export class AgentService {
             meetingTitle: options.meetingTitle || 'Direct Chat',
             config: options.systemConfig || {},
             tasks: options.tasks || [],
-            images: options.images || []
+            images: options.images || [],
+            userId: this.userId // Pass userId explicitly for worker/service-role contexts
         };
 
         const replyData = await getAgentReply(this.config, this.history, context);

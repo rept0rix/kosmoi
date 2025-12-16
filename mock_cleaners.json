@@ -1,0 +1,62 @@
+[
+  {
+    "business_name": "Samui Sparkle Cleaning",
+    "description": "Reliable and thorough cleaning services for homes and villas.",
+    "price_range": "1500-3000 THB",
+    "location": "Bophut"
+  },
+  {
+    "business_name": "Island Shine Cleaning",
+    "description": "Professional cleaning services with eco-friendly products.",
+    "price_range": "1200-2500 THB",
+    "location": "Chaweng"
+  },
+  {
+    "business_name": "Tropical Cleaners",
+    "description": "Experienced cleaners providing top-notch service.",
+    "price_range": "1800-3500 THB",
+    "location": "Lamai"
+  },
+  {
+    "business_name": "Samui Home Cleaning",
+    "description": "Detailed cleaning for apartments and houses.",
+    "price_range": "1000-2000 THB",
+    "location": "Maenam"
+  },
+  {
+    "business_name": "Crystal Clean Samui",
+    "description": "High-quality cleaning services for a sparkling home.",
+    "price_range": "2000-4000 THB",
+    "location": "Bang Rak"
+  },
+  {
+    "business_name": "Paradise Cleaning Services",
+    "description": "Your trusted partner for a clean and healthy environment.",
+    "price_range": "1300-2800 THB",
+    "location": "Choeng Mon"
+  },
+  {
+    "business_name": "Coconut Cleaning Crew",
+    "description": "Local experts providing exceptional cleaning services.",
+    "price_range": "1600-3200 THB",
+    "location": "Huathanon"
+  },
+  {
+    "business_name": "Seaview Cleaning",
+    "description": "Affordable and reliable cleaning services for all budgets.",
+    "price_range": "900-1800 THB",
+    "location": "Nathon"
+  },
+  {
+    "business_name": "Angthong Cleaners",
+    "description": "Specialized cleaning services for villas and luxury homes.",
+    "price_range": "2500-5000 THB",
+    "location": "Lipa Noi"
+  },
+  {
+    "business_name": "Big Buddha Cleaning",
+    "description": "Eco-friendly cleaning solutions for a sustainable lifestyle.",
+    "price_range": "1400-2900 THB",
+    "location": "Plai Laem"
+  }
+]

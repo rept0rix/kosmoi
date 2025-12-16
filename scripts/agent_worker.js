@@ -495,10 +495,10 @@ async function main() {
                     currentAgentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
                 } else {
                     // Dynamic Load
-                    currentAgentConfig = agents.find(a => a.id === task.assigned_to) || agents.find(a => a.role === 'tech-lead-agent'); // Fallback
+                    currentAgentConfig = agents.find(a => a.id === task.assigned_to) || agents.find(a => a.id === 'tech-lead-agent'); // Fallback
                     if (!currentAgentConfig) {
                         console.warn(`⚠️ Unknown agent type '${task.assigned_to}'. Using default Tech Lead.`);
-                        currentAgentConfig = agents.find(a => a.role === 'tech-lead-agent'); // Super fallback
+                        currentAgentConfig = agents.find(a => a.id === 'tech-lead-agent'); // Super fallback
                     }
                     console.log(`🎭 Universal Worker adapting persona: ${currentAgentConfig.role}`);
 

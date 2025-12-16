@@ -1,0 +1,20 @@
+// Assuming a component named MassageList exists and needs the mock data
+import React from 'react';
+import mockData from './mock_massage_data';
+
+const MassageList = () => {
+  return (
+    <div>
+      {mockData.map((massage, index) => (
+        <div key={index}>
+          <h3>{massage.business_name}</h3>
+          <p>{massage.description}</p>
+          <p>Price Range: {massage.price_range}</p>
+          <p>Location: {massage.location}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default MassageList;

@@ -174,7 +174,8 @@ IMPORTANT: You are a helpful AI agent. You always output valid JSON.`,
       try {
         await db.entities.AgentLogs.create({
           agent_id: agent.id,
-          user_id: db.auth.isAuthenticated() ? (await db.auth.me())?.id : null,
+          // Use context.userId if provided (e.g. Worker Mode), otherwise try to fetch from Auth
+          user_id: context.userId || (db.auth.isAuthenticated() ? (await db.auth.me())?.id : null),
           prompt: prompt.slice(0, 1000), // Truncate
           response: text.slice(0, 2000), // Truncate
           metadata: {

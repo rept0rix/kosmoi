@@ -1,0 +1,15 @@
+// Assuming App.jsx is the main application file
+// Import the AboutUs component
+import AboutUs from './components/AboutUs';
+
+function App() {
+  return (
+    <>
+      {/* Other components */}
+      <AboutUs />
+      {/* More components */}
+    </>
+  );
+}
+
+export default App;
