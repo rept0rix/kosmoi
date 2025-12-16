@@ -25,7 +25,18 @@ export function useBoardRoom() {
     // Start Autonomous Engine
     useEffect(() => {
         CoreLoop.start();
-        return () => CoreLoop.stop();
+        // Start Meta-Learning (Plasticity)
+        // Dynamic import to avoid circular dependencies or loading heavy logic upfront
+        import('@/services/loops/OptimizerLoop').then(({ OptimizerLoop }) => {
+            OptimizerLoop.start(1000 * 60 * 60); // Run every hour
+        }).catch(err => console.error("Failed to load OptimizerLoop", err));
+
+        return () => {
+            CoreLoop.stop();
+            import('@/services/loops/OptimizerLoop').then(({ OptimizerLoop }) => {
+                OptimizerLoop.stop();
+            });
+        };
     }, []);
 
     const { user } = useAuth();
@@ -112,12 +123,20 @@ export function useBoardRoom() {
         });
     };
 
-    // Hot Reload Agents
+    // Hot Reload Agents & Load Dynamic Prompts
     useEffect(() => {
-        syncAgentsWithDatabase().then(() => {
-            console.log("Agents synced with database.");
+        const initAgents = async () => {
+            // 1. Sync default prompts to DB (ensure they exist)
+            await syncAgentsWithDatabase();
+
+            // 2. Load any overrides from DB (Neuro-Plasticity)
+            const { loadDynamicPrompts } = await import('@/services/agents/AgentRegistry');
+            await loadDynamicPrompts();
+
+            console.log("Agents initialized and synced.");
             setCompanyState(prev => ({ ...prev }));
-        });
+        };
+        initAgents();
     }, []);
 
     // Fetch Meetings
