@@ -34,15 +34,30 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    // Safety timeout to prevent infinite loading
+    const safetyTimer = setTimeout(() => {
+      console.warn("Auth check timed out, forcing load completion");
+      setIsLoadingAuth(false);
+      setIsLoadingPublicSettings(false);
+    }, 5000);
+
     try {
-      setIsLoadingPublicSettings(true); // Start loading
+      setIsLoadingPublicSettings(true);
       setAuthError(null);
 
-      // Simulate fetching public settings if needed, or just skip
-      // For now we assume the app is always accessible if authenticated
-      setAppPublicSettings({ public_settings: {} });
-      setIsLoadingPublicSettings(false); // Done loading settings
+      // 1. Optimistic Check: Get session from LocalStorage first
+      // This prevents the "Login Loop" where Login page sees session but AuthContext waits for server
+      const { data: { session } } = await db.auth.getSession();
+      if (session?.user) {
+        console.log("Hyperspeed/Optimistic Auth: Found session User");
+        setUser(session.user);
+        setIsAuthenticated(true);
+      }
 
+      setAppPublicSettings({ public_settings: {} });
+      setIsLoadingPublicSettings(false);
+
+      // 2. Strict / Server Verification (can happen in background or parallel)
       await checkUserAuth();
 
     } catch (error) {
@@ -53,6 +68,8 @@ export const AuthProvider = ({ children }) => {
       });
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
+    } finally {
+      clearTimeout(safetyTimer);
     }
   };
 

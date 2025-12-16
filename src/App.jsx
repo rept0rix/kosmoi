@@ -58,6 +58,7 @@ import AdminInfra from './pages/admin/AdminInfra';
 import AdminLogs from './pages/admin/AdminLogs';
 import AdminSchema from './pages/admin/AdminSchema';
 import AdminMemory from './pages/admin/AdminMemory';
+import AdminSitemap from '@/pages/admin/AdminSitemap';
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
@@ -177,6 +178,7 @@ const AuthenticatedApp = () => {
                 <Route path="studio" element={<Studio />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
                 <Route path="importer" element={<AdminImporter />} />
+                <Route path="sitemap" element={<AdminSitemap />} />
               </Route>
             </Route>
 
@@ -212,9 +214,9 @@ const AuthenticatedApp = () => {
 
         {/* KOSMOI INJECTION: Samui Speed Pass */}
         <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
-           <div className="pointer-events-auto">
-             <SpeedPassCard />
-           </div>
+          <div className="pointer-events-auto">
+            <SpeedPassCard />
+          </div>
         </div>
 
       </div>

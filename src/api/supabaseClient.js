@@ -671,13 +671,34 @@ export const supabaseHelpers = {
 }
 
 // Export REAL Supabase client for all standard usage
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-        persistSession: true, // Enable persistence
-        autoRefreshToken: true,
-        detectSessionInUrl: true
+// Export REAL Supabase client for all standard usage
+// Use a singleton pattern to prevent multiple instances during HMR
+const createSupabaseClient = () => {
+    return createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+            persistSession: true, // Enable persistence
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        }
+    });
+};
+
+let supabaseInstance;
+
+if (typeof window !== 'undefined') {
+    if (!window.__supabaseInstance) {
+        window.__supabaseInstance = createSupabaseClient();
     }
-});
+    supabaseInstance = window.__supabaseInstance;
+} else {
+    // Server-side or non-browser environment
+    if (!global.__supabaseInstance) {
+        global.__supabaseInstance = createSupabaseClient();
+    }
+    supabaseInstance = global.__supabaseInstance;
+}
+
+export const supabase = supabaseInstance;
 
 // Export db object with all helpers (Legacy / Custom implementation)
 export const db = {
