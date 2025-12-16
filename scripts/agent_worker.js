@@ -290,6 +290,38 @@ async function executeTool(toolName, payload) {
 
                 if (taskError) throw taskError;
                 return `Task Created Successfully: ${newTask.title} (ID: ${newTask.id})`;
+
+            // --- CRM TOOLS ---
+            case 'update_lead':
+                const updateRes = await workerSupabase
+                    .from('crm_leads')
+                    .update(payload.updates || payload) // Support {updates: {}} or directly {}
+                    .eq('id', payload.id || payload.lead_id);
+                if (updateRes.error) return "Error updating lead: " + updateRes.error.message;
+                return "Lead updated successfully.";
+
+            case 'insert_interaction':
+                const interactRes = await workerSupabase
+                    .from('crm_interactions')
+                    .insert([payload]);
+                if (interactRes.error) return "Error logging interaction: " + interactRes.error.message;
+                return "Interaction logged successfully.";
+
+            case 'get_lead':
+                const leadRes = await workerSupabase
+                    .from('crm_leads')
+                    .select('*')
+                    .eq('id', payload.id || payload.lead_id)
+                    .single();
+                if (leadRes.error) return "Error fetching lead: " + leadRes.error.message;
+                return JSON.stringify(leadRes.data);
+
+            case 'generate_email':
+                // Simple deterministic generation for now, or use LLM logic if we had access here.
+                // Since the agent IS an LLM, it should generate the content itself and just use 'insert_interaction'.
+                // But if it asks for a helper:
+                return `Subject: Hello from Kosmoi\n\nDear Lead,\n\nWe saw you are interested in... [Generated Content Stub]`;
+
             default:
                 return `Tool ${toolName} not supported in Worker Mode.`;
         }

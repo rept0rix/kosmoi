@@ -25,7 +25,11 @@ export const ProtectedAdminRoute = () => {
 
     if (!user || !adminEmail || user.email !== adminEmail) {
         console.warn(`Unauthorized Admin Access Attempt by: ${user?.email || 'Guest'}`);
-        // Redirect to 404 to hide existence, or home
+        // Redirect to login if not logged in, or home if logged in but not admin
+        if (!user) {
+            const returnUrl = encodeURIComponent(location.pathname + location.search);
+            return <Navigate to={`/login?returnUrl=${returnUrl}`} replace />;
+        }
         return <Navigate to="/" replace />;
     }
 
@@ -46,10 +50,8 @@ export const ProtectedUserRoute = () => {
 
     if (!user) {
         // Redirect to login, saving the location they tried to access
-        // Ideally this should trigger the Auth Modal, but detailed redirect logic 
-        // depends on your auth system. For now, we redirect to home or login page.
-        // If you have a specific /login route, use it. Otherwise, home.
-        return <Navigate to="/" state={{ from: location, authTrigger: true }} replace />;
+        const returnUrl = encodeURIComponent(location.pathname + location.search);
+        return <Navigate to={`/login?returnUrl=${returnUrl}`} replace />;
     }
 
     return <Outlet />;

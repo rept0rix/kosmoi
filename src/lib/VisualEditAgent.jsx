@@ -10,10 +10,15 @@ export default function VisualEditAgent() {
 	const layoutPresets = {
 		'grid-2': 'grid grid-cols-1 md:grid-cols-2 gap-4',
 		'grid-3': 'grid grid-cols-1 md:grid-cols-3 gap-4',
+		'grid-4': 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4',
 		'flex-row': 'flex flex-row items-center gap-4',
 		'flex-col': 'flex flex-col gap-4',
-		'card-container': 'p-6 bg-white rounded-xl shadow-sm border border-slate-200',
-		'hero-section': 'py-20 px-4 text-center bg-gradient-to-b from-blue-50 to-white'
+		'card-container': 'p-6 bg-white rounded-xl shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-800',
+		'hero-section': 'py-20 px-4 text-center bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-950',
+		'dashboard-shell': 'flex h-screen bg-gray-50 dark:bg-slate-950',
+		'sidebar-layout': 'w-64 border-r bg-white dark:bg-slate-900 dark:border-slate-800',
+		'feature-section': 'py-16 px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center',
+		'pricing-table': 'grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto'
 	};
 
 	// State and refs

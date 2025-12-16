@@ -30,6 +30,7 @@ import Team from './pages/Team';
 import CommandCenter from './pages/CommandCenter';
 import AgentChat from './pages/AgentChat';
 import CRMDashboard from './pages/admin/CRMDashboard'; // Added CRMDashboard import
+import AdminInfra from './pages/admin/AdminInfra'; // Added AdminInfra import
 import Blog from './pages/Blog';
 import BlogPostDetail from './pages/BlogPostDetail';
 import __Layout from './Layout.jsx';

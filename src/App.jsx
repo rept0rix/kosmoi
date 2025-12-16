@@ -47,11 +47,17 @@ import AdminClaims from '@/pages/admin/AdminClaims';
 import AdminAgents from '@/pages/admin/AdminAgents';
 import AgentDetail from '@/pages/admin/AgentDetail';
 import AdminCompany from '@/pages/admin/AdminCompany';
+import AdminBusinesses from '@/pages/admin/AdminBusinesses';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
 import AdminEvolution from './pages/admin/AdminEvolution';
+import AdminKanban from './pages/admin/AdminKanban';
 import AdminRoadmap from '@/pages/admin/AdminRoadmap';
-import AdminCanvas from '@/pages/admin/AdminCanvas';
+import AdminCanvas from './pages/admin/AdminCanvas';
+import AdminInfra from './pages/admin/AdminInfra';
+import AdminLogs from './pages/admin/AdminLogs';
+import AdminSchema from './pages/admin/AdminSchema';
+import AdminMemory from './pages/admin/AdminMemory';
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
@@ -59,6 +65,9 @@ import NotFound from '@/pages/NotFound';
 import LocalBrain from '@/pages/LocalBrain';
 import SystemMonitor from '@/components/dashboard/SystemMonitor';
 import ProviderProfile from '@/pages/ProviderProfile';
+
+// Speed Pass Injection
+import SpeedPassCard from '@/components/SpeedPassCard';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -133,6 +142,7 @@ const AuthenticatedApp = () => {
             <Route path="/real-estate" element={<RealEstateHub />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/vendor-signup" element={<VendorSignup />} />
+            <Route path="/login" element={<Pages.Login />} />
             <Route path="/experiences" element={<Pages.Experiences />} />
 
             <Route path="/provider/:providerId" element={<ProviderProfile />} />
@@ -142,7 +152,6 @@ const AuthenticatedApp = () => {
             <Route path="/command-center" element={<CommandCenter />} />
             <Route path="/board-room" element={<BoardRoom />} />
 
-            {/* Admin Routes (New Layout) */}
             {/* Admin Routes (New Layout) */}
             <Route element={<ProtectedAdminRoute />}>
               <Route path="/admin" element={<AdminLayout />}>
@@ -154,10 +163,16 @@ const AuthenticatedApp = () => {
                 <Route path="agents" element={<AdminAgents />} />
                 <Route path="agents/:agentId" element={<AgentDetail />} />
                 <Route path="company" element={<AdminCompany />} />
+                <Route path="businesses" element={<AdminBusinesses />} />
                 <Route path="data" element={<AdminData />} />
                 <Route path="crm" element={<Pages.CRMDashboard />} />
+                <Route path="logs" element={<AdminLogs />} />
                 <Route path="evolution" element={<AdminEvolution />} />
+                <Route path="schema" element={<AdminSchema />} />
+                <Route path="memory" element={<AdminMemory />} />
+                <Route path="tasks" element={<AdminKanban />} />
                 <Route path="roadmap" element={<AdminRoadmap />} />
+                <Route path="infrastructure" element={<AdminInfra />} />
                 <Route path="canvas" element={<AdminCanvas />} />
                 <Route path="studio" element={<Studio />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
@@ -193,6 +208,13 @@ const AuthenticatedApp = () => {
             <Route path="/health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+        </div>
+
+        {/* KOSMOI INJECTION: Samui Speed Pass */}
+        <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
+           <div className="pointer-events-auto">
+             <SpeedPassCard />
+           </div>
         </div>
 
       </div>

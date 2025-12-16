@@ -40,7 +40,7 @@ export const TECH_LEAD_AGENT = {
 TOOL: create_task { "title": "List Files", "description": "execute_command: ls -la", "assigned_to": "tech-lead-agent" }
 
 אל תנסה להשתמש ב-\`execute_command\` ישירות - זה ייחסם!`,
-    allowedTools: ["editor", "write_code", "read_file", "update_ui", "create_task"],
+    allowedTools: ["editor", "write_code", "read_file", "update_ui", "create_task", "create_payment_link"],
     memory: { type: "midterm", ttlDays: 365 },
     maxRuntimeSeconds: 3600,
     reportsTo: "cto-agent"

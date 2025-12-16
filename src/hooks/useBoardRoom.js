@@ -142,14 +142,23 @@ export function useBoardRoom() {
     // Fetch Meetings
     useEffect(() => {
         const fetchMeetings = async () => {
-            const { data, error } = await supabase.from('board_meetings').select('*').order('created_at', { ascending: false });
-            if (data) {
-                setMeetings(data);
-                if (data.length > 0 && !selectedMeeting) {
-                    setSelectedMeeting(data[0]);
+            try {
+                const { data, error } = await supabase.from('board_meetings').select('*').order('created_at', { ascending: false });
+                if (error) {
+                    throw error;
                 }
+                if (data) {
+                    setMeetings(data);
+                    if (data.length > 0 && !selectedMeeting) {
+                        setSelectedMeeting(data[0]);
+                    }
+                }
+            } catch (error) {
+                console.error("BOARD: Failed to fetch meetings", error);
+                toast({ title: "Connection Error", description: "Failed to load meetings. Please check your connection.", variant: "destructive" });
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
         fetchMeetings();
     }, []);

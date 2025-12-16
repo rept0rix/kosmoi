@@ -178,7 +178,7 @@ function BoardRoomContent() {
                                     setBookingDetails(details);
                                     setIsBookingOpen(true);
                                 }}
-                                className="max-w-5xl mx-auto w-full border-x border-gray-100 dark:border-slate-800 shadow-sm"
+                                className="max-w-3xl mx-auto w-full border-x border-gray-100 dark:border-slate-800 shadow-sm bg-white min-h-screen"
                             />
 
                             <BoardRoomInput
@@ -268,8 +268,11 @@ function BoardRoomContent() {
                 <BookingDialog
                     open={isBookingOpen}
                     onOpenChange={setIsBookingOpen}
-                    providerId={bookingDetails?.providerId || 'default'}
-                    serviceName={bookingDetails?.serviceName || 'Service'}
+                    provider={{
+                        id: bookingDetails?.providerId || 'default',
+                        business_name: bookingDetails?.providerName || 'Provider',
+                        category: bookingDetails?.serviceName || 'Service'
+                    }}
                     onBookingConfirmed={() => { }}
                 />
             </div>

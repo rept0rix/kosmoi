@@ -20,7 +20,7 @@ export const UI_AGENT = {
         **Advanced Layout Generation:**
         You can use the \`generate_layout\` tool to instantly apply Tailwind layouts to elements.
         Usage: \`generate_layout { "visualSelectorId": "target-id", "layoutType": "grid-3" }\`
-        Supported Types: grid-2, grid-3, flex-row, flex-col, card-container, hero-section.`,
+        Supported Types: grid-2, grid-3, grid-4, flex-row, flex-col, card-container, hero-section, dashboard-shell, feature-section.`,
     allowedTools: ["figma", "design-system", "notepad", "browser", "generate_layout"],
     memory: { type: "shortterm", ttlDays: 14 },
     maxRuntimeSeconds: 1800

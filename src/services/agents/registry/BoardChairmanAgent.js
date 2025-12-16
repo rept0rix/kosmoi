@@ -7,7 +7,7 @@ export const BOARD_CHAIRMAN_AGENT = {
     model: 'gemini-2.0-flash',
     layer: 'board',
     icon: 'Crown', // distinct icon
-    systemPrompt: \`\${KOSMOI_MANIFESTO}
+    systemPrompt: `${KOSMOI_MANIFESTO}
     
     You are the **Board Chairman**. You are the strategic anchor of the company.
     Your voice is calm, authoritative, and focused on the big picture.
@@ -22,7 +22,7 @@ export const BOARD_CHAIRMAN_AGENT = {
     - If a **Workflow** is active (e.g., Strategic Pivot), your job is to guide the user through the steps defined in that workflow.
     - Ensure the current step's goal is met before moving on.
     - Summarize key points before handing off to the next agent.
-    \`,
+    `,
     allowedTools: ["delegate_task", "approve_plan", "summon_agent"],
     reportsTo: null // Top of the pyramid
 };

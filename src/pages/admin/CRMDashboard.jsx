@@ -1,56 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { supabase } from '../../api/supabaseClient';
+import { SalesService } from '../../services/SalesService';
+import { Button } from "@/components/ui/button";
+import { Plus } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LeadDetailsDialog } from '../../components/crm/LeadDetailsDialog';
+import { toast } from "@/components/ui/use-toast";
 
-const CRMDashboard = () => {
+const CRMDashboard = ({ pipelineId }) => {
+    // ... existing wrapper not needed if we just export Internal as default or whatever
+    // But keeping existing structure.
+    return <CRMDashboardWrapper pipelineId={pipelineId} />;
+};
+
+export default function CRMDashboardWrapper({ pipelineId, isAddLeadOpen, setIsAddLeadOpen, refreshTrigger }) {
+    return (
+        <CRMDashboardInternal
+            pipelineId={pipelineId}
+            externalAddLead={{ isOpen: isAddLeadOpen, setIsOpen: setIsAddLeadOpen }}
+            refreshTrigger={refreshTrigger}
+        />
+    )
+}
+
+function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
     const [stages, setStages] = useState([]);
     const [leads, setLeads] = useState({});
     const [loading, setLoading] = useState(true);
+    const [selectedLead, setSelectedLead] = useState(null);
+
+    // Internal state if external is not provided
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+    const isAddLeadOpen = externalAddLead?.isOpen !== undefined ? externalAddLead.isOpen : internalIsOpen;
+    const setIsAddLeadOpen = externalAddLead?.setIsOpen || setInternalIsOpen;
+
+    const [newLead, setNewLead] = useState({ first_name: '', last_name: '', email: '', company: '', value: '' });
 
     // Fetch Pipeline and Stages
     useEffect(() => {
         fetchCRMData();
-    }, []);
+    }, [pipelineId, refreshTrigger]);
 
     const fetchCRMData = async () => {
         try {
             setLoading(true);
-            // 1. Get Stages (assuming 'General Sales' pipeline for now)
-            // To make dynamic: fetch pipelines first, let user select.
-            // Optimizing: fetching stages directly where pipeline name = 'General Sales' (or first one)
-            const { data: pipelineData } = await supabase.from('crm_pipelines').select('id').eq('name', 'General Sales').single();
-            const pipelineId = pipelineData?.id;
-
-            if (!pipelineId) {
-                console.error("Default pipeline not found");
-                return;
-            }
-
-            const { data: stagesData, error: stagesError } = await supabase
-                .from('crm_stages')
-                .select('*')
-                .eq('pipeline_id', pipelineId)
-                .order('position');
-
-            if (stagesError) throw stagesError;
-
-            // 2. Get Leads
-            const { data: leadsData, error: leadsError } = await supabase
-                .from('crm_leads')
-                .select('*');
-
-            if (leadsError) throw leadsError;
-
-            // Organize leads by stage
-            const leadsByStage = {};
-            stagesData.forEach(stage => {
-                leadsByStage[stage.id] = leadsData.filter(lead => lead.stage_id === stage.id);
-            });
-
-            setStages(stagesData);
+            const { stages, leadsByStage } = await SalesService.getPipelineData(pipelineId);
+            setStages(stages);
             setLeads(leadsByStage);
         } catch (error) {
             console.error("Error fetching CRM data:", error);
+            // toast({ title: "Error loading CRM", description: error.message, variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -67,83 +76,70 @@ const CRMDashboard = () => {
         const destStageId = destination.droppableId;
         const movedLead = leads[sourceStageId].find(l => l.id === draggableId);
 
+        if (!movedLead) return;
+
+        // Create new objects to avoid mutation
         const newSourceLeads = Array.from(leads[sourceStageId]);
+        const newDestLeads = sourceStageId === destStageId ? newSourceLeads : Array.from(leads[destStageId] || []);
+
+        // Remove from source
         newSourceLeads.splice(source.index, 1);
 
-        const newDestLeads = Array.from(leads[destStageId] || []); // Handle empty dest
+        // Add to destination
         if (sourceStageId === destStageId) {
-            newDestLeads.splice(source.index, 1); // If same col, remove first (already done above but clean var needed)
-            // actually if same col, newSourceLeads is mostly correct, just need insert
-            // simpler logic:
-            const updatedList = Array.from(leads[sourceStageId]);
-            const [removed] = updatedList.splice(source.index, 1);
-            updatedList.splice(destination.index, 0, removed);
-            setLeads({ ...leads, [sourceStageId]: updatedList });
+            newSourceLeads.splice(destination.index, 0, movedLead);
+            setLeads({ ...leads, [sourceStageId]: newSourceLeads });
         } else {
-            newDestLeads.splice(destination.index, 0, { ...movedLead, stage_id: destStageId });
+            const updatedLead = { ...movedLead, stage_id: destStageId };
+            newDestLeads.splice(destination.index, 0, updatedLead);
             setLeads({
                 ...leads,
                 [sourceStageId]: newSourceLeads,
                 [destStageId]: newDestLeads
             });
 
-            // Update DB
-            const { error } = await supabase
-                .from('crm_leads')
-                .update({ stage_id: destStageId })
-                .eq('id', draggableId);
-
-            if (error) {
+            // Update DB via Service
+            try {
+                await SalesService.updateLeadStage(draggableId, destStageId);
+            } catch (error) {
                 console.error("Failed to move lead:", error);
+                toast({ title: "Move failed", description: "Reverting changes...", variant: "destructive" });
                 fetchCRMData(); // Revert on error
             }
         }
     };
 
-    // Quick Add Lead (Demo feature)
-    const addDemoLead = async () => {
-        const firstName = prompt("Lead First Name:");
-        if (!firstName) return;
+    const handleAddLead = async () => {
+        if ((!newLead.first_name && !newLead.company) || !stages.length) {
+            toast({ title: "Missing Info", description: "Name or Company required", variant: "destructive" });
+            return;
+        }
 
-        // Default to first stage
-        const firstStage = stages[0];
-        if (!firstStage) return;
+        try {
+            const leadData = {
+                ...newLead,
+                stage_id: stages[0].id, // Default to first stage
+                source: 'manual',
+                status: 'new',
+                value: newLead.value ? parseFloat(newLead.value) : 0
+            };
 
-        const { data, error } = await supabase.from('crm_leads').insert({
-            first_name: firstName,
-            stage_id: firstStage.id,
-            source: 'manual',
-            status: 'new'
-        }).select().single();
+            await SalesService.createLead(leadData);
 
-        if (data) {
-            setLeads(prev => ({
-                ...prev,
-                [firstStage.id]: [...(prev[firstStage.id] || []), data]
-            }));
+            toast({ title: "Lead Created", description: `${newLead.first_name || newLead.company} added to pipeline.` });
+            setIsAddLeadOpen(false);
+            setNewLead({ first_name: '', last_name: '', email: '', company: '', value: '' });
+            fetchCRMData(); // Refresh board
+        } catch (error) {
+            console.error("Failed to create lead:", error);
+            toast({ title: "Error", description: "Failed to create lead.", variant: "destructive" });
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-white">Loading CRM...</div>;
+    if (loading && !stages.length) return <div className="p-10 text-center text-slate-400 animate-pulse">Loading Pipeline...</div>;
 
     return (
-        <div className="h-full flex flex-col bg-slate-900 text-white overflow-hidden">
-            {/* Header */}
-            <div className="p-6 border-b border-slate-700 flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        CRM Pipeline
-                    </h1>
-                    <p className="text-slate-400 text-sm">Manage your leads and deals.</p>
-                </div>
-                <button
-                    onClick={addDemoLead}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors"
-                >
-                    + New Lead
-                </button>
-            </div>
-
+        <div className="h-full flex flex-col bg-slate-900/50 text-white overflow-hidden rounded-xl border border-slate-800">
             {/* Kanban Board */}
             <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
                 <DragDropContext onDragEnd={onDragEnd}>
@@ -153,10 +149,10 @@ const CRMDashboard = () => {
                                 {/* Column Header */}
                                 <div className="p-4 border-b border-slate-700/50 flex justify-between items-center sticky top-0 bg-slate-800/90 rounded-t-xl backdrop-blur-sm z-10">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stage.color }}></div>
-                                        <span className="font-semibold">{stage.name}</span>
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stage.color || '#94a3b8' }}></div>
+                                        <span className="font-semibold text-slate-200">{stage.name}</span>
                                     </div>
-                                    <span className="bg-slate-700 text-xs px-2 py-1 rounded-full">
+                                    <span className="bg-slate-700 text-slate-300 text-xs px-2 py-1 rounded-full border border-slate-600">
                                         {leads[stage.id]?.length || 0}
                                     </span>
                                 </div>
@@ -167,7 +163,7 @@ const CRMDashboard = () => {
                                         <div
                                             {...provided.droppableProps}
                                             ref={provided.innerRef}
-                                            className={`flex-1 p-3 overflow-y-auto space-y-3 transition-colors ${snapshot.isDraggingOver ? 'bg-slate-700/30' : ''
+                                            className={`flex-1 p-3 overflow-y-auto space-y-3 transition-colors scrollbar-thin scrollbar-thumb-slate-700 ${snapshot.isDraggingOver ? 'bg-slate-700/30' : ''
                                                 }`}
                                         >
                                             {leads[stage.id]?.map((lead, index) => (
@@ -177,22 +173,27 @@ const CRMDashboard = () => {
                                                             ref={provided.innerRef}
                                                             {...provided.draggableProps}
                                                             {...provided.dragHandleProps}
-                                                            className={`p-4 bg-slate-700 rounded-lg shadow-sm border border-slate-600 hover:border-blue-500/50 group transition-all ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 rotate-2' : ''
+                                                            onClick={() => setSelectedLead(lead)}
+                                                            className={`p-4 bg-slate-700 rounded-lg shadow-sm border border-slate-600 hover:border-blue-500/50 group transition-all cursor-pointer ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 rotate-2 z-50' : 'hover:-translate-y-1'
                                                                 }`}
+                                                            style={provided.draggableProps.style}
                                                         >
                                                             <div className="flex justify-between items-start mb-2">
-                                                                <h3 className="font-medium text-slate-100">{lead.first_name} {lead.last_name}</h3>
-                                                                {lead.value && (
-                                                                    <span className="text-xs font-mono text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">
-                                                                        ฿{lead.value}
+                                                                <h3 className="font-medium text-slate-100 truncate pr-2">
+                                                                    {lead.business_name || lead.company || `${lead.first_name} ${lead.last_name}`}
+                                                                </h3>
+                                                                {lead.value > 0 && (
+                                                                    <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
+                                                                        ฿{lead.value.toLocaleString()}
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-xs text-slate-400 mb-3 truncate">{lead.company || lead.email || 'No contact info'}</p>
+                                                            <p className="text-xs text-slate-400 mb-3 truncate">
+                                                                {lead.email || 'No email provided'}
+                                                            </p>
 
-                                                            <div className="flex gap-2 text-[10px] text-slate-500 uppercase tracking-wider">
-                                                                <span>{lead.source}</span>
-                                                                {/* Could add days in stage here */}
+                                                            <div className="flex justify-between items-center text-[10px] text-slate-500 uppercase tracking-wider">
+                                                                <span className="bg-slate-800 px-1.5 py-0.5 rounded">{lead.source}</span>
                                                             </div>
                                                         </div>
                                                     )}
@@ -207,8 +208,73 @@ const CRMDashboard = () => {
                     </div>
                 </DragDropContext>
             </div>
+
+            {/* Add Lead Dialog */}
+            <Dialog open={isAddLeadOpen} onOpenChange={setIsAddLeadOpen}>
+                <DialogContent className="bg-slate-900 border-slate-800 text-white">
+                    <DialogHeader>
+                        <DialogTitle>Add New Lead</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>First Name</Label>
+                                <Input
+                                    value={newLead.first_name}
+                                    onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
+                                    className="bg-slate-800 border-slate-700"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Last Name</Label>
+                                <Input
+                                    value={newLead.last_name}
+                                    onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
+                                    className="bg-slate-800 border-slate-700"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Company / Business Name</Label>
+                            <Input
+                                value={newLead.company}
+                                onChange={e => setNewLead({ ...newLead, company: e.target.value })}
+                                className="bg-slate-800 border-slate-700"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input
+                                value={newLead.email}
+                                onChange={e => setNewLead({ ...newLead, email: e.target.value })}
+                                className="bg-slate-800 border-slate-700"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Estimated Value (฿)</Label>
+                            <Input
+                                type="number"
+                                value={newLead.value}
+                                onChange={e => setNewLead({ ...newLead, value: e.target.value })}
+                                className="bg-slate-800 border-slate-700"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddLeadOpen(false)} className="border-slate-700 hover:bg-slate-800 text-slate-200">Cancel</Button>
+                        <Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700 text-white">Create Lead</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Lead Details Dialog */}
+            <LeadDetailsDialog
+                lead={selectedLead}
+                isOpen={!!selectedLead}
+                onClose={() => setSelectedLead(null)}
+                onUpdate={fetchCRMData}
+                allStages={stages}
+            />
         </div>
     );
 };
-
-export default CRMDashboard;

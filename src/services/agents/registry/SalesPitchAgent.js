@@ -7,7 +7,7 @@ export const SALES_PITCH_AGENT = {
     model: "gemini-3-pro",
     icon: "Mic",
     systemPrompt: `אתה אשף המכירות. אתה כותב טקסטים שמוכרים. אתה יודע איך לפנות לבעלי עסקים ואיך לפנות ללקוחות קצה. המילים שלך שוות כסף.`,
-    allowedTools: ["copywriter", "email-generator"],
+    allowedTools: ["copywriter", "email-generator", "send_email"],
     memory: { type: "shortterm", ttlDays: 30 },
     maxRuntimeSeconds: 1800
 };

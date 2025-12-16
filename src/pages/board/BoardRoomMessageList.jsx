@@ -109,24 +109,25 @@ export default function BoardRoomMessageList({
                                         })()}
                                     </div>
                                 ) : (
-                                    <div className={`p-5 rounded-2xl text-base shadow-glass backdrop-blur-md leading-relaxed ${isUser
-                                        ? 'bg-primary text-primary-foreground rounded-tr-none shadow-neon'
+                                    <div className={`p-6 rounded-3xl text-lg shadow-sm leading-relaxed tracking-wide ${isUser
+                                        ? 'bg-blue-600 text-white rounded-tr-md shadow-md'
                                         : msg.type === 'task_created'
-                                            ? 'bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-300 rounded-tl-none'
+                                            ? 'bg-emerald-50 border border-emerald-100 text-emerald-900 rounded-tl-md'
                                             : msg.type === 'proposal'
-                                                ? 'bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 rounded-tl-none'
-                                                : 'bg-card/60 border border-white/10 text-card-foreground rounded-tl-none'
+                                                ? 'bg-indigo-50 border border-indigo-100 text-indigo-900 rounded-tl-md'
+                                                : 'bg-white border border-gray-100 text-gray-800 rounded-tl-md shadow-sm'
                                         }`}>
                                         <ReactMarkdown
                                             remarkPlugins={[remarkGfm]}
                                             components={{
                                                 img: ({ node, ...props }) => (
-                                                    <img {...props} className="max-w-full h-auto rounded-lg shadow-md my-2 border border-white/10" />
+                                                    <img {...props} className="max-w-full h-auto rounded-xl shadow-lg my-3" />
                                                 ),
+                                                p: ({ node, ...props }) => <p {...props} className="mb-2 last:mb-0" />,
                                                 code({ node, className, children, ...props }) {
                                                     const match = /language-(\w+)/.exec(className || '')
                                                     return match ? (
-                                                        <pre className="p-2 rounded-md bg-black/50 text-white overflow-x-auto text-xs border border-white/10">
+                                                        <pre className="p-4 rounded-xl bg-gray-900 text-gray-50 overflow-x-auto text-sm my-3 font-mono border border-gray-800">
                                                             <code className={className} {...props}>
                                                                 {children}
                                                             </code>
