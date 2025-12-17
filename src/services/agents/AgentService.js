@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { db } from "../../api/supabaseClient.js";
+import { db, supabase } from "../../api/supabaseClient.js";
 import { ToolRegistry } from "../tools/ToolRegistry.js";
 import { getAgentReply } from "./AgentBrain.js";
 
@@ -23,7 +23,8 @@ console.log("AgentService Module Loaded. Tools Registered:", ToolRegistry.getToo
  * Now includes Safety Middleware.
  */
 export async function toolRouter(toolName, payload, options = {}) {
-    const { userId, agentId } = options;
+    const { userId, agentId, dbClient } = options;
+    const client = dbClient || supabase;
 
     // 🛡️ SAFETY MIDDLEWARE: Intercept sensitive tools
     const SENSITIVE_TOOLS = ['send_email', 'create_payment_link', 'execute_command', 'write_file', 'write_code'];
@@ -58,7 +59,66 @@ Approval ID: ${approvalData.id}`;
             }
         }
     }
+    // --- CONTEXT ENGINEERING TOOLS ---
+    if (toolName === 'save_skill') {
+        try {
+            const { category, tags, problem, solution, confidence } = payload;
 
+            // Validate
+            if (!problem || !solution) return "Error: problem and solution are required.";
+
+            const { data, error } = await client
+                .from('agent_skills')
+                .insert([{
+                    category: category || 'general',
+                    trigger_tags: tags || [],
+                    problem_pattern: problem,
+                    solution_pattern: solution,
+                    confidence: confidence || 0.8,
+                    created_by: userId
+                }])
+                .select();
+
+            if (error) throw error;
+            return `Skill Saved: ${data[0].id}`;
+        } catch (e) {
+            console.error("Failed to save skill:", e);
+            return "Error saving skill: " + e.message;
+        }
+    }
+
+    if (toolName === 'search_skills') {
+        try {
+            const { query, tags } = payload;
+            let queryBuilder = client.from('agent_skills').select('*').limit(5);
+
+            // Simple search logic
+            if (tags && tags.length > 0) {
+                // Postgres array overlap: tags && trigger_tags
+                queryBuilder = queryBuilder.overlaps('trigger_tags', tags);
+            }
+
+            // Text search (simple ILIKE for now, ideally vector search later)
+            if (query) {
+                queryBuilder = queryBuilder.or(`problem_pattern.ilike.%${query}%,solution_pattern.ilike.%${query}%`);
+            }
+
+            const { data, error } = await queryBuilder;
+
+            if (error) throw error;
+            if (!data || data.length === 0) return "No relevant skills found.";
+
+            return JSON.stringify(data.map(s => ({
+                problem: s.problem_pattern,
+                solution: s.solution_pattern,
+                confidence: s.confidence
+            })));
+
+        } catch (e) {
+            console.error("Failed to search skills:", e);
+            return "Error searching skills: " + e.message;
+        }
+    }
     // --- OPTIMIZER TOOLS ---
     if (toolName === 'propose_optimization') {
         try {

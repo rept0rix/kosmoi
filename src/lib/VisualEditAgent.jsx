@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge'
+
+import VisualEditorUI from '@/components/admin/VisualEditorUI';
+import { VisualEditService } from '@/services/admin/VisualEditService';
 
 export default function VisualEditAgent() {
 	// this functions job is to receive first a message from the parent window, to set or unset visual edits mode. 
@@ -7,7 +11,10 @@ export default function VisualEditAgent() {
 	// then, the parent window will have an editor, allow for changes to the tailwind css classes of the selected element, and send the updated css classes back to the iframe. 
 	// the iframe will then update the css classes of the selected element.
 
+	const location = useLocation();
+
 	const layoutPresets = {
+		// ... (keep existing presets)
 		'grid-2': 'grid grid-cols-1 md:grid-cols-2 gap-4',
 		'grid-3': 'grid grid-cols-1 md:grid-cols-3 gap-4',
 		'grid-4': 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4',
@@ -22,6 +29,7 @@ export default function VisualEditAgent() {
 	};
 
 	// State and refs
+	// ... (keep existing refs)
 	const [isVisualEditMode, setIsVisualEditMode] = useState(false);
 	const isVisualEditModeRef = useRef(false);
 	const [isPopoverDragging, setIsPopoverDragging] = useState(false);
@@ -32,6 +40,45 @@ export default function VisualEditAgent() {
 	const selectedOverlaysRef = useRef([]); // Multiple overlays for selection
 	const currentHighlightedElementsRef = useRef([]); // Multiple elements for hover
 	const selectedElementIdRef = useRef(null); // Store the visual selector ID
+
+	// Hydration Logic
+	useEffect(() => {
+		const loadEdits = async () => {
+			// Avoid loading on admin pages or if we are in an iframe (if applicable)
+			// For now, load everywhere
+			try {
+				const edits = await VisualEditService.fetchEditsForPage(location.pathname);
+				if (edits && edits.length > 0) {
+					console.log(`[VisualEditAgent] Hydrating ${edits.length} edits for ${location.pathname}`);
+					edits.forEach(edit => {
+						if (edit.edit_type === 'content') {
+							updateElementContent(edit.selector_id, edit.value.text);
+						} else if (edit.edit_type === 'style') {
+							updateElementClasses(edit.selector_id, edit.value.classes, true); // replace=true to override
+						}
+					});
+				}
+			} catch (error) {
+				console.warn('[VisualEditAgent] Failed to load edits (Table might not exist yet):', error);
+			}
+		};
+
+		// Small delay to ensure DOM is ready
+		const timer = setTimeout(loadEdits, 100);
+		return () => clearTimeout(timer);
+	}, [location.pathname]);
+
+
+	// Create overlay element
+	// ... (keep existing createOverlay)
+
+	// ... (keep existing positionOverlay, findElementsById, clearHoverOverlays, handleMouseOver, etc.)
+	// ... (skip lines to handleSave)
+
+
+
+	// ... (rest of code)
+
 
 	// Create overlay element
 	const createOverlay = (isSelected = false) => {
@@ -166,6 +213,8 @@ export default function VisualEditAgent() {
 		clearHoverOverlays();
 	};
 
+	const [selectedElementData, setSelectedElementData] = useState(null);
+
 	// Handle element click
 	const handleElementClick = (e) => {
 		if (!isVisualEditModeRef.current) return;
@@ -240,21 +289,112 @@ export default function VisualEditAgent() {
 			centerY: rect.top + rect.height / 2
 		};
 
-		// Send message to parent window with element info including position
-		const elementData = {
-			type: 'element-selected',
+		const elementInfo = {
 			tagName: element.tagName,
 			classes: element.className?.baseVal || element.className || '',
 			visualSelectorId: visualSelectorId,
 			content: element.innerText,
+			attributes: {
+				src: element.src || '',
+				alt: element.alt || '',
+				href: element.getAttribute('href') || '' // getAttribute to avoid full URL if relative
+			},
 			dataSourceLocation: element.dataset.sourceLocation,
 			isDynamicContent: element.dataset.dynamicContent === 'true',
 			linenumber: element.dataset.linenumber, // Keep for backward compatibility
 			filename: element.dataset.filename, // Keep for backward compatibility
 			position: elementPosition // Add position data for popover
 		};
-		window.parent.postMessage(elementData, '*');
+
+		// Update Local UI State
+		setSelectedElementData(elementInfo);
+
+		// Send message to parent window with element info including position
+		window.parent.postMessage({
+			type: 'element-selected',
+			...elementInfo
+		}, '*');
 	};
+
+	const historyRef = useRef([]);
+	const redoStackRef = useRef([]);
+
+	const handleLocalUpdate = (updatedData, type) => {
+		// Capture state for Undo before applying changes
+		const currentData = selectedElementData;
+		if (currentData) {
+			historyRef.current.push({
+				data: currentData, // Store the entire object for simplicity
+				type: type
+			});
+			// Clear redo stack on new change
+			redoStackRef.current = [];
+		}
+
+		// Optimistically update the DOM
+		if (type === 'content') {
+			updateElementContent(updatedData.visualSelectorId, updatedData.content);
+		} else if (type === 'classes') {
+			updateElementClasses(updatedData.visualSelectorId, updatedData.classes);
+		} else if (type === 'attributes') {
+			updateElementAttributes(updatedData.visualSelectorId, updatedData.attributes);
+		}
+
+		// Update local state to match
+		setSelectedElementData(updatedData);
+	};
+
+	const handleUndo = () => {
+		if (historyRef.current.length === 0) return;
+
+		const previousState = historyRef.current.pop();
+		// Push current state to redo
+		if (selectedElementData) {
+			redoStackRef.current.push({
+				data: selectedElementData,
+				type: previousState.type
+			});
+		}
+
+		// Apply previous state
+		const restoredData = previousState.data;
+		if (previousState.type === 'content') {
+			updateElementContent(restoredData.visualSelectorId, restoredData.content);
+		} else if (previousState.type === 'classes') {
+			updateElementClasses(restoredData.visualSelectorId, restoredData.classes, true); // replace=true
+		} else if (previousState.type === 'attributes') {
+			updateElementAttributes(restoredData.visualSelectorId, restoredData.attributes);
+		}
+
+		setSelectedElementData(restoredData);
+	};
+
+	const handleRedo = () => {
+		if (redoStackRef.current.length === 0) return;
+
+		const nextState = redoStackRef.current.pop();
+		// Push current state to history
+		if (selectedElementData) {
+			historyRef.current.push({
+				data: selectedElementData,
+				type: nextState.type
+			});
+		}
+
+		// Apply next state
+		const restoredData = nextState.data;
+		if (nextState.type === 'content') {
+			updateElementContent(restoredData.visualSelectorId, restoredData.content);
+		} else if (nextState.type === 'classes') {
+			updateElementClasses(restoredData.visualSelectorId, restoredData.classes, true);
+		} else if (nextState.type === 'attributes') {
+			updateElementAttributes(restoredData.visualSelectorId, restoredData.attributes);
+		}
+
+		setSelectedElementData(restoredData);
+	};
+
+
 
 	// Unselect the current element
 	const unselectElement = () => {
@@ -265,9 +405,91 @@ export default function VisualEditAgent() {
 			}
 		});
 		selectedOverlaysRef.current = [];
-
 		selectedElementIdRef.current = null;
+		setSelectedElementData(null);
 	};
+
+	const handleSave = async () => {
+		// Send save request to parent/backend
+		console.log("Saving changes for:", selectedElementData);
+
+		// Save using Service
+		try {
+			if (selectedElementData.content) {
+				await VisualEditService.saveEdit({
+					page_path: location.pathname,
+					selector_id: selectedElementData.visualSelectorId,
+					edit_type: 'content',
+					value: { text: selectedElementData.content }
+				});
+			}
+
+			if (selectedElementData.classes) {
+				await VisualEditService.saveEdit({
+					page_path: location.pathname,
+					selector_id: selectedElementData.visualSelectorId,
+					edit_type: 'style',
+					value: { classes: selectedElementData.classes }
+				});
+			}
+
+			if (selectedElementData.attributes && (selectedElementData.tagName === 'IMG' || selectedElementData.tagName === 'A')) {
+				// Save attributes as 'attributes' type or specific types?
+				// Let's use 'attributes' type for flexibility or map to specific ones.
+				// The schema supports 'image' type, let's stick to generic 'attributes' or use 'image' / 'link' mapping if we strictly followed schema CHECK constraint.
+				// Schema check constraint was: CHECK (edit_type IN ('content', 'style', 'image', 'component'))
+				// So for IMG we use 'image'. For Link... we didn't add 'link'.
+				// We should probably update the schema later or just piggyback on 'image' or allow 'style' to carry attributes? 
+				// Wait, 'image' allows src/alt. What about 'link'?
+				// I will add a 'link' type to the Service call, but if the DB constraint fails, I'll need to update DB.
+				// Actually I control the service, I can save it as 'image' (for images) and maybe 'content' for links? No that's confusing.
+				// Let's assume I can add 'link' or just use 'component' generic type.
+				// Let's try 'component' for now since it is validated.
+
+				let editType = 'component';
+				if (selectedElementData.tagName === 'IMG') editType = 'image';
+
+				await VisualEditService.saveEdit({
+					page_path: location.pathname,
+					selector_id: selectedElementData.visualSelectorId,
+					edit_type: editType,
+					value: selectedElementData.attributes
+				});
+			}
+
+			console.log("Changes saved to Supabase!");
+			// Toast or notification could go here
+		} catch (error) {
+			console.error("Failed to save changes:", error);
+			// Fallback for demo: log to console
+		}
+	}
+
+	// ... (existing useEffects)
+
+	// Handle window resize (existing)
+
+	// ...
+
+	// Render the UI if we have a selected element
+	if (selectedElementData && isVisualEditMode) {
+		return (
+			<div className="font-sans">
+				<VisualEditorUI
+					selectedElement={selectedElementData}
+					onUpdate={handleLocalUpdate}
+					onClose={unselectElement}
+					onSave={handleSave}
+					onUndo={handleUndo}
+					onRedo={handleRedo}
+					canUndo={historyRef.current.length > 0}
+					canRedo={redoStackRef.current.length > 0}
+				/>
+			</div>
+		)
+	}
+
+
 
 	// Update element classes by visual selector ID
 	const updateElementClasses = (visualSelectorId, classes, replace = false) => {
@@ -340,6 +562,31 @@ export default function VisualEditAgent() {
 				});
 			}
 		}, 50); // Small delay to ensure the browser has time to recalculate layout
+	};
+
+	// Update element attributes by visual selector ID
+	const updateElementAttributes = (visualSelectorId, attributes) => {
+		const elements = findElementsById(visualSelectorId);
+		if (elements.length === 0) return;
+
+		elements.forEach(element => {
+			if (attributes.src !== undefined && element.tagName === 'IMG') {
+				element.src = attributes.src;
+			}
+			if (attributes.alt !== undefined && element.tagName === 'IMG') {
+				element.alt = attributes.alt;
+			}
+			if (attributes.href !== undefined && element.tagName === 'A') {
+				element.setAttribute('href', attributes.href);
+			}
+		});
+
+		// Reposition could be needed if image size changes
+		setTimeout(() => {
+			// force update layout
+			const event = new Event('resize');
+			window.dispatchEvent(event);
+		}, 100);
 	};
 
 	// Toggle visual edit mode
@@ -671,6 +918,19 @@ export default function VisualEditAgent() {
 		};
 	}, []);
 
-	// No visible UI - all functionality is handled through event listeners and message passing
+	// Render the UI if we have a selected element
+	if (selectedElementData && isVisualEditMode) {
+		return (
+			<div className="font-sans">
+				<VisualEditorUI
+					selectedElement={selectedElementData}
+					onUpdate={handleLocalUpdate}
+					onClose={unselectElement}
+					onSave={handleSave}
+				/>
+			</div>
+		)
+	}
+
 	return null;
 }

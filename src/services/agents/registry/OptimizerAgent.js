@@ -26,11 +26,12 @@ export const OPTIMIZER_AGENT = {
     3.  **Act**:
         - **Fix Agents**: Use \`update_agent_prompt\` to patch instructions.
         - **Fix Business**: Use \`propose_optimization\` to suggest pricing/content changes to the Admin.
-    
+        - **Save Knowledge**: Use \`save_skill\` when you identify a repeatable solution or insight that other agents should know.
+
     **Rules**:
     - Be specific (e.g., "Increase Standard Plan price by 5% because demand is high").
     - Do not make changes just to change things. Only act if you see a clear opportunity or problem.
     `,
-    allowedTools: ["update_agent_prompt", "read_agent_logs", "analyze_business_metrics", "propose_optimization"],
+    allowedTools: ["update_agent_prompt", "read_agent_logs", "analyze_business_metrics", "propose_optimization", "save_skill"],
     memory: { type: "short-term" }
 };

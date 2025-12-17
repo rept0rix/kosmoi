@@ -20,6 +20,70 @@ import {
 
 import { useAnalytics } from '@/services/useAnalytics';
 
+const sitemapData = [
+    {
+        title: "Overview",
+        icon: Layout,
+        pages: [
+            { name: "Command Center", path: "/admin/command-center", status: "prod" },
+            { name: "Board Room", path: "/admin/board-room", status: "prod" },
+            { name: "Admin Dashboard", path: "/admin", status: "prod" },
+        ]
+    },
+    {
+        title: "Operations",
+        icon: Store,
+        pages: [
+            { name: "Businesses", path: "/admin/businesses", status: "prod" },
+            { name: "Users", path: "/admin/users", status: "prod" },
+            { name: "CRM / Leads", path: "/admin/crm", status: "dev" },
+            { name: "Platform Analytics", path: "/admin/data", status: "dev" },
+        ]
+    },
+    {
+        title: "Intelligence",
+        icon: Bot,
+        pages: [
+            { name: "Optimizer Agent", path: "/admin/optimizer", status: "dev" },
+            { name: "Workforce", path: "/admin/agents", status: "prod" },
+            { name: "Agent Studio", path: "/admin/studio", status: "prod" },
+            { name: "Local Brain", path: "/local-brain", status: "prod" },
+        ]
+    },
+    {
+        title: "System",
+        icon: Server,
+        pages: [
+            { name: "Infrastructure", path: "/admin/infrastructure", status: "prod" },
+            { name: "System Logs", path: "/admin/logs", status: "prod" },
+            { name: "Site Map / QA", path: "/admin/sitemap", status: "prod" },
+            { name: "Company Settings", path: "/admin/company", status: "prod" },
+            { name: "Diagnostics", path: "/diagnostics", status: "dev" },
+        ]
+    },
+    {
+        title: "Public Pages",
+        icon: Home,
+        pages: [
+            { name: "Home", path: "/", status: "prod" },
+            { name: "About Us", path: "/about", status: "prod" },
+            { name: "Use Cases", path: "/use-cases", status: "prod" },
+            { name: "Pricing", path: "/pricing", status: "prod" },
+            { name: "Contact", path: "/contact", status: "prod" },
+            { name: "Blog", path: "/blog", status: "prod" },
+        ]
+    },
+    {
+        title: "Legal",
+        icon: Shield,
+        pages: [
+            { name: "Terms of Service", path: "/legal/terms", status: "prod" },
+            { name: "Privacy Policy", path: "/legal/privacy", status: "prod" },
+            { name: "Accessibility", path: "/legal/accessibility", status: "prod" },
+        ]
+    }
+];
+
 export default function AdminSitemap() {
     useAnalytics('Admin_Sitemap');
 
