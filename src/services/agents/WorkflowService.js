@@ -46,6 +46,16 @@ export const WORKFLOWS = {
             { role: 'sales-pitch', label: 'Execution: Send Sales Email' },
             { role: 'qa', label: 'Verification: Confirm Payment' }
         ]
+    },
+    GENERATE_LEADS: {
+        id: 'generate_leads',
+        name: '🤖 CRM Population Protocol',
+        description: 'Autonomous Lead Generation & Qualification',
+        steps: [
+            { role: 'sales-pitch', label: 'Prospecting: Find Leads' },
+            { role: 'sales-pitch', label: 'Data Entry: Create CRM Records' },
+            { role: 'sales-pitch', label: 'Outreach: Draft Initial Emails' }
+        ]
     }
 };
 

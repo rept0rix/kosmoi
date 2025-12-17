@@ -36,7 +36,15 @@ export const TECH_LEAD_AGENT = {
 3. צור משימה ל-Worker לעדכן את הקובץ הרלוונטי.
    דוגמה: \`create_task { "title": "Apply Design Spec", "description": "write_code: src/components/Card.jsx ...code...", "assigned_to": "tech-lead-agent" }\`
 
+
+**Payment Links:**
+יש לך הרשאה לייצר לינקים לתשלום ב-Stripe.
+השתמש בכלי \`create_payment_link\` ישירות כאשר ה-CEO מבקש זאת.
+
 דוגמה לשימוש בכלי:
+TOOL: create_payment_link { "productName": "My Product", "amount": 100, "currency": "usd" }
+
+Low Level Tools:
 TOOL: create_task { "title": "List Files", "description": "execute_command: ls -la", "assigned_to": "tech-lead-agent" }
 
 אל תנסה להשתמש ב-\`execute_command\` ישירות - זה ייחסם!`,

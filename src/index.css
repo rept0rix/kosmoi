@@ -170,4 +170,24 @@ button:focus-visible {
   h6 {
     font-family: 'Outfit', sans-serif;
   }
+
+  .glass-card {
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  
+  .glass-panel {
+    @apply bg-slate-950/80 backdrop-blur-md border border-slate-800;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-amber-200 to-yellow-500 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-blue {
+    @apply bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent;
+  }
 }
