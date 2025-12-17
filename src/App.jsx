@@ -168,7 +168,7 @@ const AuthenticatedApp = () => {
                 <Route path="businesses" element={<AdminBusinesses />} />
                 <Route path="data" element={<AdminData />} />
                 <Route path="optimizer" element={<AdminOptimizer />} />
-                <Route path="crm" element={<Pages.CRMDashboard />} />
+                <Route path="crm" element={<AdminCRM />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="evolution" element={<AdminEvolution />} />
                 <Route path="schema" element={<AdminSchema />} />
@@ -235,9 +235,9 @@ function App() {
           <Router>
             <NavigationTracker />
             <AuthenticatedApp />
+            <VisualEditAgent />
           </Router>
           <Toaster />
-          <VisualEditAgent />
         </QueryClientProvider>
         <SpeedInsights />
       </AppConfigProvider>

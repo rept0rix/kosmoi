@@ -88,13 +88,80 @@ const AdminData = () => {
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+    const handleSeedData = async () => {
+        setLoading(true);
+        try {
+            const events = [];
+            const today = new Date();
+
+            // Generate 30 days of data
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+
+                // Random stats per day
+                const signups = Math.floor(Math.random() * 5) + 1; // 1-5 signups
+                const purchases = Math.floor(Math.random() * 3); // 0-2 purchases
+                const views = Math.floor(Math.random() * 50) + 20; // 20-70 views
+
+                // Signups
+                for (let j = 0; j < signups; j++) {
+                    events.push({
+                        event_name: 'signup',
+                        created_at: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
+                        properties: { source: Math.random() > 0.5 ? 'organic' : 'ads' }
+                    });
+                }
+
+                // Purchases
+                for (let k = 0; k < purchases; k++) {
+                    const value = Math.floor(Math.random() * 2000) + 500;
+                    events.push({
+                        event_name: 'purchase',
+                        created_at: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
+                        properties: { value, plan: 'premium' }
+                    });
+                }
+
+                // Page Views (just a few for distribution chart)
+                for (let l = 0; l < views; l++) {
+                    events.push({
+                        event_name: 'page_view',
+                        created_at: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
+                        properties: { path: '/home' }
+                    });
+                }
+            }
+
+            // Batch insert
+            const { error } = await supabase.from('analytics_events').insert(events);
+            if (error) throw error;
+
+            fetchAnalytics(); // Refresh
+
+        } catch (error) {
+            console.error("Error seeding data:", error);
+            alert("Failed to seed data. Ensure 'analytics_events' table exists.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) return <div className="p-10 text-center text-white">Loading Analytics Agent...</div>;
 
     return (
         <div className="p-8 bg-slate-900 text-white min-h-screen overflow-y-auto">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-8">
-                Platform Analytics
-            </h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                    Platform Analytics
+                </h1>
+                <button
+                    onClick={handleSeedData}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md text-sm text-slate-300 transition-colors"
+                >
+                    Generate Demo Data
+                </button>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* MRR Chart */}

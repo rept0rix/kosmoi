@@ -6,9 +6,22 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Star, Clock, Users, ArrowRight, Search, Calendar } from 'lucide-react';
+import { MapPin, Star, Clock, Users, ArrowRight, Search, Calendar, Loader2 } from 'lucide-react';
 import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
+import { CrmService } from '@/services/business/CrmService';
+import { toast } from 'sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 // MOCK DATA: Experiences
 const EXPERIENCES = [
@@ -59,6 +72,76 @@ import { useQuery } from '@tanstack/react-query';
 
 export default function ExperiencesHub() {
     const [activeCategory, setActiveCategory] = useState('All');
+
+    // Inquiry State
+    const [selectedExperience, setSelectedExperience] = useState(null);
+    const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [inquiryForm, setInquiryForm] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        date: '',
+        guests: 2,
+        message: ''
+    });
+
+    const handleBookClick = (exp) => {
+        setSelectedExperience(exp);
+        setInquiryForm({
+            name: '',
+            email: '',
+            phone: '',
+            date: '',
+            guests: 2,
+            message: `I'd like to book ${exp.title}.`
+        });
+        setIsInquiryOpen(true);
+    };
+
+    const handleInquirySubmit = async () => {
+        if (!inquiryForm.name || !inquiryForm.email) {
+            toast.error("Name and Email are required");
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            // 1. Get Pipeline (for Stage ID)
+            const pipelines = await CrmService.getPipelines();
+            const salesPipeline = pipelines.find(p => p.name === 'General Sales') || pipelines[0];
+
+            let stageId = null;
+            if (salesPipeline) {
+                const stages = await CrmService.getStages(salesPipeline.id);
+                // Look for 'New Lead' or first stage
+                const firstStage = stages.find(s => s.name === 'New Lead') || stages[0];
+                if (firstStage) stageId = firstStage.id;
+            }
+
+            // 2. Create Lead
+            const leadData = {
+                first_name: inquiryForm.name.split(' ')[0],
+                last_name: inquiryForm.name.split(' ').slice(1).join(' ') || '',
+                email: inquiryForm.email,
+                phone: inquiryForm.phone,
+                notes: `Booking Request for: ${selectedExperience?.title}\nCategory: ${selectedExperience?.category}\nDate: ${inquiryForm.date}\nGuests: ${inquiryForm.guests}\n\nMessage: ${inquiryForm.message}`,
+                source: 'Experiences Hub',
+                stage_id: stageId,
+                value: selectedExperience?.price ? (selectedExperience.price * inquiryForm.guests) : 0
+            };
+
+            await CrmService.createLead(leadData);
+
+            toast.success("Booking request sent! We will confirm availability shortly.");
+            setIsInquiryOpen(false);
+        } catch (error) {
+            console.error("Booking failed:", error);
+            toast.error("Failed to send request.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const categories = ['All', 'Adventure', 'Relaxation', 'Culture', 'Nature', 'Water Sports'];
 
@@ -192,8 +275,12 @@ export default function ExperiencesHub() {
                                         <span className="text-xs text-gray-400 block">From</span>
                                         <span className="font-bold text-lg text-gray-900">฿{exp.price}</span>
                                     </div>
-                                    <Button size="sm" variant="outline" className="group-hover:bg-rose-500 group-hover:text-white group-hover:border-rose-500 transition-colors">
-                                        View Details
+                                    <Button
+                                        size="sm"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white border-none"
+                                        onClick={() => handleBookClick(exp)}
+                                    >
+                                        Book Now
                                     </Button>
                                 </div>
                             </CardContent>
@@ -220,6 +307,87 @@ export default function ExperiencesHub() {
             </div>
 
             <Footer />
+
+            {/* Booking Dialog */}
+            <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Book Experience</DialogTitle>
+                        <DialogDescription>
+                            Request a booking for "{selectedExperience?.title}".
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Full Name</Label>
+                            <Input
+                                id="name"
+                                value={inquiryForm.name}
+                                onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                                placeholder="Jane Doe"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    value={inquiryForm.email}
+                                    onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                                    placeholder="jane@example.com"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="phone">Phone</Label>
+                                <Input
+                                    id="phone"
+                                    type="tel"
+                                    value={inquiryForm.phone}
+                                    onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+                                    placeholder="+1 234..."
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="date">Preferred Date</Label>
+                                <Input
+                                    id="date"
+                                    type="date"
+                                    value={inquiryForm.date}
+                                    onChange={(e) => setInquiryForm({ ...inquiryForm, date: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="guests">Guests</Label>
+                                <Input
+                                    id="guests"
+                                    type="number"
+                                    min={1}
+                                    value={inquiryForm.guests}
+                                    onChange={(e) => setInquiryForm({ ...inquiryForm, guests: parseInt(e.target.value) })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="message">Special Requests</Label>
+                            <Textarea
+                                id="message"
+                                value={inquiryForm.message}
+                                onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
+                                rows={2}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button disabled={submitting} onClick={handleInquirySubmit} type="submit" className="bg-rose-500 hover:bg-rose-600 w-full text-white">
+                            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Request Booking
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

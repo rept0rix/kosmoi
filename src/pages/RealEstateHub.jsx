@@ -1,6 +1,8 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/api/supabaseClient';
+import { CrmService } from '@/services/business/CrmService'; // Import CRM Service
 import { useQuery } from '@tanstack/react-query';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -9,9 +11,21 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { MapPin, Bath, Bed, Square, Heart, Filter, Grid, Map } from 'lucide-react';
+import { MapPin, Bath, Bed, Square, Heart, Filter, Grid, Map, Loader2 } from 'lucide-react';
 import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
+import { toast } from 'sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 // MOCK DATA for Initial Demo (if DB is empty)
 const MOCK_PROPERTIES = [
@@ -58,6 +72,17 @@ export default function RealEstateHub() {
     const [searchTerm, setSearchTerm] = useState('');
     const [priceRange, setPriceRange] = useState('all');
 
+    // Inquiry State
+    const [selectedProperty, setSelectedProperty] = useState(null);
+    const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [inquiryForm, setInquiryForm] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        message: ''
+    });
+
     // Fetch Real Properties from DB
     const { data: realProperties, isLoading } = useQuery({
         queryKey: ['properties', activeTab, searchTerm, priceRange],
@@ -85,9 +110,6 @@ export default function RealEstateHub() {
     });
 
     // Merge Mock Data if DB is empty (for demo)
-    // Note: Filtering on mock data is removed in favor of DB truth, 
-    // but if we want fallback, we'd need complex logic. 
-    // For now, we assume DB usage or fallback to full mock if DB is empty.
     const properties = (realProperties && realProperties.length > 0) ? realProperties : MOCK_PROPERTIES.filter(p => {
         const matchesTab = p.type === (activeTab === 'buy' ? 'sale' : 'rent');
         const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,14 +117,67 @@ export default function RealEstateHub() {
         return matchesTab && matchesSearch;
     });
 
-    // const filteredProperties = properties; // No longer needed as 'properties' is the result
-
     const formatPrice = (price, type) => {
         return new Intl.NumberFormat('en-TH', {
             style: 'currency',
             currency: 'THB',
             maximumFractionDigits: 0
         }).format(price) + (type === 'rent' ? '/mo' : '');
+    };
+
+    const handleInquiryClick = (property) => {
+        setSelectedProperty(property);
+        setInquiryForm({
+            name: '',
+            email: '',
+            phone: '',
+            message: `I'm interested in ${property.title}. Please send me more details.`
+        });
+        setIsInquiryOpen(true);
+    };
+
+    const handleInquirySubmit = async () => {
+        if (!inquiryForm.name || !inquiryForm.email) {
+            toast.error("Name and Email are required");
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            // 1. Get Pipeline (for Stage ID) - ideally cached or optimized
+            const pipelines = await CrmService.getPipelines();
+            const salesPipeline = pipelines.find(p => p.name === 'General Sales') || pipelines[0];
+
+            let stageId = null;
+            if (salesPipeline) {
+                const stages = await CrmService.getStages(salesPipeline.id);
+                // Look for 'New Lead' or first stage
+                const firstStage = stages.find(s => s.name === 'New Lead') || stages[0];
+                if (firstStage) stageId = firstStage.id;
+            }
+
+            // 2. Create Lead
+            const leadData = {
+                first_name: inquiryForm.name.split(' ')[0],
+                last_name: inquiryForm.name.split(' ').slice(1).join(' ') || '',
+                email: inquiryForm.email,
+                phone: inquiryForm.phone,
+                notes: `Inquiry for Property: ${selectedProperty?.title} (${selectedProperty?.location})\n\nMessage: ${inquiryForm.message}`,
+                source: 'Real Estate Hub',
+                stage_id: stageId,
+                value: selectedProperty?.price ? (selectedProperty.type === 'rent' ? selectedProperty.price * 12 : selectedProperty.price * 0.03) : 0 // Est. Commission or Value
+            };
+
+            await CrmService.createLead(leadData);
+
+            toast.success("Inquiry sent! An agent will contact you shortly.");
+            setIsInquiryOpen(false);
+        } catch (error) {
+            console.error("Inquiry failed:", error);
+            toast.error("Failed to send inquiry.");
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -218,7 +293,13 @@ export default function RealEstateHub() {
 
                             <CardFooter className="p-4 bg-gray-50 border-t flex justify-between items-center">
                                 <div className="text-xs text-gray-400">Listed by Agent</div>
-                                <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/5">View Details</Button>
+                                <Button
+                                    size="sm"
+                                    className="border-primary bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    onClick={() => handleInquiryClick(property)}
+                                >
+                                    Contact Agent
+                                </Button>
                             </CardFooter>
                         </Card>
                     ))}
@@ -226,6 +307,65 @@ export default function RealEstateHub() {
             </div>
 
             <Footer />
+
+            {/* Inquiry Dialog */}
+            <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Contact Agent</DialogTitle>
+                        <DialogDescription>
+                            Inquire about "{selectedProperty?.title}". We'll get back to you shortly.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Full Name</Label>
+                            <Input
+                                id="name"
+                                value={inquiryForm.name}
+                                onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                                placeholder="John Doe"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                value={inquiryForm.email}
+                                onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                                placeholder="john@example.com"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="phone">Phone Number</Label>
+                            <Input
+                                id="phone"
+                                type="tel"
+                                value={inquiryForm.phone}
+                                onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+                                placeholder="+1 234 567 890"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="message">Message</Label>
+                            <Textarea
+                                id="message"
+                                value={inquiryForm.message}
+                                onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
+                                rows={4}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button disabled={submitting} onClick={handleInquirySubmit} type="submit" className="bg-indigo-600 hover:bg-indigo-700 w-full">
+                            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Send Inquiry
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
+

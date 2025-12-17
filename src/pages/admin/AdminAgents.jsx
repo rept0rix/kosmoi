@@ -40,28 +40,39 @@ export default function AdminAgents() {
         name: '', role: '', description: '', color: 'blue', type: 'assistant'
     });
 
-    useEffect(() => {
-        // Load from registry, but check if we have overrides or new additions in localStorage
+    const syncWithRegistry = () => {
+        // Master Sync: Merges Registry (Single Source of Truth for Code) with LocalStorage (User Overrides)
         const stored = localStorage.getItem('kosmoi_admin_agents_v2');
-        if (stored) {
-            const storedAgents = JSON.parse(stored);
+        const storedAgents = stored ? JSON.parse(stored) : [];
+        const storedMap = new Map(storedAgents.map(a => [a.id, a]));
 
-            // Merge logic: valid stored agents + any new system agents from registry not present in storage
-            // We use 'id' as the unique key
-            const storedIds = new Set(storedAgents.map(a => a.id));
-            const newSystemAgents = initialAgents.filter(a => !storedIds.has(a.id));
-
-            if (newSystemAgents.length > 0) {
-                const merged = [...storedAgents, ...newSystemAgents];
-                setAgents(merged);
-                // Optional: valid to update storage immediately or wait for user action? 
-                // Let's rely on 'saveAgents' for explicit saves, but here we just update view.
-            } else {
-                setAgents(storedAgents);
+        // 1. Start with Initial Agents (Codebase)
+        const merged = initialAgents.map(systemAgent => {
+            const userOverride = storedMap.get(systemAgent.id);
+            if (userOverride) {
+                // Merge: Keep system structure but allow user overrides for specific fields
+                return {
+                    ...systemAgent, // Base: System definition
+                    ...userOverride, // Overlay: User config (e.g. customized instructions)
+                    // Ensure critical fields aren't completely lost if userOverride is malformed
+                    name: userOverride.name || systemAgent.name,
+                    role: userOverride.role || systemAgent.role,
+                };
             }
-        } else {
-            setAgents(initialAgents);
-        }
+            return systemAgent;
+        });
+
+        // 2. Add purely local agents (User created)
+        const systemIds = new Set(initialAgents.map(a => a.id));
+        const localOnly = storedAgents.filter(a => !systemIds.has(a.id));
+
+        const finalAgentList = [...merged, ...localOnly];
+        setAgents(finalAgentList);
+        saveAgents(finalAgentList);
+    };
+
+    useEffect(() => {
+        syncWithRegistry();
     }, []);
 
     const saveAgents = (updatedAgents) => {
@@ -102,55 +113,60 @@ export default function AdminAgents() {
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Agent Command</h1>
                     <p className="text-gray-500 mt-2">Manage your AI workforce matrix.</p>
                 </div>
-                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="gap-2">
-                            <Plus className="w-4 h-4" /> Deploy Agent
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Deploy New Agent</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">Name</Label>
-                                <Input id="name" value={newAgent.name} onChange={e => setNewAgent({ ...newAgent, name: e.target.value })} className="col-span-3" />
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={syncWithRegistry} title="Resync with Code Registry">
+                        <Bot className="w-4 h-4 mr-2" /> Resync
+                    </Button>
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="gap-2">
+                                <Plus className="w-4 h-4" /> Deploy Agent
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Deploy New Agent</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="name" className="text-right">Name</Label>
+                                    <Input id="name" value={newAgent.name} onChange={e => setNewAgent({ ...newAgent, name: e.target.value })} className="col-span-3" />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="role" className="text-right">Role</Label>
+                                    <Input id="role" value={newAgent.role} onChange={e => setNewAgent({ ...newAgent, role: e.target.value })} className="col-span-3" />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="color" className="text-right">Color Theme</Label>
+                                    <Select onValueChange={v => setNewAgent({ ...newAgent, color: v })} defaultValue={newAgent.color}>
+                                        <SelectTrigger className="col-span-3">
+                                            <SelectValue placeholder="Select color" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="blue">Blue (Tech)</SelectItem>
+                                            <SelectItem value="green">Green (Growth)</SelectItem>
+                                            <SelectItem value="purple">Purple (Creative)</SelectItem>
+                                            <SelectItem value="red">Red (Critical)</SelectItem>
+                                            <SelectItem value="amber">Amber (Support)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-4 items-start gap-4">
+                                    <Label htmlFor="desc" className="text-right pt-2">Directive</Label>
+                                    <textarea
+                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
+                                        placeholder="Brief description of primary function..."
+                                        value={newAgent.description}
+                                        onChange={e => setNewAgent({ ...newAgent, description: e.target.value })}
+                                    />
+                                </div>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="role" className="text-right">Role</Label>
-                                <Input id="role" value={newAgent.role} onChange={e => setNewAgent({ ...newAgent, role: e.target.value })} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="color" className="text-right">Color Theme</Label>
-                                <Select onValueChange={v => setNewAgent({ ...newAgent, color: v })} defaultValue={newAgent.color}>
-                                    <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select color" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="blue">Blue (Tech)</SelectItem>
-                                        <SelectItem value="green">Green (Growth)</SelectItem>
-                                        <SelectItem value="purple">Purple (Creative)</SelectItem>
-                                        <SelectItem value="red">Red (Critical)</SelectItem>
-                                        <SelectItem value="amber">Amber (Support)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-4 items-start gap-4">
-                                <Label htmlFor="desc" className="text-right pt-2">Directive</Label>
-                                <textarea
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
-                                    placeholder="Brief description of primary function..."
-                                    value={newAgent.description}
-                                    onChange={e => setNewAgent({ ...newAgent, description: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button onClick={handleAddAgent}>Deploy Unit</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                            <DialogFooter>
+                                <Button onClick={handleAddAgent}>Deploy Unit</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
