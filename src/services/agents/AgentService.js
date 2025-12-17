@@ -59,6 +59,37 @@ Approval ID: ${approvalData.id}`;
         }
     }
 
+    // --- OPTIMIZER TOOLS ---
+    if (toolName === 'propose_optimization') {
+        try {
+            // Save insight to 'agent_tasks' (as a task for Admin) OR a dedicated table 'optimizer_insights'
+            // For MVP, we'll assume we have a table or use logs, but let's just log it to console and return success
+            // effectively simulating "Database Insertion" until we confirm the schema.
+            // Actually, we can use 'agent_tasks' with a specific tag.
+
+            const taskPayload = {
+                title: `[Optimization] ${payload.title}`,
+                description: `${payload.description}\n\nImpact: ${payload.impact}\nSuggested Action: ${JSON.stringify(payload.action)}`,
+                assigned_to: 'admin',
+                priority: payload.priority || 'medium',
+                status: 'pending', // Pending Admin Approval
+                tags: ['optimization', payload.type]
+            };
+
+            // We use the raw DB client if available, or just log if we don't want to break schema
+            // Assuming agent_tasks table exists and works:
+            const { data, error } = await db.entities.AgentTasks.create(taskPayload);
+
+            if (error) throw error;
+            return `Optimization Proposal Logged: ${data.id}`;
+        } catch (e) {
+            console.error("Failed to propose optimization:", e);
+            return "Error saving proposal: " + e.message;
+        }
+    }
+
+    // --- GENERIC TOOLS ---
+
 
     // --- LOGGING & EXECUTION ---
     Logger.info("AgentService", `Executing tool: ${toolName}`, { agentId, payload });

@@ -1,0 +1,29 @@
+[
+  {
+    "lead_email": "marcus@samuielitevillas.com",
+    "interaction_type": "email_draft",
+    "content": "Subject: Exclusive Proposal for Samui Elite Villas\n\nDear Marcus,\n\nI've been following Samui Elite Villas's impressive trajectory in Koh Samui. At Samui Service Hub, we specialize in empowering premium businesses like yours.\n\nI've prepared some ideas on how we can further elevate your guest experience. Would you be open to a brief chat?\n\nBest,\n[Your Name]",
+    "metadata": {
+      "source": "ai_prospecting",
+      "value": "High"
+    }
+  },
+  {
+    "lead_email": "sarah.j@lotuswellness-samui.com",
+    "interaction_type": "email_draft",
+    "content": "Subject: Collaboration with Lotus Wellness Retreat\n\nHi Sarah,\n\nI noticed Lotus Wellness Retreat is doing great work in the local scene. I'd love to connect and share how Samui Service Hub is helping local businesses streamline their operations.\n\nAre you free for a quick call next week?\n\nCheers,\n[Your Name]",
+    "metadata": {
+      "source": "ai_prospecting",
+      "value": "Medium"
+    }
+  },
+  {
+    "lead_email": "bookings@bluehorizondiving.th",
+    "interaction_type": "email_draft",
+    "content": "Subject: Collaboration with Blue Horizon Diving\n\nHi Somchai,\n\nI noticed Blue Horizon Diving is doing great work in the local scene. I'd love to connect and share how Samui Service Hub is helping local businesses streamline their operations.\n\nAre you free for a quick call next week?\n\nCheers,\n[Your Name]",
+    "metadata": {
+      "source": "ai_prospecting",
+      "value": "Medium"
+    }
+  }
+]

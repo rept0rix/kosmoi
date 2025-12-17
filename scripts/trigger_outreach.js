@@ -1,105 +1,80 @@
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
-// Load env vars if needed - assuming they are in process.env or loaded via command line
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_SERVICE_ROLE_KEY);
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_SERVICE_ROLE_KEY");
-    process.exit(1);
-}
+// Define Agent Logic (Simplified Orchestrator)
+async function draftEmail(lead) {
+    console.log(`\n🤖 Drafting email for ${lead.company}...`);
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // In a real system, we'd call the Agent Service/API.
+    // Here, I'll simulate the agent's output logic or call a "generate_email" tool if I had access to the LLM directly.
+    // Since this is a specialized script running "as" the orchestration layer:
 
-// SalesService mock using the service role client
-const SalesServiceFull = {
-    async createLead(leadData) {
-        const { data, error } = await supabase.from('crm_leads').insert([leadData]).select().single();
-        if (error) throw error;
-        return data;
-    },
-    async runOutreachCampaign() {
-        try {
-            const { data: stages } = await supabase.from('crm_stages').select('*');
-            // Assuming "Qualified" stage exists as verified in DB
-            const qualStage = stages.find(s => s.name.toLowerCase().includes('qualified'));
-            const contactedStage = stages.find(s => s.name.toLowerCase().includes('contacted'));
+    // We will create a TASK for the worker to do this, so we can verify the agent actually does it.
+    // But for speed and reliability given previous JSON issues, I will construct a HIGH PROBABILITY prompt task.
 
-            if (!qualStage?.id) return { message: "Qualified stage not found." };
+    const taskTitle = `Outreach: ${lead.company}`;
+    const taskDesc = `Draft a polite, professional B2B cold email to ${lead.first_name} ${lead.last_name} at ${lead.company}.                     ` +
+        `Propose a partnership with Kosmoi (Service Hub). ` +
+        `Use the 'send_email' tool to SEND the email immediately (Real World Mode). ` +
+        `RECIPIENT OVERRIDE: Send to 'na0ryank0@gmail.com' (Do NOT use the lead's email, this is a live test). ` +
+        `Subject: 'Partnership Inquiry for ${lead.company}'. ` +
+        `Interaction Type: 'email_outreach'. ` +
+        `Interaction Summary: 'Sent Outreach Email'. ` +
+        `Interaction Details: The full email body. ` +
+        `Lead ID: '${lead.id}' (CRITICAL: Use this EXACT UUID). ` +
+        `Reply with 'TASK_COMPLETED' in JSON format.`;
 
-            const { data: targetLeads } = await supabase
-                .from('crm_leads')
-                .select('*')
-                .eq('stage_id', qualStage.id);
+    const { data: task, error } = await supabase.from('agent_tasks').insert([{
+        title: taskTitle,
+        description: taskDesc,
+        assigned_to: 'sales-pitch',
+        status: 'pending',
+        priority: 'high'
+    }]).select().single();
 
-            if (!targetLeads || targetLeads.length === 0) return { message: "No qualified leads to contact." };
-
-            const taskPayload = {
-                title: `CRM Outreach Campaign: ${new Date().toLocaleDateString()}`,
-                description: `Conduct outreach for ${targetLeads.length} qualified leads.\n\nTarget Stage ID for success: ${contactedStage?.id}\n\nLead IDs: ${targetLeads.map(l => l.id).join(', ')}\n\nInstructions:\n1. For each lead, generating a personalized hello email.\n2. Log the email content as an interaction (type: 'email').\n3. Update the lead's stage_id to the Target Stage ID.\n\nUse your tools 'update_lead' (or similar Supabase tools) and 'insert_interaction'.`,
-                status: 'pending',
-                assigned_to: 'sales-agent',
-                priority: 'high'
-            };
-
-            const { error } = await supabase.from('agent_tasks').insert([taskPayload]);
-
-            if (error) throw error;
-
-            return {
-                sent: 0,
-                queued: true,
-                message: `Outreach Task Queued for ${targetLeads.length} leads. Worker will process.`
-            };
-        } catch (error) {
-            console.error("Outreach Error:", error);
-            return { message: "Error queuing outreach task." };
-        }
-    }
-};
-
-async function testOutreach() {
-    console.log("Starting Outreach Test with Service Role...");
-
-    // 1. Ensure we have a qualified lead
-    const { data: stages } = await supabase.from('crm_stages').select('*');
-    const qualStage = stages.find(s => s.name.toLowerCase().includes('qualified'));
-
-    if (!qualStage) {
-        console.error("Qualified stage not found! Available stages:", stages.map(s => s.name));
+    if (error) {
+        console.error("Failed to create task:", error.message);
         return;
     }
 
-    // Insert a dummy qualified lead if none exists
-    const { data: existing } = await supabase.from('crm_leads').select('id').eq('stage_id', qualStage.id).limit(1);
+    console.log(`✅ Task Created: ${task.id}. Waiting for agent...`);
 
-    if (!existing || existing.length === 0) {
-        console.log("Creating dummy qualified lead...");
-        await SalesServiceFull.createLead({
-            first_name: 'Test',
-            last_name: 'Lead',
-            company: 'Test Corp',
-            email: 'test@example.com',
-            stage_id: qualStage.id,
-            status: 'open',
-            value: 5000
-        });
+    // Poll for completion
+    let turns = 0;
+    while (turns < 30) {
+        const { data } = await supabase.from('agent_tasks').select('status, result').eq('id', task.id).single();
+        if (data.status === 'done') {
+            console.log(`🎉 Done! Result: ${data.result}`);
+            return;
+        }
+        await new Promise(r => setTimeout(r, 4000));
+        process.stdout.write('.');
+        turns++;
+    }
+    console.log("Timeout waiting for agent.");
+}
+
+async function run() {
+    // 1. Fetch recent leads (last 10 mins)
+    const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: leads, error } = await supabase
+        .from('crm_leads')
+        .select('*')
+        .gt('created_at', tenMinsAgo);
+
+    if (error) {
+        console.error(error);
+        return;
     }
 
-    // 2. Run Outreach
-    console.log("Running Outreach Logic...");
-    const result = await SalesServiceFull.runOutreachCampaign();
-    console.log("Result:", result);
+    console.log(`Found ${leads.length} recent leads.`);
 
-    if (result.queued) {
-        console.log("SUCCESS: Task queued for worker.");
-        // Verify task exists
-        const { data: tasks } = await supabase.from('agent_tasks').select('*').order('created_at', { ascending: false }).limit(1);
-        console.log("Latest Task Created:", tasks[0]);
-    } else {
-        console.error("FAILED to queue task:", result.message);
+    for (const lead of leads) {
+        await draftEmail(lead);
     }
 }
 
-testOutreach();
+run();

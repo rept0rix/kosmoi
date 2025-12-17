@@ -1,0 +1,1 @@
+ALTER TABLE crm_interactions ADD COLUMN content TEXT;

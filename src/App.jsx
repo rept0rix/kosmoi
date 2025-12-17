@@ -59,6 +59,7 @@ import AdminLogs from './pages/admin/AdminLogs';
 import AdminSchema from './pages/admin/AdminSchema';
 import AdminMemory from './pages/admin/AdminMemory';
 import AdminSitemap from '@/pages/admin/AdminSitemap';
+import AdminOptimizer from './pages/admin/AdminOptimizer';
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
@@ -166,6 +167,7 @@ const AuthenticatedApp = () => {
                 <Route path="company" element={<AdminCompany />} />
                 <Route path="businesses" element={<AdminBusinesses />} />
                 <Route path="data" element={<AdminData />} />
+                <Route path="optimizer" element={<AdminOptimizer />} />
                 <Route path="crm" element={<Pages.CRMDashboard />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="evolution" element={<AdminEvolution />} />

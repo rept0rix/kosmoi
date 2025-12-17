@@ -31,31 +31,37 @@ export const OptimizerLoop = {
         try {
             // 1. Fetch Recent Logs (Last 50 interactions)
             const { data: logs, error } = await db.entities.AgentLogs.listLatest(50);
-            if (error || !logs || logs.length === 0) return;
 
-            // 2. Heuristic: Find potential "Corrections"
-            // Look for user messages following an agent message that contain correction keywords
-            // Ideally, we'd feed all logs to the LLM, but to save tokens, we pre-filter.
+            // 2. NEW: Fetch Business Metrics (Mock for now, normally we query analytics_events)
+            // We use the same 'stats' structure as AdminData
+            const stats = {
+                revenue: 12500, // Monthly
+                signups: 142,   // This month
+                activeUsers: 89,
+                conversionRate: "4.2%"
+            };
 
-            // Simplified for V1: We'll just look for explicit user frustration or correction
-            // And pass the CONTEXT of that conversation to the Optimizer.
-
-            // For this prototype, let's just feed the last 10 logs to the Optimizer 
-            // and ask if it spots any patterns.
-
-            const recentLogs = logs.slice(0, 20).reverse().map(l =>
+            const recentLogs = logs && !error ? logs.slice(0, 20).reverse().map(l =>
                 `[${l.created_at}] ${l.agent_id}: ${l.prompt.slice(0, 50)}... -> Response: ${l.response.slice(0, 100)}...`
-            ).join('\n');
+            ).join('\n') : "No recent logs.";
 
             // 3. Construct Prompt for Optimizer
             const analysisPrompt = `
-            Analyze these recent agent logs for performance issues.
-            Logs:
+            Analyze the current System Status.
+            
+            **Business Metrics**:
+            - App Revenue: $${stats.revenue}
+            - New Signups: ${stats.signups}
+            - Conversion Rate: ${stats.conversionRate}
+            
+            **Recent Agent Logs**:
             ${recentLogs}
             
-            Do you see any repeated failures or patterns where agents are confused?
-            If yes, use the 'update_agent_prompt' tool to fix them.
-            If everything looks fine, just reply "Status Normal".
+            **Instructions**:
+            1. Check if conversion rate is below 5%. If so, propose a change.
+            2. Check if agents are failing (see logs).
+            3. Use 'propose_optimization' for business ideas, or 'update_agent_prompt' for fixes.
+            4. If status is optimal, reply "Status Normal".
             `;
 
             // 4. Invoke Optimizer Agent

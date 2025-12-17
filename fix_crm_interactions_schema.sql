@@ -1,0 +1,1 @@
+ALTER TABLE crm_interactions ADD COLUMN IF NOT EXISTS interaction_type TEXT;

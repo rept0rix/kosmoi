@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
@@ -13,7 +14,8 @@ import {
     Target,
     Server,
     Store,
-    Map
+    Map,
+    BrainCircuit
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -34,10 +36,10 @@ export default function AdminLayout() {
 
             {/* Sidebar */}
             <aside className={`
-                w-64 border-r border-white/5 bg-slate-900/95 flex flex-col
-                fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+w - 64 border - r border - white / 5 bg - slate - 900 / 95 flex flex - col
+                fixed inset - y - 0 left - 0 z - 40 transition - transform duration - 300 ease -in -out md:relative md: translate - x - 0
                 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-            `}>
+`}>
                 <div className="p-4 flex items-center justify-between border-b border-white/5">
                     <div className="flex items-center gap-3">
                         <img src="/kosmoi_logo_white.svg" alt="Kosmoi Logo" className="h-8 md:h-10 w-auto" />
@@ -58,8 +60,6 @@ export default function AdminLayout() {
                     </NavGroup>
 
                     <NavGroup title="Operations">
-                        <NavItem to="/admin/tasks" icon={<Activity />} label="Task Board" onClick={() => setIsMobileOpen(false)} />
-                        <NavItem to="/admin/agents" icon={<Bot />} label="Agent Workforce" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/businesses" icon={<Store />} label="Businesses" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
@@ -67,10 +67,9 @@ export default function AdminLayout() {
                     </NavGroup>
 
                     <NavGroup title="Intelligence">
-                        <NavItem to="/admin/evolution" icon={<Activity />} label="Evolution Tree" onClick={() => setIsMobileOpen(false)} />
-                        <NavItem to="/admin/schema" icon={<Activity />} label="Brain Structure" onClick={() => setIsMobileOpen(false)} />
-                        <NavItem to="/admin/memory" icon={<Activity />} label="Subconscious" onClick={() => setIsMobileOpen(false)} />
-                        <NavItem to="/admin/studio" icon={<Activity />} label="Kosmoi Studio" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/optimizer" icon={<BrainCircuit />} label="Optimizer Agent" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/agents" icon={<Users />} label="Workforce" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/studio" icon={<Code2 />} label="Agent Studio" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>
 
                     <NavGroup title="System">
@@ -120,7 +119,7 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Page Content */}
-                <div className={`flex-1 flex flex-col h-full ${location.pathname.includes('board-room') ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-auto'}`}>
+                <div className={`flex - 1 flex flex - col h - full ${location.pathname.includes('board-room') ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-auto'} `}>
                     <Outlet />
                 </div>
             </main>
@@ -135,11 +134,12 @@ function NavItem({ to, icon, label, end = false, onClick }) {
             end={end}
             onClick={onClick}
             className={({ isActive }) => `
-                flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                flex items - center gap - 3 px - 3 py - 2 rounded - lg text - sm font - medium transition - colors
                 ${isActive
                     ? 'bg-blue-600/10 text-blue-400'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'}
-            `}
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
+                }
+`}
         >
             {React.cloneElement(icon, { className: "w-4 h-4" })}
             {label}
