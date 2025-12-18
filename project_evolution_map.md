@@ -32,8 +32,8 @@ graph TD
 
     %% Upper Branches: Scale & Future
     subgraph Canopy [CANOPY: Scale & Growth]
-        P7[Phase 7: DevOps & QA]:::current
-        P8[Phase 8: Growth & Marketing]:::future
+        P7- [DONE] Phase 7: DevOps & QA (CI/CD, Automated Testing, Security Audit)
+        P8- [ ] Phase 8: Growth & Marketing (SEO, Social Proof, Scaling)
     end
 
     %% Connections

@@ -40,38 +40,51 @@ export const Core = {
             let lastError = null;
 
             for (const modelName of modelsToTry) {
-                try {
-                    const model = genAI.getGenerativeModel({
-                        model: modelName,
-                        systemInstruction: system_instruction
-                    });
+                let retries = 0;
+                const maxRetries = 3;
 
-                    // Construct content parts (Text + Images)
-                    const contentParts = [];
-                    contentParts.push({ text: prompt });
-
-                    if (images && images.length > 0) {
-                        images.forEach(img => {
-                            // Ensure base64 string is clean (remove data:image/png;base64, prefix if present)
-                            const base64Data = img.base64.split(',')[1] || img.base64;
-                            contentParts.push({
-                                inlineData: {
-                                    data: base64Data,
-                                    mimeType: img.mimeType || 'image/png'
-                                }
-                            });
+                while (retries <= maxRetries) {
+                    try {
+                        const model = genAI.getGenerativeModel({
+                            model: modelName,
+                            systemInstruction: system_instruction
                         });
+
+                        // Construct content parts (Text + Images)
+                        const contentParts = [];
+                        contentParts.push({ text: prompt });
+
+                        if (images && images.length > 0) {
+                            images.forEach(img => {
+                                const base64Data = img.base64.split(',')[1] || img.base64;
+                                contentParts.push({
+                                    inlineData: {
+                                        data: base64Data,
+                                        mimeType: img.mimeType || 'image/png'
+                                    }
+                                });
+                            });
+                        }
+
+                        const result = await model.generateContent(contentParts);
+                        const response = await result.response;
+                        const text = response.text();
+
+                        return { text };
+                    } catch (error) {
+                        const isRateLimit = error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED');
+
+                        if (isRateLimit && retries < maxRetries) {
+                            retries++;
+                            const delay = Math.pow(2, retries) * 1000;
+                            console.warn(`[LLM] Rate limited on ${modelName}. Retrying in ${delay}ms... (${retries}/${maxRetries})`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue; // Retry same model
+                        }
+
+                        lastError = error;
+                        break; // Move to next model if not a rate limit or retries exhausted
                     }
-
-                    const result = await model.generateContent(contentParts);
-                    const response = await result.response;
-                    const text = response.text();
-
-                    return { text };
-                } catch (error) {
-                    // console.warn(`Failed to use model ${modelName}:`, error.message);
-                    lastError = error;
-                    // Continue to next model
                 }
             }
 

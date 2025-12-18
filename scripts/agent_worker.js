@@ -67,12 +67,13 @@ async function checkForUpdates() {
 // -----------------------------
 
 // --- LOGGING OVERRIDE ---
+import util from 'util';
 const logFile = path.join(process.cwd(), 'worker.log');
 const originalLog = console.log;
 const originalError = console.error;
 
 function logToFile(type, args) {
-    const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg))).join(' ');
+    const message = args.map(arg => (typeof arg === 'object' ? util.inspect(arg, { depth: null, colors: false }) : String(arg))).join(' ');
     const timestamp = new Date().toISOString();
     const logLine = `[${timestamp}] [${type}] ${message}\n`;
     fs.appendFileSync(logFile, logLine);
@@ -123,13 +124,14 @@ const workerName = nameArg ? nameArg.split('=')[1] : `Worker-${Math.floor(Math.r
 
 // Universal Worker Mode Flag
 const isUniversal = !agentRole;
+let agentConfig;
 
 if (isUniversal) {
     console.log(`🤖 Starting Universal Worker: ${workerName}`);
     console.log("🌍 Mode: Universal (Will pick up tasks for ANY agent)");
 } else {
     // Validate specific role if provided
-    const agentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
+    agentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
     if (!agentConfig) {
         console.error(`❌ Agent with role '${agentRole}' not found.`);
         console.log("Available agents:", agents.map(a => a.id).join(', '));
