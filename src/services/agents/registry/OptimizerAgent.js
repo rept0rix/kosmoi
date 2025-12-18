@@ -4,7 +4,7 @@ export const OPTIMIZER_AGENT = {
     id: "optimizer-agent",
     role: "optimizer",
     name: "The Optimizer",
-    model: "gemini-2.0-flash", // Fast thinking for meta-analysis
+    model: "gemini-1.5-pro", // Thinking model for meta-analysis
     layer: "automation",
     icon: "BrainCircuit",
     systemPrompt: `You are **The Optimizer**. You are the "Meta-Learner" & "Business Strategist" of the Kosmoi system.

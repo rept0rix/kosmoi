@@ -442,7 +442,16 @@ async function executeTool(toolName, payload) {
 async function processTask(task, agentService, agentConfigOverride) {
     console.log(`\n📋 Processing Task: ${task.title}`);
     console.log(`[${workerName}] Claiming task...`);
-    await db.entities.AgentTasks.update(task.id, { status: 'in_progress' });
+    console.log(`[${workerName}] Claiming task...`);
+    const { error: updateError } = await workerSupabase
+        .from('agent_tasks')
+        .update({ status: 'in_progress' })
+        .eq('id', task.id);
+
+    if (updateError) {
+        console.error("❌ Failed to claim task:", updateError.message);
+        return;
+    }
 
     // Use the override config if provided (Universal Mode), otherwise fallback to global (Dedicated Mode)
     // Actually, in Universal Mode step we pass both. In dedicated mode (old code) we rely on global.
@@ -538,15 +547,16 @@ When finished, reply with "TASK_COMPLETED".
             // No tool call. Check if done.
             if (response.text.toUpperCase().includes("TASK_COMPLETED") || response.text.toUpperCase().includes("TERMINATE")) {
                 console.log("✅ Task Completed by Agent.");
-                try {
-                    await db.entities.AgentTasks.update(task.id, {
+                const { error: completeError } = await workerSupabase
+                    .from('agent_tasks')
+                    .update({
                         status: 'done',
                         result: response.text
-                    });
-                } catch (dbError) {
-                    console.warn("⚠️ Failed to update result (column might be missing), updating status only:", dbError.message);
-                    await db.entities.AgentTasks.update(task.id, { status: 'done' });
-                }
+                    })
+                    .eq('id', task.id);
+
+                if (completeError) console.warn("⚠️ Failed to update result:", completeError.message);
+
                 return;
             }
 
@@ -556,11 +566,10 @@ When finished, reply with "TASK_COMPLETED".
             // Force fail if we are stuck in a loop without actions (RELAXED LIMIT)
             if (turnCount >= MAX_TURNS) {
                 console.error("❌ Task Failed: Agent is not calling tools.");
-                try {
-                    await db.entities.AgentTasks.update(task.id, { status: 'done', result: "FAILED: Agent failed to execute tools." });
-                } catch (e) {
-                    await db.entities.AgentTasks.update(task.id, { status: 'done' });
-                }
+                await workerSupabase
+                    .from('agent_tasks')
+                    .update({ status: 'done', result: "FAILED: Agent failed to execute tools." })
+                    .eq('id', task.id);
                 return;
             }
 
@@ -573,9 +582,14 @@ When finished, reply with "TASK_COMPLETED".
         }
     }
 
+
+
     if (turnCount >= MAX_TURNS) {
         console.error("❌ Task Timeout: Max turns reached.");
-        await db.entities.AgentTasks.update(task.id, { status: 'done', result: "FAILED: Timeout: Max turns reached." });
+        await workerSupabase
+            .from('agent_tasks')
+            .update({ status: 'done', result: "FAILED: Timeout: Max turns reached." })
+            .eq('id', task.id);
     }
 }
 

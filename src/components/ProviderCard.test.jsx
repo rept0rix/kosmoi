@@ -38,8 +38,8 @@ describe('ProviderCard', () => {
         expect(screen.getByText('Test Business')).toBeVisible()
         expect(screen.getByText('John Doe', { exact: false })).toBeVisible() // "Contact: John Doe"
         expect(screen.getByText('4.5')).toBeVisible()
-        expect(screen.getByText('(10 ביקורות)')).toBeVisible()
-        expect(screen.getByText('מוסמך')).toBeVisible() // Verified badge
+        expect(screen.getByText('(10)')).toBeVisible()
+        expect(screen.getByText('Verified')).toBeVisible() // Verified badge
     })
 
     it('calls onCall when call button is clicked', async () => {
@@ -47,7 +47,7 @@ describe('ProviderCard', () => {
         const handleCall = vi.fn()
         renderWithRouter(<ProviderCard provider={mockProvider} onCall={handleCall} />)
 
-        const callButton = screen.getByText('התקשר')
+        const callButton = screen.getByText('Call')
         await user.click(callButton)
 
         expect(handleCall).toHaveBeenCalledTimes(1)

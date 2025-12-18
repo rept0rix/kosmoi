@@ -150,14 +150,23 @@ IMPORTANT: You are a helpful AI agent. You always output valid JSON.`,
 
     // 4. Parse JSON
     try {
-      // Clean up potential markdown code blocks
-      let jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      let jsonStr = text;
 
-      // Robust Extractor: Find the first '{' and last '}'
-      const firstOpen = jsonStr.indexOf('{');
-      const lastClose = jsonStr.lastIndexOf('}');
-      if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
-        jsonStr = jsonStr.substring(firstOpen, lastClose + 1);
+      // Strategy A: Look for markdown code block (Most reliable)
+      const markdownMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+      if (markdownMatch) {
+        jsonStr = markdownMatch[1].trim();
+      } else {
+        // Strategy B: Heuristic extraction
+        // If no markdown, find the *last* contiguous block that looks like a root JSON object
+        // This helps avoid matching "thinking" text that might contain { brackets }
+
+        // Current logic: Find first { and last }
+        const firstOpen = text.indexOf('{');
+        const lastClose = text.lastIndexOf('}');
+        if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+          jsonStr = text.substring(firstOpen, lastClose + 1);
+        }
       }
 
       const data = JSON.parse(jsonStr);
@@ -186,7 +195,8 @@ IMPORTANT: You are a helpful AI agent. You always output valid JSON.`,
           response: text.slice(0, 2000), // Truncate
           metadata: {
             actions: response.toolRequest,
-            context_used: !!knowledgeContext
+            context_used: !!knowledgeContext,
+            model_used: agent.model
           }
         });
       } catch (logErr) {

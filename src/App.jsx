@@ -13,11 +13,13 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AgentCommandCenter from '@/pages/AgentCommandCenter';
 import AdminImporter from '@/pages/AdminImporter';
 import { ProtectedAdminRoute, ProtectedUserRoute } from '@/components/RouteGuards';
+import { RequireRole } from '@/components/RequireRole';
 
 import VendorSignup from './pages/VendorSignup';
 import VendorLite from '@/pages/VendorLite';
 
 import { AppConfigProvider } from '@/components/AppConfigContext';
+import { RxDBInitializer } from '@/services/rxdb/RxDBInitializer';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 import PersistenceTestPage from '@/pages/PersistenceTest';
 import { SpeedInsights } from "@vercel/speed-insights/react"
@@ -130,8 +132,12 @@ const AuthenticatedApp = () => {
             {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
             <Route path="/mapview" element={null} />
 
-            {/* Explicit Business Route for clarity, though dynamic loop handles it too */}
-            <Route path="/business" element={<Pages.Business />} />
+            {/* Protected Business Route */}
+            <Route path="/business" element={
+              <RequireRole role="vendor">
+                <Pages.Business />
+              </RequireRole>
+            } />
 
             {Object.entries(Pages)
               .filter(([path]) => path !== 'MapView')
@@ -156,7 +162,11 @@ const AuthenticatedApp = () => {
 
             {/* Admin Routes (New Layout) */}
             <Route element={<ProtectedAdminRoute />}>
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={
+                <RequireRole role="admin">
+                  <AdminLayout />
+                </RequireRole>
+              }>
                 <Route index element={<Navigate to="/admin/command-center" replace />} />
                 <Route path="command-center" element={<CommandCenter />} />
                 <Route path="board-room" element={<BoardRoom />} />
@@ -214,12 +224,12 @@ const AuthenticatedApp = () => {
           </Routes>
         </div>
 
-        {/* KOSMOI INJECTION: Samui Speed Pass */}
-        <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
+        {/* KOSMOI INJECTION: Samui Speed Pass - Disabled per user request */}
+        {/* <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
           <div className="pointer-events-auto">
             <SpeedPassCard />
           </div>
-        </div>
+        </div> */}
 
       </div>
     </LayoutWrapper >
@@ -231,6 +241,7 @@ function App() {
   return (
     <AuthProvider>
       <AppConfigProvider>
+        <RxDBInitializer />
         <QueryClientProvider client={queryClientInstance}>
           <Router>
             <NavigationTracker />

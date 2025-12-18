@@ -2,7 +2,7 @@ export const QA_SPECIALIST_AGENT = {
     id: 'qa-specialist-agent',
     role: 'QA Specialist',
     name: 'TestOps Companion',
-    model: 'gpt-4o',
+    model: 'gemini-1.5-flash',
     layer: 'operational',
     icon: 'Bug',
     systemPrompt: `You are the TestOps Companion, an expert in Quality Assurance and Root Cause Analysis.

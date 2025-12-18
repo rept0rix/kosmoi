@@ -21,6 +21,7 @@ import { agents } from '@/services/agents/AgentRegistry';
 import { WORKFLOWS } from '@/services/agents/WorkflowService';
 
 import BoardRoomErrorBoundary from '@/components/BoardRoomErrorBoundary';
+import WorkflowStateBanner from '@/components/board/WorkflowStateBanner';
 
 function BoardRoomContent() {
     const {
@@ -196,16 +197,16 @@ function BoardRoomContent() {
                             />
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-6">
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-6 p-4">
                             <motion.div
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ duration: 0.5 }}
                                 className="relative"
                             >
-                                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-                                <GlassCard className="w-32 h-32 flex items-center justify-center relative z-10 glass-shine">
-                                    <Layout className="w-16 h-16 opacity-50 text-foreground" />
+                                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                                <GlassCard className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center relative z-10 glass-shine border-white/10">
+                                    <Layout className="w-16 h-16 md:w-20 md:h-20 opacity-60 text-foreground" />
                                 </GlassCard>
                             </motion.div>
 
@@ -213,12 +214,12 @@ function BoardRoomContent() {
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-center space-y-2 z-10"
+                                className="text-center space-y-3 z-10 max-w-lg"
                             >
-                                <h2 className="text-3xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50">
+                                <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50 py-1">
                                     {isRTL ? 'חדר הישיבות' : 'The Board Room'}
                                 </h2>
-                                <p className="text-base text-muted-foreground/80 max-w-xs mx-auto">
+                                <p className="text-base md:text-lg text-muted-foreground/80 max-w-sm mx-auto leading-relaxed">
                                     {isRTL ? 'בחר או צור פגישה כדי להתחיל לעבוד עם הצוות' : 'Select or create a meeting to start collaborating with your AI team.'}
                                 </p>
                             </motion.div>
@@ -228,7 +229,7 @@ function BoardRoomContent() {
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <Button size="lg" className="shadow-neon hover:shadow-glass-hover bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-lg transition-all duration-300 transform hover:scale-105" onClick={() => setIsCreateMeetingOpen(true)}>
+                                <Button size="lg" className="shadow-neon hover:shadow-glass-hover bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-lg font-medium transition-all duration-300 transform hover:scale-105" onClick={() => setIsCreateMeetingOpen(true)}>
                                     {isRTL ? 'צור פגישה חדשה' : 'Start New Session'}
                                 </Button>
                             </motion.div>

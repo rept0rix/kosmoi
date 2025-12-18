@@ -19,7 +19,9 @@ import initialCompanyState from '@/data/company_state.json';
 import { CoreLoop } from '@/services/loops/CoreLoop';
 
 // Initialize direct Supabase client for Realtime support
+// Initialize direct Supabase client for Realtime support
 import { realSupabase as supabase } from '@/api/supabaseClient';
+import { useRxQuery, useRxDB } from '@/services/rxdb/hooks';
 
 export function useBoardRoom() {
     // Start Autonomous Engine
@@ -58,7 +60,21 @@ export function useBoardRoom() {
     const [meetings, setMeetings] = useState([]);
     const [selectedMeeting, setSelectedMeeting] = useState(null);
     const [messages, setMessages] = useState([]);
-    const [tasks, setTasks] = useState([]);
+
+    // RxDB Integration for Tasks
+    const db = useRxDB();
+    const { result: rxTasks } = useRxQuery('tasks', collection => {
+        if (!selectedMeeting) return collection.find({ selector: { id: 'nothing' } }); // Return empty if no meeting
+        return collection.find({
+            selector: {
+                meeting_id: selectedMeeting.id
+            },
+            sort: [{ created_at: 'desc' }]
+        });
+    });
+
+    const tasks = rxTasks ? rxTasks.map(doc => doc.toJSON()) : [];
+
     const [knowledgeItems, setKnowledgeItems] = useState([]);
     const [activeRightTab, setActiveRightTab] = useState('tasks');
     const [isSplitView, setIsSplitView] = useState(false);
@@ -174,11 +190,7 @@ export function useBoardRoom() {
                 .order('created_at', { ascending: true });
             setMessages(msgs || []);
 
-            const { data: tsks } = await supabase.from('agent_tasks')
-                .select('*')
-                .eq('meeting_id', selectedMeeting.id)
-                .order('created_at', { ascending: false });
-            setTasks(tsks || []);
+            // Tasks handled by RxDB now
         };
         fetchDetails();
 
@@ -198,17 +210,10 @@ export function useBoardRoom() {
                 }
             });
 
-        const taskSub = supabase.channel(`tasks:${selectedMeeting.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_tasks', filter: `meeting_id=eq.${selectedMeeting.id}` }, payload => {
-                supabase.from('agent_tasks').select('*').eq('meeting_id', selectedMeeting.id).then(({ data }) => setTasks(data || []));
-            })
-            .subscribe((status) => {
-                if (status === 'CHANNEL_ERROR') console.error(`BOARD: Task Subscription Error`, status);
-            });
+        // Task Subscription removed (Handled by RxDB Replication)
 
         return () => {
             msgSub.unsubscribe();
-            taskSub.unsubscribe();
         };
     }, [selectedMeeting]);
 
@@ -514,27 +519,39 @@ export function useBoardRoom() {
     };
 
     const handleCreateTask = async ({ title, description, priority }) => {
-        if (!selectedMeeting || !title.trim()) return;
-        const { data, error } = await supabase.from('agent_tasks').insert([{ meeting_id: selectedMeeting.id, title, description, assigned_to: 'Human', priority, status: 'in_progress' }]).select();
+        if (!selectedMeeting || !title.trim() || !db) return;
 
-        if (error) {
-            console.error("Failed to create task:", error);
+        try {
+            const taskDoc = await db.tasks.insert({
+                id: crypto.randomUUID(),
+                meeting_id: selectedMeeting.id,
+                title,
+                description,
+                assigned_to: 'Human',
+                priority,
+                status: 'in_progress',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+            console.log("RxDB: Task Created", taskDoc);
+        } catch (error) {
+            console.error("Failed to create task in RxDB:", error);
             alert(`Failed to create task: ${error.message}`);
-            return;
         }
-
-        if (data) setTasks(prev => [data[0], ...prev]);
     };
 
     const handleUpdateTaskStatus = async (taskId, newStatus) => {
-        await supabase.from('agent_tasks').update({ status: newStatus }).eq('id', taskId);
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+        if (!db) return;
+        const task = await db.tasks.findOne(taskId).exec();
+        if (task) {
+            await task.patch({ status: newStatus, updated_at: new Date().toISOString() });
+        }
     };
 
     const handleDeleteTask = async (taskId) => {
-        if (confirm("Delete task?")) {
-            await supabase.from('agent_tasks').delete().eq('id', taskId);
-            setTasks(prev => prev.filter(t => t.id !== taskId));
+        if (confirm("Delete task?") && db) {
+            const task = await db.tasks.findOne(taskId).exec();
+            if (task) await task.remove();
         }
     };
 

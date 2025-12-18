@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 // Mock ResizeObserver
 beforeAll(() => {
-    global.ResizeObserver = class ResizeObserver {
+    globalThis.ResizeObserver = class ResizeObserver {
         observe() { }
         unobserve() { }
         disconnect() { }
