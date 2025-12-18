@@ -1,0 +1,10 @@
+[
+ {
+ "lead_id": "lead_1",
+ "email_draft": "Subject: Welcome to our platform!\n\nDear [Lead Name],\n\nWe're excited to have you! Explore our services and let us know if you have any questions.\n\nBest regards,\nThe Team"
+ },
+ {
+ "lead_id": "lead_2",
+ "email_draft": "Subject: Get Started with us!\n\nHi [Lead Name],\n\nThank you for joining our community. We're here to support you every step of the way.\n\nSincerely,\nThe Kosmoi Team"
+ }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "company": "Samui Serenity Spa",
+    "first_name": "Pim",
+    "last_name": "Sukjai",
+    "email": "pim.sukjai@samuiserenity.com",
+    "value": 7500,
+    "source": "ai_prospecting"
+  },
+  {
+    "company": "Island Hopper Tours",
+    "first_name": "Arun",
+    "last_name": "Dech",
+    "email": "arun.dech@islandhoppertours.com",
+    "value": 12000,
+    "source": "ai_prospecting"
+  },
+  {
+    "company": "Chaweng Catering Co.",
+    "first_name": "Suda",
+    "last_name": "Panya",
+    "email": "suda.panya@chawengcatering.com",
+    "value": 9000,
+    "source": "ai_prospecting"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "campaign_name": "Samui Fair Price Launch",
+  "target_audience": "Tourists, Expats, Digital Nomads in Koh Samui",
+  "channels": {
+    "social_media_post": {
+      "platform": "Facebook / Instagram",
+      "hook": "🏝️ Stop overpaying in Samui. Know the real price before you negotiate.",
+      "body": "Taxis, laundry, cleaning—tourist prices can be 200% higher. The 2024 Samui Fair Price Index gives you the local rates instantly. Save your budget for the sunsets. 👇",
+      "call_to_action": "Get the Index for $1"
+    },
+    "direct_message_script": {
+      "context": "Reply to users asking for taxi recommendations",
+      "text": "Hey, just a heads up—taxi rates vary wildly here. We just released a verified list of fair local prices so you don't get ripped off. It's $1 if you want to save the hassle: [Link]"
+    },
+    "email_blast": {
+      "subject": "🧾 The Real Cost of Living in Samui (2024 Update)",
+      "preview": "Don't pay the 'farang tax'.",
+      "body": "We've aggregated data from 500+ local transactions to bring you the definitive Fair Price Index. Stop guessing. Start negotiating with leverage. Download the guide for $1."
+    }
+  }
+}

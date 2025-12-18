@@ -1,0 +1,100 @@
+:root {
+  --primary: #0f172a;
+  --accent: #3b82f6;
+  --surface: #ffffff;
+  --background: #f8fafc;
+  --text: #334155;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding-top: 4rem;
+}
+
+h1 {
+  font-size: 3rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.05em;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 3rem;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.price-tag {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 1.5rem 0;
+}
+
+.currency {
+  font-size: 1.5rem;
+  vertical-align: super;
+  opacity: 0.7;
+}
+
+.btn-buy {
+  display: inline-block;
+  background-color: var(--accent);
+  color: white;
+  font-weight: 600;
+  padding: 1rem 2.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 1.1rem;
+}
+
+.btn-buy:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(59 130 246 / 0.3);
+}
+
+.features {
+  margin-top: 3rem;
+  text-align: left;
+  display: grid;
+  gap: 1rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.check {
+  color: var(--accent);
+  font-weight: bold;
+}

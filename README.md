@@ -1,9 +1,19 @@
-# Base44 Preview Template for MicroVM sandbox
+# Samui Fair Price Index (2024) - Deployment Package
 
-This template is used by the server to preview user-apps.
+## Overview
+A high-value, instant-delivery digital product designed to solve pricing ambiguity for tourists on Koh Samui. Price point: $1.
 
-## user files
-server creates the user-app files in the __components__, __pages__ folders
+## Repository Structure
+1. **Concept**: `product_idea.json` - Core value proposition and pricing logic.
+2. **Storefront**: `landing_page.html` - High-conversion sales page. Deploy to Vercel/Netlify or any static host.
+3. **The Product**: `samui_fair_price_guide.md` - The actual content delivered to the customer upon purchase.
+4. **Growth Engine**: `marketing_launch_kit.json` - Copywriting and strategy for social media channels.
 
-## server injected data
-server injects app related data to __app.config.js__, which is used by App.jsx to render the components in the files.
+## Deployment Instructions
+1. **Host the Storefront**: Upload `landing_page.html` to your preferred web server.
+2. **Set up Payment**: Link the 'Buy Now' button in the HTML to a Stripe Payment Link or Gumroad checkout.
+3. **Configure Delivery**: Set the success redirect URL to a hosted version of `samui_fair_price_guide.md` or configure an email automation to send the file.
+4. **Launch**: Execute the strategy outlined in `marketing_launch_kit.json`.
+
+## Status
+Ready for immediate execution. NO LATENCY.

@@ -1,0 +1,26 @@
+[
+  {
+    "company": "Samui Serenity Spa",
+    "first_name": "Anya",
+    "last_name": "Sharma",
+    "email": "anya.sharma@samuiserenityspa.com",
+    "value": 1500,
+    "source": "ai_prospecting"
+  },
+  {
+    "company": "Island Tours Koh Samui",
+    "first_name": "Ben",
+    "last_name": "Williams",
+    "email": "ben.williams@islandtourssamui.com",
+    "value": 2200,
+    "source": "ai_prospecting"
+  },
+  {
+    "company": "Chaweng Catering Services",
+    "first_name": "Pim",
+    "last_name": "Srisawat",
+    "email": "pim.srisawat@chawengcatering.com",
+    "value": 1800,
+    "source": "ai_prospecting"
+  }
+]
