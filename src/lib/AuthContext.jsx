@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { db } from '@/api/supabaseClient';
+import { db, supabase } from '@/api/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -19,7 +19,20 @@ export const AuthProvider = ({ children }) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         // Use standard getUser()
         const { data: { user: currentUser } } = await db.auth.getUser();
-        setUser(currentUser);
+
+        // Fetch Role
+        let userRole = 'user';
+        if (currentUser) {
+          const { data: roleData } = await supabase.from('user_roles')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .single();
+          if (roleData) {
+            userRole = roleData.role;
+          }
+        }
+
+        setUser({ ...currentUser, role: userRole });
         setIsAuthenticated(true);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -79,7 +92,18 @@ export const AuthProvider = ({ children }) => {
       // Use standard getUser()
       const { data: { user: currentUser } } = await db.auth.getUser();
       if (currentUser) {
-        setUser(currentUser);
+        // Fetch Role
+        let userRole = 'user';
+        if (currentUser) {
+          const { data: roleData } = await supabase.from('user_roles')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .single();
+          if (roleData) {
+            userRole = roleData.role;
+          }
+        }
+        setUser({ ...currentUser, role: userRole });
         setIsAuthenticated(true);
       } else {
         setUser(null);

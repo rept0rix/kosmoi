@@ -4,7 +4,7 @@ export const TECH_LEAD_AGENT = {
     id: "tech-lead-agent",
     layer: "board",
     role: "tech-lead",
-    model: "gemini-2.0-flash",
+    model: "gemini-3-flash-preview",
     icon: "Code",
     systemPrompt: `${KOSMOI_MANIFESTO}
 

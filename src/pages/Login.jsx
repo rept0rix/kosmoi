@@ -13,44 +13,38 @@ export default function Login() {
 
     // Get return URL from query params
     const searchParams = new URLSearchParams(location.search);
-    const returnUrl = searchParams.get('returnUrl') || createPageUrl('Profile');
+    const returnUrl = searchParams.get('returnUrl') || '/board-room';
 
     useEffect(() => {
-        // Check for hash parameters from OAuth redirect
-        const handleAuthCallback = async () => {
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                const params = new URLSearchParams(hash.substring(1)); // remove #
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-
-                if (accessToken) {
-                    db.auth.setSession({
-                        access_token: accessToken,
-                        refresh_token: refreshToken
-                    });
-                    // Clear hash to clean up URL
-                    window.history.replaceState(null, null, window.location.pathname + window.location.search);
-                }
-            }
-
-            // Check if already authenticated using official client checks
+        const checkSession = async () => {
             const { data: { session } } = await db.auth.getSession();
             if (session) {
-                try {
-                    const url = new URL(returnUrl, window.location.origin);
-                    if (url.origin === window.location.origin) {
-                        navigate(url.pathname + url.search + url.hash);
-                    } else {
-                        window.location.href = returnUrl;
-                    }
-                } catch (e) {
-                    navigate(returnUrl);
-                }
+                handleRedirect();
             }
         };
-        handleAuthCallback();
+        checkSession();
+
+        const { data: { subscription } } = db.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || session) {
+                handleRedirect();
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, [navigate, returnUrl]);
+
+    const handleRedirect = () => {
+        try {
+            const url = new URL(returnUrl, window.location.origin);
+            if (url.origin === window.location.origin) {
+                navigate(url.pathname + url.search + url.hash);
+            } else {
+                window.location.href = returnUrl;
+            }
+        } catch (e) {
+            navigate(returnUrl);
+        }
+    };
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -60,7 +54,7 @@ export default function Login() {
         setLoading(true);
         setError(null);
         try {
-            const { data, error } = await db.auth.signInWithPassword({
+            const { data, error } = await db.auth.signIn({
                 email,
                 password
             });
@@ -91,11 +85,8 @@ export default function Login() {
             const currentOrigin = window.location.origin;
             const redirectUrl = `${currentOrigin}/login?returnUrl=${encodeURIComponent(returnUrl)}`;
 
-            await db.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: redirectUrl
-                }
+            await db.auth.signInWithOAuth('google', {
+                redirectTo: redirectUrl
             });
         } catch (err) {
             console.error('Login error:', err);

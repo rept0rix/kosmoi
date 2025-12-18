@@ -69,9 +69,10 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
  * - Real-time weather context
  */
 export default function AIChat() {
-    const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'Sawadee krup! 🙏 I am your Koh Samui Concierge. How can I help you today?' }
-    ]);
+    const [messages, setMessages] = useState(() => {
+        const saved = localStorage.getItem('kosmoi_chat_history');
+        return saved ? JSON.parse(saved) : [{ role: 'assistant', content: 'Sawadee krup! 🙏 I am your Koh Samui Concierge. How can I help you today?' }];
+    });
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const navigate = useNavigate();
@@ -151,6 +152,7 @@ export default function AIChat() {
     }, [state]); // Add state dependency
 
     useEffect(() => {
+        localStorage.setItem('kosmoi_chat_history', JSON.stringify(messages));
         scrollToBottom();
     }, [messages]);
 
@@ -520,6 +522,20 @@ ${providersContext}
                                 {messages.some(m => m.card?.action?.type === 'add_to_trip') ? '🏝️ Trip Planning Mode' : '🛎️ Concierge Active'}
                             </span>
                         </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-4 top-2 h-8 w-8 text-gray-400 hover:text-red-500"
+                            onClick={() => {
+                                if (window.confirm('Clear chat history?')) {
+                                    setMessages([{ role: 'assistant', content: 'Sawadee krup! 🙏 I am your Koh Samui Concierge. How can I help you today?' }]);
+                                    localStorage.removeItem('kosmoi_chat_history');
+                                }
+                            }}
+                            title="Clear History"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
                     </div>
 
                     {messages.map((msg, idx) => (

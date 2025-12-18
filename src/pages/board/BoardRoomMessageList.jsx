@@ -25,9 +25,9 @@ export default function BoardRoomMessageList({
                     const agent = getAgentById(msg.agent_id);
 
                     return (
-                        <div key={msg.id} className={`flex gap-5 ${isUser ? 'flex-row-reverse' : ''} group`}>
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border-2 border-white ${isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
-                                {isUser ? <Users className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
+                        <div key={msg.id} className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''} group`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-white ${isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
+                                {isUser ? <Users className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                             </div>
                             <motion.div
                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -39,7 +39,7 @@ export default function BoardRoomMessageList({
                                     <span className="text-sm font-semibold text-foreground/80">
                                         {isUser ? (isRTL ? 'אתה' : 'You') : (agent?.role || msg.agent_id)}
                                     </span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-[10px] text-muted-foreground">
                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
@@ -109,7 +109,7 @@ export default function BoardRoomMessageList({
                                         })()}
                                     </div>
                                 ) : (
-                                    <div className={`p-6 rounded-3xl text-lg shadow-sm leading-relaxed tracking-wide ${isUser
+                                    <div className={`p-3 rounded-2xl text-sm shadow-sm leading-relaxed tracking-wide ${isUser
                                         ? 'bg-blue-600 text-white rounded-tr-md shadow-md'
                                         : msg.type === 'task_created'
                                             ? 'bg-emerald-50 border border-emerald-100 text-emerald-900 rounded-tl-md'
@@ -166,9 +166,9 @@ export default function BoardRoomMessageList({
                 })}
 
                 {typingAgent && (
-                    <div className="flex gap-5">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border-2 border-white bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600">
-                            <Bot className="w-6 h-6" />
+                    <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-white bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600">
+                            <Bot className="w-4 h-4" />
                         </div>
                         <div className="flex flex-col items-start">
                             <div className="flex items-center gap-2 mb-1 px-1">
@@ -177,7 +177,7 @@ export default function BoardRoomMessageList({
                                 </span>
                                 <span className="text-xs text-gray-400">Typing...</span>
                             </div>
-                            <div className="p-4 rounded-2xl rounded-tl-none bg-white border border-gray-100 shadow-sm">
+                            <div className="p-3 rounded-2xl rounded-tl-none bg-white border border-gray-100 shadow-sm">
                                 <div className="flex gap-1">
                                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

@@ -4,6 +4,8 @@ import { RefreshCw, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, E
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from '@/lib/instance';
+import { HeatmapService } from '@/services/HeatmapService';
+import HeatmapOverlay from '@/components/HeatmapOverlay';
 
 const LivePreview = ({
     initialUrl = 'http://localhost:5173',

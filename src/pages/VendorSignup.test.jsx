@@ -11,9 +11,20 @@ import { BrowserRouter } from 'react-router-dom'
 // So we mock '../api/supabaseClient' relative to the test file (which is in src/pages).
 vi.mock('../api/supabaseClient', () => ({
     db: {
+        auth: {
+            signUp: vi.fn()
+        },
         entities: {
             ServiceProvider: {
                 create: vi.fn()
+            },
+            Review: { // Also mock Review as it might be used in other tests or init
+                filter: vi.fn().mockResolvedValue([])
+            }
+        },
+        integrations: {
+            Core: {
+                UploadFile: vi.fn()
             }
         }
     }
@@ -32,11 +43,13 @@ describe('VendorSignup Page', () => {
         // Mock successful response by default
         // @ts-ignore
         db.entities.ServiceProvider.create.mockResolvedValue({ data: { id: 1 }, error: null })
+        // @ts-ignore
+        db.auth.signUp.mockResolvedValue({ data: { user: { id: 'test-user-id' }, session: { access_token: 'token' } }, error: null })
     })
 
     it('renders signup form', () => {
         renderWithRouter(<VendorSignup />)
-        expect(screen.getByText('Join Kosmoi Service Hub', { exact: false })).toBeVisible()
+        expect(screen.getByText('Partner with Kosmoi', { exact: false })).toBeVisible()
         // Check for h1
         expect(screen.getByRole('heading', { level: 1 })).toBeVisible()
     })
@@ -54,6 +67,12 @@ describe('VendorSignup Page', () => {
         await user.type(descriptionInput, 'Best pad thai')
         await user.type(locationInput, 'Chaweng Beach')
         await user.type(ownerInput, 'Mr. Chef')
+
+        const emailInput = container.querySelector('input[name="email"]')
+        await user.type(emailInput, 'test@example.com')
+
+        const passwordInput = container.querySelector('input[name="password"]')
+        await user.type(passwordInput, 'password123')
 
         // There is no input named 'contact_info' in the JSX form based on view_file! 
         // It seems 'owner_name' is used for contact person.

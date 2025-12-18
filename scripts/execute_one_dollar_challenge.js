@@ -119,15 +119,26 @@ async function main() {
 
     // Parse JSON
     try {
-        const match = ceoOut.result.match(/\{[\s\S]*\}/);
-        const jsonStr = match ? match[0] : ceoOut.result;
+        let jsonStr = ceoOut.result;
+        // Try to find JSON block in markdown
+        const markdownMatch = ceoOut.result.match(/```json\s*([\s\S]*?)\s*```/);
+        if (markdownMatch) {
+            jsonStr = markdownMatch[1];
+        } else {
+            // Try to find raw JSON object
+            const jsonMatch = ceoOut.result.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                jsonStr = jsonMatch[0];
+            }
+        }
+
         const product = JSON.parse(jsonStr);
         context.productName = product.productName || "Generic Product";
         context.description = product.description;
         context.price = product.price || 100;
         context.currency = product.currency || "usd";
     } catch (e) {
-        console.warn("Could not parse CEO output, using constants.");
+        console.warn("Could not parse CEO output, using constants. Output was:", ceoOut.result);
         context.productName = "One Dollar Insight";
         context.price = 100;
         context.currency = "usd";
@@ -141,7 +152,7 @@ async function main() {
     const techOut = await safeRunStep(STEPS[1], context);
 
     // Extract link
-    const linkMatch = techOut.result.match(/https:\/\/buy\.stripe\.com\/[a-zA-Z0-9_]+/);
+    const linkMatch = techOut.result.match(/(https:\/\/buy\.stripe\.com\/[a-zA-Z0-9_]+|https:\/\/checkout\.stripe\.com\/[^\s]+)/);
     // If we have a robust fallback in safeRunStep result, it might be a JSON object string, or just a string.
     // The fallback in STEPS[1] is a JSON string with url.
     let paymentLink = "https://buy.stripe.com/mock_LINK_MISSING";
@@ -151,7 +162,11 @@ async function main() {
     } else {
         // Try to parse as JSON if it was a JSON response
         try {
-            const json = JSON.parse(techOut.result);
+            let jsonStr = techOut.result;
+            const markdownMatch = techOut.result.match(/```json\s*([\s\S]*?)\s*```/);
+            if (markdownMatch) jsonStr = markdownMatch[1];
+
+            const json = JSON.parse(jsonStr);
             if (json.url) paymentLink = json.url;
         } catch (e) { /* ignore */ }
     }

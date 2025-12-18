@@ -6,504 +6,409 @@ const getEnv = (key) => {
     return undefined;
 };
 
-
-console.log("[DEBUG] supabaseClient Env Check:");
-console.log("VITE_SUPABASE_URL:", getEnv("VITE_SUPABASE_URL") ? "Exists" : "Missing");
-console.log("VITE_SUPABASE_SERVICE_ROLE_KEY:", getEnv("VITE_SUPABASE_SERVICE_ROLE_KEY") ? "Exists" : "Missing");
-console.log("VITE_SUPABASE_ANON_KEY:", getEnv("VITE_SUPABASE_ANON_KEY") ? "Exists" : "Missing");
-
 const supabaseUrl = getEnv('VITE_SUPABASE_URL');
 const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY');
 
-console.log("[DEBUG] Final URLs:", { supabaseUrl, keyLength: supabaseAnonKey?.length });
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Missing Supabase Environment Variables');
+}
 
-
-
-// export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-//     auth: {
-//         persistSession: false
-//     },
-//     global: {
-//         fetch: (...args) => fetch(...args)
-//     }
-// })
-
-// Dummy client to prevent import errors while we use direct fetch
-// Client is initialized at the bottom of the file
-// export const supabase ...
-
-// Token management
-const TOKEN_KEY = 'sb-access-token';
-const REFRESH_TOKEN_KEY = 'sb-refresh-token';
-
-const getAccessToken = () => {
-    if (typeof localStorage !== 'undefined') {
-        return localStorage.getItem(TOKEN_KEY);
+// 1. Initialize official Client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
     }
-    return null;
-};
-const setSession = (session) => {
-    if (!session) {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
-        return;
-    }
-    localStorage.setItem(TOKEN_KEY, session.access_token);
-    localStorage.setItem(REFRESH_TOKEN_KEY, session.refresh_token);
-};
+});
 
-// Auth State Listeners
-const authListeners = new Set();
-const notifyAuthListeners = (event, session) => {
-    authListeners.forEach(callback => callback(event, session));
-};
-
-// Helper for direct fetch to bypass client library issues
-const fetchSupabase = async (endpoint, options = {}) => {
-    const url = `${supabaseUrl}/rest/v1/${endpoint}`;
-    const token = getAccessToken();
-    const headers = {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${token || supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation', // Return the created/updated record
-        ...options.headers
-    };
-
-    const response = await fetch(url, {
-        ...options,
-        headers
-    });
-
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Supabase API Error: ${response.status} ${text}`);
-    }
-
-    return response.json();
-};
-
-// Helper for Auth API
-const fetchAuth = async (endpoint, options = {}) => {
-    const url = `${supabaseUrl}/auth/v1/${endpoint}`;
-    const headers = {
-        'apikey': supabaseAnonKey,
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-    const token = getAccessToken();
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Auth Error: ${response.status} ${text}`);
-    }
-    return response.json();
-};
-
-// Helper functions for Supabase API
+// 2. Helper Implementation using the SDK
 export const supabaseHelpers = {
     entities: {
         ServiceProvider: {
             async filter(filters = {}) {
-                let queryParams = new URLSearchParams({ select: '*' });
+                let query = supabase.from('service_providers').select('*');
+                if (filters.status) query = query.eq('status', filters.status);
+                if (filters.verified !== undefined) query = query.eq('verified', filters.verified);
+                if (filters.super_category) query = query.eq('super_category', filters.super_category);
+                if (filters.sub_category) query = query.eq('sub_category', filters.sub_category);
+                if (filters.category) query = query.eq('category', filters.category);
+                if (filters.id) query = query.eq('id', filters.id);
+                if (filters.google_place_id) query = query.eq('google_place_id', filters.google_place_id);
+                if (filters.created_by) query = query.eq('created_by', filters.created_by);
 
-                if (filters.status) queryParams.append('status', `eq.${filters.status}`);
-                if (filters.verified !== undefined) queryParams.append('verified', `eq.${filters.verified}`);
-                if (filters.super_category) queryParams.append('super_category', `eq.${filters.super_category}`);
-                if (filters.sub_category) queryParams.append('sub_category', `eq.${filters.sub_category}`);
-                if (filters.category) queryParams.append('category', `eq.${filters.category}`);
-                if (filters.id) queryParams.append('id', `eq.${filters.id}`);
-                if (filters.google_place_id) queryParams.append('google_place_id', `eq.${filters.google_place_id}`);
-                if (filters.created_by) queryParams.append('created_by', `eq.${filters.created_by}`);
-
-                return fetchSupabase(`service_providers?${queryParams.toString()}`);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async list(orderBy = '-created_at', limit) {
-                let queryParams = new URLSearchParams({ select: '*' });
-
+                let query = supabase.from('service_providers').select('*');
                 if (orderBy) {
                     const desc = orderBy.startsWith('-');
                     const field = desc ? orderBy.slice(1) : orderBy;
-                    queryParams.append('order', `${field}.${desc ? 'desc' : 'asc'}`);
+                    query = query.order(field, { ascending: !desc });
                 }
-
-                if (limit) queryParams.append('limit', limit);
-
-                return fetchSupabase(`service_providers?${queryParams.toString()}`);
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async create(data) {
-                const result = await fetchSupabase('service_providers', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0]; // Supabase returns array
+                const { data: res, error } = await supabase.from('service_providers').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async update(id, data) {
-                const result = await fetchSupabase(`service_providers?id=eq.${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('service_providers').update(data).eq('id', id).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async delete(id) {
-                await fetchSupabase(`service_providers?id=eq.${id}`, {
-                    method: 'DELETE'
-                });
+                const { error } = await supabase.from('service_providers').delete().eq('id', id);
+                if (error) throw error;
             },
 
             async bulkCreate(items) {
-                return fetchSupabase('service_providers', {
-                    method: 'POST',
-                    body: JSON.stringify(items)
-                });
+                const { data, error } = await supabase.from('service_providers').insert(items).select();
+                if (error) throw error;
+                return data;
             }
         },
 
         Review: {
             async filter(filters = {}) {
-                let queryParams = new URLSearchParams({ select: '*' });
-                if (filters.service_provider_id) queryParams.append('service_provider_id', `eq.${filters.service_provider_id}`);
-                if (filters.user_id) queryParams.append('user_id', `eq.${filters.user_id}`);
-                if (filters.id) queryParams.append('id', `eq.${filters.id}`);
-                return fetchSupabase(`reviews?${queryParams.toString()}`);
+                let query = supabase.from('reviews').select('*');
+                if (filters.service_provider_id) query = query.eq('service_provider_id', filters.service_provider_id);
+                if (filters.user_id) query = query.eq('user_id', filters.user_id);
+                if (filters.id) query = query.eq('id', filters.id);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async list(orderBy = '-created_at', limit) {
-                let queryParams = new URLSearchParams({ select: '*' });
+                let query = supabase.from('reviews').select('*');
                 if (orderBy) {
                     const desc = orderBy.startsWith('-');
                     const field = desc ? orderBy.slice(1) : orderBy;
-                    queryParams.append('order', `${field}.${desc ? 'desc' : 'asc'}`);
+                    query = query.order(field, { ascending: !desc });
                 }
-                if (limit) queryParams.append('limit', limit);
-                return fetchSupabase(`reviews?${queryParams.toString()}`);
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async create(data) {
-                const result = await fetchSupabase('reviews', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('reviews').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async update(id, data) {
-                const result = await fetchSupabase(`reviews?id=eq.${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('reviews').update(data).eq('id', id).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async delete(id) {
-                await fetchSupabase(`reviews?id=eq.${id}`, {
-                    method: 'DELETE'
-                });
+                const { error } = await supabase.from('reviews').delete().eq('id', id);
+                if (error) throw error;
             }
         },
 
         Favorite: {
             async filter(filters = {}) {
-                let queryParams = new URLSearchParams({ select: '*' });
-                if (filters.service_provider_id) queryParams.append('service_provider_id', `eq.${filters.service_provider_id}`);
-                if (filters.user_id) queryParams.append('user_id', `eq.${filters.user_id}`);
-                if (filters.id) queryParams.append('id', `eq.${filters.id}`);
-                return fetchSupabase(`favorites?${queryParams.toString()}`);
+                let query = supabase.from('favorites').select('*');
+                if (filters.service_provider_id) query = query.eq('service_provider_id', filters.service_provider_id);
+                if (filters.user_id) query = query.eq('user_id', filters.user_id);
+                if (filters.id) query = query.eq('id', filters.id);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async list(orderBy = '-created_at', limit) {
-                let queryParams = new URLSearchParams({ select: '*' });
+                let query = supabase.from('favorites').select('*');
                 if (orderBy) {
                     const desc = orderBy.startsWith('-');
                     const field = desc ? orderBy.slice(1) : orderBy;
-                    queryParams.append('order', `${field}.${desc ? 'desc' : 'asc'}`);
+                    query = query.order(field, { ascending: !desc });
                 }
-                if (limit) queryParams.append('limit', limit);
-                return fetchSupabase(`favorites?${queryParams.toString()}`);
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async create(data) {
-                const result = await fetchSupabase('favorites', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('favorites').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async delete(id) {
-                await fetchSupabase(`favorites?id=eq.${id}`, {
-                    method: 'DELETE'
-                });
+                const { error } = await supabase.from('favorites').delete().eq('id', id);
+                if (error) throw error;
             }
         },
 
         SearchHistory: {
             async filter(filters = {}) {
-                let queryParams = new URLSearchParams({ select: '*' });
-                if (filters.user_id) queryParams.append('user_id', `eq.${filters.user_id}`);
-                if (filters.id) queryParams.append('id', `eq.${filters.id}`);
-                return fetchSupabase(`search_history?${queryParams.toString()}`);
+                let query = supabase.from('search_history').select('*');
+                if (filters.user_id) query = query.eq('user_id', filters.user_id);
+                if (filters.id) query = query.eq('id', filters.id);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async list(orderBy = '-created_date', limit) {
-                let queryParams = new URLSearchParams({ select: '*' });
+                let query = supabase.from('search_history').select('*');
                 if (orderBy) {
                     const desc = orderBy.startsWith('-');
-                    const field = desc ? orderBy.slice(1) : orderBy;
-                    queryParams.append('order', `${field}.${desc ? 'desc' : 'asc'}`);
+                    const field = desc ? orderBy.slice(1) : orderBy; // Note: 'created_date' in db vs 'created_at' usually
+                    query = query.order(field, { ascending: !desc });
                 }
-                if (limit) queryParams.append('limit', limit);
-                return fetchSupabase(`search_history?${queryParams.toString()}`);
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async create(data) {
-                const result = await fetchSupabase('search_history', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('search_history').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async delete(id) {
-                await fetchSupabase(`search_history?id=eq.${id}`, {
-                    method: 'DELETE'
-                });
+                const { error } = await supabase.from('search_history').delete().eq('id', id);
+                if (error) throw error;
             }
         },
 
         ServiceRequest: {
             async filter(filters = {}) {
-                let queryParams = new URLSearchParams({ select: '*' });
-                if (filters.user_id) queryParams.append('user_id', `eq.${filters.user_id}`);
-                if (filters.category) queryParams.append('category', `eq.${filters.category}`);
-                if (filters.status) queryParams.append('status', `eq.${filters.status}`);
-                if (filters.id) queryParams.append('id', `eq.${filters.id}`);
-                return fetchSupabase(`service_requests?${queryParams.toString()}`);
+                let query = supabase.from('service_requests').select('*');
+                if (filters.user_id) query = query.eq('user_id', filters.user_id);
+                if (filters.category) query = query.eq('category', filters.category);
+                if (filters.status) query = query.eq('status', filters.status);
+                if (filters.id) query = query.eq('id', filters.id);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async list(orderBy = '-created_at', limit) {
-                let queryParams = new URLSearchParams({ select: '*' });
+                let query = supabase.from('service_requests').select('*');
                 if (orderBy) {
                     const desc = orderBy.startsWith('-');
                     const field = desc ? orderBy.slice(1) : orderBy;
-                    queryParams.append('order', `${field}.${desc ? 'desc' : 'asc'}`);
+                    query = query.order(field, { ascending: !desc });
                 }
-                if (limit) queryParams.append('limit', limit);
-                return fetchSupabase(`service_requests?${queryParams.toString()}`);
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
 
             async create(data) {
-                const result = await fetchSupabase('service_requests', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('service_requests').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async update(id, data) {
-                const result = await fetchSupabase(`service_requests?id=eq.${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('service_requests').update(data).eq('id', id).select().single();
+                if (error) throw error;
+                return res;
             },
 
             async delete(id) {
-                await fetchSupabase(`service_requests?id=eq.${id}`, {
-                    method: 'DELETE'
-                });
+                const { error } = await supabase.from('service_requests').delete().eq('id', id);
+                if (error) throw error;
             }
         },
 
         AgentMemory: {
             async get(agentId, userId) {
-                const result = await fetchSupabase(`agent_memory?agent_id=eq.${agentId}&user_id=eq.${userId}&select=history`);
-                return result[0] || null;
+                const { data, error } = await supabase
+                    .from('agent_memory')
+                    .select('history')
+                    .eq('agent_id', agentId)
+                    .eq('user_id', userId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') throw error; // PGRST116 is 'not found'
+                return data || null;
             },
             async upsert(data) {
-                // Upsert based on user_id, agent_id
-                const result = await fetchSupabase('agent_memory?on_conflict=user_id,agent_id', {
-                    method: 'POST',
-                    headers: { 'Prefer': 'resolution=merge-duplicates' },
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_memory').upsert(data, { onConflict: 'user_id,agent_id' }).select().single();
+                if (error) throw error;
+                return res;
             }
         },
 
         AgentFiles: {
             async list(userId) {
-                return fetchSupabase(`agent_files?user_id=eq.${userId}&select=path,updated_at,agent_id`);
+                const { data, error } = await supabase.from('agent_files').select('path,updated_at,agent_id').eq('user_id', userId);
+                if (error) throw error;
+                return data;
             },
             async get(path, userId) {
-                const result = await fetchSupabase(`agent_files?user_id=eq.${userId}&path=eq.${path}&select=content`);
-                return result[0] || null;
+                const { data, error } = await supabase.from('agent_files').select('content').eq('user_id', userId).eq('path', path).single();
+                if (error && error.code !== 'PGRST116') throw error;
+                return data || null;
             },
             async upsert(data) {
-                const result = await fetchSupabase('agent_files?on_conflict=user_id,path', {
-                    method: 'POST',
-                    headers: { 'Prefer': 'resolution=merge-duplicates' },
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_files').upsert(data, { onConflict: 'user_id,path' }).select().single();
+                if (error) throw error;
+                return res;
             }
         },
 
         AgentTickets: {
             async create(data) {
-                const result = await fetchSupabase('agent_tickets', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_tickets').insert(data).select().single();
+                if (error) throw error;
+                return res;
             }
         },
 
         AgentTasks: {
             async list(meetingId) {
-                let url = `agent_tasks?select=*&order=created_at.desc`;
+                let query = supabase.from('agent_tasks').select('*').order('created_at', { ascending: false });
                 if (meetingId) {
-                    url += `&meeting_id=eq.${meetingId}`;
+                    query = query.eq('meeting_id', meetingId);
                 }
-                return fetchSupabase(url);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
             async create(data) {
-                const result = await fetchSupabase('agent_tasks', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_tasks').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
             async update(id, data) {
-                const result = await fetchSupabase(`agent_tasks?id=eq.${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_tasks').update(data).eq('id', id).select().single();
+                if (error) throw error;
+                return res;
             }
         },
 
         AgentConfigs: {
             async get(agentId, key) {
-                const result = await fetchSupabase(`agent_configs?agent_id=eq.${agentId}&key=eq.${key}&select=value`);
-                return result[0] ? result[0].value : null;
+                const { data, error } = await supabase
+                    .from('agent_configs')
+                    .select('value')
+                    .eq('agent_id', agentId)
+                    .eq('key', key)
+                    .single();
+                if (error && error.code !== 'PGRST116') throw error;
+                return data ? data.value : null;
             },
             async list(agentId = null) {
-                let url = `agent_configs?select=agent_id,key,value`;
+                let query = supabase.from('agent_configs').select('agent_id,key,value');
                 if (agentId) {
-                    url += `&agent_id=eq.${agentId}`;
+                    query = query.eq('agent_id', agentId);
                 }
-                const result = await fetchSupabase(url);
-                return result || [];
+                const { data, error } = await query;
+                if (error) throw error;
+                return data || [];
             },
             async upsert(agentId, key, value) {
-                const result = await fetchSupabase('agent_configs?on_conflict=agent_id,key', {
-                    method: 'POST',
-                    headers: { 'Prefer': 'resolution=merge-duplicates' },
-                    body: JSON.stringify({ agent_id: agentId, key, value })
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_configs').upsert({ agent_id: agentId, key, value }, { onConflict: 'agent_id,key' }).select().single();
+                if (error) throw error;
+                return res;
             }
         },
 
         CompanyKnowledge: {
             async get(key) {
-                const result = await fetchSupabase(`company_knowledge?key=eq.${key}&select=*`);
-                return result[0] || null;
+                const { data, error } = await supabase.from('company_knowledge').select('*').eq('key', key).single();
+                if (error && error.code !== 'PGRST116') throw error;
+                return data || null;
             },
             async list(category) {
-                let url = `company_knowledge?select=*`;
+                let query = supabase.from('company_knowledge').select('*');
                 if (category) {
-                    url += `&category=eq.${category}`;
+                    query = query.eq('category', category);
                 }
-                return fetchSupabase(url);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
             },
             async upsert(data) {
-                const result = await fetchSupabase('company_knowledge?on_conflict=key', {
-                    method: 'POST',
-                    headers: { 'Prefer': 'resolution=merge-duplicates' },
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('company_knowledge').upsert(data, { onConflict: 'key' }).select().single();
+                if (error) throw error;
+                return res;
             },
             async delete(key) {
-                await fetchSupabase(`company_knowledge?key=eq.${key}`, {
-                    method: 'DELETE'
-                });
+                const { error } = await supabase.from('company_knowledge').delete().eq('key', key);
+                if (error) throw error;
             }
         },
 
         Query: {
-            // Placeholder for custom queries if needed
             async execute(query) {
-                // RPC calls also via fetch
-                const result = await fetchSupabase(`rpc/${query.name}`, {
-                    method: 'POST',
-                    body: JSON.stringify(query.params)
-                });
-                return result;
+                const { data, error } = await supabase.rpc(query.name, query.params);
+                if (error) throw error;
+                // RPC returns data directly
+                return data;
             }
         },
 
         AgentApprovals: {
             async create(data) {
-                const result = await fetchSupabase('agent_approvals', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_approvals').insert(data).select().single();
+                if (error) throw error;
+                return res;
             },
             async update(id, data) {
-                const result = await fetchSupabase(`agent_approvals?id=eq.${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_approvals').update(data).eq('id', id).select().single();
+                if (error) throw error;
+                return res;
             },
             async get(id) {
-                const result = await fetchSupabase(`agent_approvals?id=eq.${id}&select=*`);
-                return result[0];
+                const { data, error } = await supabase.from('agent_approvals').select('*').eq('id', id).single();
+                if (error) throw error;
+                return data;
             },
             async list(userId) {
-                return fetchSupabase(`agent_approvals?user_id=eq.${userId}&status=eq.pending&order=created_at.desc`);
+                const { data, error } = await supabase.from('agent_approvals').select('*').eq('user_id', userId).eq('status', 'pending').order('created_at', { ascending: false });
+                if (error) throw error;
+                return data;
             }
         },
 
         AgentLogs: {
             async create(data) {
-                const result = await fetchSupabase('agent_logs', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                return result[0];
+                const { data: res, error } = await supabase.from('agent_logs').insert(data).select().single();
+                if (error) throw error;
+                return res;
             }
         }
     },
 
     auth: {
         async me() {
-            const token = getAccessToken();
-            if (!token) return null;
-            try {
-                const user = await fetchAuth('user');
-                return user;
-            } catch (e) {
-                console.warn("me() failed", e);
-                setSession(null); // Clear invalid token
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error) {
+                console.warn("me() failed", error);
                 return null;
             }
+            return user;
         },
 
         async isAuthenticated() {
-            return !!getAccessToken();
+            const { data: { session } } = await supabase.auth.getSession();
+            return !!session;
         },
 
         redirectToLogin(returnUrl) {
@@ -512,11 +417,7 @@ export const supabaseHelpers = {
         },
 
         async logout(returnUrl) {
-            try {
-                await fetchAuth('logout', { method: 'POST' });
-            } catch (e) { console.warn("Logout failed", e); }
-            setSession(null);
-            notifyAuthListeners('SIGNED_OUT', null);
+            await supabase.auth.signOut();
             if (returnUrl) {
                 window.location.href = returnUrl
             } else {
@@ -525,87 +426,72 @@ export const supabaseHelpers = {
         },
 
         async signUp(email, password, metadata = {}) {
-            const data = await fetchAuth('signup', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email,
-                    password,
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
                     data: metadata
-                })
+                }
             });
-            // SignUp might return session if auto-confirm is on, or just user
-            if (data.session) {
-                setSession(data.session);
-                notifyAuthListeners('SIGNED_IN', data.session);
-            }
-            return { user: data.user, session: data.session };
+            if (error) throw error;
+            return data;
         },
 
         async signIn(email, password) {
-            const data = await fetchAuth('token?grant_type=password', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email,
-                    password
-                })
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
             });
-            setSession(data);
-            notifyAuthListeners('SIGNED_IN', data);
-            return { user: data.user, session: data };
+            if (error) throw error;
+            return data;
         },
 
         async signInWithOAuth(provider, options = {}) {
-            // OAuth is harder with REST as it involves redirects.
-            // For now, we can try to construct the URL manually or warn.
-            // Supabase URL: /auth/v1/authorize?provider=google&redirect_to=...
             const redirectTo = options.redirectTo || window.location.origin;
-            const url = `${supabaseUrl}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(redirectTo)}`;
-            window.location.href = url;
-            // We can't return data here as it redirects.
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider,
+                options: {
+                    redirectTo
+                }
+            });
+            if (error) throw error;
+            return data;
         },
 
         async updateMe(data) {
-            const result = await fetchAuth('user', {
-                method: 'PUT',
-                body: JSON.stringify({ data })
+            const { data: res, error } = await supabase.auth.updateUser({
+                data: data
             });
-            return result;
+            if (error) throw error;
+            return res;
         },
 
         onAuthStateChange(callback) {
-            authListeners.add(callback);
-            return { data: { subscription: { unsubscribe: () => authListeners.delete(callback) } } };
+            return supabase.auth.onAuthStateChange(callback);
         },
 
-        setSession(session) {
-            setSession(session);
-            notifyAuthListeners('SIGNED_IN', session);
+        async getUser() {
+            return supabase.auth.getUser();
+        },
+
+        async getSession() {
+            return supabase.auth.getSession();
+        },
+
+        // Helper to manually set session if needed (e.g. from tests or URL params)
+        async setSession(session) {
+            if (!session) {
+                await supabase.auth.signOut();
+            } else {
+                await supabase.auth.setSession(session);
+            }
         }
     },
 
     functions: {
         async invoke(functionName, params) {
-            // Functions are usually at a different URL, but often proxied.
-            // Standard Supabase functions URL: https://<project>.supabase.co/functions/v1/<function>
-            const url = `${supabaseUrl}/functions/v1/${functionName}`;
-            const token = getAccessToken();
-            const headers = {
-                'Authorization': `Bearer ${token || supabaseAnonKey}`,
-                'Content-Type': 'application/json'
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(params)
-            });
-
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(`Function Error: ${response.status} ${text}`);
-            }
-
-            const data = await response.json();
+            const { data, error } = await supabase.functions.invoke(functionName, { body: params });
+            if (error) throw error;
             return { data };
         }
     },
@@ -619,27 +505,13 @@ export const supabaseHelpers = {
                 if (!file) throw new Error('No file provided');
 
                 const fileName = `${Date.now()}_${file.name}`;
-                const token = getAccessToken();
-                const headers = {
-                    'Authorization': `Bearer ${token || supabaseAnonKey}`,
-                    'apikey': supabaseAnonKey
-                };
+                const { data, error } = await supabase.storage.from('uploads').upload(fileName, file);
 
-                // 1. Upload
-                const uploadUrl = `${supabaseUrl}/storage/v1/object/uploads/${fileName}`;
-                const uploadRes = await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers,
-                    body: file
-                });
+                if (error) throw error;
 
-                if (!uploadRes.ok) throw new Error('Upload failed');
+                const { data: publicData } = supabase.storage.from('uploads').getPublicUrl(fileName);
 
-                // 2. Get Public URL
-                // Storage public URLs are usually: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<file>
-                const publicUrl = `${supabaseUrl}/storage/v1/object/public/uploads/${fileName}`;
-
-                return { file_url: publicUrl };
+                return { file_url: publicData.publicUrl };
             },
             GenerateImage: async () => { console.warn('GenerateImage not implemented'); return {}; },
             ExtractDataFromUploadedFile: async () => { console.warn('ExtractDataFromUploadedFile not implemented'); return {}; }
@@ -648,7 +520,6 @@ export const supabaseHelpers = {
 
     appLogs: {
         async logUserInApp(pageName) {
-            // Optional: implement app logging if needed
             console.log('User navigated to:', pageName)
         }
     },
@@ -658,8 +529,6 @@ export const supabaseHelpers = {
         entities: {
             ServiceProvider: {
                 async filter(filters) {
-                    // Use service role key for admin operations
-                    // For now, use same as regular
                     return supabaseHelpers.entities.ServiceProvider.filter(filters)
                 },
                 async bulkCreate(items) {
@@ -670,40 +539,10 @@ export const supabaseHelpers = {
     }
 }
 
-// Export REAL Supabase client for all standard usage
-// Export REAL Supabase client for all standard usage
-// Use a singleton pattern to prevent multiple instances during HMR
-const createSupabaseClient = () => {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-            persistSession: true, // Enable persistence
-            autoRefreshToken: true,
-            detectSessionInUrl: true
-        }
-    });
-};
-
-let supabaseInstance;
-
-if (typeof window !== 'undefined') {
-    if (!window.__supabaseInstance) {
-        window.__supabaseInstance = createSupabaseClient();
-    }
-    supabaseInstance = window.__supabaseInstance;
-} else {
-    // Server-side or non-browser environment
-    if (!global.__supabaseInstance) {
-        global.__supabaseInstance = createSupabaseClient();
-    }
-    supabaseInstance = global.__supabaseInstance;
-}
-
-export const supabase = supabaseInstance;
-
 // Export db object with all helpers (Legacy / Custom implementation)
 export const db = {
     ...supabaseHelpers,
-    auth: supabase.auth // Use the real auth client in the helper too, to avoid sync issues
+    auth: supabaseHelpers.auth // Use wrapper to match previous structure
 };
 
 // Export supabaseAdmin for AdminImporter

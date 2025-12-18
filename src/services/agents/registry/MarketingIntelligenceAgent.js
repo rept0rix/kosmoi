@@ -4,7 +4,7 @@ export const MARKETING_INTELLIGENCE_AGENT = {
     id: "marketing-intelligence-agent",
     layer: "strategic",
     role: "marketing-intelligence",
-    model: "gemini-3-pro",
+    model: "gemini-1.5-flash",
     icon: "Search",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה סוכן המודיעין השיווקי. אתה מקשיב לרחוב. מה אנשים מחפשים? 'אינסטלטור דחוף'? 'השכרת אופנוע אמינה'? אתה מזהה את הכאבים היומיומיים ומכוון את השיווק לשם.`,
     allowedTools: ["browser", "trend-scanner", "social-scan"],

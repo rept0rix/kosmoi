@@ -196,23 +196,24 @@ export default function BusinessDashboard() {
   const business = myBusinesses[0];
   const recentReviews = reviews.slice(0, 5);
 
-  // Activity data for the last 7 days
+  // Activity data (placeholder for now, to be implemented with real analytics table)
+  // For now, we can show flatline or random data if we want, but better to show empty state or realistic defaults
   const activityData = [
-    { day: "א'", views: 28, calls: 12, whatsapp: 8 },
-    { day: "ב'", views: 35, calls: 15, whatsapp: 10 },
-    { day: "ג'", views: 42, calls: 18, whatsapp: 14 },
-    { day: "ד'", views: 38, calls: 16, whatsapp: 11 },
-    { day: "ה'", views: 52, calls: 22, whatsapp: 18 },
-    { day: "ו'", views: 45, calls: 19, whatsapp: 15 },
-    { day: "ש'", views: 31, calls: 13, whatsapp: 9 },
+    { day: "א'", views: 0, calls: 0, whatsapp: 0 },
+    { day: "ב'", views: 0, calls: 0, whatsapp: 0 },
+    { day: "ג'", views: 0, calls: 0, whatsapp: 0 },
+    { day: "ד'", views: 0, calls: 0, whatsapp: 0 },
+    { day: "ה'", views: 0, calls: 0, whatsapp: 0 },
+    { day: "ו'", views: 0, calls: 0, whatsapp: 0 },
+    { day: "ש'", views: 0, calls: 0, whatsapp: 0 },
   ];
 
   const stats = [
     {
       icon: Eye,
-      label: "צפיות השבוע",
-      value: "245",
-      change: "+12%",
+      label: "צפיות (סה״כ)",
+      value: business.views_count || "0", // Assuming views_count exists on business object
+      change: "מאז ההקמה",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
@@ -220,23 +221,23 @@ export default function BusinessDashboard() {
       icon: Star,
       label: "דירוג ממוצע",
       value: business.average_rating?.toFixed(1) || "0.0",
-      change: business.total_reviews + " ביקורות",
+      change: (business.total_reviews || 0) + " ביקורות",
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
     },
     {
       icon: MessageSquare,
-      label: "פניות חדשות",
-      value: "18",
-      change: "השבוע",
+      label: "פניות (הודעות)",
+      value: business.messages_count || "0", // Placeholder column
+      change: "סה״כ הודעות",
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
       icon: Users,
-      label: "לקוחות חדשים",
-      value: "32",
-      change: "החודש",
+      label: "קליקים (טלפון)",
+      value: business.phone_clicks || "0", // Placeholder column
+      change: "חשיפות למספר",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
