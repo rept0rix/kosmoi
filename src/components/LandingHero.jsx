@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { predictCategory } from '@/utils/categoryRouter';
+import { predictCategory } from '@/shared/utils/categoryRouter';
 
 const LandingHero = () => {
     const navigate = useNavigate();

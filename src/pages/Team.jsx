@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Twitter, Linkedin, Mail, Code, Terminal, Cpu, Shield, Zap, Search, PenTool, Database, Activity, Lock, Share2, DollarSign, Briefcase, Eye, ChevronRight, BarChart2, Globe } from 'lucide-react';
-import { agents } from '../services/agents/AgentRegistry';
-import { KOSMOI_MANIFESTO } from '../services/agents/Kosmoi_Manifesto';
+import { agents } from '@/features/agents/services/AgentRegistry';
+import { KOSMOI_MANIFESTO } from '@/features/agents/services/Kosmoi_Manifesto';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

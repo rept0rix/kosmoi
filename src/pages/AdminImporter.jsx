@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import seedData from '@/data/samui_real_data_seed.json';
 import { subCategoriesBySuperCategory } from '@/components/subCategories';
 import AutomatedImportPanel from './admin/AutomatedImportPanel';
-import { getSuperCategory } from '@/utils/categoryMapping';
+import { getSuperCategory } from '@/shared/utils/categoryMapping';
 
 /** @type {any} */
 const google = (/** @type {any} */ (window)).google;

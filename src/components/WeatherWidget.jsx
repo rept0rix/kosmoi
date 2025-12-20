@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWeather, getWeatherDescription } from '@/hooks/useWeather';
+import { useWeather, getWeatherDescription } from '@/shared/hooks/useWeather';
 import { Card, CardContent } from "@/components/ui/card";
 import { Cloud, Sun, CloudRain, CloudLightning, CloudSnow, Wind } from 'lucide-react';
 

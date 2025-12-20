@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/api/supabaseClient';
-import { CrmService } from '@/services/business/CrmService'; // Import CRM Service
+import { SalesService as CrmService } from '@/services/SalesService'; // Import SalesService as CrmService
 import { useQuery } from '@tanstack/react-query';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';

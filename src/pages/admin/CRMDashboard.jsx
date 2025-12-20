@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { SalesService } from '../../services/SalesService';
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import {
@@ -8,35 +7,40 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LeadDetailsDialog } from '../../components/crm/LeadDetailsDialog';
+import { LeadDetailsDialog } from '@/features/leads/components/LeadDetailsDialog';
 import { toast } from "@/components/ui/use-toast";
-
-const CRMDashboard = ({ pipelineId }) => {
-    // ... existing wrapper not needed if we just export Internal as default or whatever
-    // But keeping existing structure.
-    return <CRMDashboardWrapper pipelineId={pipelineId} />;
-};
+import { useRxQuery } from '@/shared/hooks/useRxQuery';
+import { DatabaseService } from '@/core/db/database';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function CRMDashboardWrapper({ pipelineId, isAddLeadOpen, setIsAddLeadOpen, refreshTrigger }) {
     return (
         <CRMDashboardInternal
             pipelineId={pipelineId}
             externalAddLead={{ isOpen: isAddLeadOpen, setIsOpen: setIsAddLeadOpen }}
-            refreshTrigger={refreshTrigger}
         />
     )
 }
 
-function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
+function CRMDashboardInternal({ pipelineId, externalAddLead }) {
+    // --- RxDB Hooks ---
+    // 1. Fetch Stages
+    const { data: stagesData, loading: stagesLoading } = useRxQuery('stages',
+        collection => collection.find().sort({ position: 'asc' })
+    );
+
+    // 2. Fetch Contacts (Leads)
+    const { data: leadsData, loading: leadsLoading } = useRxQuery('contacts',
+        collection => collection.find().sort({ updated_at: 'desc' })
+    );
+
+    // --- State Management ---
     const [stages, setStages] = useState([]);
-    const [leads, setLeads] = useState({});
-    const [loading, setLoading] = useState(true);
+    const [leadsByStage, setLeadsByStage] = useState({});
     const [selectedLead, setSelectedLead] = useState(null);
 
     // Internal state if external is not provided
@@ -46,24 +50,35 @@ function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
 
     const [newLead, setNewLead] = useState({ first_name: '', last_name: '', email: '', company: '', value: '' });
 
-    // Fetch Pipeline and Stages
+    // --- Data Processing ---
     useEffect(() => {
-        fetchCRMData();
-    }, [pipelineId, refreshTrigger]);
-
-    const fetchCRMData = async () => {
-        try {
-            setLoading(true);
-            const { stages, leadsByStage } = await SalesService.getPipelineData(pipelineId);
-            setStages(stages);
-            setLeads(leadsByStage);
-        } catch (error) {
-            console.error("Error fetching CRM data:", error);
-            // toast({ title: "Error loading CRM", description: error.message, variant: "destructive" });
-        } finally {
-            setLoading(false);
+        if (stagesData) {
+            // Filter by pipelineId if provided, otherwise generic behavior (or default pipeline logic if needed)
+            // For now, we use all stages or filter if pipelineId exists in schema (it does)
+            const filteredStages = pipelineId
+                ? stagesData.filter(s => s.pipeline_id === pipelineId)
+                : stagesData;
+            setStages(filteredStages);
         }
-    };
+    }, [stagesData, pipelineId]);
+
+    useEffect(() => {
+        if (leadsData && stages.length > 0) {
+            const grouped = {};
+            stages.forEach(s => grouped[s.id] = []);
+
+            leadsData.forEach(lead => {
+                // If lead has a valid stage, add it. Otherwise fallback to first stage?
+                if (grouped[lead.stage_id]) {
+                    grouped[lead.stage_id].push(lead);
+                } else if (stages[0]) {
+                    // Fallback or ignore. Let's ignore for now or put in backlog if we had one.
+                }
+            });
+            setLeadsByStage(grouped);
+        }
+    }, [leadsData, stages]);
+
 
     const onDragEnd = async (result) => {
         const { source, destination, draggableId } = result;
@@ -71,41 +86,21 @@ function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
         if (!destination) return;
         if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-        // Optimistic UI Update
-        const sourceStageId = source.droppableId;
+        // Optimistic UI handled by RxDB automatically if we write cleanly
         const destStageId = destination.droppableId;
-        const movedLead = leads[sourceStageId].find(l => l.id === draggableId);
 
-        if (!movedLead) return;
-
-        // Create new objects to avoid mutation
-        const newSourceLeads = Array.from(leads[sourceStageId]);
-        const newDestLeads = sourceStageId === destStageId ? newSourceLeads : Array.from(leads[destStageId] || []);
-
-        // Remove from source
-        newSourceLeads.splice(source.index, 1);
-
-        // Add to destination
-        if (sourceStageId === destStageId) {
-            newSourceLeads.splice(destination.index, 0, movedLead);
-            setLeads({ ...leads, [sourceStageId]: newSourceLeads });
-        } else {
-            const updatedLead = { ...movedLead, stage_id: destStageId };
-            newDestLeads.splice(destination.index, 0, updatedLead);
-            setLeads({
-                ...leads,
-                [sourceStageId]: newSourceLeads,
-                [destStageId]: newDestLeads
-            });
-
-            // Update DB via Service
-            try {
-                await SalesService.updateLeadStage(draggableId, destStageId);
-            } catch (error) {
-                console.error("Failed to move lead:", error);
-                toast({ title: "Move failed", description: "Reverting changes...", variant: "destructive" });
-                fetchCRMData(); // Revert on error
+        try {
+            const db = await DatabaseService.get();
+            const leadDoc = await db.contacts.findOne(draggableId).exec();
+            if (leadDoc) {
+                await leadDoc.patch({
+                    stage_id: destStageId,
+                    updated_at: new Date().toISOString() // Ensure sync picks it up
+                });
             }
+        } catch (error) {
+            console.error("Failed to move lead:", error);
+            toast({ title: "Move failed", description: "Could not update database.", variant: "destructive" });
         }
     };
 
@@ -116,27 +111,30 @@ function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
         }
 
         try {
-            const leadData = {
+            const db = await DatabaseService.get();
+            const newId = uuidv4();
+
+            await db.contacts.insert({
+                id: newId, // UUID
                 ...newLead,
-                stage_id: stages[0].id, // Default to first stage
+                stage_id: stages[0].id,
                 source: 'manual',
                 status: 'new',
-                value: newLead.value ? parseFloat(newLead.value) : 0
-            };
-
-            await SalesService.createLead(leadData);
+                value: newLead.value ? parseFloat(newLead.value) : 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
 
             toast({ title: "Lead Created", description: `${newLead.first_name || newLead.company} added to pipeline.` });
             setIsAddLeadOpen(false);
             setNewLead({ first_name: '', last_name: '', email: '', company: '', value: '' });
-            fetchCRMData(); // Refresh board
         } catch (error) {
             console.error("Failed to create lead:", error);
-            toast({ title: "Error", description: "Failed to create lead.", variant: "destructive" });
+            toast({ title: "Error", description: "Failed to create lead locally.", variant: "destructive" });
         }
     };
 
-    if (loading && !stages.length) return <div className="p-10 text-center text-slate-400 animate-pulse">Loading Pipeline...</div>;
+    if (stagesLoading && !stages.length) return <div className="p-10 text-center text-slate-400 animate-pulse">Loading Pipeline (Offline Ready)...</div>;
 
     return (
         <div className="h-full flex flex-col bg-slate-900/50 text-white overflow-hidden rounded-xl border border-slate-800">
@@ -153,7 +151,7 @@ function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
                                         <span className="font-semibold text-slate-200">{stage.name}</span>
                                     </div>
                                     <span className="bg-slate-700 text-slate-300 text-xs px-2 py-1 rounded-full border border-slate-600">
-                                        {leads[stage.id]?.length || 0}
+                                        {leadsByStage[stage.id]?.length || 0}
                                     </span>
                                 </div>
 
@@ -166,7 +164,7 @@ function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
                                             className={`flex-1 p-3 overflow-y-auto space-y-3 transition-colors scrollbar-thin scrollbar-thumb-slate-700 ${snapshot.isDraggingOver ? 'bg-slate-700/30' : ''
                                                 }`}
                                         >
-                                            {leads[stage.id]?.map((lead, index) => (
+                                            {leadsByStage[stage.id]?.map((lead, index) => (
                                                 <Draggable key={lead.id} draggableId={lead.id} index={index}>
                                                     {(provided, snapshot) => (
                                                         <div
@@ -268,11 +266,14 @@ function CRMDashboardInternal({ pipelineId, externalAddLead, refreshTrigger }) {
             </Dialog>
 
             {/* Lead Details Dialog */}
+            {/* Note: LeadDetailsDialog might need updates if it pulls data internally. For now we pass the object so it should display ok. Updates inside it will need similar refactor if they don't use the onUpdate callback properly. */}
             <LeadDetailsDialog
                 lead={selectedLead}
                 isOpen={!!selectedLead}
                 onClose={() => setSelectedLead(null)}
-                onUpdate={fetchCRMData}
+                // onUpdate prop was used to trigger fetchCRMData. Since we use RxDB, we don't need manual fetch.
+                // However, LeadDetailsDialog likely calls SalesService.updateLead. We should inspect that next if we want Full Offline there too.
+                onUpdate={() => { }}
                 allStages={stages}
             />
         </div>

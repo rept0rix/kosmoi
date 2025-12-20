@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { listFilesFromSupabase, saveFileToSupabase, createTicketInSupabase } from '../services/agents/memorySupabase';
-import { useAuth } from '../lib/AuthContext';
+import { listFilesFromSupabase, saveFileToSupabase, createTicketInSupabase } from '@/features/agents/services/memorySupabase';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 export default function PersistenceTest() {
     const { user, navigateToLogin } = useAuth();

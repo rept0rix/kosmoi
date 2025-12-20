@@ -1,5 +1,5 @@
-import { BoardOrchestrator } from './agents/BoardOrchestrator';
-import { agents } from './agents/AgentRegistry';
+import { BoardOrchestrator } from '@/features/agents/services/BoardOrchestrator';
+import { agents } from '@/features/agents/services/AgentRegistry';
 
 /**
  * CompanyHeartbeat

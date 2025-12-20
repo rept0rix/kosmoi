@@ -1,7 +1,14 @@
 import TelegramBot from 'node-telegram-bot-api';
 
 // Placeholder for the token - will be replaced by environment variable or user input
-const token = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
+const getEnvVar = (key) => {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+        return import.meta.env[key] || import.meta.env[`VITE_${key}`];
+    }
+    return process.env[key] || process.env[`VITE_${key}`];
+};
+
+const token = getEnvVar('TELEGRAM_BOT_TOKEN') || 'YOUR_TELEGRAM_BOT_TOKEN';
 
 // We only create the bot instance if we have a token (or for dev structure)
 // In production/worker, this should crash or warn if no token.

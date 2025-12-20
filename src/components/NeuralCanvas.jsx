@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
-import { agents } from '@/services/agents/AgentRegistry';
+import { agents } from '@/features/agents/services/AgentRegistry';
 
 const NeuralCanvas = () => {
     const canvasRef = useRef(null);

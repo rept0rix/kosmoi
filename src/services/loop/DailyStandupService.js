@@ -1,5 +1,5 @@
 import { db } from "../../api/supabaseClient.js";
-import { CompanyKnowledge } from "../agents/CompanyKnowledge.js";
+import { CompanyKnowledge } from "../../features/agents/services/CompanyKnowledge.js";
 
 export const DailyStandupService = {
     /**
@@ -33,6 +33,7 @@ export const DailyStandupService = {
 
 
         // 3. Construct the Prompt
+        const insights = []; // Placeholder until real insights logic is connected
         const taskSummary = tasks?.length ? tasks.map(t => `- [${t.priority}] ${t.title}`).join('\n') : "No open tasks.";
         const insightSummary = insights?.length ? insights.map(i => `- [${i.category}] ${i.content}`).join('\n') : "No new insights.";
 

@@ -1,4 +1,5 @@
 import { supabase } from '../api/supabaseClient.js';
+import { DatabaseService } from '../core/db/database.js';
 
 /**
  * SalesService
@@ -26,7 +27,7 @@ export const SalesService = {
                 .from('crm_pipelines')
                 .select('id')
                 .eq('is_default', true)
-                .single();
+                .maybeSingle(); // Use maybeSingle to avoid error if 0 rows
             if (defaultPipeline) pid = defaultPipeline.id;
         }
 
@@ -94,20 +95,51 @@ export const SalesService = {
     },
 
     async createLead(leadData) {
-        const { data, error } = await supabase
-            .from('crm_leads')
-            .insert([leadData])
-            .select()
-            .single();
+        // Try RxDB
+        try {
+            const db = await DatabaseService.get();
+            const id = leadData.id || crypto.randomUUID();
+            const doc = await db.contacts.insert({
+                ...leadData,
+                id,
+                created_at: leadData.created_at || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+            return doc.toJSON();
+        } catch (rxError) {
+            console.warn("RxDB createLead failed, falling back to Supabase", rxError);
+            // Fallback
+            const { data, error } = await supabase
+                .from('crm_leads')
+                .insert([leadData])
+                .select()
+                .single();
 
-        if (error) throw error;
-        return data;
+            if (error) throw error;
+            return data;
+        }
     },
 
     async updateLead(leadId, updates) {
+        const updatePayload = {
+            ...updates,
+            updated_at: new Date().toISOString() // Force replication pickup
+        };
+
+        try {
+            const db = await DatabaseService.get();
+            const doc = await db.contacts.findOne(leadId).exec();
+            if (doc) {
+                await doc.patch(updatePayload);
+                return doc.toJSON();
+            }
+        } catch (rxError) {
+            console.warn("RxDB updateLead failed/doc not found, falling back to Supabase", rxError);
+        }
+
         const { data, error } = await supabase
             .from('crm_leads')
-            .update(updates)
+            .update(updatePayload)
             .eq('id', leadId)
             .select()
             .single();
@@ -121,6 +153,17 @@ export const SalesService = {
     },
 
     async deleteLead(leadId) {
+        try {
+            const db = await DatabaseService.get();
+            const doc = await db.contacts.findOne(leadId).exec();
+            if (doc) {
+                await doc.remove();
+                return;
+            }
+        } catch (rxError) {
+            console.warn("RxDB deleteLead failed/doc not found, falling back", rxError);
+        }
+
         const { error } = await supabase.from('crm_leads').delete().eq('id', leadId);
         if (error) throw error;
     },

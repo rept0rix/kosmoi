@@ -1,214 +1,195 @@
-
 import React from 'react';
-import { Bot, Zap, Box, Layers, Search, Code, Globe, MessageSquare } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import { screenRegistry } from './screenRegistry';
+import { Layout, FilePlus, Monitor } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import PricingModal from '@/components/payments/PricingModal';
 
-const SidebarItem = ({ type, label, icon: Icon, color }) => {
-    const onDragStart = (event, nodeType) => {
+export default function StudioSidebar({ nodes = [], onNodeSelect, setNodes }) {
+    const [activeTab, setActiveTab] = React.useState('assets'); // 'assets' | 'layers'
+    const [filterStatus, setFilterStatus] = React.useState('all'); // 'all' | 'live' | 'dev' | 'draft'
+
+    const onDragStart = (event, nodeType, screenId, label) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
-        event.dataTransfer.setData('application/label', label);
-        event.dataTransfer.setData('application/color', color);
+        event.dataTransfer.setData('screenId', screenId || '');
+        event.dataTransfer.setData('label', label || '');
         event.dataTransfer.effectAllowed = 'move';
     };
 
-    return (
-        <div
-            className={`
-                flex items-center gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/50 
-                cursor-grab active:cursor-grabbing hover:bg-slate-800 hover:border-slate-700 
-                transition-all group
-            `}
-            draggable
-            onDragStart={(event) => onDragStart(event, type)}
-        >
-            <div className={`p-2 rounded-md bg-opacity-10 ${color.bg} ${color.text}`}>
-                <Icon size={16} />
-            </div>
-            <div className="flex-1">
-                <div className="text-xs font-semibold text-slate-200">{label}</div>
-                <div className="text-[10px] text-slate-500 group-hover:text-slate-400">Drag to canvas</div>
-            </div>
-        </div>
-    );
-};
+    const handleDeployAll = () => {
+        if (!setNodes) return;
 
+        const newNodes = [];
+        const COLUMNS = 4;
+        const SPACING_X = 500;
+        const SPACING_Y = 800; // ample space for height
 
+        Object.entries(screenRegistry).forEach(([key, value], index) => {
+            const row = Math.floor(index / COLUMNS);
+            const col = index % COLUMNS;
 
-export default function StudioSidebar({ onLoadWorkflow, onImportGraph }) {
-    const [savedWorkflows, setSavedWorkflows] = React.useState([]);
-
-    React.useEffect(() => {
-        // Dynamic import to avoid circular dep issues in some bundlers, though unlikely here
-        import('../../../services/agents/WorkflowService').then(({ workflowService }) => {
-            workflowService.listWorkflows().then(setSavedWorkflows).catch(console.error);
+            newNodes.push({
+                id: `deployed-${key}-${Date.now()}`,
+                type: 'live-screen',
+                position: { x: col * SPACING_X, y: row * SPACING_Y },
+                data: { screenId: key, status: 'draft' }, // Default to draft
+            });
         });
-    }, []);
+
+        if (window.confirm(`This will add ${newNodes.length} screens to the canvas. Continue?`)) {
+            setNodes((nds) => [...nds, ...newNodes]);
+        }
+    };
+
+    // Filter nodes for Layers view
+    const visibleNodes = React.useMemo(() => {
+        return nodes.filter(n => {
+            if (n.type !== 'live-screen') return false; // Only show screens in layers for now? Or all?
+            if (filterStatus === 'all') return true;
+            return n.data?.status === filterStatus;
+        });
+    }, [nodes, filterStatus]);
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'live': return 'bg-green-100 text-green-700 border-green-200';
+            case 'dev': return 'bg-orange-100 text-orange-700 border-orange-200';
+            case 'draft': return 'bg-gray-100 text-gray-600 border-gray-200';
+            default: return 'bg-slate-100 text-slate-600 border-slate-200';
+        }
+    };
 
     return (
-        <aside className="w-72 bg-slate-950 border-r border-slate-800 flex flex-col h-full z-20">
-            <div className="p-4 border-b border-slate-800">
-                <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                    Kosmoi Studio
-                </h2>
-                <p className="text-xs text-slate-500">Visual Agent Orchestration</p>
+        <div className="w-72 h-full bg-white border-r border-gray-200 flex flex-col shadow-sm z-10 transition-all">
+            {/* Header / Tabs */}
+            <div className="flex border-b border-gray-100">
+                <button
+                    onClick={() => setActiveTab('assets')}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'assets' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Layout size={16} /> Assets
+                </button>
+                <button
+                    onClick={() => setActiveTab('layers')}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'layers' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Monitor size={16} /> Layers ({visibleNodes.length})
+                </button>
             </div>
 
-            <ScrollArea className="flex-1">
+            {/* Content Area */}
+            <ScrollArea className="flex-1 bg-slate-50/50">
                 <div className="p-4 space-y-6">
 
-                    {/* Magic Input */}
-                    <div className="mb-6 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-3 rounded-xl border border-indigo-500/30">
-                        <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2 mb-2">
-                            <Zap size={12} /> Magic Build
-                        </h3>
-                        {/* Only show input if handler is provided */}
-                        {onImportGraph && (
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="e.g. 'Build a blog agent'..."
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-3 pr-8 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            const p = e.target.value;
-                                            if (!p.trim()) return;
-                                            import('../../../services/agents/MagicGraph').then(async ({ generateGraphFromPrompt }) => {
-                                                const btn = e.target;
-                                                const originalPlaceholder = btn.placeholder;
-                                                btn.disabled = true;
-                                                btn.value = "Thinking...";
-
-                                                try {
-                                                    const graph = await generateGraphFromPrompt(p);
-                                                    onImportGraph(graph);
-                                                } catch (err) {
-                                                    console.error("Magic Build Failed:", err);
-                                                    // Optional: toast.error("Magic Build Failed");
-                                                } finally {
-                                                    btn.disabled = false;
-                                                    btn.value = '';
-                                                    btn.placeholder = originalPlaceholder;
-                                                    btn.focus();
-                                                }
-                                            });
-                                        }
-                                    }}
-                                />
-                                <Bot size={14} className="absolute right-2 top-2.5 text-indigo-400 opacity-50" />
-                            </div>
-                        )}
-                        {!onImportGraph && <p className="text-[10px] text-slate-500">Magic Build unavailable in this mode.</p>}
-                    </div>
-
-                    {/* Saved Workflows */}
-                    {savedWorkflows.length > 0 && (
-                        <div className="space-y-3">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                <Layers size={12} /> My Workflows
-                            </h3>
-                            {savedWorkflows.map(wf => (
-                                <div
-                                    key={wf.id}
-                                    onClick={() => onLoadWorkflow(wf.id)}
-                                    className="flex items-center gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/30 cursor-pointer hover:bg-slate-800 hover:border-indigo-500/50 transition-all"
+                    {activeTab === 'assets' && (
+                        <>
+                            {/* Deploy All Action */}
+                            <div className="mb-6">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDeployAll}
+                                    className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"
                                 >
-                                    <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-400">
-                                        <Layers size={14} />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs font-semibold text-slate-200">{wf.name}</div>
-                                        <div className="text-[10px] text-slate-500">{new Date(wf.created_at).toLocaleDateString()}</div>
-                                    </div>
+                                    <Layout size={14} className="mr-2" /> Deploy All Screens
+                                </Button>
+                            </div>
+
+                            <div>
+                                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Library</h4>
+                                <div className="space-y-2">
+                                    {Object.entries(screenRegistry).map(([key, value]) => (
+                                        <div
+                                            key={key}
+                                            className="p-2 bg-white border border-slate-200 rounded cursor-grab hover:border-blue-300 hover:shadow-sm flex items-center gap-2 transition-all group"
+                                            draggable
+                                            onDragStart={(event) => onDragStart(event, 'live-screen', key, value.name)}
+                                        >
+                                            <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                                                <Monitor size={16} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-slate-700 truncate">{value.name}</p>
+                                                <p className="text-[10px] text-slate-400 truncate">{key}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
+
+                            <div className="mt-6">
+                                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tools</h4>
+                                <div
+                                    className="p-2 border border-dashed border-yellow-400 bg-yellow-50 rounded cursor-grab hover:bg-yellow-100 flex items-center gap-2 transition-colors"
+                                    draggable
+                                    onDragStart={(event) => onDragStart(event, 'live-screen', 'new-draft', 'New Draft Screen')}
+                                >
+                                    <FilePlus size={14} className="text-yellow-600" />
+                                    <span className="text-sm font-medium text-yellow-700">Draft Placeholder</span>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {activeTab === 'layers' && (
+                        <div className="space-y-4">
+                            {/* Filters */}
+                            <div className="flex gap-1 p-1 bg-slate-200 rounded-lg">
+                                {['all', 'live', 'dev', 'draft'].map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setFilterStatus(status)}
+                                        className={`flex-1 py-1 text-[10px] font-bold uppercase rounded-md transition-all ${filterStatus === status ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        {status}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="space-y-2">
+                                {visibleNodes.length === 0 ? (
+                                    <p className="text-center text-xs text-gray-400 py-8 italic">No nodes found.</p>
+                                ) : (
+                                    visibleNodes.map((node) => {
+                                        const screenName = node.data?.screenId ? (screenRegistry[node.data.screenId]?.name || node.data.screenId) : node.type;
+                                        const status = node.data?.status || 'draft';
+
+                                        return (
+                                            <div
+                                                key={node.id}
+                                                onClick={() => onNodeSelect && onNodeSelect(node.id)}
+                                                className={`p-2 bg-white border rounded cursor-pointer hover:shadow-md flex items-center justify-between group transition-all ${node.selected ? 'ring-2 ring-blue-500 border-transparent' : 'border-slate-200'}`}
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className={`w-2 h-2 rounded-full ${status === 'live' ? 'bg-green-500' : status === 'dev' ? 'bg-orange-400' : 'bg-gray-300'}`} />
+                                                    <span className="text-sm font-medium text-slate-700 truncate max-w-[120px]" title={screenName}>
+                                                        {screenName}
+                                                    </span>
+                                                </div>
+                                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${getStatusColor(status)}`}>
+                                                    {status}
+                                                </span>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
                     )}
 
-                    {/* Blueprints */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <Layers size={12} /> Blueprints
-                        </h3>
-                        <SidebarItem
-                            type="blueprint_startup"
-                            label="Startup Launch"
-                            icon={Layers}
-                            color={{ bg: 'bg-indigo-500', text: 'text-indigo-400' }}
-                        />
-                        <SidebarItem
-                            type="blueprint_content"
-                            label="Content Engine"
-                            icon={Layers}
-                            color={{ bg: 'bg-indigo-500', text: 'text-indigo-400' }}
-                        />
-                    </div>
-
-                    {/* Agents */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <Bot size={12} /> Agents
-                        </h3>
-                        <SidebarItem
-                            type="agent_ceo"
-                            label="CEO Agent"
-                            icon={Bot}
-                            color={{ bg: 'bg-amber-500', text: 'text-amber-400' }}
-                        />
-                        <SidebarItem
-                            type="agent_dev"
-                            label="Tech Lead"
-                            icon={Code}
-                            color={{ bg: 'bg-cyan-500', text: 'text-cyan-400' }}
-                        />
-                        <SidebarItem
-                            type="agent_marketing"
-                            label="Marketing"
-                            icon={Globe}
-                            color={{ bg: 'bg-pink-500', text: 'text-pink-400' }}
-                        />
-                    </div>
-
-                    {/* Skills */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <Box size={12} /> Innovation Tools
-                        </h3>
-                        <SidebarItem
-                            type="tool_market_watch"
-                            label="Market Watchtower"
-                            icon={Search}
-                            color={{ bg: 'bg-green-500', text: 'text-green-400' }}
-                        />
-                        <SidebarItem
-                            type="tool_trend_spy"
-                            label="Trend Spy"
-                            icon={Zap}
-                            color={{ bg: 'bg-red-500', text: 'text-red-400' }}
-                        />
-                    </div>
-
-                    {/* Triggers */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <Zap size={12} /> Triggers
-                        </h3>
-                        <SidebarItem
-                            type="trigger_webhook"
-                            label="Webhook"
-                            icon={Globe}
-                            color={{ bg: 'bg-slate-500', text: 'text-slate-400' }}
-                        />
-                        <SidebarItem
-                            type="trigger_schedule"
-                            label="Schedule (Cron)"
-                            icon={Zap}
-                            color={{ bg: 'bg-slate-500', text: 'text-slate-400' }}
-                        />
-                    </div>
-
                 </div>
             </ScrollArea>
-        </aside>
+
+            {/* Footer with Upgrade Button */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
+                <PricingModal
+                    trigger={
+                        <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-md">
+                            Upgrade to Pro
+                        </Button>
+                    }
+                />
+            </div>
+        </div>
     );
 }

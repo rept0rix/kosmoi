@@ -1,7 +1,7 @@
 import { ToolRegistry } from "../ToolRegistry.js";
 import { db } from "../../../api/supabaseClient.js";
-import { createTicketInSupabase } from "../../agents/memorySupabase.js";
-import { syncAgentsWithDatabase, getAgentById } from "../../agents/AgentRegistry.js";
+import { createTicketInSupabase } from "@/features/agents/services/memorySupabase.js";
+import { syncAgentsWithDatabase, getAgentById } from "@/features/agents/services/AgentRegistry.js";
 
 ToolRegistry.register("create_task", async (payload, options) => {
     // payload: { title, description, assigned_to, priority }

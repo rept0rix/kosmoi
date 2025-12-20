@@ -1,10 +1,13 @@
 
 import React from 'react';
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Button } from "@/components/ui/button";
 
 /**
  * GlassCard - A card with glassmorphism effect
+ * @param {object} props
+ * @param {string} [props.className]
+ * @param {React.ReactNode} props.children
  */
 export const GlassCard = React.forwardRef(({ className, children, ...props }, ref) => (
     <div
@@ -24,8 +27,12 @@ GlassCard.displayName = "GlassCard";
 
 /**
  * GlassButton - A button with glass effect
+ * @param {object} props
+ * @param {string} [props.className]
+ * @param {string} [props.variant]
+ * @param {React.ReactNode} [props.children]
  */
-export const GlassButton = React.forwardRef(({ className, variant = "default", ...props }, ref) => {
+export const GlassButton = React.forwardRef(({ className, variant = "default", children, ...props }, ref) => {
     // We wrap the standard Button but override styles
     return (
         <Button

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useBoardRoom } from '@/hooks/useBoardRoom';
+import { useBoardRoom } from '@/shared/hooks/useBoardRoom';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,11 @@ import BoardRoomMessageList from './board/BoardRoomMessageList';
 import BoardRoomInput from './board/BoardRoomInput';
 import CreateMeetingDialog from './board/CreateMeetingDialog';
 import TeamManagementDialog from './board/TeamManagementDialog';
-import CompanyStateDisplay from '@/components/agents/CompanyStateDisplay';
+import CompanyStateDisplay from '@/features/agents/components/CompanyStateDisplay';
 import BookingDialog from '@/components/BookingDialog';
 
-import { agents } from '@/services/agents/AgentRegistry';
-import { WORKFLOWS } from '@/services/agents/WorkflowService';
+import { agents } from '@/features/agents/services/AgentRegistry';
+import { WORKFLOWS } from '@/features/agents/services/WorkflowService';
 
 import BoardRoomErrorBoundary from '@/components/BoardRoomErrorBoundary';
 import WorkflowStateBanner from '@/components/board/WorkflowStateBanner';

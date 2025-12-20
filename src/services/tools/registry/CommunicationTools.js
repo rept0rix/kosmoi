@@ -1,5 +1,6 @@
 import { ToolRegistry } from "../ToolRegistry.js";
 import { SendEmail, SendTelegram } from "../../../api/integrations.js";
+import { sendWhatsApp } from "../../../api/manyPi.js";
 
 ToolRegistry.register("send_email", async (payload) => {
     try {
@@ -25,5 +26,15 @@ ToolRegistry.register("notify_admin", async (payload) => {
         return `[System] Admin notified via Telegram.`;
     } catch (e) {
         return `[Error] Failed to notify admin: ${e.message}`;
+    }
+});
+
+ToolRegistry.register("send_whatsapp_message", async (payload) => {
+    // payload: { phone, message }
+    try {
+        const result = await sendWhatsApp(payload.phone, payload.message);
+        return `[System] WhatsApp sent successfully! Response: ${JSON.stringify(result)}`;
+    } catch (e) {
+        return `[Error] WhatsApp failed: ${e.message}`;
     }
 });

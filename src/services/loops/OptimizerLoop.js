@@ -1,7 +1,7 @@
 import { db, supabase } from "../../api/supabaseClient.js";
-import { OPTIMIZER_AGENT } from "../agents/registry/OptimizerAgent.js";
-import { getAgentReply } from "../agents/AgentBrain.js";
-import { toolRouter } from "../agents/AgentService.js";
+import { OPTIMIZER_AGENT } from "@/features/agents/services/registry/OptimizerAgent.js";
+import { getAgentReply } from "@/features/agents/services/AgentBrain.js";
+import { toolRouter } from "@/features/agents/services/AgentService.js";
 
 export const OptimizerLoop = {
     isRunning: false,

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Layout, Plus, Users, TriangleAlert } from 'lucide-react';
-import MiniTeamGallery from '@/components/agents/MiniTeamGallery';
+import MiniTeamGallery from '@/features/agents/components/MiniTeamGallery';
 import WalletCard from '@/components/WalletCard';
 
 export default function BoardRoomLeftSidebar({

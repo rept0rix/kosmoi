@@ -1,29 +1,32 @@
 import './App.css'
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-client'
-import VisualEditAgent from '@/lib/VisualEditAgent'
-import NavigationTracker from '@/lib/NavigationTracker'
-import { usePageDirection } from '@/hooks/usePageDirection';
+import { queryClientInstance } from '@/shared/lib/query-client'
+import VisualEditAgent from '@/shared/lib/VisualEditAgent'
+
+import { usePageDirection } from '@/shared/hooks/usePageDirection';
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
-import { setupIframeMessaging } from './lib/iframe-messaging';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { setupIframeMessaging } from '@/shared/lib/iframe-messaging';
+import { AuthProvider, useAuth } from '@/features/auth/context/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import AgentCommandCenter from '@/pages/AgentCommandCenter';
+// import AgentCommandCenter from '@/pages/AgentCommandCenter'; // Unused?
 import AdminImporter from '@/pages/AdminImporter';
 import { ProtectedAdminRoute, ProtectedUserRoute } from '@/components/RouteGuards';
 import { RequireRole } from '@/components/RequireRole';
 
-import VendorSignup from './pages/VendorSignup';
-import VendorLite from '@/pages/VendorLite';
+import VendorSignup from '@/features/vendors/pages/Signup';
+// import VendorLite from '@/pages/VendorLite'; // Unused?
 
 import { AppConfigProvider } from '@/components/AppConfigContext';
 import { RxDBInitializer } from '@/services/rxdb/RxDBInitializer';
+import { RxDBProvider } from '@/core/db/RxDBProvider';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 import PersistenceTestPage from '@/pages/PersistenceTest';
 import { SpeedInsights } from "@vercel/speed-insights/react"
-import Footer from '@/components/Footer';
+// import Footer from '@/components/Footer'; // Unused in main layout?
+
+import GlobalErrorBoundary from '@/components/GlobalErrorBoundary';
 
 // Content Sprint Pages
 import AboutUs from '@/pages/AboutUs';
@@ -41,12 +44,12 @@ import MyBookings from '@/pages/MyBookings';
 import Marketplace from '@/pages/Marketplace';
 
 import RealEstateHub from '@/pages/RealEstateHub';
-import CommandCenter from '@/pages/CommandCenter';
+import CommandCenter from '@/features/agents/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminClaims from '@/pages/admin/AdminClaims';
-import AdminAgents from '@/pages/admin/AdminAgents';
+import AdminAgents from '@/features/agents/pages/AdminAgents';
 import AgentDetail from '@/pages/admin/AgentDetail';
 import AdminCompany from '@/pages/admin/AdminCompany';
 import AdminBusinesses from '@/pages/admin/AdminBusinesses';
@@ -62,16 +65,17 @@ import AdminSchema from './pages/admin/AdminSchema';
 import AdminMemory from './pages/admin/AdminMemory';
 import AdminSitemap from '@/pages/admin/AdminSitemap';
 import AdminOptimizer from './pages/admin/AdminOptimizer';
+import AdminSkills from './pages/admin/AdminSkills';
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
 
 import LocalBrain from '@/pages/LocalBrain';
-import SystemMonitor from '@/components/dashboard/SystemMonitor';
+// import SystemMonitor from '@/components/dashboard/SystemMonitor'; // Unused?
 import ProviderProfile from '@/pages/ProviderProfile';
 
 // Speed Pass Injection
-import SpeedPassCard from '@/components/SpeedPassCard';
+// import SpeedPassCard from '@/components/SpeedPassCard'; // Disabled
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -79,9 +83,13 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
 setupIframeMessaging();
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
+const LayoutWrapper = ({ children, currentPageName }) => {
+  const LayoutComponent = Layout;
+  return LayoutComponent ?
+    // @ts-ignore
+    <LayoutComponent currentPageName={currentPageName}>{children}</LayoutComponent>
+    : <>{children}</>;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
@@ -188,6 +196,7 @@ const AuthenticatedApp = () => {
                 <Route path="infrastructure" element={<AdminInfra />} />
                 <Route path="canvas" element={<AdminCanvas />} />
                 <Route path="studio" element={<Studio />} />
+                <Route path="skills" element={<AdminSkills />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
                 <Route path="importer" element={<AdminImporter />} />
                 <Route path="sitemap" element={<AdminSitemap />} />
@@ -203,7 +212,7 @@ const AuthenticatedApp = () => {
 
             </Route>
 
-            <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay /></div>} />
+            <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay data={{}} /></div>} />
             <Route path="/test-persistence" element={<PersistenceTestPage />} />
 
             {/* Trust Pages */}
@@ -223,14 +232,6 @@ const AuthenticatedApp = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
-
-        {/* KOSMOI INJECTION: Samui Speed Pass - Disabled per user request */}
-        {/* <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
-          <div className="pointer-events-auto">
-            <SpeedPassCard />
-          </div>
-        </div> */}
-
       </div>
     </LayoutWrapper >
   );
@@ -241,15 +242,19 @@ function App() {
   return (
     <AuthProvider>
       <AppConfigProvider>
-        <RxDBInitializer />
-        <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <NavigationTracker />
-            <AuthenticatedApp />
-            <VisualEditAgent />
-          </Router>
-          <Toaster />
-        </QueryClientProvider>
+        <RxDBProvider>
+          <RxDBInitializer />
+          <QueryClientProvider client={queryClientInstance}>
+            <GlobalErrorBoundary>
+              <Router>
+
+                <AuthenticatedApp />
+                <VisualEditAgent />
+              </Router>
+            </GlobalErrorBoundary>
+            <Toaster />
+          </QueryClientProvider>
+        </RxDBProvider>
         <SpeedInsights />
       </AppConfigProvider>
     </AuthProvider>

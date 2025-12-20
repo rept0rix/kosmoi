@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/shared/lib/utils";
 import { LanguageProvider } from "@/components/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { AppConfigProvider, useAppConfig } from "@/components/AppConfigContext";
@@ -121,7 +121,7 @@ const LayoutContent = ({ children }) => {
                       </Button>
                     </SheetTrigger>
                     <SheetContent side="left">
-                      <SheetHeader>
+                      <SheetHeader className="">
                         <SheetTitle className="text-left">Menu</SheetTitle>
                       </SheetHeader>
                       <div className="flex flex-col gap-4 mt-6">

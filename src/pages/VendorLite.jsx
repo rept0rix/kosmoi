@@ -3,7 +3,7 @@ import { Bell, DollarSign, Calendar, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import VendorJobCard from '@/components/vendor/VendorJobCard';
 import { BookingService } from '@/services/BookingService';
-import { PaymentService } from '@/services/PaymentService';
+import { PaymentService } from '@/features/payments/services/PaymentService';
 import { db } from '@/api/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,9 @@ export default function VendorLite() {
         rating: 4.8
     });
 
+    // State management
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // Mock provider ID for MVP - in real app would come from auth context
-    const PROVIDER_ID = 'e6eb8c2e-41d3-45c1-9657-236274438136';
-    // We need the ACTUAL user ID for the wallet.
-    // For this demo to work visually, we'll fetch the current user's wallet.
-    // If we are 'demoing' as a provider, we assume the logged in user IS the provider.
 
     useEffect(() => {
         fetchData();
@@ -33,32 +28,44 @@ export default function VendorLite() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch Bookings
-            // setJobs([]);
-
-            // 2. Fetch Wallet
-            // We need the current user ID
             const { data: { user } } = await db.auth.getUser();
+
             if (user) {
+                // 1. Fetch Wallet
                 const wallet = await PaymentService.getWallet(user.id);
+                // 2. Fetch Provider Profile to get the Provider ID
+                const { data: provider } = await db.from('service_providers')
+                    .select('id, business_name')
+                    .eq('owner_id', user.id)
+                    .single();
+
                 if (wallet) {
                     setStats(prev => ({ ...prev, todayEarnings: wallet.balance }));
                 }
+
+                if (provider) {
+                    // 3. Fetch Real Bookings/Requests
+                    // Assuming 'service_requests' table has 'provider_id'
+                    const { data: requests, error } = await db.from('service_requests')
+                        .select('*, profiles:customer_id(full_name, phone_number)')
+                        .eq('provider_id', provider.id)
+                        .order('created_at', { ascending: false });
+
+                    if (requests) {
+                        setJobs(requests);
+                        setStats(prev => ({
+                            ...prev,
+                            pendingJobs: requests.filter(j => j.status === 'pending').length
+                        }));
+                    }
+                }
+            } else {
+                // Keep Demo Data for unauthenticated view
+                setJobs([]);
             }
 
-            // REAL IMPLEMENTATION TODO: Get provider_id from logged in user profile.
-            // For now, let's just use an empty list if we don't have an ID, or try to fetch one.
-            // Actually, let's just fetch all bookings from the DB for the purpose of the demo dashboard if we can't find a provider.
-            // But we can't.
-
-            // Let's rely on the user having created a booking for a provider.
-            // We can fetch the first provider from the DB to be safe
-            // But I can't easily do that here without importing another service.
-
-            setJobs([]); // Default to empty
-
         } catch (error) {
-            console.error(error);
+            console.error("VendorLite fetch error:", error);
         } finally {
             setLoading(false);
         }
@@ -155,7 +162,7 @@ export default function VendorLite() {
                                     id: job.id,
                                     serviceName: job.service_type || 'Service',
                                     customerName: job.profiles?.full_name || 'Guest',
-                                    time: `${job.service_date} @ ${job.start_time?.slice(0, 5)}`,
+                                    time: job.service_date ? `${job.service_date} @ ${job.start_time?.slice(0, 5)}` : 'TBD',
                                     price: job.price || 0,
                                     location: 'Samui',
                                     status: job.status

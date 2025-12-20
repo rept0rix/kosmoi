@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/shared/lib/utils";
 import { db } from '@/api/supabaseClient';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
 import MapProviderCard from "@/components/MapProviderCard";
-import { getCategoryIcon } from "@/utils/mapIcons";
+import { getCategoryIcon } from "@/shared/utils/mapIcons";
 
 const categories = [
   { value: "all", label: "הכל" },
@@ -129,9 +129,32 @@ export default function MapView() {
       const matchesReviews = provider.total_reviews >= minReviews;
       const hasLocation = provider.latitude && provider.longitude;
 
-      // Open Now Logic (Placeholder - assumes 9-17 if not specified, or checks if hours exist)
-      // In a real app, you'd parse provider.opening_hours
-      const matchesOpenNow = !isOpenNow || true; // TODO: Implement real opening hours check
+      // Open Now Logic
+      let matchesOpenNow = true;
+      if (isOpenNow && provider.opening_hours) {
+        try {
+          const now = new Date();
+          const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+          const dayName = days[now.getDay()];
+          const todayHours = provider.opening_hours[dayName];
+
+          if (!todayHours || !todayHours.open || !todayHours.close) {
+            matchesOpenNow = false; // Closed if no hours listed for today
+          } else {
+            const currentTime = now.getHours() * 100 + now.getMinutes();
+            const openTime = parseInt(todayHours.open.replace(':', ''), 10);
+            const closeTime = parseInt(todayHours.close.replace(':', ''), 10);
+
+            if (currentTime < openTime || currentTime >= closeTime) {
+              matchesOpenNow = false;
+            }
+          }
+        } catch (e) {
+          console.warn("Error parsing opening hours", e);
+          // matchesOpenNow = true; // Fail safe? Or strict? Let's be strict for filter.
+          matchesOpenNow = false;
+        }
+      }
 
       return matchesSearch && matchesCategory && matchesSuperCategory && matchesSubCategory && matchesRating && matchesReviews && hasLocation && matchesOpenNow;
     })

@@ -1,8 +1,9 @@
+
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import LandingHero from "@/components/LandingHero";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
