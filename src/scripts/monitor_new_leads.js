@@ -18,12 +18,10 @@ console.log(`Checking for 'new_lead' every ${POLLING_INTERVAL / 1000} seconds.`)
 async function checkNewLeads() {
     try {
         console.log("🔍 Checking new leads...");
-        const { data, error } = await db.entities.ServiceProvider.filter({ status: 'new_lead' });
+        const data = await db.entities.ServiceProvider.filter({ status: 'new_lead' });
 
-        if (error) {
-            console.error("Error fetching leads:", error);
-            return;
-        }
+        // Wrapper filter throws on error, so try/catch handles it.
+        // if (error) { ... } logic is now covered by catch block.
 
         if (!data || data.length === 0) {
             // No new leads

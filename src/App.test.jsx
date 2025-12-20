@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import React from 'react';
 
 // Mock everything that might crash the app on pure render
-vi.mock('@/lib/AuthContext', () => ({
+vi.mock('@/features/auth/context/AuthContext', () => ({
     AuthProvider: ({ children }) => <div>{children}</div>,
     useAuth: () => ({ isAuthenticated: false, isLoadingAuth: false })
 }));

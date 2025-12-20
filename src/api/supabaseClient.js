@@ -1,26 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { api } from '../core/api/client.js';
 
-const getEnv = (key) => {
-    if (typeof import.meta !== 'undefined' && import.meta.env) return import.meta.env[key];
-    if (typeof process !== 'undefined' && process.env) return process.env[key];
-    return undefined;
-};
-
-const supabaseUrl = getEnv('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY');
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Missing Supabase Environment Variables');
-}
-
-// 1. Initialize official Client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-    }
-});
+// 1. Initialize official Client using the Singleton from Core
+export const supabase = api.client;
 
 // 2. Helper Implementation using the SDK
 export const supabaseHelpers = {
@@ -542,6 +523,10 @@ export const supabaseHelpers = {
 // Export db object with all helpers (Legacy / Custom implementation)
 export const db = {
     ...supabaseHelpers,
+    from: (table) => supabase.from(table),
+    rpc: (fn, args) => supabase.rpc(fn, args),
+    storage: supabase.storage,
+    channel: (name, config) => supabase.channel(name, config),
     auth: supabaseHelpers.auth // Use wrapper to match previous structure
 };
 

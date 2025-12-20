@@ -14,11 +14,13 @@ export default function GoogleMap({
   onMapClick = null,
   options = {},
   userLocation = null,
-  height = "400px"
+  height = "400px",
+  polylines = []
 }) {
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
   const markersRef = useRef([]);
+  const polylinesRef = useRef([]);
   const markerClustererRef = useRef(null);
   const userMarkerRef = useRef(null);
   const [error, setError] = useState(null);
@@ -68,6 +70,12 @@ export default function GoogleMap({
         if (marker.setMap) marker.setMap(null);
       });
       markersRef.current = [];
+
+      polylinesRef.current.forEach(polyline => {
+        if (polyline.setMap) polyline.setMap(null);
+      });
+      polylinesRef.current = [];
+
       if (userMarkerRef.current) {
         userMarkerRef.current.setMap(null);
       }
@@ -83,7 +91,7 @@ export default function GoogleMap({
         updateMapAndMarkers();
       }
     }
-  }, [loading, error, center, markers, zoom, options, userLocation]);
+  }, [loading, error, center, markers, zoom, options, userLocation, polylines]);
 
   // Handle dynamic resizing
   useEffect(() => {
@@ -247,6 +255,26 @@ export default function GoogleMap({
         }
       }
 
+      // Handle Polylines
+      // Clear old polylines
+      polylinesRef.current.forEach(polyline => polyline.setMap(null));
+      polylinesRef.current = [];
+
+      // Add new polylines
+      polylines.forEach(polylineData => {
+        // @ts-ignore
+        const polyline = new window.google.maps.Polyline({
+          path: polylineData.path,
+          geodesic: true,
+          strokeColor: polylineData.strokeColor || "#FF0000",
+          strokeOpacity: polylineData.strokeOpacity || 1.0,
+          strokeWeight: polylineData.strokeWeight || 2,
+          map: googleMapRef.current,
+          ...polylineData.options
+        });
+        polylinesRef.current.push(polyline);
+      });
+
     } catch (err) {
       console.error('Error updating markers:', err);
     }
@@ -314,5 +342,15 @@ GoogleMap.propTypes = {
   onMapClick: PropTypes.func,
   height: PropTypes.string,
   options: PropTypes.object,
-  userLocation: PropTypes.object
+  userLocation: PropTypes.object,
+  polylines: PropTypes.arrayOf(PropTypes.shape({
+    path: PropTypes.arrayOf(PropTypes.shape({
+      lat: PropTypes.number.isRequired,
+      lng: PropTypes.number.isRequired
+    })).isRequired,
+    strokeColor: PropTypes.string,
+    strokeOpacity: PropTypes.number,
+    strokeWeight: PropTypes.number,
+    options: PropTypes.object
+  }))
 };

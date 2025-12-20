@@ -1,20 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, Sparkles, Key, MapPin, Phone, MessageCircle, Navigation, X, Star, Compass, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
+import { Bot, Send, Sparkles, Key, MapPin, Phone, MessageCircle, Navigation, X, Star, Compass, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight, Trash2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../lib/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { db } from '@/api/supabaseClient';
 import GoogleMap from "@/components/GoogleMap";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { createPageUrl } from "@/utils";
-import { getCategoryIcon } from "@/utils/mapIcons";
+import { createPageUrl } from "@/shared/lib/utils";
+import { getCategoryIcon } from "@/shared/utils/mapIcons";
 import MapProviderCard from "@/components/MapProviderCard";
-import { useWeather, getWeatherDescription } from '@/hooks/useWeather';
+import { useWeather, getWeatherDescription } from '@/shared/hooks/useWeather';
 import { samuiKnowledge } from '@/data/samuiKnowledge';
-import { CONCIERGE_AGENT } from '@/services/agents/registry/ConciergeAgent';
+import { CONCIERGE_AGENT } from '@/features/agents/services/registry/ConciergeAgent';
 import SEO from '@/components/SEO';
 
 const categories = [
@@ -152,7 +152,21 @@ export default function AIChat() {
     }, [state]); // Add state dependency
 
     useEffect(() => {
-        localStorage.setItem('kosmoi_chat_history', JSON.stringify(messages));
+        try {
+            const historyToSave = messages.slice(-50); // Keep only last 50 messages
+            localStorage.setItem('kosmoi_chat_history', JSON.stringify(historyToSave));
+        } catch (error) {
+            console.error("Failed to save chat history:", error);
+            // If quota exceeded, try saving fewer messages
+            if (error.name === 'QuotaExceededError') {
+                try {
+                    const minimalHistory = messages.slice(-10);
+                    localStorage.setItem('kosmoi_chat_history', JSON.stringify(minimalHistory));
+                } catch (retryError) {
+                    console.error("Critical: Cannot save even minimal history", retryError);
+                }
+            }
+        }
         scrollToBottom();
     }, [messages]);
 
@@ -215,7 +229,11 @@ ${providersContext}
       "title": "Place 1",
       "description": "Short bio",
       "image": "https://url...",
-      "action": { "type": "navigate", "label": "View Details", "path": "/url" }
+      "action": { 
+        "type": "add_to_trip", 
+        "label": "Add to Trip", 
+        "data": { "title": "Place Name", "address": "Address", "location": { "lat": 0, "lng": 0 } }
+      }
     }
   ],
   "choices": ["Option 1", "Option 2"] // OPTIONAL: Bubble buttons
@@ -320,7 +338,13 @@ ${providersContext}
         const userMessage = { role: 'user', content: input };
         setMessages(prev => [...prev, userMessage]);
         setInput('');
-        processMessage(input);
+
+        // Pass location context if available
+        const context = userLocation
+            ? `User Location: Lat ${userLocation.lat}, Lng ${userLocation.lng}`
+            : "";
+
+        processMessage(input, context);
     };
 
     const handleActionClick = (action) => {

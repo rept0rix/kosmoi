@@ -6,7 +6,7 @@ import { User, Lock, Heart, PartyPopper } from 'lucide-react';
 import { db } from '@/api/supabaseClient';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-export default function AuthGate({ children, actionName = "continue", onAuthSuccess, className }) {
+export default function AuthGate({ children, actionName = "continue", onAuthSuccess = () => { }, className = "" }) {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function AuthGate({ children, actionName = "continue", onAuthSucc
 
     const handleLogin = () => {
         // Redirect to login with return path
-        db.auth.redirectToLogin(location.pathname);
+        navigate(`/login?returnUrl=${encodeURIComponent(location.pathname)}`);
     };
 
     // Clone the child to intercept the click

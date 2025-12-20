@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from '@/lib/instance';
+import { supabase } from '@/shared/lib/instance';
 import { HeatmapService } from '@/services/HeatmapService';
 import HeatmapOverlay from '@/components/HeatmapOverlay';
 

@@ -24,8 +24,8 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 // Backend Integration
-import { WorkflowTransformer } from '../../services/agents/WorkflowSchema';
-import { workflowService } from '../../services/agents/WorkflowService';
+import { WorkflowTransformer } from '@/features/agents/services/WorkflowSchema';
+import { workflowService } from '@/features/agents/services/WorkflowService';
 
 const nodeTypes = {
     studioNode: StudioNode,

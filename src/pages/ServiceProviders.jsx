@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { db } from '@/api/supabaseClient';
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { cn, createPageUrl } from "@/shared/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +47,7 @@ import SearchFiltersPanel from "../components/SearchFiltersPanel";
 import SuperCategories from "../components/SuperCategories";
 import SubCategorySelector from "../components/SubCategorySelector";
 import { useTranslation } from 'react-i18next';
-import { getCategoryIcon } from "@/utils/mapIcons";
+import { getCategoryIcon } from "@/shared/utils/mapIcons";
 import { getSubCategoryLabel } from "../components/subCategories";
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {

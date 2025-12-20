@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import KanbanBoard from '@/components/board/KanbanBoard';
-import { db } from '@/api/supabaseClient';
-import { CrmService } from '@/services/business/CrmService';
+import { DatabaseService } from '@/core/db/database';
+import { useRxQuery } from '@/shared/hooks/useRxQuery';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, LayoutGrid, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,15 +24,29 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { agents } from '@/services/agents/AgentRegistry';
+import { agents } from '@/features/agents/services/AgentRegistry';
+import { useLanguage } from "@/components/LanguageContext";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminKanban() {
+    const { language } = useLanguage();
+    const isRTL = language === 'he';
     const [mode, setMode] = useState('tasks'); // 'tasks' or 'crm'
-    const [tasks, setTasks] = useState([]);
-    const [columns, setColumns] = useState([]); // Dynamic columns
-    const [loading, setLoading] = useState(true);
-    const [pipelines, setPipelines] = useState([]);
-    const [selectedPipelineId, setSelectedPipelineId] = useState(null);
+
+    // --- RxDB Hooks ---
+
+    // 1. Agent Tasks
+    const { data: tasksData, loading: tasksLoading } = useRxQuery('tasks',
+        collection => collection.find().sort({ created_at: 'desc' })
+    );
+
+    // 2. CRM Data (Stages & Contacts)
+    const { data: stagesData, loading: stagesLoading } = useRxQuery('stages',
+        collection => collection.find().sort({ position: 'asc' })
+    );
+    const { data: leadsData, loading: leadsLoading } = useRxQuery('contacts',
+        collection => collection.find().sort({ created_at: 'desc' })
+    );
 
     // Create Task State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -44,111 +58,87 @@ export default function AdminKanban() {
         assigned_to: 'admin'
     });
 
-    useEffect(() => {
-        loadData();
-    }, [mode, selectedPipelineId]);
+    // --- Data Flattening/Mapping ---
 
-    const loadData = async () => {
-        setLoading(true);
+    const getBoardData = () => {
+        if (mode === 'tasks') {
+            const columns = [
+                { id: 'pending', label: 'To Do', color: 'bg-slate-100 border-slate-200' },
+                { id: 'in_progress', label: 'In Progress', color: 'bg-blue-50 border-blue-200' },
+                { id: 'review', label: 'In Review', color: 'bg-purple-50 border-purple-200' },
+                { id: 'done', label: 'Done', color: 'bg-green-50 border-green-200' }
+            ];
+
+            const tasks = (tasksData || []).map(t => ({
+                ...t,
+                status: t.status || 'pending',
+                title: t.title || t.description || 'Untitled Task',
+                priority: t.priority || 'medium'
+            }));
+
+            return { columns, tasks, loading: tasksLoading };
+        }
+
+        if (mode === 'crm') {
+            // Map Stages to Columns
+            const columns = (stagesData || []).map(s => ({
+                id: s.id,
+                label: s.name,
+                color: s.color ? `border-l-4` : 'bg-slate-50',
+            }));
+
+            // Map Leads to Tasks
+            const tasks = (leadsData || []).map(l => ({
+                id: l.id,
+                status: l.stage_id,
+                stage_id: l.stage_id,
+                title: `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.company || 'Unknown Lead',
+                description: l.notes,
+                priority: l.value > 1000 ? 'high' : 'medium',
+                assigned_to: null,
+                value: l.value,
+                company: l.company,
+                type: 'lead'
+            }));
+
+            return { columns, tasks, loading: stagesLoading || leadsLoading };
+        }
+
+        return { columns: [], tasks: [], loading: false };
+    };
+
+    const { columns, tasks, loading } = getBoardData();
+
+    const handleUpdateStatus = async (itemId, newColumnId) => {
         try {
+            const db = await DatabaseService.get();
+
             if (mode === 'tasks') {
-                // Load Agent Tasks
-                const data = await db.entities.AgentTasks.list();
-                const adaptedTasks = (data || []).map(t => ({
-                    ...t,
-                    status: t.status || 'pending',
-                    title: t.title || t.description || 'Untitled Task',
-                    priority: t.priority || 'medium'
-                }));
-                setTasks(adaptedTasks);
-
-                // Default Task Columns
-                setColumns([
-                    { id: 'pending', label: 'To Do', color: 'bg-slate-100 border-slate-200' },
-                    { id: 'in_progress', label: 'In Progress', color: 'bg-blue-50 border-blue-200' },
-                    { id: 'review', label: 'In Review', color: 'bg-purple-50 border-purple-200' },
-                    { id: 'done', label: 'Done', color: 'bg-green-50 border-green-200' }
-                ]);
-
-            } else if (mode === 'crm') {
-                // Load CRM Data
-                let currentPipelineId = selectedPipelineId;
-
-                // 1. Fetch Pipelines if not already set
-                if (!currentPipelineId) {
-                    const pips = await CrmService.getPipelines();
-                    if (pips && pips.length > 0) {
-                        setPipelines(pips);
-                        currentPipelineId = pips[0].id; // Default to first
-                        setSelectedPipelineId(currentPipelineId);
-                    } else {
-                        toast.error("No CRM Pipelines found.");
-                        setLoading(false);
-                        return;
-                    }
+                const doc = await db.tasks.findOne(itemId).exec();
+                if (doc) {
+                    await doc.patch({
+                        status: newColumnId,
+                        updated_at: new Date().toISOString()
+                    });
+                    toast.success("Task updated");
                 }
-
-                // 2. Fetch Stages (Columns)
-                const stages = await CrmService.getStages(currentPipelineId);
-                const cols = stages.map(s => ({
-                    id: s.id,
-                    label: s.name,
-                    color: s.color ? `border-l-4` : 'bg-slate-50', // Simplified color logic
-                    metadata: s // Keep full stage data
-                }));
-                setColumns(cols);
-
-                // 3. Fetch Leads (Tasks)
-                const leads = await CrmService.getLeads(currentPipelineId);
-                // Adapt leads to simple Task interface for Kanban
-                const adaptedLeads = leads.map(l => ({
-                    id: l.id,
-                    stage_id: l.stage_id, // Important for column mapping
-                    title: `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.company || 'Unknown Lead',
-                    description: l.notes,
-                    priority: l.value > 1000 ? 'high' : 'medium', // Mock priority based on value
-                    assigned_to: null, // Leads might not be assigned yet
-                    value: l.value,
-                    company: l.company,
-                    //...l
-                }));
-                setTasks(adaptedLeads);
+            } else {
+                // CRM Mode
+                const doc = await db.contacts.findOne(itemId).exec();
+                if (doc) {
+                    await doc.patch({
+                        stage_id: newColumnId,
+                        updated_at: new Date().toISOString()
+                    });
+                    toast.success("Lead moved");
+                }
             }
         } catch (error) {
-            console.error("Failed to load data:", error);
-            toast.error("Failed to load data");
-        } finally {
-            setLoading(false);
+            console.error("Update failed:", error);
+            toast.error("Failed to update status");
         }
     };
 
-    const handleUpdateStatus = async (taskId, newColumnId) => {
-        // Optimistic Update
-        if (mode === 'tasks') {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newColumnId } : t));
-            try {
-                await db.entities.AgentTasks.update(taskId, { status: newColumnId });
-                toast.success("Task updated");
-            } catch (error) {
-                console.error(error);
-                toast.error("Failed to update task");
-                loadData();
-            }
-        } else {
-            // CRM Mode: Update Lead Stage
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, stage_id: newColumnId } : t));
-            try {
-                await CrmService.updateLead(taskId, { stage_id: newColumnId });
-                toast.success("Lead moved");
-            } catch (error) {
-                console.error(error);
-                toast.error("Failed to move lead");
-                loadData();
-            }
-        }
-    };
-
-    // --- Task Creation Logic (Keeping simple for MVP, only for Tasks) ---
     const handleCreateSubmit = async () => {
         if (mode === 'crm') {
             toast.info("Lead creation not yet implemented via this modal.");
@@ -162,27 +152,33 @@ export default function AdminKanban() {
 
         setCreating(true);
         try {
-            const taskData = {
+            const db = await DatabaseService.get();
+            const newId = uuidv4();
+
+            await db.tasks.insert({
+                id: newId,
                 ...newTask,
                 status: 'pending',
-                created_at: new Date().toISOString()
-            };
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
 
-            const created = await db.entities.AgentTasks.create(taskData);
-            if (created) {
-                const taskToAdd = created.id ? created : { ...taskData, id: 'temp-' + Date.now() };
-                setTasks(prev => [taskToAdd, ...prev]);
-                toast.success("Task created");
-                setIsCreateOpen(false);
-                setNewTask({ title: '', description: '', priority: 'medium', assigned_to: 'admin' });
-            }
+            toast.success("Task created");
+            setIsCreateOpen(false);
+            setNewTask({ title: '', description: '', priority: 'medium', assigned_to: 'admin' });
         } catch (error) {
             console.error("Create task failed:", error);
-            toast.error("Failed to create task");
+            toast.error("Failed to create task locally");
         } finally {
             setCreating(false);
         }
     };
+
+    // Use a task adapter for the KanbanBoard to ensure it finds the right column ID
+    const taskAdapter = (item) => ({
+        ...item,
+        status: mode === 'crm' ? item.stage_id : item.status
+    });
 
     return (
         <div className="h-full flex flex-col">
@@ -294,13 +290,14 @@ export default function AdminKanban() {
 
             <div className="flex-1 min-h-0 overflow-hidden">
                 {loading ? (
-                    <div className="text-white text-center mt-20">Loading...</div>
+                    <div className="text-white text-center mt-20">Loading (Offline Ready)...</div>
                 ) : (
                     <KanbanBoard
                         tasks={tasks}
                         columns={columns}
                         onUpdateTaskStatus={handleUpdateStatus}
-                        isRTL={false}
+                        isRTL={isRTL}
+                        taskAdapter={taskAdapter}
                     />
                 )}
             </div>

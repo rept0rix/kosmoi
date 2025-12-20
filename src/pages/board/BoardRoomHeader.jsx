@@ -34,7 +34,7 @@ import {
     Github
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 const BoardRoomHeader = ({
     meetings,

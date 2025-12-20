@@ -1,6 +1,6 @@
 import { ToolRegistry } from "../ToolRegistry.js";
 import { db } from "../../../api/supabaseClient.js";
-import { agents } from "../../agents/AgentRegistry.js";
+import { agents } from "@/features/agents/services/AgentRegistry.js";
 
 /**
  * Update Agent Prompt (Plasticity Tool)

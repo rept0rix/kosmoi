@@ -7,11 +7,12 @@ import {
     useEdgesState,
     addEdge,
     BackgroundVariant,
-    Handle,
     Position,
     Panel,
     useReactFlow
 } from '@xyflow/react';
+// @ts-ignore
+import { Handle as FlowHandle } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ const EvolutionNode = ({ data, selected }) => (
             data.status === 'current' ? 'bg-amber-500/10 border-amber-500/50 shadow-neon' :
                 'bg-slate-500/10 border-slate-500/30'
         }`}>
-        <Handle type="target" position={Position.Top} className="!bg-slate-400 w-3 h-3" />
+        <FlowHandle type="target" position={Position.Top} className="!bg-slate-400 w-3 h-3" />
         <div className="text-[10px] font-bold tracking-wider uppercase opacity-70 mb-1 flex justify-center items-center gap-2">
             {data.type || 'FEATURE'}
             {data.status === 'completed' && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
@@ -38,7 +39,7 @@ const EvolutionNode = ({ data, selected }) => (
         {data.description && (
             <div className="text-[10px] text-slate-400 mt-1 max-w-[140px] truncate mx-auto">{data.description}</div>
         )}
-        <Handle type="source" position={Position.Bottom} className="!bg-slate-400 w-3 h-3" />
+        <FlowHandle type="source" position={Position.Bottom} className="!bg-slate-400 w-3 h-3" />
 
         {/* Hover Actions (Visual cue only) */}
         <div className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity">

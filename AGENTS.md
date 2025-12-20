@@ -55,7 +55,7 @@ Agents are defined in code at `src/services/agents/AgentRegistry.js`.
 - **Concierge**: (`concierge-agent`)
 - **Support**: (`support-agent`)
 - **Booking**: (`booking-agent`)
-- **Sales Pitch**: (`sales-pitch-agent`)
+- **Sales Pitch**: (`sales-pitch-agent`) - Sales Copy & Psychology (Current Model: llama-3.3-70b-versatile [Groq])
 - **CRM Sales**: (`crm-sales-agent`)
 - **Vector Search**: (`vector-search-agent`)
 - **Code Refactor**: (`code-refactor-agent`)

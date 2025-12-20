@@ -16,6 +16,7 @@ const _create = async () => {
     console.log('RxDB: Initializing Database...');
     let storage = getRxStorageDexie();
     if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
+        // @ts-ignore - Wrapper types don't perfectly match Dexie types but it works at runtime
         storage = wrappedValidateAjvStorage({
             storage: storage
         });

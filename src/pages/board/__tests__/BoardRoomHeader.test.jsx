@@ -9,7 +9,7 @@ vi.mock("@/components/LanguageContext", () => ({
     useLanguage: () => ({ language: 'en' })
 }));
 
-vi.mock("@/lib/AuthContext", () => ({
+vi.mock("@/features/auth/context/AuthContext", () => ({
     useAuth: () => ({
         user: { id: 'test-user', email: 'test@example.com' },
         isAuthenticated: true,

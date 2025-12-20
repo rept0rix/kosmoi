@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, Star, Clock, Users, ArrowRight, Search, Calendar, Loader2 } from 'lucide-react';
 import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
-import { CrmService } from '@/services/business/CrmService';
+import { SalesService } from '@/services/SalesService';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -22,6 +22,10 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+
+// ... (MOCK DATA remains unchanged - implicit in replacement if not touched, but since I'm targeting a large block I need to be careful.
+// Actually, let's target specific blocks to be safer and smaller edits.)
+
 
 // MOCK DATA: Experiences
 const EXPERIENCES = [
@@ -108,12 +112,12 @@ export default function ExperiencesHub() {
         setSubmitting(true);
         try {
             // 1. Get Pipeline (for Stage ID)
-            const pipelines = await CrmService.getPipelines();
+            const pipelines = await SalesService.getPipelines();
             const salesPipeline = pipelines.find(p => p.name === 'General Sales') || pipelines[0];
 
             let stageId = null;
             if (salesPipeline) {
-                const stages = await CrmService.getStages(salesPipeline.id);
+                const stages = await SalesService.getStages(salesPipeline.id);
                 // Look for 'New Lead' or first stage
                 const firstStage = stages.find(s => s.name === 'New Lead') || stages[0];
                 if (firstStage) stageId = firstStage.id;
@@ -125,13 +129,20 @@ export default function ExperiencesHub() {
                 last_name: inquiryForm.name.split(' ').slice(1).join(' ') || '',
                 email: inquiryForm.email,
                 phone: inquiryForm.phone,
-                notes: `Booking Request for: ${selectedExperience?.title}\nCategory: ${selectedExperience?.category}\nDate: ${inquiryForm.date}\nGuests: ${inquiryForm.guests}\n\nMessage: ${inquiryForm.message}`,
+                company: 'Individual', // Add company fallback as it might be required
+                // notes field removed ensuring schema compliance
                 source: 'Experiences Hub',
                 stage_id: stageId,
                 value: selectedExperience?.price ? (selectedExperience.price * inquiryForm.guests) : 0
             };
 
-            await CrmService.createLead(leadData);
+            const newLead = await SalesService.createLead(leadData);
+
+            // 3. Create Interaction for the message
+            if (inquiryForm.message || selectedExperience) {
+                const noteContent = `Booking Request for: ${selectedExperience?.title}\nCategory: ${selectedExperience?.category}\nDate: ${inquiryForm.date}\nGuests: ${inquiryForm.guests}\n\nMessage: ${inquiryForm.message}`;
+                await SalesService.createInteraction(newLead.id, 'note', noteContent);
+            }
 
             toast.success("Booking request sent! We will confirm availability shortly.");
             setIsInquiryOpen(false);

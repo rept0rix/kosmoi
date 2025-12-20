@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/shared/lib/utils";
 import { db } from '@/api/supabaseClient';
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,7 +67,7 @@ export default function Profile() {
   }, [userLoading]);
 
   const handleLogin = () => {
-    db.auth.redirectToLogin(window.location.pathname);
+    navigate(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
   };
 
   const handleLogout = () => {

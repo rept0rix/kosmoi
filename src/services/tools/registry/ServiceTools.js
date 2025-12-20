@@ -1,5 +1,5 @@
 import { ToolRegistry } from "../ToolRegistry.js";
-import { AgentTools } from "../../AgentTools.js";
+import { AgentTools } from "@/features/agents/services/AgentTools.js";
 
 /**
  * Service Tools: Empower agents to interact with the Kosmoi Marketplace.
@@ -18,7 +18,7 @@ ToolRegistry.register("check_availability", async (payload) => {
     return await AgentTools.checkAvailability(payload.providerId, payload.date);
 }, "Check provider availability. Params: { providerId: 'uuid', date: 'YYYY-MM-DD' }");
 
-import { StripeService } from "../../StripeService.js";
+import { StripeService } from "@/services/payments/StripeService.js";
 
 ToolRegistry.register("create_booking", async (payload) => {
     // payload: { userId, providerId, serviceType, date, startTime, endTime }

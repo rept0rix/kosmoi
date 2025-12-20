@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAppConfig } from '@/components/AppConfigContext';
 import {
     DropdownMenu,

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BookingService } from '@/services/BookingService';
 import { Loader2, CheckCircle, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/AuthContext";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { DayPicker } from 'react-day-picker';
 import { format, addDays } from 'date-fns';
 import 'react-day-picker/dist/style.css';

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useWeather, getWeatherDescription } from '@/hooks/useWeather';
+import { useWeather, getWeatherDescription } from '@/shared/hooks/useWeather';
 import { Cloud, Sun, Loader2 } from 'lucide-react';
 
 export default function MiniWeather() {

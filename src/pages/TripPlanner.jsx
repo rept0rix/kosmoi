@@ -18,7 +18,7 @@ import {
     Navigation
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
-import { getCategoryIcon } from "@/utils/mapIcons";
+import { getCategoryIcon } from "@/shared/utils/mapIcons";
 import SEO from '@/components/SEO';
 
 export default function TripPlanner() {
@@ -227,7 +227,16 @@ export default function TripPlanner() {
                         zoom={mapZoom}
                         height="100%"
                         markers={mapMarkers}
-                    // TODO: Add polyline to connect markers
+                        polylines={[
+                            {
+                                path: itinerary
+                                    .filter(item => item.location?.lat && item.location?.lng)
+                                    .map(item => ({ lat: item.location.lat, lng: item.location.lng })),
+                                strokeColor: "#2563eb", // blue-600
+                                strokeWeight: 4,
+                                strokeOpacity: 0.8
+                            }
+                        ]}
                     />
                 </div>
             </div>

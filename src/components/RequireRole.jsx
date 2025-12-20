@@ -1,10 +1,15 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 export function RequireRole({ children, role }) {
     const { user, isAuthenticated, isLoadingAuth } = useAuth();
     const location = useLocation();
+
+    // Allow bypass in DEV mode so you can see Admin pages without logging in
+    if (import.meta.env.DEV) {
+        return children;
+    }
 
     if (isLoadingAuth) {
         return <div className="p-4 text-center">Loading permissions...</div>;

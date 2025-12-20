@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Phone, MessageCircle, Navigation, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "@/shared/lib/utils";
 import { db } from '@/api/supabaseClient';
 
 const categories = {

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Terminal, Code, Brain, Bot } from 'lucide-react';
-import { agents as initialAgents } from '@/services/agents/AgentRegistry';
+import { agents as initialAgents } from '@/features/agents/services/AgentRegistry';
 
 const colorMap = {
     blue: { border: 'border-blue-100', bg: 'bg-blue-100', text: 'text-blue-700', badge: 'text-blue-500 border-blue-200' },

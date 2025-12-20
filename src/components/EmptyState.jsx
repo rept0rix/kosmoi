@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { GlassCard } from "@/components/ui/glass-kit";
 import { SearchX, FolderOpen, BellOff, Ghost } from "lucide-react";
 

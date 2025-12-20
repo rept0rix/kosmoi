@@ -4,7 +4,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva } from "class-variance-authority";
 import { X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 
 const Sheet = SheetPrimitive.Root
 
@@ -95,6 +95,7 @@ SheetFooter.displayName = "SheetFooter"
 
 /**
  * @typedef {Object} SheetTitleProps
+ * @property {React.ReactNode} [children]
  * @property {string} [className]
  */
 

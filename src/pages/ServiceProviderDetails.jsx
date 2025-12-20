@@ -50,7 +50,7 @@ import {
   Truck
 } from "lucide-react";
 import GoogleMap from "../components/GoogleMap";
-import { getCategoryIcon } from "@/utils/mapIcons";
+import { getCategoryIcon } from "@/shared/utils/mapIcons";
 import { getSubCategoryLabel } from "../components/subCategories";
 import { useLanguage } from "@/components/LanguageContext";
 

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export const ProtectedAdminRoute = () => {

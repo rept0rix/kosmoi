@@ -1,0 +1,120 @@
+import { createClient } from '@supabase/supabase-js';
+
+class APIClient {
+    constructor() {
+        this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        this.supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        if (!this.supabaseUrl || !this.supabaseKey) {
+            console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+        }
+
+        this.supabase = createClient(this.supabaseUrl, this.supabaseKey, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        });
+        this.cache = new Map();
+        this.listeners = new Map();
+    }
+
+    // Unified request method
+    async request(config) {
+        const { method = 'GET', table, data, filters, options = {} } = config;
+        const cacheKey = this.getCacheKey(config);
+
+        if (method === 'GET' && this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
+        // Basic retry logic tailored for unstable networks
+        let lastError;
+        for (let i = 0; i < 3; i++) {
+            try {
+                const result = await this._executeRequest(config);
+                if (method === 'GET') {
+                    this.cache.set(cacheKey, result);
+                }
+                if (method !== 'GET') {
+                    this.notify(table, 'updated', result);
+                }
+                return result;
+            } catch (error) {
+                lastError = error;
+                console.warn(`API attempt ${i + 1} failed:`, error);
+                if (i < 2) await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            }
+        }
+        throw lastError;
+    }
+
+    async _executeRequest(config) {
+        const { method, table, data, filters, options } = config;
+
+        let query = this.supabase.from(table);
+
+        switch (method) {
+            case 'GET':
+                query = query.select(options.select || '*');
+                if (filters) {
+                    Object.entries(filters).forEach(([key, value]) => {
+                        query = query.eq(key, value);
+                    });
+                }
+                break;
+            case 'POST':
+                query = query.insert(data).select();
+                break;
+            case 'PUT':
+            case 'PATCH':
+                // Assuming update requires an Update ID in filters or options
+                query = query.update(data).select();
+                if (filters) {
+                    Object.entries(filters).forEach(([key, value]) => {
+                        query = query.eq(key, value);
+                    });
+                }
+                break;
+            case 'DELETE':
+                query = query.delete();
+                if (filters) {
+                    Object.entries(filters).forEach(([key, value]) => {
+                        query = query.eq(key, value);
+                    });
+                }
+                break;
+        }
+
+        const { data: resultData, error } = await query;
+        if (error) {
+            throw new Error(error.message);
+        }
+        return resultData;
+    }
+
+    getCacheKey(config) {
+        return JSON.stringify(config);
+    }
+
+    subscribe(table, callback) {
+        if (!this.listeners.has(table)) {
+            this.listeners.set(table, []);
+        }
+        this.listeners.get(table).push(callback);
+
+        // Setup Supabase Realtime subscription if not already exists (optimization for later)
+    }
+
+    notify(table, event, data) {
+        this.listeners.get(table)?.forEach(cb => cb(event, data));
+    }
+
+    // Direct access for edge cases
+    get client() {
+        return this.supabase;
+    }
+}
+
+export const api = new APIClient();

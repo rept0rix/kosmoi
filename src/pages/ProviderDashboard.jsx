@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Clock, CreditCard, Power } from 'lucide-react';
+import { MapPin, Navigation, Clock, CreditCard, Power, Star, Zap } from 'lucide-react';
 import GoogleMap from '@/components/GoogleMap';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/api/supabaseClient';
+import PricingModal from '@/components/payments/PricingModal';
+import { StripeService } from '@/services/payments/StripeService';
 
 // Mock Incoming Job
 const MOCK_JOB = {
@@ -24,6 +26,13 @@ export default function ProviderDashboard() {
     const [userLocation, setUserLocation] = useState(null);
     const [incomingJob, setIncomingJob] = useState(null);
     const { toast } = useToast();
+
+    // Pricing Modal State
+    const [subscription, setSubscription] = useState(null);
+
+    useEffect(() => {
+        StripeService.getSubscription().then(setSubscription);
+    }, []);
 
     // 1. Get Location
     useEffect(() => {
@@ -137,13 +146,48 @@ export default function ProviderDashboard() {
         }
     };
 
-    const handleAcceptJob = () => {
-        toast({
-            title: "Job Accepted! 🚀",
-            description: `Navigating to ${incomingJob.customer}...`,
-        });
-        setIncomingJob(prev => ({ ...prev, status: 'accepted' }));
-        // Here we would create a real 'booking' record
+    const handleAcceptJob = async () => {
+        if (!incomingJob) return;
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
+                return;
+            }
+
+            // Get provider ID
+            const { data: provider } = await supabase.from('service_providers')
+                .select('id')
+                .eq('owner_id', user.id)
+                .single();
+
+            if (!provider) {
+                toast({ variant: "destructive", title: "Error", description: "Provider profile not found." });
+                return;
+            }
+
+            // Update Service Request
+            const { error } = await supabase
+                .from('service_requests')
+                .update({
+                    status: 'accepted',
+                    provider_id: provider.id,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', incomingJob.id);
+
+            if (error) throw error;
+
+            toast({
+                title: "Job Accepted! 🚀",
+                description: `Navigating to ${incomingJob.customer}...`,
+            });
+            setIncomingJob(prev => ({ ...prev, status: 'accepted' }));
+        } catch (error) {
+            console.error("Error accepting job:", error);
+            toast({ variant: "destructive", title: "Accept Failed", description: error.message });
+        }
     };
 
     return (
@@ -162,12 +206,34 @@ export default function ProviderDashboard() {
                             className="data-[state=checked]:bg-green-500"
                         />
                     </div>
-                    <div className="bg-black/40 mt-10 backdrop-blur-md rounded-xl p-2 px-4 border border-white/10 text-right">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Today's Earnings</p>
-                        <p className="text-xl font-bold text-white">฿ 1,450</p>
+
+                    <div className="flex flex-col gap-2 mt-10 items-end">
+                        <div className="bg-black/40 backdrop-blur-md rounded-xl p-2 px-4 border border-white/10 text-right">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider">Today's Earnings</p>
+                            <p className="text-xl font-bold text-white">฿ 1,450</p>
+                        </div>
+
+                        {!subscription && (
+                            <PricingModal trigger={
+                                <Button
+                                    size="sm"
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-purple-900/20 border border-white/10"
+                                >
+                                    <Zap className="w-4 h-4 mr-1 text-yellow-300 fill-yellow-300" />
+                                    Upgrade to Pro
+                                </Button>
+                            } />
+                        )}
+                        {subscription && (
+                            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/50 backdrop-blur-md">
+                                <Star className="w-3 h-3 mr-1 fill-blue-300" /> Pro Partner
+                            </Badge>
+                        )}
                     </div>
                 </div>
             </div>
+
+
 
             {/* --- Map Layer --- */}
             <div className="flex-1 w-full h-full">
@@ -276,6 +342,6 @@ export default function ProviderDashboard() {
                 )}
             </AnimatePresence>
 
-        </div>
+        </div >
     );
 }

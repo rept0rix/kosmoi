@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PaymentService } from '@/services/PaymentService';
+import { PaymentService } from '@/features/payments/services/PaymentService';
 import { Wallet, Plus, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/AuthContext";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function WalletCard() {
     const [balance, setBalance] = useState({ available: 0, currency: 'USD' });

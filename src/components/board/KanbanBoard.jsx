@@ -4,8 +4,8 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { agents } from '@/services/agents/AgentRegistry';
-import { cn } from "@/lib/utils";
+import { agents } from '@/features/agents/services/AgentRegistry';
+import { cn } from "@/shared/lib/utils";
 
 
 
@@ -20,7 +20,8 @@ export default function KanbanBoard({
     tasks,
     onUpdateTaskStatus,
     columns = DEFAULT_STATUSES,
-    taskAdapter = (task) => task // Optional adapter to normalize task data
+    taskAdapter = (task) => task, // Optional adapter to normalize task data
+    isRTL = false
 }) {
 
     const boardData = useMemo(() => {
@@ -62,7 +63,7 @@ export default function KanbanBoard({
 
     return (
         <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex h-full gap-4 overflow-x-auto p-4 pb-2">
+            <div className={cn("flex h-full gap-4 overflow-x-auto p-4 pb-2", isRTL ? "flex-row-reverse" : "flex-row")}>
                 {columns.map((col) => (
                     <div key={col.id} className={cn("flex-shrink-0 w-72 flex flex-col rounded-xl border-2 h-full bg-white/50 backdrop-blur-sm", col.color || 'bg-slate-50_border-slate-200')}>
                         <div className="p-3 font-semibold text-sm flex items-center justify-between">

@@ -76,6 +76,7 @@ export default function AdminLayout() {
                     <NavGroup title="System">
                         <NavItem to="/admin/infrastructure" icon={<Server />} label="Infrastructure" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/canvas" icon={<LayoutDashboard />} label="Screen Canvas" onClick={() => setIsMobileOpen(false)} /> // Reusing LayoutDashboard for now or importing Monitor
                         <NavItem to="/admin/sitemap" icon={<Map />} label="Site Map / QA" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/company" icon={<Settings />} label="Company Settings" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>

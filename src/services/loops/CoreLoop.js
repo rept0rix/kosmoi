@@ -1,6 +1,7 @@
 import { LoggerService } from '../LoggerService';
-import { supabase } from '@/lib/instance';
-import { agents } from '../agents/AgentRegistry';
+
+import { supabase } from '@/shared/lib/instance';
+import { agents } from '@/features/agents/services/AgentRegistry.js';
 
 /**
  * CoreLoop.js - The "BabyAGI" Engine of Kosmoi.
@@ -97,7 +98,7 @@ export const CoreLoop = {
             console.log(`🧠 Brain Assigned Task ${task.id} to ${assignedAgent}`);
 
             // Trigger Agent Wakeup dynamically
-            const { AgentService } = await import('../agents/AgentService.js');
+            const { AgentService } = await import('@/features/agents/services/AgentService.js');
             await AgentService.wakeUp(assignedAgent);
         }
     }

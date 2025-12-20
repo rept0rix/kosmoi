@@ -1,5 +1,5 @@
 
-import { useAdminStats } from '../../hooks/useAdminStats';
+import { useAdminStats } from '@/shared/hooks/useAdminStats';
 import UserTable from '../../components/admin/UserTable';
 import BusinessTable from '../../components/admin/BusinessTable';
 import { Card } from "@/components/ui/card";

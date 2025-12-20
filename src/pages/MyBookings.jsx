@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, XCircle, AlertCircle } from 'lucide-react';
-import { useAuth } from "@/lib/AuthContext";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { BookingService } from '@/services/BookingService';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
