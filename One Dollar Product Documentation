@@ -1,0 +1,22 @@
+# Samui Starter Pack (One Dollar Product)
+
+## Overview
+A high-utility digital checklist for travelers, monetized at $1 USD.
+
+## Architecture
+
+### 1. Frontend: `SamuiStarterPack.tsx`
+- **Role**: User Interface
+- **Function**: Displays the checklist preview and 'Unlock' button.
+- **Interaction**: Calls `paymentService` on user click.
+
+### 2. Service Layer: `src/services/paymentService.ts`
+- **Role**: Bridge
+- **Function**: Handles the stripe/payment gateway initialization and tokenization.
+
+### 3. Backend: `src/api/processOrder.ts`
+- **Role**: Validation & Delivery
+- **Function**: Verifies the transaction and returns the full content JSON.
+
+## Deployment
+Ensure `processOrder.ts` is registered in the API routes. Import `SamuiStarterPack` into the main Landing Page router.

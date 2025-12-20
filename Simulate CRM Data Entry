@@ -1,0 +1,7 @@
+const leads = [{"company":"Samui Elite Villas","first_name":"Marcus","last_name":"Thorne","email":"marcus@samuielitevillas.com","value":"High","source":"ai_prospecting"},{"company":"Lotus Wellness Retreat","first_name":"Sarah","last_name":"Jenkins","email":"sarah.j@lotuswellness-samui.com","value":"Medium","source":"ai_prospecting"},{"company":"Blue Horizon Diving","first_name":"Somchai","last_name":"Rattana","email":"bookings@bluehorizondiving.th","value":"Medium","source":"ai_prospecting"}];
+
+leads.forEach(lead => {
+  console.log(`Adding lead: ${lead.first_name} ${lead.last_name} from ${lead.company}`);
+});
+
+console.log("TASK_COMPLETED");

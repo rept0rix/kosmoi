@@ -1,0 +1,39 @@
+// Install the Stripe library: npm install stripe
+
+const stripe = require('stripe')('YOUR_STRIPE_SECRET_KEY'); // Replace with your actual secret key
+
+async function createPaymentLink() {
+  try {
+    const product = await stripe.products.create({
+      name: 'Samui Lifeline: The Essential Contacts Pack',
+    });
+
+    const price = await stripe.prices.create({
+      product: product.id,
+      unit_amount: 100, // Amount in cents
+      currency: 'usd',
+    });
+
+    const paymentLink = await stripe.paymentLinks.create({
+      line_items: [{
+        price: price.id,
+        quantity: 1,
+      }],
+      after_completion: {
+        type: 'redirect',
+        redirect: {
+          url: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}', // Replace with your success URL
+        },
+      },
+    });
+
+    console.log('Payment Link URL:', paymentLink.url);
+    return paymentLink.url; // Return the payment link URL
+
+  } catch (error) {
+    console.error('Error creating payment link:', error);
+    return null;
+  }
+}
+
+createPaymentLink();

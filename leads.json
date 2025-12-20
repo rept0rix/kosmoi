@@ -1,0 +1,26 @@
+[
+  {
+    "company": "Samui Serenity Spa",
+    "first_name": "Pim",
+    "last_name": "Sukumaran",
+    "email": "pim.s@samuiserenityspa.com",
+    "value": 2500,
+    "source": "ai_prospecting"
+  },
+  {
+    "company": "Island Breeze Laundry Services",
+    "first_name": "Chai",
+    "last_name": "Thongchai",
+    "email": "chai.t@islandbreezelaundry.com",
+    "value": 1800,
+    "source": "ai_prospecting"
+  },
+  {
+    "company": "Koh Samui Divers",
+    "first_name": "Ricardo",
+    "last_name": "Mendes",
+    "email": "ricardo.m@kohsamuidivers.com",
+    "value": 3200,
+    "source": "ai_prospecting"
+  }
+]
