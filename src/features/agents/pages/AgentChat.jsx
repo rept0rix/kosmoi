@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js'; // Removed unused import
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
@@ -13,9 +13,7 @@ import { getAgentReply } from '@/features/agents/services/AgentBrain';
 import { workflowService } from '@/features/agents/services/WorkflowService';
 
 // Initialize Supabase Client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/api/supabaseClient';
 
 export default function AgentChat() {
     const { workflowId } = useParams();
