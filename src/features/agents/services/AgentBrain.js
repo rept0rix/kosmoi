@@ -1,9 +1,9 @@
-import { callAgentInteraction } from '@/api/geminiInteractions.js';
-import { callGroqInteraction } from '@/api/groqInteractions.js';
-import { getModelConfig, AI_PROVIDERS } from '@/services/ai/ModelRegistry.js';
-import { db } from '@/api/supabaseClient.js';
-import { TranslationService } from '@/services/TranslationService.js';
-import { KnowledgeService } from '@/services/ai/KnowledgeService.js';
+import { callAgentInteraction } from '../../../api/geminiInteractions.js';
+import { callGroqInteraction } from '../../../api/groqInteractions.js';
+import { getModelConfig, AI_PROVIDERS } from '../../../services/ai/ModelRegistry.js';
+import { db } from '../../../api/supabaseClient.js';
+import { TranslationService } from '../../../services/TranslationService.js';
+import { KnowledgeService } from '../../../services/ai/KnowledgeService.js';
 import { SkillService } from './SkillService.js';
 
 // JSON Schema for Agent Output

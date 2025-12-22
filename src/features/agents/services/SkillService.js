@@ -1,4 +1,4 @@
-import { db, supabase } from "@/api/supabaseClient.js";
+import { db, supabase } from "../../../api/supabaseClient.js";
 
 /**
  * Service to manage Agent Skills.

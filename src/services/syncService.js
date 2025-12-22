@@ -1,4 +1,4 @@
-import { db } from '@/api/supabaseClient';
+import { db } from '../api/supabaseClient';
 import {
     saveProviders,
     getAllProviders,

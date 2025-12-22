@@ -160,7 +160,8 @@ export default function AdminKanban() {
                 ...newTask,
                 status: 'pending',
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                meeting_id: ""
             });
 
             toast.success("Task created");

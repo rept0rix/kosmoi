@@ -1,5 +1,5 @@
 import { ToolRegistry } from "../ToolRegistry.js";
-import { CompanyKnowledge } from "@/features/agents/services/CompanyKnowledge.js";
+import { CompanyKnowledge } from "../../../features/agents/services/CompanyKnowledge.js";
 
 ToolRegistry.register("read_knowledge", async (payload) => {
     // payload: { query, key }

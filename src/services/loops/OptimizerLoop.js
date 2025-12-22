@@ -30,7 +30,11 @@ export const OptimizerLoop = {
 
         try {
             // 1. Fetch Recent Logs (Last 50 interactions)
-            const { data: logs, error } = await db.entities.AgentLogs.listLatest(50);
+            const { data: logs, error } = await supabase
+                .from('agent_logs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
 
             // 2. Fetch Real Business Metrics
             const stats = await this.fetchRealMetrics();

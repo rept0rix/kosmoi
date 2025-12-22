@@ -1,4 +1,4 @@
-import { db } from "@/api/supabaseClient.js";
+import { db } from "../../../api/supabaseClient.js";
 
 /**
  * CompanyKnowledge
@@ -54,6 +54,26 @@ export const CompanyKnowledge = {
             return data;
         } catch (e) {
             console.error("[CompanyKnowledge] Search failed:", e);
+            return [];
+        }
+    },
+
+    /**
+     * List recent knowledge
+     * @param {number} limit 
+     * @returns {Promise<Array>}
+     */
+    async list(limit = 10) {
+        try {
+            const { data, error } = await db.from('agent_knowledge')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) throw error;
+            return data;
+        } catch (e) {
+            console.error("[CompanyKnowledge] List failed:", e);
             return [];
         }
     },

@@ -1,4 +1,4 @@
-import { db } from "@/api/supabaseClient.js";
+import { db } from "../../../api/supabaseClient.js";
 
 // Import Agents from Registry
 import { UX_DESIGNER_AGENT } from "./UXDesignerAgent.js";

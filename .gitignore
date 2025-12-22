@@ -30,3 +30,14 @@ dist-ssr
 
 .env
 database.sqlite
+
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.vscode
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/ 

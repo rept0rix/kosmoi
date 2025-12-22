@@ -1,4 +1,4 @@
-import { db } from "@/api/supabaseClient.js";
+import { db } from "../../../../api/supabaseClient.js";
 
 export const OPTIMIZER_AGENT = {
     id: "optimizer-agent",

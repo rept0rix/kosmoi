@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 class APIClient {
     constructor() {
-        this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        this.supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        this.supabaseUrl = (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_URL;
+        this.supabaseKey = (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_ANON_KEY;
 
         if (!this.supabaseUrl || !this.supabaseKey) {
             console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');

@@ -41,7 +41,7 @@ export default function TeamManagementDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col dark:bg-slate-950 dark:border-slate-800">
+            <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col dark:bg-slate-950 dark:border-slate-800">
                 <DialogHeader>
                     <DialogTitle className="dark:text-slate-100">{isRTL ? "ניהול צוות" : "Manage Team"}</DialogTitle>
                     <DialogDescription className="dark:text-slate-400">
@@ -51,7 +51,7 @@ export default function TeamManagementDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="relative mb-4">
+                <div className="relative mb-2">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder={isRTL ? "חפש סוכן..." : "Search agents..."}
@@ -61,19 +61,19 @@ export default function TeamManagementDialog({
                     />
                 </div>
 
-                <ScrollArea className="flex-1 pr-4 max-h-[60vh] overflow-y-auto">
-                    <div className="space-y-6">
+                <ScrollArea className="flex-1 pr-4 min-h-0 overflow-y-auto">
+                    <div className="space-y-4">
                         {Object.entries(groupedAgents).map(([layer, layerAgents]) => (
                             <div key={layer}>
-                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 dark:text-slate-500">
+                                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 dark:text-slate-500 sticky top-0 bg-white/95 dark:bg-slate-950/95 py-1 z-10 backdrop-blur-sm">
                                     {layer.replace('-', ' ')} Layer
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                     {layerAgents.map(agent => (
                                         <div
                                             key={agent.id}
                                             className={`
-                                                flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer
+                                                flex items-start gap-2 p-2 rounded-lg border transition-all cursor-pointer h-full items-center
                                                 ${selectedAgentIds.includes(agent.id)
                                                     ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
                                                     : 'bg-white border-gray-100 hover:border-gray-200 dark:bg-slate-900/50 dark:border-slate-800 dark:hover:border-slate-700'

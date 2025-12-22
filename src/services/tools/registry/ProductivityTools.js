@@ -1,5 +1,5 @@
 import { ToolRegistry } from "../ToolRegistry.js";
-import { saveFileToSupabase, listFilesFromSupabase } from "@/features/agents/services/memorySupabase.js";
+import { saveFileToSupabase, listFilesFromSupabase } from "../../../features/agents/services/memorySupabase.js";
 
 ToolRegistry.register("notepad", async (payload, options) => {
     // payload: { filename, content } or just content string if legacy

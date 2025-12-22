@@ -1,6 +1,6 @@
 import { ToolRegistry } from "../ToolRegistry.js";
 import { BookingService } from "../../BookingService.js";
-import { PaymentService } from "@/features/payments/services/PaymentService";
+import { PaymentService } from "../../../features/payments/services/PaymentService.js";
 import { GenerateImage, CreatePaymentLink } from "../../../api/integrations.js";
 import { db } from "../../../api/supabaseClient.js"; // Needed for delegating tasks
 

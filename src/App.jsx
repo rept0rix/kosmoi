@@ -19,7 +19,6 @@ import VendorSignup from '@/features/vendors/pages/Signup';
 // import VendorLite from '@/pages/VendorLite'; // Unused?
 
 import { AppConfigProvider } from '@/components/AppConfigContext';
-import { RxDBInitializer } from '@/services/rxdb/RxDBInitializer';
 import { RxDBProvider } from '@/core/db/RxDBProvider';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 import PersistenceTestPage from '@/pages/PersistenceTest';
@@ -243,7 +242,6 @@ function App() {
     <AuthProvider>
       <AppConfigProvider>
         <RxDBProvider>
-          <RxDBInitializer />
           <QueryClientProvider client={queryClientInstance}>
             <GlobalErrorBoundary>
               <Router>

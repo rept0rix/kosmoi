@@ -16,7 +16,15 @@ import {
     Store,
     Map,
     BrainCircuit,
-    Code2
+    Code2,
+    Network,
+    ClipboardList,
+    Milestone,
+    Zap,
+    FileText,
+    Table,
+    HardDrive,
+    Upload
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -58,25 +66,33 @@ export default function AdminLayout() {
                     <NavGroup title="Overview">
                         <NavItem to="/admin/command-center" icon={<LayoutDashboard />} label="Command Center" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/board-room" icon={<Bot />} label="Board Room" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/roadmap" icon={<Milestone />} label="Roadmap" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>
 
                     <NavGroup title="Operations">
+                        <NavItem to="/admin/tasks" icon={<ClipboardList />} label="Task Board" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/businesses" icon={<Store />} label="Businesses" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/claims" icon={<FileText />} label="Claims" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/data" icon={<Database />} label="Platform Analytics" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>
 
                     <NavGroup title="Intelligence">
                         <NavItem to="/admin/optimizer" icon={<BrainCircuit />} label="Optimizer Agent" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/agents" icon={<Users />} label="Workforce" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/evolution" icon={<Network />} label="Network Graph" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/studio" icon={<Code2 />} label="Agent Studio" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/skills" icon={<Zap />} label="Skills Library" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/memory" icon={<HardDrive />} label="Long-term Memory" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>
 
                     <NavGroup title="System">
                         <NavItem to="/admin/infrastructure" icon={<Server />} label="Infrastructure" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/logs" icon={<Activity />} label="System Logs" onClick={() => setIsMobileOpen(false)} />
-                        <NavItem to="/admin/canvas" icon={<LayoutDashboard />} label="Screen Canvas" onClick={() => setIsMobileOpen(false)} /> // Reusing LayoutDashboard for now or importing Monitor
+                        <NavItem to="/admin/schema" icon={<Table />} label="Database Schema" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/importer" icon={<Upload />} label="Data Importer" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/canvas" icon={<LayoutDashboard />} label="Screen Canvas" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/sitemap" icon={<Map />} label="Site Map / QA" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/company" icon={<Settings />} label="Company Settings" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>

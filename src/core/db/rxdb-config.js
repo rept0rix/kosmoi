@@ -5,7 +5,10 @@ import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 
+import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema';
+
 // Add plugins
+addRxPlugin(RxDBMigrationSchemaPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBLeaderElectionPlugin);
@@ -27,7 +30,7 @@ export const createDatabase = async () => {
         : rawStorage;
 
     const db = await createRxDatabase({
-        name: 'kosmoidb',
+        name: 'kosmoidb_v2',
         storage,
         multiInstance: true,
         eventReduce: true,

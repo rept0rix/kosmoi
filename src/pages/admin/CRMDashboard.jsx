@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import KanbanBoard from '@/components/board/KanbanBoard';
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import {
@@ -59,8 +59,37 @@ function CRMDashboardInternal({ pipelineId, externalAddLead }) {
                 ? stagesData.filter(s => s.pipeline_id === pipelineId)
                 : stagesData;
             setStages(filteredStages);
+
+            // Seeding Logic: If loaded but empty, create defaults
+            if (!stagesLoading && stagesData.length === 0) {
+                const seedStages = async () => {
+                    console.log("Seeding default stages...");
+                    const db = await DatabaseService.get();
+                    const defaults = [
+                        { name: 'New', color: 'blue', position: 0 },
+                        { name: 'Qualified', color: 'purple', position: 1 },
+                        { name: 'Proposal', color: 'yellow', position: 2 },
+                        { name: 'Negotiation', color: 'orange', position: 3 },
+                        { name: 'Closed Won', color: 'green', position: 4 },
+                        { name: 'Closed Lost', color: 'red', position: 5 }
+                    ];
+
+                    const pipeline = pipelineId || 'default-pipeline';
+                    await Promise.all(defaults.map(s => db.stages.insert({
+                        id: `stage-${s.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`, // Simple unique ID
+                        name: s.name,
+                        color: s.color,
+                        position: s.position,
+                        pipeline_id: pipeline,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })));
+                    toast({ title: "System", description: "Default CRM stages created." });
+                };
+                seedStages();
+            }
         }
-    }, [stagesData, pipelineId]);
+    }, [stagesData, pipelineId, stagesLoading]);
 
     useEffect(() => {
         if (leadsData && stages.length > 0) {
@@ -134,133 +163,110 @@ function CRMDashboardInternal({ pipelineId, externalAddLead }) {
         }
     };
 
-    if (stagesLoading && !stages.length) return <div className="p-10 text-center text-slate-400 animate-pulse">Loading Pipeline (Offline Ready)...</div>;
+    if (stagesLoading && !stages.length) return (
+        <div className="flex h-full items-center justify-center space-y-4 flex-col opacity-50">
+            <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            <p className="text-muted-foreground font-medium animate-pulse">Loading Pipeline...</p>
+        </div>
+    );
 
     return (
-        <div className="h-full flex flex-col bg-slate-900/50 text-white overflow-hidden rounded-xl border border-slate-800">
+        <div className="h-full flex flex-col bg-background/40 backdrop-blur-sm overflow-hidden rounded-2xl border border-border shadow-inner">
             {/* Kanban Board */}
-            <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="flex h-full gap-6">
-                        {stages.map(stage => (
-                            <div key={stage.id} className="min-w-[300px] flex flex-col bg-slate-800/50 rounded-xl border border-slate-700/50">
-                                {/* Column Header */}
-                                <div className="p-4 border-b border-slate-700/50 flex justify-between items-center sticky top-0 bg-slate-800/90 rounded-t-xl backdrop-blur-sm z-10">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stage.color || '#94a3b8' }}></div>
-                                        <span className="font-semibold text-slate-200">{stage.name}</span>
-                                    </div>
-                                    <span className="bg-slate-700 text-slate-300 text-xs px-2 py-1 rounded-full border border-slate-600">
-                                        {leadsByStage[stage.id]?.length || 0}
-                                    </span>
-                                </div>
-
-                                {/* Droppable Area */}
-                                <Droppable droppableId={stage.id}>
-                                    {(provided, snapshot) => (
-                                        <div
-                                            {...provided.droppableProps}
-                                            ref={provided.innerRef}
-                                            className={`flex-1 p-3 overflow-y-auto space-y-3 transition-colors scrollbar-thin scrollbar-thumb-slate-700 ${snapshot.isDraggingOver ? 'bg-slate-700/30' : ''
-                                                }`}
-                                        >
-                                            {leadsByStage[stage.id]?.map((lead, index) => (
-                                                <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                                                    {(provided, snapshot) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                            onClick={() => setSelectedLead(lead)}
-                                                            className={`p-4 bg-slate-700 rounded-lg shadow-sm border border-slate-600 hover:border-blue-500/50 group transition-all cursor-pointer ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 rotate-2 z-50' : 'hover:-translate-y-1'
-                                                                }`}
-                                                            style={provided.draggableProps.style}
-                                                        >
-                                                            <div className="flex justify-between items-start mb-2">
-                                                                <h3 className="font-medium text-slate-100 truncate pr-2">
-                                                                    {lead.business_name || lead.company || `${lead.first_name} ${lead.last_name}`}
-                                                                </h3>
-                                                                {lead.value > 0 && (
-                                                                    <span className="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
-                                                                        ฿{lead.value.toLocaleString()}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-xs text-slate-400 mb-3 truncate">
-                                                                {lead.email || 'No email provided'}
-                                                            </p>
-
-                                                            <div className="flex justify-between items-center text-[10px] text-slate-500 uppercase tracking-wider">
-                                                                <span className="bg-slate-800 px-1.5 py-0.5 rounded">{lead.source}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
-                                        </div>
-                                    )}
-                                </Droppable>
-                            </div>
-                        ))}
-                    </div>
-                </DragDropContext>
+            <div className="flex-1 overflow-x-auto overflow-y-hidden p-0">
+                {stagesLoading && !stages.length ? (
+                    <div className="p-10 text-center text-muted-foreground animate-pulse">Loading Pipeline...</div>
+                ) : (
+                    <KanbanBoard
+                        tasks={leadsData || []}
+                        columns={stages.map(s => ({
+                            id: s.id,
+                            label: s.name,
+                            // Use semantic colors mapped to specific stage logic if needed, or default
+                            color: undefined
+                        }))}
+                        onUpdateTaskStatus={onDragEnd}
+                        taskAdapter={(lead) => ({
+                            id: lead.id,
+                            title: lead.business_name || lead.company || `${lead.first_name} ${lead.last_name}`,
+                            status: lead.stage_id,
+                            value: lead.value,
+                            company: lead.company,
+                            assigned_to: lead.assigned_to,
+                            tags: lead.source ? [lead.source] : [],
+                            priority: lead.value > 10000 ? 'high' : lead.value > 5000 ? 'medium' : 'low', // Auto-priority example
+                            ...lead
+                        })}
+                        isRTL={false}
+                    />
+                )}
             </div>
 
             {/* Add Lead Dialog */}
             <Dialog open={isAddLeadOpen} onOpenChange={setIsAddLeadOpen}>
-                <DialogContent className="bg-slate-900 border-slate-800 text-white">
+                <DialogContent className="bg-background border-border sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>Add New Lead</DialogTitle>
+                        <DialogTitle className="text-xl font-outfit font-bold text-foreground">Add New Lead</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6 py-4">
+                        <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label>First Name</Label>
+                                <Label className="text-muted-foreground">Contact Name</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                        placeholder="First"
+                                        value={newLead.first_name}
+                                        onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
+                                        className="bg-muted/30 border-border focus:ring-primary/20"
+                                    />
+                                    <Input
+                                        placeholder="Last"
+                                        value={newLead.last_name}
+                                        onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
+                                        className="bg-muted/30 border-border focus:ring-primary/20"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-muted-foreground">Email Address</Label>
                                 <Input
-                                    value={newLead.first_name}
-                                    onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
-                                    className="bg-slate-800 border-slate-700"
+                                    type="email"
+                                    placeholder="client@company.com"
+                                    value={newLead.email}
+                                    onChange={e => setNewLead({ ...newLead, email: e.target.value })}
+                                    className="bg-muted/30 border-border focus:ring-primary/20"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-muted-foreground">Company</Label>
+                                <Input
+                                    placeholder="Business Name"
+                                    value={newLead.company}
+                                    onChange={e => setNewLead({ ...newLead, company: e.target.value })}
+                                    className="bg-muted/30 border-border focus:ring-primary/20"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Last Name</Label>
-                                <Input
-                                    value={newLead.last_name}
-                                    onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
-                                    className="bg-slate-800 border-slate-700"
-                                />
+                                <Label className="text-muted-foreground">Estimated Value</Label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2.5 text-muted-foreground">฿</span>
+                                    <Input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={newLead.value}
+                                        onChange={e => setNewLead({ ...newLead, value: e.target.value })}
+                                        className="pl-8 bg-muted/30 border-border focus:ring-primary/20"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Company / Business Name</Label>
-                            <Input
-                                value={newLead.company}
-                                onChange={e => setNewLead({ ...newLead, company: e.target.value })}
-                                className="bg-slate-800 border-slate-700"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Email</Label>
-                            <Input
-                                value={newLead.email}
-                                onChange={e => setNewLead({ ...newLead, email: e.target.value })}
-                                className="bg-slate-800 border-slate-700"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Estimated Value (฿)</Label>
-                            <Input
-                                type="number"
-                                value={newLead.value}
-                                onChange={e => setNewLead({ ...newLead, value: e.target.value })}
-                                className="bg-slate-800 border-slate-700"
-                            />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddLeadOpen(false)} className="border-slate-700 hover:bg-slate-800 text-slate-200">Cancel</Button>
-                        <Button onClick={handleAddLead} className="bg-blue-600 hover:bg-blue-700 text-white">Create Lead</Button>
+                        <Button variant="outline" onClick={() => setIsAddLeadOpen(false)} className="border-border hover:bg-muted text-muted-foreground">Cancel</Button>
+                        <Button onClick={handleAddLead} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">Create Lead</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
