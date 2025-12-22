@@ -1,5 +1,5 @@
 export const taskSchema = {
-    version: 0,
+    version: 2,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -32,7 +32,12 @@ export const taskSchema = {
         },
         created_at: {
             type: 'string',
-            format: 'date-time'
+            format: 'date-time',
+            maxLength: 50
+        },
+        meeting_id: {
+            type: 'string',
+            maxLength: 100
         },
         updated_at: {
             type: 'string',
@@ -40,6 +45,22 @@ export const taskSchema = {
             maxLength: 50
         }
     },
-    required: ['id', 'title', 'status', 'assigned_to', 'updated_at'],
-    indexes: ['status', 'assigned_to', 'updated_at']
+    required: [
+        'id',
+        'title',
+        'status',
+        'assigned_to',
+        'updated_at',
+        'created_at',
+        'meeting_id',
+        'description',
+        'priority'
+    ],
+    indexes: [
+        'status',
+        'assigned_to',
+        'updated_at',
+        'created_at',
+        'meeting_id'
+    ]
 };

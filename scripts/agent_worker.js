@@ -125,13 +125,19 @@ console.error = function (...args) {
 // Note: We need to use absolute paths or handle imports carefully in Node
 // Since package.json has "type": "module", we can use imports.
 import { db, realSupabase } from '../src/api/supabaseClient.js';
-import { AgentService } from '../src/services/agents/AgentService.js';
-import { agents } from '../src/services/agents/AgentRegistry.js';
-import { clearMemory } from '../src/services/agents/memorySupabase.js';
-import { StripeService } from '../src/services/StripeService.js'; // Import StripeService
+import { AuditorSentinelService } from '../src/services/security/AuditorSentinelService.js';
+import { AgentService } from '../src/features/agents/services/AgentService.js';
+// import { AgentBrain } from '../src/features/agents/services/AgentBrain.js'; // Not used directly in worker loop yet
+import { agents } from '../src/features/agents/services/AgentRegistry.js';
+import { clearMemory } from '../src/features/agents/services/memorySupabase.js';
+import { StripeService } from '../src/services/payments/StripeService.js'; // Import StripeService
 
 // Config loaded
 import { createClient } from '@supabase/supabase-js';
+
+// --- ACTIVE SECURITY STATE ---
+const actionHistory = new Map(); // Tracks event history per Agent Task ID
+// -----------------------------
 
 // Ensure we use the Service Role Key for the worker operations
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -535,8 +541,63 @@ When finished, reply with "TASK_COMPLETED".
         }
 
         if (action && action.name) {
+            // --- SECURITY AUDIT (SENTINEL) ---
+            if (!actionHistory.has(task.id)) {
+                actionHistory.set(task.id, []);
+            }
+            const history = actionHistory.get(task.id);
+
+            // Audit Tool Usage
+            const event = {
+                agentId: task.assigned_to,
+                type: 'ACTION',
+                timestamp: new Date().toISOString(),
+                details: action
+            };
+            history.push(event);
+
+            const alerts = AuditorSentinelService.audit(history);
+            const criticalAlert = alerts.find(a => a.level === 'CRITICAL' || a.level === 'ERROR');
+
+            if (criticalAlert) {
+                console.error(`🚨 SECURITY BLOCK: ${criticalAlert.issue}`);
+
+                // Log Block Event
+                history.push({
+                    agentId: task.assigned_to,
+                    type: 'GUARDRAIL_BLOCK',
+                    timestamp: new Date().toISOString(),
+                    details: criticalAlert
+                });
+
+                // KILL SWITCH: Terminate Task
+                await workerSupabase.from('agent_tasks')
+                    .update({
+                        status: 'failed',
+                        result: `SECURITY TERMINATION: ${criticalAlert.issue} - ${criticalAlert.details}`
+                    })
+                    .eq('id', task.id);
+                return; // Stop processing loop
+            }
+            // ---------------------------------
+
             console.log(`✅ Detected Tool Action: ${action.name}`);
-            const result = await executeTool(action.name, action.payload);
+            let result;
+            try {
+                result = await executeTool(action.name, action.payload);
+            } catch (e) {
+                // Log Error for Loop Detection
+                if (history) {
+                    history.push({
+                        agentId: task.assigned_to,
+                        type: 'ERROR',
+                        timestamp: new Date().toISOString(),
+                        details: e.message
+                    });
+                }
+                result = `Error: ${e.message}`;
+            }
+
             console.log(`✅ Tool Result:`, result.substring(0, 100) + "...");
             currentMessage = `Tool '${action.name}' output:\n${result}\n\nWhat is the next step?`;
         } else if (action && !action.name) {

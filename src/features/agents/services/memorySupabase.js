@@ -1,5 +1,5 @@
 // src/services/agents/memorySupabase.js
-import { db } from '@/api/supabaseClient.js';
+import { db } from '../../../api/supabaseClient.js';
 
 /**
  * Load agent memory from Supabase

@@ -1,4 +1,4 @@
-import { AI_MODELS } from "@/services/ai/ModelRegistry.js";
+import { AI_MODELS } from "../../../../services/ai/ModelRegistry.js";
 import { KOSMOI_MANIFESTO } from "../Kosmoi_Manifesto.js";
 
 export const SALES_PITCH_AGENT = {

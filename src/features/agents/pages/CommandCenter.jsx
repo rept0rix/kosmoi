@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Users, Briefcase, Activity, Search, Filter,
     MoreHorizontal, CheckCircle, XCircle, Mail, Phone,
-    Shield, Monitor, Database, Download, Cpu, Grid, LayoutDashboard, Network
+    Shield, Monitor, Database, Download, Cpu, Grid, LayoutDashboard, Network,
+    DollarSign, Building2, TrendingUp, Plus, ListTodo, Settings, Terminal
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '@/api/supabaseClient';
@@ -11,183 +12,308 @@ import { Link } from 'react-router-dom';
 import LiveTerminal from '@/components/LiveTerminal';
 import NeuralCanvas from '@/components/NeuralCanvas';
 import { agents } from '@/features/agents/services/AgentRegistry';
+import { AdminService } from '@/services/AdminService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const StatCard = ({ title, value, change, icon: Icon, color }) => (
-    <div className="bg-slate-950/80 border border-slate-800 p-6 rounded-xl backdrop-blur-md relative overflow-hidden group hover:border-slate-600 transition-all">
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-slate-900/50 pointer-events-none" />
+const StatCard = ({ title, value, change, icon: Icon, color, subtext }) => (
+    <div className="bg-background/40 border border-border p-6 rounded-2xl backdrop-blur-sm relative overflow-hidden group hover:border-primary/20 transition-all shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 pointer-events-none" />
         <div className="relative z-10 flex items-center justify-between mb-4">
-            <h3 className="text-slate-500 text-xs font-mono uppercase tracking-wider">{title}</h3>
-            <div className={`p-2 rounded-lg bg-opacity-10 ${color.replace('text-', 'bg-')}`}>
-                <Icon className={`w-4 h-4 ${color}`} />
+            <h3 className="text-muted-foreground text-xs font-outfit font-bold uppercase tracking-wider">{title}</h3>
+            <div className={`p-2.5 rounded-xl bg-background border border-border/50 shadow-inner ${color}`}>
+                <Icon className="w-5 h-5" />
             </div>
         </div>
-        <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white tracking-tight">{value}</span>
-            <span className={`text-xs font-medium ${change === 'Offline' ? 'text-red-500' : 'text-green-500'}`}>{change}</span>
+        <div className="flex flex-col gap-1 relative z-10">
+            <span className="text-3xl font-bold text-foreground font-outfit tracking-tight">{value}</span>
+            {change && (
+                <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${change.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {change}
+                    </span>
+                    {subtext && <span className="text-xs text-muted-foreground">{subtext}</span>}
+                </div>
+            )}
         </div>
     </div>
 );
 
+const QuickActionCard = ({ title, description, icon: Icon, to, colorClass }) => (
+    <Link to={to} className="block group">
+        <div className="h-full bg-background/40 border border-border p-6 rounded-2xl backdrop-blur-sm hover:bg-muted/30 hover:border-primary/30 transition-all cursor-pointer shadow-sm relative overflow-hidden">
+            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-${colorClass}-500/10 to-transparent rounded-bl-full -mr-4 -mt-4 opacity-50 group-hover:scale-110 transition-transform`} />
+            <div className={`w-12 h-12 rounded-xl bg-${colorClass}-500/10 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
+                <Icon className={`w-6 h-6 text-${colorClass}-500`} />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">{title}</h3>
+            <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+    </Link>
+);
+
 const CommandCenter = () => {
-    // ... existing CRM logic (kept for fallback/reference) ...
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState("all");
-    const [viewMode, setViewMode] = useState("network"); // network | grid
+    const [stats, setStats] = useState({ totalUsers: 0, totalBusinesses: 0, mrr: 0, activeSubscriptions: 0 });
+    const [loadingStats, setLoadingStats] = useState(true);
+    const [activeTab, setActiveTab] = useState("business"); // business | network
 
-    // Fetch Providers
-    const { data: providers = [] } = useQuery({
-        queryKey: ['admin-providers'],
-        queryFn: async () => [
-            { id: 1, name: "Samui Cleaners Pro", category: "Cleaning", contact: "John Doe", phone: "+66 81 234 5678", email: "john@clean.com", status: "pending", date: "2024-03-20" },
-            { id: 2, name: "Best Burger Lamai", category: "Food", contact: "Sarah Smith", phone: "+66 90 987 6543", email: "sarah@burger.com", status: "active", date: "2024-03-19" },
-            { id: 3, name: "Island Tours Express", category: "Travel", contact: "Mike Chang", phone: "+66 61 111 2222", email: "mike@tours.com", status: "active", date: "2024-03-18" },
-        ]
-    });
+    // Fetch Stats
+    useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const data = await AdminService.getStats();
+                setStats(data);
+            } catch (e) {
+                console.error("Failed to load dashboard stats", e);
+            } finally {
+                setLoadingStats(false);
+            }
+        };
+        loadStats();
+    }, []);
 
-    const filteredProviders = providers.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.contact.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
-        return matchesSearch && matchesStatus;
-    });
+    // Mock Recent Activity
+    const recentActivity = [
+        { id: 1, action: "New Lead Created", subject: "Siam Paragon Retail", time: "2 mins ago", type: "success" },
+        { id: 2, action: "Task Completed", subject: "Update Vendor Contracts", time: "15 mins ago", type: "info" },
+        { id: 3, action: "System Alert", subject: "Database Backup Successful", time: "1 hour ago", type: "neutral" },
+    ];
 
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-blue-500/30">
-            {/* Top Navigation Bar */}
-            <div className="border-b border-slate-900 bg-[#020617]/50 backdrop-blur-xl sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img src="/kosmoi_logo_white.svg" alt="Kosmoi Logo" className="h-8 md:h-10 w-auto" />
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
+            <div className="max-w-7xl mx-auto p-8 space-y-8">
+
+                {/* Header & Tabs */}
+                <div className="flex items-end justify-between pb-6 border-b border-border/40">
+                    <div>
+                        <h1 className="text-4xl font-outfit font-bold tracking-tight text-foreground">
+                            Welcome Back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Admin</span>
+                        </h1>
+                        <p className="text-muted-foreground mt-2 text-lg">Here's what's happening in your business today.</p>
                     </div>
 
-                    <div className="flex gap-2">
-                        <Link to="/board-room">
-                            <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white">
-                                <LayoutDashboard className="w-4 h-4 mr-2" /> Board
-                            </Button>
-                        </Link>
-                        <Button size="sm" variant="outline" className="border-slate-800 bg-slate-950 text-slate-400">
-                            <Activity className="w-4 h-4 mr-2 text-green-500" /> System Stable
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
-
-                {/* 1. THE NEURAL HEADER: Stats & Neural Brain */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-
-                    {/* Left: Enhanced Neural Viz */}
-                    <div className="lg:col-span-2 flex flex-col gap-6">
-                        {/* High Level Stats */}
-                        <div className="grid grid-cols-4 gap-4">
-                            <StatCard title="Active Nodes" value={agents.length} change="Online" icon={Cpu} color="text-blue-500" />
-                            <StatCard title="Tasks Queue" value="12" change="+3 new" icon={Activity} color="text-yellow-500" />
-                            <StatCard title="Memory Usage" value="45%" change="Optimal" icon={Database} color="text-purple-500" />
-                            <StatCard title="Network Load" value="12ms" change="Low Latency" icon={Network} color="text-emerald-500" />
-                        </div>
-
-                        {/* NEURAL CANVAS (The "Brain") */}
-                        <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl relative overflow-hidden shadow-2xl">
-                            {/* Viz Header */}
-                            <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-                                <span className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-widest bg-slate-950/80 px-3 py-1 rounded border border-blue-500/20 backdrop-blur-sm">
-                                    <Network className="w-3 h-3" /> Live Architecture
-                                </span>
-                            </div>
-
-                            {/* The Canvas */}
-                            <NeuralCanvas />
-
-                            {/* Overlay Vignette */}
-                            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_20%,#020617_150%)]"></div>
-                        </div>
-                    </div>
-
-                    {/* Right: Live Terminal */}
-                    <div className="lg:col-span-1 h-full flex flex-col gap-6">
-                        <LiveTerminal className="flex-1" />
-
-                        {/* Mini Task Stream */}
-                        <div className="bg-slate-900/30 border border-slate-900 rounded-xl p-4 h-1/3 overflow-y-auto">
-                            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <Activity className="w-3 h-3" /> Active Operations
-                            </h3>
-                            <div className="space-y-2">
-                                <div className="bg-slate-950/80 p-2 rounded border-l-2 border-yellow-500 flex justify-between items-center">
-                                    <span className="text-xs text-slate-300">Harvesting 'Samui Map'</span>
-                                    <span className="text-[10px] text-yellow-500 animate-pulse">RUNNING</span>
-                                </div>
-                                <div className="bg-slate-950/80 p-2 rounded border-l-2 border-green-500 flex justify-between items-center">
-                                    <span className="text-xs text-slate-300">Sanitizing Input #842</span>
-                                    <span className="text-[10px] text-green-500">DONE</span>
-                                </div>
-                            </div>
+                    <div className="flex items-center gap-4">
+                        {/* View Toggles */}
+                        <div className="bg-muted/30 p-1 rounded-lg border border-border flex items-center">
+                            <button
+                                onClick={() => setActiveTab('business')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'business' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                <LayoutDashboard className="w-4 h-4" /> Business Pulse
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('network')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'network' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                <Network className="w-4 h-4" /> Agent Network
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. OPERATIONAL LAYER: Task & CRM (Visualizing the "Queue") */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Task Stream (Mocked for now, will connect to DB) */}
-                    <div className="bg-slate-900/30 border border-slate-900 rounded-xl p-6 min-h-[300px]">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Activity className="w-4 h-4" /> Task Stream
-                        </h3>
-                        <div className="space-y-3">
-                            {/* Example Task Card */}
-                            <div className="bg-slate-950 p-3 rounded border border-slate-800 flex justify-between items-center opacity-70">
-                                <div>
-                                    <div className="text-xs text-blue-400 font-mono mb-1">TASK-8832</div>
-                                    <div className="text-sm text-slate-300">Scrape 'Samui Map' Cities</div>
-                                </div>
-                                <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded">IN PROGRESS</span>
-                            </div>
-                            <div className="bg-slate-950 p-3 rounded border border-slate-800 flex justify-between items-center opacity-50">
-                                <div>
-                                    <div className="text-xs text-green-400 font-mono mb-1">TASK-8831</div>
-                                    <div className="text-sm text-slate-300">Sanitize 'Chaweng Beach' Data</div>
-                                </div>
-                                <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-1 rounded">DONE</span>
+                {/* CONTENT: Business View */}
+                {activeTab === 'business' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Business Pulse Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <StatCard
+                                title="Total Revenue"
+                                value={`฿${(stats.mrr * 34).toLocaleString()}`}
+                                change="+12.5%"
+                                subtext="vs last month"
+                                icon={DollarSign}
+                                color="text-emerald-500"
+                            />
+                            <StatCard
+                                title="Active Businesses"
+                                value={stats.totalBusinesses}
+                                change="+3"
+                                subtext="new this week"
+                                icon={Building2}
+                                color="text-blue-500"
+                            />
+                            <StatCard
+                                title="Total Users"
+                                value={stats.totalUsers}
+                                change="+8%"
+                                subtext="growth rate"
+                                icon={Users}
+                                color="text-purple-500"
+                            />
+                            <StatCard
+                                title="Pending Tasks"
+                                value="12"
+                                change="-2"
+                                subtext="since yesterday"
+                                icon={ListTodo}
+                                color="text-amber-500"
+                            />
+                        </div>
+
+                        {/* Quick Actions Grid */}
+                        <div>
+                            <h2 className="text-xl font-outfit font-semibold mb-4 flex items-center gap-2">
+                                <Grid className="w-5 h-5 text-primary" /> Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <QuickActionCard
+                                    title="New Lead"
+                                    description="Add a potential client to the CRM pipeline."
+                                    icon={Plus}
+                                    to="/admin/crm"
+                                    colorClass="blue"
+                                />
+                                <QuickActionCard
+                                    title="Manage Tasks"
+                                    description="Review and update your team's tasks."
+                                    icon={CheckCircle}
+                                    to="/admin/tasks"
+                                    colorClass="emerald"
+                                />
+                                <QuickActionCard
+                                    title="Agent Network"
+                                    description="Monitor and configure your AI workforce."
+                                    icon={Cpu}
+                                    to="/admin/agents"
+                                    colorClass="purple"
+                                />
+                                <QuickActionCard
+                                    title="Workflows"
+                                    description="Build and visualize automation pipelines."
+                                    icon={Network}
+                                    to="/admin/studio"
+                                    colorClass="amber"
+                                />
+                                <QuickActionCard
+                                    title="Network Graph"
+                                    description="Explore the relationships within your agent network."
+                                    icon={Grid}
+                                    to="/admin/evolution"
+                                    colorClass="rose"
+                                />
+                                <QuickActionCard
+                                    title="Settings"
+                                    description="Configure system preferences and users."
+                                    icon={Settings}
+                                    to="/admin/settings"
+                                    colorClass="slate"
+                                />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Quick CRM (The old layout, condensed) */}
-                    <div className="bg-slate-900/30 border border-slate-900 rounded-xl p-6 min-h-[300px]">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Database className="w-4 h-4" /> Data Ingestion (Manual)
-                        </h3>
-                        <div className="overflow-hidden bg-slate-950 rounded border border-slate-800">
-                            {/* Simplified Table */}
-                            <table className="w-full text-left text-xs text-slate-400">
-                                <thead className="bg-slate-900 text-slate-500">
-                                    <tr>
-                                        <th className="px-4 py-2">Name</th>
-                                        <th className="px-4 py-2">Status</th>
-                                        <th className="px-4 py-2 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-800">
-                                    {filteredProviders.slice(0, 5).map(p => (
-                                        <tr key={p.id}>
-                                            <td className="px-4 py-2 text-white">{p.name}</td>
-                                            <td className="px-4 py-2">
-                                                <span className={`px-1.5 py-0.5 rounded ${p.status === 'active' ? 'text-green-400' : 'text-yellow-400'}`}>
-                                                    {p.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2 text-right">
-                                                <Button size="icon" variant="ghost" className="w-6 h-6"><MoreHorizontal className="w-3 h-3" /></Button>
-                                            </td>
-                                        </tr>
+                        {/* Recent Activity & System Health */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+                            <div className="lg:col-span-2 bg-background/40 border border-border rounded-2xl p-6 backdrop-blur-sm">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-muted-foreground" /> Recent Activity
+                                </h3>
+                                <div className="space-y-4">
+                                    {recentActivity.map((item) => (
+                                        <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-background border border-border/50 hover:bg-muted/30 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-2 h-2 rounded-full ${item.type === 'success' ? 'bg-emerald-500' : item.type === 'info' ? 'bg-blue-500' : 'bg-slate-500'}`} />
+                                                <div>
+                                                    <p className="text-sm font-medium text-foreground">{item.action}</p>
+                                                    <p className="text-xs text-muted-foreground">{item.subject}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground font-mono">{item.time}</span>
+                                        </div>
                                     ))}
-                                </tbody>
-                            </table>
+                                    <div className="text-center pt-2">
+                                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs">View Full Log</Button>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* System Status / Mini-Monitor */}
+                            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 text-slate-200">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                                    <Monitor className="w-4 h-4 text-emerald-500" /> System Status
+                                </h3>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs text-slate-400">
+                                            <span>Database (RxDB)</span>
+                                            <span className="text-emerald-400">Connected</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-500 w-[98%] rounded-full" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs text-slate-400">
+                                            <span>Sync Status (Supabase)</span>
+                                            <span className="text-blue-400">Syncing</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-500 w-[100%] rounded-full animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs text-slate-400">
+                                            <span>Agent Workforce</span>
+                                            <span className="text-yellow-400">Standby</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div className="h-full bg-yellow-500 w-[30%] rounded-full" />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-800/50">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500">Version</span>
+                                            <span className="font-mono text-slate-300">v2.4.0-stable</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {/* CONTENT: Network View (Restored) */}
+                {activeTab === 'network' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* 1. THE NEURAL HEADER: Stats & Neural Brain */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                            {/* Left: Enhanced Neural Viz */}
+                            <div className="lg:col-span-2 flex flex-col gap-6">
+                                <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl relative overflow-hidden shadow-2xl">
+                                    {/* Viz Header */}
+                                    <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
+                                        <span className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-widest bg-slate-950/80 px-3 py-1 rounded border border-blue-500/20 backdrop-blur-sm">
+                                            <Network className="w-3 h-3" /> Live Architecture
+                                        </span>
+                                    </div>
+                                    {/* The Canvas */}
+                                    <NeuralCanvas />
+                                    {/* Overlay Vignette */}
+                                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_20%,#020617_150%)]"></div>
+                                </div>
+                            </div>
+
+                            {/* Right: Live Terminal */}
+                            <div className="lg:col-span-1 h-full flex flex-col gap-6">
+                                <LiveTerminal className="flex-1" />
+                                {/* Mini Task Stream */}
+                                <div className="bg-slate-900/30 border border-slate-900 rounded-xl p-4 h-1/3 overflow-y-auto">
+                                    <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Activity className="w-3 h-3" /> Active Operations
+                                    </h3>
+                                    <div className="space-y-2">
+                                        <div className="bg-slate-950/80 p-2 rounded border-l-2 border-yellow-500 flex justify-between items-center">
+                                            <span className="text-xs text-slate-300">Harvesting 'Samui Map'</span>
+                                            <span className="text-[10px] text-yellow-500 animate-pulse">RUNNING</span>
+                                        </div>
+                                        <div className="bg-slate-950/80 p-2 rounded border-l-2 border-green-500 flex justify-between items-center">
+                                            <span className="text-xs text-slate-300">Sanitizing Input #842</span>
+                                            <span className="text-[10px] text-green-500">DONE</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
 
             </div>

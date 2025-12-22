@@ -4,7 +4,9 @@
  */
 import axios from 'axios';
 
-const MANYPI_API_KEY = import.meta.env.VITE_MANYPI_API_KEY;
+// Cross-environment safe access to env vars
+const env = (typeof process !== "undefined" && process.env) ? process.env : import.meta.env;
+const MANYPI_API_KEY = env.VITE_MANYPI_API_KEY;
 const BASE_URL = 'https://app.manypi.com/api';
 
 const client = axios.create({

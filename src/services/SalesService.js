@@ -254,22 +254,39 @@ export const SalesService = {
             // Create a Task for the Worker
             // This enables DISTRIBUTED EXECUTION. The specific logic (email generation, logging) happens implicitly by the agent following the prompt.
             const taskPayload = {
+                id: crypto.randomUUID(),
                 title: `CRM Outreach Campaign: ${new Date().toLocaleDateString()}`,
                 description: `Conduct outreach for ${targetLeads.length} qualified leads.\n\nTarget Stage ID for success: ${contactedStage?.id}\n\nLead IDs: ${targetLeads.map(l => l.id).join(', ')}\n\nInstructions:\n1. For each lead, generating a personalized hello email.\n2. Log the email content as an interaction (type: 'email').\n3. Update the lead's stage_id to the Target Stage ID.\n\nUse your tools 'update_lead' (or similar Supabase tools) and 'insert_interaction'.`,
                 status: 'pending',
                 assigned_to: 'sales-agent',
-                priority: 'high'
+                priority: 'high',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             };
 
-            const { error } = await supabase.from('agent_tasks').insert([taskPayload]);
+            // Use RxDB for offline-first task creation
+            // The replication layer will sync this to Supabase 'agent_tasks'
+            try {
+                const db = await DatabaseService.get();
+                await db.tasks.insert(taskPayload);
 
-            if (error) throw error;
+                return {
+                    sent: 0,
+                    queued: true,
+                    message: `Outreach Task Queued for ${targetLeads.length} leads. Worker will process.`
+                };
+            } catch (rxError) {
+                console.error("RxDB Task Creation Error, falling back to Supabase:", rxError);
+                // Fallback to direct Supabase insert if local DB fails
+                const { error } = await supabase.from('agent_tasks').insert([taskPayload]);
+                if (error) throw error;
 
-            return {
-                sent: 0,
-                queued: true,
-                message: `Outreach Task Queued for ${targetLeads.length} leads. Worker will process.`
-            };
+                return {
+                    sent: 0,
+                    queued: true,
+                    message: `Outreach Task Queued (Direct Sync) for ${targetLeads.length} leads.`
+                };
+            }
         } catch (error) {
             console.error("Outreach Error:", error);
             return { message: "Error queuing outreach task." };

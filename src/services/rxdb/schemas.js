@@ -22,7 +22,8 @@ export const taskSchema = {
             type: 'string'
         },
         meeting_id: {
-            type: 'string'
+            type: 'string',
+            maxLength: 100
         },
         priority: {
             type: 'string'
@@ -32,7 +33,8 @@ export const taskSchema = {
         },
         created_at: {
             type: 'string',
-            format: 'date-time'
+            format: 'date-time',
+            maxLength: 100
         },
         updated_at: {
             type: 'string',

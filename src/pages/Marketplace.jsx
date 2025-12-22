@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { Search, MapPin, Star, Filter, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GlassCard } from '@/components/ui/GlassCard'; // Assuming this exists or I'll use a fallback div style
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-// Initialize Supabase Client (assuming access to env, if not we rely on global or props? No, usually localized)
-// Ideally we valid useAuth or similar context, but for a page we can use direct client for public data
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '../api/supabaseClient';
 
 const CATEGORIES = [
     "All", "Plumber", "Electrician", "Cleaner", "AC Repair", "Gardener", "Driver"

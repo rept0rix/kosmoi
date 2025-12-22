@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
         // Fetch Role
         let userRole = 'user';
         if (currentUser) {
-          const { data: roleData } = await supabase.from('user_roles')
+          const { data: roleData, error: roleError } = await supabase.from('user_roles')
             .select('role')
             .eq('user_id', currentUser.id)
             .single();
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("Auth check timed out, forcing load completion");
       setIsLoadingAuth(false);
       setIsLoadingPublicSettings(false);
-    }, 5000);
+    }, 10000); // Improved: Increased to 10s
 
     try {
       setIsLoadingPublicSettings(true);
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(false);
 
       // 2. Strict / Server Verification (can happen in background or parallel)
-      await checkUserAuth();
+      await checkUserAuth(!!session?.user);
 
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkUserAuth = async () => {
+  const checkUserAuth = async (hasOptimisticSession) => {
     try {
       setIsLoadingAuth(true);
       // Use standard getUser()
@@ -115,12 +115,15 @@ export const AuthProvider = ({ children }) => {
         // Fetch Role
         let userRole = 'user';
         if (currentUser) {
-          const { data: roleData } = await supabase.from('user_roles')
+          const { data: roleData, error: roleError } = await supabase.from('user_roles')
             .select('role')
             .eq('user_id', currentUser.id)
             .single();
-          if (roleData) {
+          
+           if (roleData) {
             userRole = roleData.role;
+          } else if (roleError) {
+             console.warn("Failed to fetch user role, defaulting to user", roleError);
           }
         }
         setUser({ ...currentUser, role: userRole });
@@ -131,7 +134,18 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('User auth check failed:', error);
-      setIsAuthenticated(false);
+      
+      // Improved: Offline Support
+      // If we have an optimistic session and this is a network error, DO NOT LOGOUT.
+      const isNetworkError = error.message?.includes('fetch') || error.message?.includes('network') || error.status === 500;
+      
+      if (hasOptimisticSession && isNetworkError) {
+          console.warn("Network error during auth check. Keeping optimistic session (Offline Mode).");
+          // Keep existing user and isAuthenticated=true
+      } else {
+          setIsAuthenticated(false);
+          setUser(null);
+      }
     } finally {
       setIsLoadingAuth(false);
     }

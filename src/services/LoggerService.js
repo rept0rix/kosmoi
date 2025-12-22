@@ -1,4 +1,4 @@
-import { supabase } from '@/shared/lib/instance';
+import { supabase } from '../shared/lib/instance';
 
 export const LoggerService = {
     /**

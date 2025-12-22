@@ -1,20 +1,20 @@
 /// <reference types="vite/client" />
-import { db, supabase } from "@/api/supabaseClient.js";
-import { ToolRegistry } from "@/services/tools/ToolRegistry.js";
+import { db, supabase } from "../../../api/supabaseClient.js";
+import { ToolRegistry } from "../../../services/tools/ToolRegistry.js";
 import { getAgentReply } from "./AgentBrain.js";
 
 // --- IMPORT ALL TOOL MODULES TO REGISTER THEM ---
-import { Logger } from "@/services/utils/Logger.js";
-import "@/services/tools/registry/McpTools.js";
-import "@/services/tools/registry/DatabaseTools.js";
-import "@/services/tools/registry/ProductivityTools.js";
-import "@/services/tools/registry/CommunicationTools.js";
-import "@/services/tools/registry/DevTools.js";
-import "@/services/tools/registry/IntegrationTools.js";
-import "@/services/tools/registry/KnowledgeTools.js";
-import "@/services/tools/registry/GrowthTools.js";
-import "@/services/tools/registry/ServiceTools.js";
-import "@/services/tools/registry/MetaTools.js";
+import { Logger } from "../../../services/utils/Logger.js";
+import "../../../services/tools/registry/McpTools.js";
+import "../../../services/tools/registry/DatabaseTools.js";
+import "../../../services/tools/registry/ProductivityTools.js";
+import "../../../services/tools/registry/CommunicationTools.js";
+import "../../../services/tools/registry/DevTools.js";
+import "../../../services/tools/registry/IntegrationTools.js";
+import "../../../services/tools/registry/KnowledgeTools.js";
+import "../../../services/tools/registry/GrowthTools.js";
+import "../../../services/tools/registry/ServiceTools.js";
+import "../../../services/tools/registry/MetaTools.js";
 import { SkillService } from "./SkillService.js";
 
 console.log("AgentService Module Loaded. Tools Registered:", ToolRegistry.getToolNames());
@@ -168,7 +168,9 @@ Approval ID: ${approvalData.id}`;
     }
 }
 
-import { TokenBucket } from "@/services/utils/TokenBucket.js";
+import { TokenBucket } from "../../../services/utils/TokenBucket.js";
+import { InputGuardrailService } from "../../../services/security/InputGuardrailService.js";
+import { OutputGuardrailService } from "../../../services/security/OutputGuardrailService.js";
 
 export class AgentService {
     /**
@@ -199,6 +201,17 @@ export class AgentService {
      * @param {Object} options 
      */
     async sendMessage(message, options = {}) {
+        // 0. Input Guardrail Check
+        const securityCheck = InputGuardrailService.validateInput(message);
+        if (!securityCheck.isValid) {
+            return {
+                text: "🚫 Security Alert: Your message was blocked by the Kosmoi Immune System.",
+                raw: { error: securityCheck.reason },
+                toolRequest: null,
+                plan: null
+            };
+        }
+
         if (!this.rateLimiter.take(1)) {
             return {
                 text: "I'm receiving too many messages at once. Please give me a moment to catch my breath.",
@@ -228,7 +241,8 @@ export class AgentService {
 
         // 3. Process Response
         const response = {
-            text: replyData.message || "...",
+            text: OutputGuardrailService.sanitize(replyData.message || "..."),
+
             raw: replyData,
             toolRequest: replyData.action,
             plan: replyData.thought_process

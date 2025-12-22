@@ -23,7 +23,22 @@ export const DatabaseService = {
                     try {
                         await db.addCollections({
                             vendors: { schema: vendorSchema },
-                            tasks: { schema: taskSchema },
+                            tasks: {
+                                schema: taskSchema,
+                                migrationStrategies: {
+                                    1: function (oldDoc) {
+                                        return oldDoc;
+                                    },
+                                    2: function (oldDoc) {
+                                        oldDoc.meeting_id = oldDoc.meeting_id || "";
+                                        oldDoc.priority = oldDoc.priority || "medium";
+                                        oldDoc.description = oldDoc.description || "";
+                                        oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
+                                        oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
+                                        return oldDoc;
+                                    }
+                                }
+                            },
                             contacts: { schema: contactSchema },
                             stages: { schema: stageSchema }
                         });

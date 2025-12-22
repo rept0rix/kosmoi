@@ -1,5 +1,5 @@
 import { ToolRegistry } from "../ToolRegistry.js";
-import { MCPClient } from "@/shared/lib/MCPClient.js";
+import { MCPClient } from "../../../shared/lib/MCPClient.js";
 
 // --- Register MCP Tools ---
 

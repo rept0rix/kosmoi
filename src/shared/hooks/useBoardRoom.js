@@ -452,27 +452,53 @@ export function useBoardRoom() {
     // Handlers
     const handleSendMessage = async () => {
         if (!input.trim() || !selectedMeeting) return;
-        console.log("BOARD: Sending message:", input);
-        const msg = { meeting_id: selectedMeeting.id, agent_id: 'HUMAN_USER', content: input, type: 'text' };
-        const { error } = await supabase.from('board_messages').insert([msg]);
-        if (error) console.error("BOARD: Failed to insert message:", error);
 
-        if (!error) {
-            handlePitchMode(input);
-            // Mentions
+        const msgContent = input;
+        const tempId = `msg-${Date.now()}`;
+
+        // Optimistic / Local Message
+        const newMsg = {
+            id: tempId,
+            meeting_id: selectedMeeting.id,
+            agent_id: 'HUMAN_USER',
+            content: msgContent,
+            type: 'text',
+            created_at: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, newMsg]);
+        setInput('');
+        setSelectedImage(null);
+
+        // If Local Meeting, STOP HERE (No backend)
+        if (selectedMeeting.id.startsWith('local-')) {
+            handlePitchMode(msgContent);
             const activeAgents = agents.filter(a => selectedAgentIds.includes(a.id));
-            const mentioned = findMentionedAgent(input, activeAgents);
+            const mentioned = findMentionedAgent(msgContent, activeAgents);
             if (mentioned) triggerAgentReply(mentioned);
+            return;
+        }
 
-            // Workflow User Input
-            if (activeWorkflowState && activeWorkflowState.currentStep.role === 'user') {
-                const nextState = workflowService.nextStep();
-                setActiveWorkflowState(nextState);
-                if (nextState && nextState.currentStep.role !== 'user') setTimeout(() => triggerAgentReply(), 1000);
+        // Backend Sync
+        try {
+            const { error } = await supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'HUMAN_USER',
+                content: msgContent,
+                type: 'text'
+            }]);
+
+            if (error) {
+                console.error("Failed to sync message to DB:", error);
+                toast({ title: "Sync Failed", description: "Message saved locally only.", variant: "warning" });
+            } else {
+                handlePitchMode(msgContent);
+                const activeAgents = agents.filter(a => selectedAgentIds.includes(a.id));
+                const mentioned = findMentionedAgent(msgContent, activeAgents);
+                if (mentioned) triggerAgentReply(mentioned);
             }
-
-            setInput('');
-            setSelectedImage(null);
+        } catch (err) {
+            console.error("Unexpected error sending message:", err);
         }
     };
 
@@ -489,25 +515,30 @@ export function useBoardRoom() {
 
         let meetingData = null;
 
-        const { data, error } = await supabase.from('board_meetings').insert([payload]).select();
+        try {
+            const { data, error } = await supabase.from('board_meetings').insert([payload]).select();
 
-        if (error) {
-            console.error("Failed to create meeting:", error);
-            // FAILSAFE: If API is broken (invalid key), create a local fake meeting to allow testing
-            if (error.message.includes("Invalid API key") || error.message.includes("Failed to fetch")) {
-                console.warn("Using INVALID API KEY Fallback: Creating local-only meeting.");
-                meetingData = {
-                    id: `local-${Date.now()}`,
-                    title: newMeetingTitle,
-                    status: 'active',
-                    created_at: new Date().toISOString()
-                };
+            if (error) {
+                console.error("Failed to create meeting (Supabase):", error);
+                throw error; // Throw to trigger catch block
             } else {
-                alert(`Failed to create meeting: ${error.message}`);
-                return;
+                meetingData = data[0];
             }
-        } else {
-            meetingData = data[0];
+        } catch (error) {
+            console.warn("Using LOCAL AND OFFLINE Fallback due to error:", error.message);
+            toast({
+                title: "Offline Mode Activated",
+                description: "Creating local meeting due to connection/permission error.",
+                variant: "default" // Not destructive, as it's a feature
+            });
+
+            meetingData = {
+                id: `local-${Date.now()}`,
+                title: newMeetingTitle,
+                status: 'active',
+                created_at: new Date().toISOString(),
+                is_local: true
+            };
         }
 
         if (meetingData) {
@@ -519,7 +550,13 @@ export function useBoardRoom() {
     };
 
     const handleCreateTask = async ({ title, description, priority }) => {
-        if (!selectedMeeting || !title.trim() || !db) return;
+        if (!selectedMeeting || !title.trim()) return;
+
+        if (!db) {
+            console.error("RxDB not initialized");
+            toast({ title: "System Error", description: "Database is not ready. Please refresh.", variant: "destructive" });
+            return;
+        }
 
         try {
             const taskDoc = await db.tasks.insert({
@@ -534,66 +571,103 @@ export function useBoardRoom() {
                 updated_at: new Date().toISOString()
             });
             console.log("RxDB: Task Created", taskDoc);
+            toast({ title: "Task Created", description: title });
         } catch (error) {
             console.error("Failed to create task in RxDB:", error);
-            alert(`Failed to create task: ${error.message}`);
+            toast({ title: "Failed to create task", description: error.message, variant: "destructive" });
         }
     };
 
     const handleUpdateTaskStatus = async (taskId, newStatus) => {
         if (!db) return;
-        const task = await db.tasks.findOne(taskId).exec();
-        if (task) {
-            await task.patch({ status: newStatus, updated_at: new Date().toISOString() });
+        try {
+            const task = await db.tasks.findOne(taskId).exec();
+            if (task) {
+                await task.patch({ status: newStatus, updated_at: new Date().toISOString() });
+            }
+        } catch (e) {
+            console.error("Task update failed", e);
         }
     };
 
     const handleDeleteTask = async (taskId) => {
-        if (confirm("Delete task?") && db) {
-            const task = await db.tasks.findOne(taskId).exec();
-            if (task) await task.remove();
+        if (!db) return;
+        if (confirm("Delete task?")) {
+            try {
+                const task = await db.tasks.findOne(taskId).exec();
+                if (task) await task.remove();
+            } catch (e) {
+                console.error("Task delete failed", e);
+            }
         }
     };
 
     const handleStartDailyStandup = async () => {
-        if (!selectedMeeting) return;
-        const required = ['ceo-agent', 'product-founder-agent', 'tech-lead-agent'];
-        const missing = required.filter(id => !selectedAgentIds.includes(id));
-        if (missing.length > 0) setSelectedAgentIds(prev => [...new Set([...prev, ...missing])]);
+        if (!selectedMeeting) {
+            toast({ title: "No Meeting Selected", variant: "destructive" });
+            return;
+        }
 
-        // Use the new Service to generate a Real-Time Report
-        const { DailyStandupService } = await import('@/services/loop/DailyStandupService');
-        const reportPrompt = await DailyStandupService.generateMorningReport(user?.id);
+        try {
+            const required = ['ceo-agent', 'product-founder-agent', 'tech-lead-agent'];
+            const missing = required.filter(id => !selectedAgentIds.includes(id));
+            if (missing.length > 0) setSelectedAgentIds(prev => [...new Set([...prev, ...missing])]);
 
-        await supabase.from('board_messages').insert([{
-            meeting_id: selectedMeeting.id,
-            agent_id: 'SYSTEM',
-            content: `[DIRECTIVE TO CEO]: ${reportPrompt}`,
-            type: 'system_hidden'
-        }]);
+            // Use the new Service to generate a Real-Time Report
+            const { DailyStandupService } = await import('@/services/loop/DailyStandupService');
+            const reportPrompt = await DailyStandupService.generateMorningReport(user?.id);
 
-        await supabase.from('board_messages').insert([{
-            meeting_id: selectedMeeting.id,
-            agent_id: 'SYSTEM',
-            content: `**SYSTEM**: 🌅 Initiating Daily Standup with Morning Report...`,
-            type: 'system'
-        }]);
+            await supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'SYSTEM',
+                content: `[DIRECTIVE TO CEO]: ${reportPrompt}`,
+                type: 'system_hidden'
+            }]);
 
-        const ceo = agents.find(a => a.id === 'ceo-agent');
-        if (ceo) {
-            setTimeout(() => triggerAgentReply(ceo), 1000);
-            setAutoDiscuss(true);
+            await supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'SYSTEM',
+                content: `**SYSTEM**: 🌅 Initiating Daily Standup with Morning Report...`,
+                type: 'system'
+            }]);
+
+            const ceo = agents.find(a => a.id === 'ceo-agent');
+            if (ceo) {
+                setTimeout(() => triggerAgentReply(ceo), 1000);
+                setAutoDiscuss(true);
+            }
+            toast({ title: "Daily Standup Started" });
+        } catch (e) {
+            console.error("Start Daily Failed", e);
+            toast({ title: "Error", description: "Failed to start daily standup", variant: "destructive" });
         }
     };
 
     const handleStartOneDollarChallenge = async () => {
-        if (!selectedMeeting) return;
-        const required = ['ceo-agent', 'tech-lead-agent', 'growth-agent'];
-        const missing = required.filter(id => !selectedAgentIds.includes(id));
-        if (missing.length > 0) setSelectedAgentIds(prev => [...new Set([...prev, ...missing])]);
+        if (!selectedMeeting) {
+            toast({ title: "No Meeting Selected", variant: "destructive" });
+            return;
+        }
 
-        await supabase.from('board_messages').insert([{ meeting_id: selectedMeeting.id, agent_id: 'HUMAN_USER', content: "Start the One Dollar Challenge.", type: 'text' }]);
-        toast({ title: "Challenge Started" });
+        try {
+            const required = ['ceo-agent', 'tech-lead-agent', 'growth-agent'];
+            const missing = required.filter(id => !selectedAgentIds.includes(id));
+            if (missing.length > 0) setSelectedAgentIds(prev => [...new Set([...prev, ...missing])]);
+
+            const { error } = await supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'HUMAN_USER',
+                content: "Start the One Dollar Challenge.",
+                type: 'text'
+            }]);
+
+            if (error) throw error;
+
+            toast({ title: "Challenge Started", description: "Agents are analyzing..." });
+        } catch (e) {
+            console.error("Start Challenge Failed", e);
+            toast({ title: "Error", description: "Failed to start challenge", variant: "destructive" });
+        }
     };
 
     const handleStartWorkflow = (workflowId) => {
@@ -601,7 +675,16 @@ export function useBoardRoom() {
         const state = workflowService.startWorkflow(workflowId, { meetingId: selectedMeeting.id });
         setActiveWorkflowState(state);
         const wf = WORKFLOWS[Object.keys(WORKFLOWS).find(k => WORKFLOWS[k].id === workflowId)];
-        supabase.from('board_messages').insert([{ meeting_id: selectedMeeting.id, agent_id: 'SYSTEM', content: `**WORKFLOW STARTED**: ${wf.name}`, type: 'system' }]);
+
+        if (wf) {
+            supabase.from('board_messages').insert([{
+                meeting_id: selectedMeeting.id,
+                agent_id: 'SYSTEM',
+                content: `**WORKFLOW STARTED**: ${wf.name}`,
+                type: 'system'
+            }]);
+            toast({ title: "Workflow Started", description: wf.name });
+        }
     };
 
     // Worker Status

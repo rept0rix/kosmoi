@@ -72,7 +72,7 @@ const LayoutContent = ({ children }) => {
     if (currentPath === '/') return null;
 
     return (
-      <header className={`${isAdminZone ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-200'} border-b px-4 py-3 sticky top-0 z-50`}>
+      <header className={`${isAdminZone ? 'bg-background/80 backdrop-blur-md border-border shadow-sm' : 'bg-background/80 backdrop-blur-md border-border shadow-sm'} border-b px-4 py-3 sticky top-0 z-50 transition-colors duration-500`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             {config.logoUrl ? (
@@ -150,7 +150,7 @@ const LayoutContent = ({ children }) => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${isAdminZone ? 'bg-slate-950 text-slate-200' : 'bg-gray-50'}`} dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
+    <div className={`min-h-screen flex flex-col bg-background text-foreground transition-colors duration-500`} dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
       {renderHeader()}
 
       {/* Main Content */}
