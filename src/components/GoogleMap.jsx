@@ -14,6 +14,7 @@ export default function GoogleMap({
   onMapClick = null,
   options = {},
   userLocation = null,
+  userAvatar = null,
   height = "400px",
   polylines = []
 }) {
@@ -23,30 +24,51 @@ export default function GoogleMap({
   const polylinesRef = useRef([]);
   const markerClustererRef = useRef(null);
   const userMarkerRef = useRef(null);
+  const userOverlayRef = useRef(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      // @ts-ignore
-      if (window.google && window.google.maps) {
+    const checkGoogleMaps = () => {
+      if (window.google && window.google.maps && window.google.maps.Map) {
         setLoading(false);
-        return;
+        return true;
       }
+      return false;
+    };
 
+    if (checkGoogleMaps()) return;
+
+    const loadScript = () => {
       const existingScript = document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`);
       if (existingScript) {
-        existingScript.addEventListener('load', () => setLoading(false));
+        // Check periodically if maps is ready, since 'load' event might have passed
+        const checkInterval = setInterval(() => {
+          if (checkGoogleMaps()) {
+            clearInterval(checkInterval);
+          }
+        }, 100);
+
+        // Safety timeout
+        setTimeout(() => clearInterval(checkInterval), 5000);
+
+        existingScript.addEventListener('load', () => {
+          setTimeout(() => checkGoogleMaps(), 100);
+        });
         return;
       }
 
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=he&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=he&libraries=places,marker&loading=async`;
       script.async = true;
       script.defer = true;
+      script.id = 'google-maps-script';
 
       script.onload = () => {
-        setLoading(false);
+        setTimeout(() => {
+          if (checkGoogleMaps()) return;
+          setTimeout(() => checkGoogleMaps(), 500);
+        }, 100);
       };
 
       script.onerror = (e) => {
@@ -58,7 +80,7 @@ export default function GoogleMap({
       document.head.appendChild(script);
     };
 
-    loadGoogleMaps();
+    loadScript();
 
     return () => {
       // Cleanup markers on unmount
@@ -173,15 +195,88 @@ export default function GoogleMap({
       markersRef.current = [];
 
       // Handle User Location Marker
+      // Handle User Location Marker
       if (userLocation) {
-        if (!userMarkerRef.current) {
-          // Create user marker if it doesn't exist
-          // @ts-ignore
-          userMarkerRef.current = new window.google.maps.Marker({
+        if (userAvatar) {
+          // Remove standard marker if exists
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setMap(null);
+            userMarkerRef.current = null;
+          }
+
+          // Define Overlay Class if not exists globally or locally
+          if (!window.UserAvatarOverlay) {
+            window.UserAvatarOverlay = class extends window.google.maps.OverlayView {
+              constructor(position, avatarUrl) {
+                super();
+                this.position = position;
+                this.avatarUrl = avatarUrl;
+                this.div = null;
+              }
+              onAdd() {
+                this.div = document.createElement('div');
+                this.div.style.position = 'absolute';
+                this.div.style.width = '44px';
+                this.div.style.height = '44px';
+                this.div.style.borderRadius = '50%';
+                this.div.style.backgroundColor = 'white';
+                this.div.style.border = '3px solid #EF4444'; // Red border
+                this.div.style.backgroundImage = `url(${this.avatarUrl})`;
+                this.div.style.backgroundSize = 'cover';
+                this.div.style.backgroundPosition = 'center';
+                this.div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                this.div.style.cursor = 'pointer';
+                this.div.className = 'user-location-pulse'; // Optional hook for CSS animation
+
+                const panes = this.getPanes();
+                panes.overlayMouseTarget.appendChild(this.div); // overlayMouseTarget allows clicks
+              }
+              draw() {
+                const overlayProjection = this.getProjection();
+                if (!overlayProjection || !this.position) return;
+                const coords = overlayProjection.fromLatLngToDivPixel(this.position);
+                if (this.div && coords) {
+                  this.div.style.left = (coords.x - 22) + 'px';
+                  this.div.style.top = (coords.y - 22) + 'px';
+                }
+              }
+              onRemove() {
+                if (this.div) {
+                  this.div.parentNode.removeChild(this.div);
+                  this.div = null;
+                }
+              }
+              setPosition(position) {
+                this.position = position;
+                this.draw();
+              }
+            };
+          }
+
+          const pos = new window.google.maps.LatLng(userLocation.latitude || userLocation.lat, userLocation.longitude || userLocation.lng);
+
+          if (!userOverlayRef.current) {
+            // @ts-ignore
+            userOverlayRef.current = new window.UserAvatarOverlay(pos, userAvatar);
+            userOverlayRef.current.setMap(googleMapRef.current);
+          } else {
+            userOverlayRef.current.setPosition(pos);
+          }
+
+        } else {
+          // No Avatar - Use standard marker
+          // Remove overlay if exists
+          if (userOverlayRef.current) {
+            userOverlayRef.current.setMap(null);
+            userOverlayRef.current = null;
+          }
+
+          const markerOptions = {
             position: { lat: userLocation.latitude || userLocation.lat, lng: userLocation.longitude || userLocation.lng },
             map: googleMapRef.current,
             title: 'המיקום שלי',
             icon: {
+              // @ts-ignore
               path: window.google.maps.SymbolPath.CIRCLE,
               scale: 8,
               fillColor: "#4285F4",
@@ -189,16 +284,30 @@ export default function GoogleMap({
               strokeWeight: 2,
               strokeColor: "#ffffff",
             },
-            zIndex: 999 // Keep on top
-          });
-        } else {
-          // Update position
-          // @ts-ignore
-          userMarkerRef.current.setPosition({ lat: userLocation.latitude || userLocation.lat, lng: userLocation.longitude || userLocation.lng });
-          userMarkerRef.current.setMap(googleMapRef.current);
+            zIndex: 999
+          };
+
+          if (!userMarkerRef.current) {
+            // @ts-ignore
+            userMarkerRef.current = new window.google.maps.Marker(markerOptions);
+          } else {
+            // @ts-ignore
+            userMarkerRef.current.setPosition(markerOptions.position);
+            // @ts-ignore
+            userMarkerRef.current.setIcon(markerOptions.icon);
+            userMarkerRef.current.setMap(googleMapRef.current);
+          }
         }
-      } else if (userMarkerRef.current) {
-        userMarkerRef.current.setMap(null);
+      } else {
+        // No location
+        if (userMarkerRef.current) {
+          userMarkerRef.current.setMap(null);
+          userMarkerRef.current = null;
+        }
+        if (userOverlayRef.current) {
+          userOverlayRef.current.setMap(null);
+          userOverlayRef.current = null;
+        }
       }
 
       // Add new markers
