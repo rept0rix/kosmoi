@@ -1,43 +1,104 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { db } from '@/api/supabaseClient';
+import { useAuth } from "@/features/auth/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { createPageUrl } from '@/shared/lib/utils';
+import { AlertCircle, Lock, ShieldCheck, Sparkles, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Import translation hook
 
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { i18n } = useTranslation();
+    const { isAuthenticated, user, checkAppState } = useAuth(); // Use Global Auth
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [verifying, setVerifying] = useState(false);
 
-    // Get return URL from query params
+    // Thai Street Vibes
+    const BG_IMAGE = "https://images.unsplash.com/photo-1535189043414-47a3c49a0bed?q=80&w=2832&auto=format&fit=crop";
+
+    // Get return URL
     const searchParams = new URLSearchParams(location.search);
     const returnUrl = searchParams.get('returnUrl') || '/board-room';
 
+    // Force English/LTR
     useEffect(() => {
-        const checkSession = async () => {
-            const { data: { session } } = await db.auth.getSession();
-            if (session) {
-                handleRedirect();
+        if (i18n.language !== 'en') {
+            i18n.changeLanguage('en');
+        }
+    }, [i18n]);
+
+    // Handle OAuth Hash & Global Auth State
+    useEffect(() => {
+        const handleOAuthCallback = async () => {
+            // 1. Detect OAuth Hash
+            if (location.hash && location.hash.includes('access_token')) {
+                console.log("🔐 OAuth Hash Detected, parsing manually...");
+                setVerifying(true);
+
+                try {
+                    // Extract tokens manually
+                    const params = new URLSearchParams(location.hash.substring(1)); // Remove #
+                    const access_token = params.get('access_token');
+                    const refresh_token = params.get('refresh_token');
+
+                    if (access_token && refresh_token) {
+                        console.log("🎟️ Tokens found, setting session manually...");
+                        const { data, error } = await db.auth.setSession({
+                            access_token,
+                            refresh_token
+                        });
+
+                        if (error) throw error;
+
+                        console.log("✅ Session set successfully via hash");
+                        // Trigger a global state refresh to update UI immediately
+                        await checkAppState();
+                    } else {
+                        // If no tokens found manually but hash exists, let Supabase handle it or fallback
+                        console.warn("⚠️ Hash present but tokens missing, relying on implicit flow");
+                        await checkAppState();
+                    }
+                } catch (error) {
+                    console.error("❌ Error setting session from hash:", error);
+                    setError("Failed to verify login. Please try again.");
+                    setVerifying(false);
+                }
             }
         };
-        checkSession();
 
-        const { data: { subscription } } = db.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' || session) {
-                handleRedirect();
+        handleOAuthCallback();
+
+        // Safety: Timeout if stuck in verifying
+        const timer = setTimeout(() => {
+            if (verifying && !isAuthenticated) {
+                console.warn("⚠️ OAuth verification timed out (Manual Handler)");
+                setVerifying(false);
+                setError("Verification timed out. Please try again.");
             }
-        });
+        }, 8000); // 8s timeout
 
-        return () => subscription.unsubscribe();
-    }, [navigate, returnUrl]);
+        return () => clearTimeout(timer);
+    }, [location.hash, isAuthenticated]);
+
+    // 2. React to Auth Success (from Context)
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            console.log("✅ Authenticated (Global), Redirecting...");
+            handleRedirect();
+        }
+    }, [isAuthenticated, user]);
+
 
     const handleRedirect = () => {
         try {
+            console.log("Handling redirect to:", returnUrl);
             const url = new URL(returnUrl, window.location.origin);
             if (url.origin === window.location.origin) {
-                navigate(url.pathname + url.search + url.hash);
+                // Clean navigation
+                navigate(url.pathname + url.search);
             } else {
                 window.location.href = returnUrl;
             }
@@ -54,22 +115,12 @@ export default function Login() {
         setLoading(true);
         setError(null);
         try {
-            const { user, session } = await db.auth.signIn(email, password);
-
-
-            // Successful login will trigger onAuthStateChange
-            // We can rely on that or force redirect if needed.
-            // But strict redirect is safer here:
-            const url = new URL(returnUrl, window.location.origin);
-            if (url.origin === window.location.origin) {
-                navigate(url.pathname + url.search + url.hash);
-            } else {
-                window.location.href = returnUrl;
-            }
+            await db.auth.signIn(email, password);
+            // Wait for AuthContext to pick it up or manually refresh
+            await checkAppState();
         } catch (err) {
             console.error('Login error:', err);
-            setError(err.message || 'אירעה שגיאה בהתחברות. אנא נסה שוב.');
-        } finally {
+            setError(err.message || 'Login failed. Please check your credentials.');
             setLoading(false);
         }
     };
@@ -79,130 +130,152 @@ export default function Login() {
             setLoading(true);
             setError(null);
 
-            const currentOrigin = window.location.origin;
-            const redirectUrl = `${currentOrigin}/login?returnUrl=${encodeURIComponent(returnUrl)}`;
+            // Ensure we redirect back correctly to process hash
+            const redirectUrl = `${window.location.origin}/login`;
 
             await db.auth.signInWithOAuth('google', {
-                redirectTo: redirectUrl
+                redirectTo: redirectUrl,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                }
             });
         } catch (err) {
-            console.error('Login error:', err);
-            setError(err.message || 'אירעה שגיאה בהתחברות. אנא נסה שוב.');
+            console.error('Google Login error:', err);
+            setError(err.message || 'Google sign-in failed. Please try again.');
             setLoading(false);
         }
     };
 
-    return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
-            {/* Left Side: Visual / Brand */}
-            <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 to-purple-900/90 z-10" />
-                <img
-                    src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?q=80&w=2888&auto=format&fit=crop"
-                    alt="Samui Lifestyle"
-                    className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay"
-                />
-
-                <div className="relative z-20 flex flex-col justify-between h-full p-12 text-white">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-                            <span className="font-bold">K</span>
-                        </div>
-                        <span className="font-semibold tracking-wide uppercase text-sm opacity-80">Kosmoi Services</span>
-                    </div>
-
-                    <div className="space-y-6 max-w-lg">
-                        <h1 className="text-5xl font-bold leading-tight">
-                            התחבר לחוויה איים <br /> נוחה ומתקדמת.
-                        </h1>
-                        <p className="text-lg text-blue-100/80 font-light leading-relaxed">
-                            הצטרף לאלפי תושבים ותיירים בקוסמוי שכבר חוסכים זמן וכסף עם המערכת החכמה שלנו לאיתור והזמנת שירותים.
-                        </p>
-
-                        <div className="flex flex-col gap-3 pt-4">
-                            {[
-                                'הזמנת שירותים בקליק אחד',
-                                'ניהול יומן ומעקב אחר הזמנות',
-                                'גישה לספקים מוסמכים בלבד'
-                            ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 text-sm font-medium text-white/90">
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                                    {item}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="text-xs text-white/40">
-                        © 2024 Kosmoi Services. All rights reserved.
-                    </div>
+    if (verifying) {
+        return (
+            <div className="min-h-screen relative flex items-center justify-center font-sans overflow-hidden bg-slate-900">
+                <div className="text-white flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-lg font-light">Completing secure sign-in...</p>
                 </div>
             </div>
+        )
+    }
 
-            {/* Right Side: Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 relative">
-                <div className="max-w-md w-full space-y-8">
-                    <div className="text-center lg:text-right space-y-2">
-                        <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 mx-auto lg:mx-0">
-                            <div className="w-6 h-6 bg-blue-600 rounded-lg shadow-lg shadow-blue-600/30" />
+    return (
+        <div className="min-h-screen relative flex items-center justify-center font-sans overflow-hidden" dir="ltr">
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={BG_IMAGE}
+                    alt="Thai Street Atmosphere"
+                    className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
+            </div>
+
+            {/* Main Container */}
+            <div className="relative z-10 w-full max-w-5xl mx-auto p-6 flex flex-col md:flex-row items-stretch gap-8 md:gap-16">
+
+                {/* Left Side: Brand & Value Props (Glassmorphism) */}
+                <div className="flex-1 flex flex-col justify-center text-white space-y-8">
+                    <div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+                                <span className="font-bold text-xl">K</span>
+                            </div>
+                            <span className="font-medium tracking-wide text-white/80 uppercase">Kosmoi OS</span>
                         </div>
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                            ברוכים השבים
-                        </h2>
-                        <p className="text-slate-500 dark:text-slate-400">
-                            התחבר כדי להמשיך מהיכן שעצרת
+                        <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
+                            Your Intelligent <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">
+                                Island Companion
+                            </span>
+                        </h1>
+                        <p className="text-lg text-slate-200/90 font-light max-w-md">
+                            Join the exclusive network of travelers and locals unlocking the best of Koh Samui with AI.
                         </p>
                     </div>
 
-                    {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl flex items-center gap-3 text-sm">
-                            <AlertCircle className="w-5 h-5 shrink-0" />
-                            {error}
-                        </div>
-                    )}
+                    <div className="space-y-4">
+                        {[
+                            { icon: ShieldCheck, text: "Verified Listings & Services", sub: "No scams, just quality." },
+                            { icon: Sparkles, text: "AI Travel Concierge", sub: "Itinerary planning in seconds." },
+                            { icon: MapPin, text: "Exclusive Local Deals", sub: "Prices you won't find online." }
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                                <div className="p-2 bg-white/10 rounded-lg">
+                                    <item.icon className="w-5 h-5 text-blue-300" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-white">{item.text}</h3>
+                                    <p className="text-sm text-slate-300">{item.sub}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
-                    <div className="space-y-4 pt-4">
-                        <form onSubmit={handleEmailLogin} className="space-y-4">
+                {/* Right Side: Login Form (Glass Card) */}
+                <div className="w-full md:w-[420px] bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-8 relative overflow-hidden">
+                    {/* Decorative Gradient Blob */}
+                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/30 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div className="relative z-10">
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+                            <p className="text-slate-300 text-sm">Enter you credentials to access your dashboard</p>
+                        </div>
+
+                        {error && (
+                            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 text-sm">
+                                <AlertCircle className="w-5 h-5 shrink-0" />
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleEmailLogin} className="space-y-5">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">דוא״ל</label>
+                                <label className="text-xs font-medium text-slate-300 uppercase tracking-wider ml-1">Email Address</label>
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-                                    placeholder="name@company.com"
+                                    className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
+                                    placeholder="name@example.com"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">סיסמה</label>
-                                    <a href="#" className="text-sm text-blue-600 hover:text-blue-500">שכחת סיסמה?</a>
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Password</label>
+                                    <a href="#" className="text-xs text-blue-300 hover:text-blue-200 transition-colors">Forgot?</a>
                                 </div>
-                                <input
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-                                    placeholder="••••••••"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
+                                        placeholder="••••••••"
+                                    />
+                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                </div>
                             </div>
+
                             <Button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-6 text-base font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 shadow-lg transition-all rounded-xl"
+                                className="w-full py-6 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition-all rounded-xl"
                             >
-                                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'התחבר'}
+                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Log In'}
                             </Button>
                         </form>
 
-                        <div className="relative py-2">
+                        <div className="relative py-6">
                             <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-slate-200 dark:border-slate-800" />
+                                <span className="w-full border-t border-white/10" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-slate-50 dark:bg-slate-900 px-2 text-slate-500">או המשך עם</span>
+                                <span className="bg-transparent px-2 text-slate-400">Or continue with</span>
                             </div>
                         </div>
 
@@ -210,10 +283,10 @@ export default function Login() {
                             onClick={handleGoogleLogin}
                             disabled={loading}
                             variant="outline"
-                            className="w-full h-14 text-base font-medium border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-3 rounded-xl transition-all hover:scale-[1.01]"
+                            className="w-full py-6 border-white/10 bg-white/5 hover:bg-white/10 text-white hover:text-white flex items-center justify-center gap-3 rounded-xl transition-all"
                         >
                             {loading ? (
-                                <div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                                     <path
@@ -234,25 +307,17 @@ export default function Login() {
                                     />
                                 </svg>
                             )}
-                            המשך באמצעות Google
+                            Sign in with Google
                         </Button>
 
-                        <div className="text-center">
-                            <Button variant="ghost" className="text-slate-500 hover:text-slate-900 dark:hover:text-white" onClick={() => navigate('/vendor-signup')}>
-                                רוצה להצטרף כספק שירות? <ArrowRight className="w-4 h-4 mr-1" />
-                            </Button>
+                        <div className="mt-8 text-center">
+                            <p className="text-slate-400 text-sm">
+                                Want to join as a professional?{' '}
+                                <button onClick={() => navigate('/vendor-signup')} className="text-blue-300 hover:text-white font-medium transition-colors">
+                                    Apply Here
+                                </button>
+                            </p>
                         </div>
-                    </div>
-
-                    <p className="px-8 text-center text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
-                        בלחיצה על המשך, אתה מסכים ל<Link to="/legal/terms" className="underline hover:text-slate-600 dark:hover:text-slate-300">תנאי השימוש</Link> ו<Link to="/legal/privacy" className="underline hover:text-slate-600 dark:hover:text-slate-300">מדיניות הפרטיות</Link> שלנו.
-                    </p>
-                </div>
-
-                {/* Mobile Logo Overlay - Only visible on small screens */}
-                <div className="lg:hidden absolute top-6 right-6 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                        <span className="font-bold text-white">K</span>
                     </div>
                 </div>
             </div>

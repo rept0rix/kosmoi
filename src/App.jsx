@@ -158,6 +158,7 @@ const AuthenticatedApp = () => {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/vendor-signup" element={<VendorSignup />} />
             <Route path="/login" element={<Pages.Login />} />
+            <Route path="/complete-signup" element={<Pages.CompleteSignup />} />
             <Route path="/experiences" element={<Pages.Experiences />} />
 
             <Route path="/provider/:providerId" element={<ProviderProfile />} />

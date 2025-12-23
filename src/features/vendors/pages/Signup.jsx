@@ -17,8 +17,8 @@ export default function VendorSignup() {
         location: '',
         contact_info: '',
         owner_name: '',
-        email: '',
-        password: ''
+
+        email: ''
     });
 
     // Claim Form State
@@ -46,38 +46,29 @@ export default function VendorSignup() {
         e.preventDefault();
         setLoading(true);
         try {
-            // 1. Sign up the user
-            const authData = await db.auth.signUp(formData.email, formData.password);
+            // 1. Sign up / Verify via OTP (Magic Link)
+            // We store the business data in user_metadata so we can pick it up after they click the email link
+            const { error } = await supabase.auth.signInWithOtp({
+                email: formData.email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/complete-signup`,
+                    data: {
+                        business_name: formData.business_name,
+                        category: formData.category,
+                        description: formData.description,
+                        location: formData.location,
+                        owner_name: formData.owner_name,
+                        contact_info: formData.contact_info || formData.email,
+                        signup_step: 'pending_password'
+                    }
+                }
+            });
 
-            // Wrapper throws on error, so we don't need to check authError explicitly here
-            // if (authError) throw authError;
+            if (error) throw error;
 
-            // Check if we have a session (Auto-confirm ON) or just a user (Email verification ON)
-            if (authData.session) {
-                // 2. Create the Service Provider linked to the new user
-                const { error: providerError } = await db.entities.ServiceProvider.create({
-                    business_name: formData.business_name,
-                    category: formData.category,
-                    description: formData.description,
-                    location: formData.location,
-                    owner_name: formData.owner_name,
-                    contact_info: formData.contact_info || formData.email, // Fallback to email if contact info is empty
-                    created_by: authData.user.id,
-                    status: 'new_lead',
-                    average_rating: 0,
-                    review_count: 0
-                });
-
-                if (providerError) throw providerError;
-
-                setSuccess(true);
-                setTimeout(() => navigate('/'), 3000);
-            } else if (authData.user) {
-                // User created but no session -> Email verification required
-                setIsWaitingForVerification(true);
-                setSuccess(true);
-                // Don't navigate away immediately so they can read the message
-            }
+            // 2. Show Verification Message
+            setIsWaitingForVerification(true);
+            setSuccess(true);
 
         } catch (error) {
             console.error("Signup failed:", error);
@@ -273,35 +264,23 @@ export default function VendorSignup() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">אימייל</label>
-                                        <div className="relative">
-                                            <Mail className="absolute right-4 top-3.5 w-5 h-5 text-slate-400" />
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                required
-                                                className="w-full pr-12 pl-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-                                                placeholder="your@email.com"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">סיסמה</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">אימייל</label>
+                                    <div className="relative">
+                                        <Mail className="absolute right-4 top-3.5 w-5 h-5 text-slate-400" />
                                         <input
-                                            type="password"
-                                            name="password"
+                                            type="email"
+                                            name="email"
                                             required
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-                                            placeholder="בחר סיסמה חזקה"
-                                            value={formData.password}
+                                            className="w-full pr-12 pl-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                            placeholder="your@email.com"
+                                            value={formData.email}
                                             onChange={handleChange}
                                         />
                                     </div>
                                 </div>
+                                {/* Password field removed - set via CompleteSignup */}
+
 
                                 <Button
                                     type="submit"
@@ -502,7 +481,7 @@ export default function VendorSignup() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
