@@ -379,12 +379,24 @@ export const supabaseHelpers = {
 
     auth: {
         async me() {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                console.warn("me() failed", error);
+            // Timeout after 5 seconds to prevent infinite loading
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 5000));
+
+            try {
+                const { data: { user }, error } = await Promise.race([
+                    supabase.auth.getUser(),
+                    timeout
+                ]);
+
+                if (error) {
+                    console.warn("me() failed", error);
+                    return null;
+                }
+                return user;
+            } catch (error) {
+                console.warn("me() check error or timeout:", error);
                 return null;
             }
-            return user;
         },
 
         async isAuthenticated() {
@@ -462,9 +474,9 @@ export const supabaseHelpers = {
         // Helper to manually set session if needed (e.g. from tests or URL params)
         async setSession(session) {
             if (!session) {
-                await supabase.auth.signOut();
+                return await supabase.auth.signOut();
             } else {
-                await supabase.auth.setSession(session);
+                return await supabase.auth.setSession(session);
             }
         }
     },

@@ -6,39 +6,74 @@ const RxDBContext = createContext(null);
 export const RxDBProvider = ({ children }) => {
     const [db, setDb] = useState(null);
     const [error, setError] = useState(null);
+    const [isTimeout, setIsTimeout] = useState(false);
 
     useEffect(() => {
+        let timeoutId;
         const initDB = async () => {
+            // Set 15s timeout
+            timeoutId = setTimeout(() => {
+                setIsTimeout(true);
+            }, 15000);
+
             try {
                 const database = await DatabaseService.get();
+                clearTimeout(timeoutId);
                 setDb(database);
             } catch (err) {
+                clearTimeout(timeoutId);
                 console.error("RxDB Initialization Failed:", err);
                 setError(err);
             }
         };
         initDB();
+
+        return () => clearTimeout(timeoutId);
     }, []);
 
-    if (error) {
+    const handleHardReset = async () => {
+        try {
+            if (confirm("This will clear your local database cache and reload. Your data is safe in the cloud. Continue?")) {
+                await DatabaseService.destroy();
+                window.location.reload();
+            }
+        } catch (e) {
+            alert("Failed to reset database: " + e.message);
+        }
+    };
+
+    if (error || isTimeout) {
         return (
-            <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-900 text-white">
-                <div className="text-red-500 font-bold text-xl">Database Initialization Failed</div>
-                <div className="text-slate-400 text-sm max-w-md text-center">
-                    {error.message || "An unexpected error occurred while loading the database."}
+            <div className="flex h-screen flex-col items-center justify-center gap-6 bg-slate-900 text-white p-4">
+                <div className="text-red-500 font-bold text-2xl">
+                    {isTimeout ? "Database Loading Timeout" : "Database Initialization Failed"}
                 </div>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                >
-                    Retry
-                </button>
+                <div className="text-slate-400 text-base max-w-md text-center leading-relaxed">
+                    {isTimeout
+                        ? "The local database is taking too long to load. This might be due to a corruption or stuck lock."
+                        : (error?.message || "An unexpected error occurred while loading the database.")
+                    }
+                </div>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-slate-700 rounded hover:bg-slate-600 transition-colors"
+                    >
+                        Try Reloading
+                    </button>
+                    <button
+                        onClick={handleHardReset}
+                        className="px-6 py-2 bg-red-600 rounded hover:bg-red-700 transition-colors font-medium"
+                    >
+                        Hard Reset & Reload
+                    </button>
+                </div>
             </div>
         );
     }
 
     if (!db) {
-        return <div className="flex h-screen items-center justify-center text-slate-400">Loading Database...</div>;
+        return <div className="flex h-screen items-center justify-center text-slate-400 animate-pulse">Loading Database...</div>;
     }
 
     return (

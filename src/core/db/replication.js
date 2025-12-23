@@ -55,5 +55,9 @@ export const replicateCollection = async (collection, tableName) => {
         retryTime: 5000,
     });
 
+    replicationState.error$.subscribe(err => {
+        console.error(`RxDB Replication Error [${tableName}]:`, err);
+    });
+
     return replicationState;
 };

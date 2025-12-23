@@ -37,6 +37,10 @@ function updateSyncStatus(updates) {
 // Download all providers from Remote DB
 export async function downloadAllProviders() {
     try {
+        if (syncStatus.isSyncing) {
+            console.log('Sync already in progress, skipping...');
+            return;
+        }
         updateSyncStatus({ isSyncing: true, progress: 0, error: null });
 
         console.log('Starting provider download...');

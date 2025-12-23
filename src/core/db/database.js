@@ -5,79 +5,65 @@ import { contactSchema } from './schemas/contact.schema';
 import { stageSchema } from './schemas/stage.schema';
 import { replicateCollection } from './replication';
 
+import { removeRxDatabase } from 'rxdb';
+import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+
 let dbPromise = null;
 
 export const DatabaseService = {
     get: async () => {
-        if (!dbPromise) {
-            console.log("DatabaseService: Initializing RxDB...");
+        if (dbPromise) return dbPromise;
+
+        console.log("DatabaseService: Initializing RxDB...");
+        dbPromise = (async () => {
             try {
                 if (typeof createDatabase !== 'function') {
-                    console.error("DatabaseService: createDatabase is not a function", createDatabase);
-                    throw new Error("createDatabase is not a function");
+                    throw new Error("createDatabase is not a function. Check rxdb-config.js export.");
                 }
 
-                dbPromise = createDatabase().then(async (db) => {
-                    console.log("DatabaseService: DB Instance created", db);
-                    // Add collections
-                    try {
-                        await db.addCollections({
-                            vendors: { schema: vendorSchema },
-                            tasks: {
-                                schema: taskSchema,
-                                migrationStrategies: {
-                                    1: function (oldDoc) {
-                                        return oldDoc;
-                                    },
-                                    2: function (oldDoc) {
-                                        oldDoc.meeting_id = oldDoc.meeting_id || "";
-                                        oldDoc.priority = oldDoc.priority || "medium";
-                                        oldDoc.description = oldDoc.description || "";
-                                        oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
-                                        oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
-                                        return oldDoc;
-                                    }
-                                }
-                            },
-                            contacts: { schema: contactSchema },
-                            stages: { schema: stageSchema }
-                        });
-                        console.log("DatabaseService: Collections added");
-                    } catch (err) {
-                        console.error("DatabaseService: Failed to add collections", err);
-                        throw err;
-                    }
+                const db = await createDatabase();
+                console.log("DatabaseService: DB Instance created", db.name);
 
-                    // Start Replication (Fire and forget)
-                    console.log('Starting replication...');
-
-                    // Vendors
-                    replicateCollection(db.vendors, 'service_providers')
-                        .catch(err => console.error('Replication vendors error', err));
-
-                    // Tasks
-                    replicateCollection(db.tasks, 'agent_tasks')
-                        .catch(err => console.error('Replication tasks error', err));
-
-                    // Contacts
-                    replicateCollection(db.contacts, 'crm_leads') // Assuming 'crm_leads' is the table
-                        .catch(err => console.error('Replication contacts error', err));
-
-                    // Stages
-                    replicateCollection(db.stages, 'crm_stages')
-                        .catch(err => console.error('Replication stages error', err));
-
-                    return db;
-                }).catch(err => {
-                    console.error("DatabaseService: Failed during DB creation promise", err);
-                    dbPromise = null; // Reset promise so we can retry
-                    throw err;
+                // Add collections
+                await db.addCollections({
+                    vendors: { schema: vendorSchema },
+                    tasks: {
+                        schema: taskSchema,
+                        migrationStrategies: {
+                            1: (oldDoc) => oldDoc,
+                            2: (oldDoc) => {
+                                oldDoc.meeting_id = oldDoc.meeting_id || "";
+                                oldDoc.priority = oldDoc.priority || "medium";
+                                oldDoc.description = oldDoc.description || "";
+                                oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
+                                oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
+                                return oldDoc;
+                            }
+                        }
+                    },
+                    contacts: { schema: contactSchema },
+                    stages: { schema: stageSchema }
                 });
+                console.log("DatabaseService: Collections added");
+
+                // Start Replication (Fire and forget, but with better error logging)
+                console.log('Starting replication...');
+
+                const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
+
+                replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
+                replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
+                replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
+                replicateCollection(db.stages, 'crm_stages').catch(err => logError('stages', err));
+
+                return db;
             } catch (err) {
-                console.error("DatabaseService: Critical error during get()", err);
+                console.error("DatabaseService: Critical Failed during DB creation", err);
+                dbPromise = null; // Reset promise so we can retry
                 throw err;
             }
-        }
+        })();
+
         return dbPromise;
     },
 
@@ -86,5 +72,22 @@ export const DatabaseService = {
      */
     reset: () => {
         dbPromise = null;
+    },
+
+    /**
+     * Destroys the local database completely.
+     * Useful for recovering from corruption or schema mismatch glitches.
+     */
+    destroy: async () => {
+        console.warn("DatabaseService: DESTROYING DATABASE...");
+        dbPromise = null;
+        try {
+            await removeRxDatabase('kosmoidb_v2', getRxStorageDexie());
+            console.log("DatabaseService: Database destroyed.");
+            return true;
+        } catch (e) {
+            console.error("DatabaseService: Failed to destroy DB", e);
+            throw e;
+        }
     }
 };

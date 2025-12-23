@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/api/supabaseClient';
-import { supabaseAdmin } from '@/api/supabaseClient';
+
 import GoogleMap from '@/components/GoogleMap';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ export default function AdminImporter() {
         entities: {
             ServiceProvider: {
                 create: async (data) => {
-                    const { data: result, error } = await supabaseAdmin
+                    const { data: result, error } = await db
                         .from('service_providers')
                         .insert(data)
                         .select()
@@ -98,7 +98,7 @@ export default function AdminImporter() {
             }));
 
             // Insert into Supabase
-            const { data, error } = await supabaseAdmin.from('service_providers').insert(rows).select();
+            const { data, error } = await db.from('service_providers').insert(rows).select();
 
             if (error) {
                 console.error("Supabase insert error:", error);

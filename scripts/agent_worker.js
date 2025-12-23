@@ -131,6 +131,7 @@ import { AgentService } from '../src/features/agents/services/AgentService.js';
 import { agents } from '../src/features/agents/services/AgentRegistry.js';
 import { clearMemory } from '../src/features/agents/services/memorySupabase.js';
 import { StripeService } from '../src/services/payments/StripeService.js'; // Import StripeService
+import './WorkflowTools.js'; // Register Workflow Tools (Node only)
 
 // Config loaded
 import { createClient } from '@supabase/supabase-js';
