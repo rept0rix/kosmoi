@@ -30,12 +30,18 @@ export default function Login() {
         }
     }, [i18n]);
 
+    const processingOAuth = React.useRef(false);
+
     // Handle OAuth Hash & Global Auth State
     useEffect(() => {
         const handleOAuthCallback = async () => {
+            // 0. Prevent Double Processing
+            if (processingOAuth.current) return;
+
             // 1. Detect OAuth Hash
             if (location.hash && location.hash.includes('access_token')) {
                 console.log("🔐 OAuth Hash Detected, parsing manually...");
+                processingOAuth.current = true; // Mark as processing
                 setVerifying(true);
 
                 try {
@@ -46,16 +52,27 @@ export default function Login() {
 
                     if (access_token && refresh_token) {
                         console.log("🎟️ Tokens found, setting session manually...");
-                        const { data, error } = await db.auth.setSession({
+
+                        // Clear Hash immediately to prevent re-triggering on any re-render
+                        window.location.hash = '';
+
+                        const { error } = await db.auth.setSession({
                             access_token,
                             refresh_token
                         });
 
                         if (error) throw error;
 
-                        console.log("✅ Session set successfully via hash");
-                        // Trigger a global state refresh to update UI immediately
+                        console.log("✅ Session set successfully via hash. Forcing state update...");
+
+                        // 1. Force Global State Refresh
                         await checkAppState();
+
+                        // 2. IMMEDIATE REDIRECT (Don't wait for effect)
+                        // Use Replace to clean history
+                        console.log("🚀 Force Redirecting to:", returnUrl);
+                        navigate(returnUrl, { replace: true });
+                        return; // Stop execution
                     } else {
                         // If no tokens found manually but hash exists, let Supabase handle it or fallback
                         console.warn("⚠️ Hash present but tokens missing, relying on implicit flow");
@@ -65,6 +82,7 @@ export default function Login() {
                     console.error("❌ Error setting session from hash:", error);
                     setError("Failed to verify login. Please try again.");
                     setVerifying(false);
+                    processingOAuth.current = false; // Reset on error
                 }
             }
         };
@@ -77,6 +95,7 @@ export default function Login() {
                 console.warn("⚠️ OAuth verification timed out (Manual Handler)");
                 setVerifying(false);
                 setError("Verification timed out. Please try again.");
+                processingOAuth.current = false;
             }
         }, 8000); // 8s timeout
 
@@ -94,16 +113,37 @@ export default function Login() {
 
     const handleRedirect = () => {
         try {
-            console.log("Handling redirect to:", returnUrl);
-            const url = new URL(returnUrl, window.location.origin);
-            if (url.origin === window.location.origin) {
-                // Clean navigation
-                navigate(url.pathname + url.search);
-            } else {
-                window.location.href = returnUrl;
+            console.log("Handling redirect...", { returnUrl, userRole: user?.role });
+
+            // 1. If returnUrl is specific (not default), use it
+            const isDefaultUrl = returnUrl === '/board-room' || returnUrl.includes('board-room');
+
+            if (!isDefaultUrl) {
+                const url = new URL(returnUrl, window.location.origin);
+                if (url.origin === window.location.origin) {
+                    navigate(url.pathname + url.search);
+                } else {
+                    window.location.href = returnUrl;
+                }
+                return;
             }
+
+            // 2. Role-Based Routing (Default Landing)
+            const role = user?.role || 'user';
+
+            if (role === 'admin') {
+                navigate('/admin/command-center');
+            } else if (role === 'vendor') {
+                navigate('/provider-dashboard');
+            } else {
+                // Regular User -> Profile (Central Hub)
+                navigate('/profile');
+            }
+
         } catch (e) {
-            navigate(returnUrl);
+            console.error("Redirect Error:", e);
+            // Fallback
+            navigate('/profile');
         }
     };
 
@@ -115,9 +155,28 @@ export default function Login() {
         setLoading(true);
         setError(null);
         try {
-            await db.auth.signIn(email, password);
-            // Wait for AuthContext to pick it up or manually refresh
+            const { error: signInError } = await db.auth.signIn(email, password);
+
+            if (signInError) throw signInError;
+
+            // Wait for AuthContext, but don't hang forever
+            console.log("Sign in successful, updating state...");
+
+            // Try updating state
             await checkAppState();
+
+            // If checkAppState implies success (we are verified), the useEffect will pick it up.
+            // But if it's slow, we manually check if we have a session and force redirect after a moment
+
+            setTimeout(() => {
+                if (window.location.pathname === '/login') {
+                    console.warn("Auth state update slow, forcing manual redirect check...");
+                    // Default assumption: if no error was thrown, we are likely good.
+                    // We can try to redirect to profile manually if still here.
+                    // But strictly speaking, we rely on isAuthenticated.
+                }
+            }, 2000);
+
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || 'Login failed. Please check your credentials.');
@@ -157,6 +216,34 @@ export default function Login() {
             </div>
         )
     }
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        const emailToReset = email || prompt("Please enter your email address for password reset:");
+
+        if (emailToReset) {
+            setLoading(true);
+            try {
+                const { error } = await db.auth.resetPasswordForEmail(emailToReset, {
+                    redirectTo: `${window.location.origin}/update-password`,
+                });
+                if (error) throw error;
+                alert("Password reset email sent! Check your inbox.");
+            } catch (err) {
+                console.error("Reset password error:", err);
+                alert("Error sending reset email: " + err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    // DEV ONLY: Quick Login
+    const handleDevLogin = async () => {
+        // Preset credentials for dev
+        setEmail('admin@kosmoi.site');
+        setPassword('password');
+    };
 
     return (
         <div className="min-h-screen relative flex items-center justify-center font-sans overflow-hidden" dir="ltr">
@@ -231,6 +318,16 @@ export default function Login() {
                             </div>
                         )}
 
+                        {/* DEV SHORTCUT */}
+                        {import.meta.env.DEV && (
+                            <button
+                                onClick={handleDevLogin}
+                                className="w-full mb-4 py-2 text-xs font-mono bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 border border-purple-500/30 rounded-lg transition-colors"
+                            >
+                                [DEV] Fill Admin Creds
+                            </button>
+                        )}
+
                         <form onSubmit={handleEmailLogin} className="space-y-5">
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-slate-300 uppercase tracking-wider ml-1">Email Address</label>
@@ -246,7 +343,13 @@ export default function Login() {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center ml-1">
                                     <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Password</label>
-                                    <a href="#" className="text-xs text-blue-300 hover:text-blue-200 transition-colors">Forgot?</a>
+                                    <button
+                                        type="button"
+                                        onClick={handleForgotPassword}
+                                        className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
+                                    >
+                                        Forgot?
+                                    </button>
                                 </div>
                                 <div className="relative">
                                     <input

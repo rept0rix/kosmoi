@@ -14,8 +14,27 @@ export default function AdminUsers() {
     const loadUsers = async () => {
         setLoading(true);
         try {
-            const data = await AdminService.getUsers();
-            setUsers(data);
+            const { data, error } = await AdminService.getUsers();
+            if (error) {
+                // Check if table is missing (Postgres error 42P01)
+                if (error.code === '42P01') {
+                    toast({
+                        title: "Setup Required: Users Table Missing",
+                        description: "Please run the 'fix_users_table.sql' script in Supabase SQL Editor.",
+                        variant: "destructive",
+                        duration: 10000,
+                    });
+                } else {
+                    toast({
+                        title: "Error Loading Users",
+                        description: error.message,
+                        variant: "destructive"
+                    });
+                }
+                setUsers([]);
+            } else {
+                setUsers(data);
+            }
         } catch (e) {
             console.error("Users Load Failed", e);
         } finally {

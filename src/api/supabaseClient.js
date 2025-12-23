@@ -229,9 +229,9 @@ export const supabaseHelpers = {
                 return data || null;
             },
             async upsert(data) {
-                const { data: res, error } = await supabase.from('agent_memory').upsert(data, { onConflict: 'user_id,agent_id' }).select().single();
+                const { error } = await supabase.from('agent_memory').upsert(data, { onConflict: 'user_id,agent_id' });
                 if (error) throw error;
-                return res;
+                return null;
             }
         },
 

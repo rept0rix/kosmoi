@@ -1,6 +1,6 @@
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
+import { RxDBDevModePlugin, disableWarnings } from 'rxdb/plugins/dev-mode';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
@@ -15,6 +15,7 @@ addRxPlugin(RxDBLeaderElectionPlugin);
 
 if (import.meta.env.DEV) {
     addRxPlugin(RxDBDevModePlugin);
+    disableWarnings();
 }
 
 // RxDB Storage setup

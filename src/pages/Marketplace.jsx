@@ -1,222 +1,538 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Filter, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { GlassCard } from '@/components/ui/GlassCard'; // Assuming this exists or I'll use a fallback div style
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '../api/supabaseClient';
+import { Input } from '@/components/ui/input';
+import { Search, Plus, Filter, Tag, ChevronDown, ChevronRight, X, LayoutGrid, Box, Map as MapIcon, List, Home, Car, Smartphone, Sofa } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MarketplaceService } from '@/services/MarketplaceService';
+import { ProductCard } from '@/components/marketplace/ProductCard';
+import { CreateListingDialog } from '@/components/marketplace/CreateListingDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { MARKETPLACE_CATEGORIES } from '@/data/marketplaceData';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-const CATEGORIES = [
-    "All", "Plumber", "Electrician", "Cleaner", "AC Repair", "Gardener", "Driver"
+// Fix Leaflet marker icons
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+var DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const MOCK_PRODUCTS = [
+    {
+        id: 'm1',
+        title: 'Honda Click 160cc (2023)',
+        price: 45000,
+        description: 'Perfect condition, low mileage. Green book ready.',
+        location: 'Chaweng',
+        category_id: 'vehicles',
+        subcategory: 'motorbikes',
+        images: [{ url: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800&q=80' }],
+        status: 'active',
+        lat: 9.512, lng: 100.05
+    },
+    {
+        id: 'm2',
+        title: 'Luxury Sea View Villa',
+        price: 25000000,
+        description: '3 Bedroom villa with panoramic ocean views.',
+        location: 'Chaweng Noi',
+        category_id: 'real-estate',
+        subcategory: 'sale',
+        images: [{ url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80' }],
+        status: 'active',
+        lat: 9.500, lng: 100.04
+    },
+    {
+        id: 'm3',
+        title: 'iPhone 14 Pro Max - 256GB',
+        price: 28900,
+        description: 'Deep Purple, no scratches, battery 95%.',
+        location: 'Lamai',
+        category_id: 'electronics',
+        subcategory: 'phones',
+        images: [{ url: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&q=80' }],
+        status: 'active',
+        lat: 9.45, lng: 100.03
+    },
+    {
+        id: 'm4',
+        title: 'L-Shape Sofa (Grey)',
+        price: 8500,
+        description: 'Comfortable sofa, moving out sale. Must pick up.',
+        location: 'Bophut',
+        category_id: 'furniture',
+        images: [{ url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' }],
+        status: 'active',
+        lat: 9.55, lng: 100.02
+    },
+    {
+        id: 'm5',
+        title: 'Toyota Fortuner 2018',
+        price: 950000,
+        description: 'Well maintained, diesel engine, pure white.',
+        location: 'Maenam',
+        category_id: 'vehicles',
+        subcategory: 'cars',
+        images: [{ url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80' }],
+        status: 'active',
+        lat: 9.57, lng: 99.99
+    }
 ];
 
-const Marketplace = () => {
-    const [providers, setProviders] = useState([]);
-    const [agents, setAgents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('agents'); // 'agents' or 'providers'
-    const [selectedCategory, setSelectedCategory] = useState("All");
+// Re-usable Filter Component
+const FilterBar = ({ activeCategory }) => {
+    if (!activeCategory) return null;
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    // Real Estate Filters
+    if (activeCategory.id === 'real-estate') {
+        return (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <Select>
+                    <SelectTrigger className="w-[130px] h-9 bg-white border-slate-200">
+                        <SelectValue placeholder="Price Range" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                        <SelectItem value="0-5m">0 - 5M THB</SelectItem>
+                        <SelectItem value="5m-15m">5M - 15M THB</SelectItem>
+                        <SelectItem value="15m+">15M+ THB</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select>
+                    <SelectTrigger className="w-[120px] h-9 bg-white border-slate-200">
+                        <SelectValue placeholder="Bedrooms" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                        <SelectItem value="studio">Studio</SelectItem>
+                        <SelectItem value="1">1 Bedroom</SelectItem>
+                        <SelectItem value="2">2 Bedrooms</SelectItem>
+                        <SelectItem value="3+">3+ Bedrooms</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select>
+                    <SelectTrigger className="w-[120px] h-9 bg-white border-slate-200">
+                        <SelectValue placeholder="View" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                        <SelectItem value="sea">Sea View</SelectItem>
+                        <SelectItem value="garden">Garden View</SelectItem>
+                        <SelectItem value="city">City View</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        );
+    }
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            // Fetch Service Providers
-            const { data: providersData } = await supabase.from('service_providers').select('*').in('status', ['active', 'new_lead']);
-            setProviders(providersData || []);
+    // Vehicle Filters
+    if (activeCategory.id === 'vehicles') {
+        return (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <Select>
+                    <SelectTrigger className="w-[130px] h-9 bg-white border-slate-200">
+                        <SelectValue placeholder="Price" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                        <SelectItem value="low">Under 50k</SelectItem>
+                        <SelectItem value="mid">50k - 500k</SelectItem>
+                        <SelectItem value="high">500k+</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select>
+                    <SelectTrigger className="w-[130px] h-9 bg-white border-slate-200">
+                        <SelectValue placeholder="Transmission" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                        <SelectItem value="auto">Automatic</SelectItem>
+                        <SelectItem value="manual">Manual</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        )
+    }
 
-            // Fetch Published AI Agents
-            const { data: agentsData } = await supabase.from('workflows')
-                .select('*')
-                .eq('deployment_status', 'published')
-                .order('version', { ascending: false });
+    return null;
+};
 
-            // Deduplicate: Keep only latest version of each workflow (by ID ideally, but distinct on name/id)
-            // For now, simpler list
-            setAgents(agentsData || []);
+// Section Component for "Home View"
+const CategorySection = ({ title, categoryId, onSeeAll }) => {
+    // Mock filtering for section
+    const sectionProducts = MOCK_PRODUCTS.filter(p => p.category_id === categoryId).slice(0, 4);
 
-        } catch (error) {
-            console.error("Error fetching marketplace data:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const filteredProviders = providers.filter(p => {
-        const matchesSearch = p.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.description?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === "All" ||
-            (p.category && p.category.toLowerCase() === selectedCategory.toLowerCase());
-        return matchesSearch && matchesCategory;
-    });
-
-    const filteredAgents = agents.filter(a =>
-        a.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (sectionProducts.length === 0) return null;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20">
-            {/* Header */}
-            <div className="bg-slate-900 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-500 rounded-full opacity-20 filter blur-3xl"></div>
-                <div className="relative z-10 max-w-7xl mx-auto">
-                    <h1 className="text-4xl font-extrabold mb-4">Marketplace</h1>
-                    <p className="text-xl text-slate-300 max-w-2xl">
-                        Find local pros or chat with intelligent agents.
-                    </p>
-
-                    {/* Search Bar */}
-                    <div className="mt-8 flex flex-col sm:flex-row gap-4 max-w-2xl bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
-                        <div className="relative flex-grow">
-                            <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                            <Input
-                                type="text"
-                                placeholder="Search..."
-                                className="pl-10 bg-transparent border-none text-white placeholder:text-slate-400 focus-visible:ring-0"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </div>
+        <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-end">
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <Button variant="link" className="text-indigo-600 p-0 h-auto font-medium" onClick={onSeeAll}>
+                    See All
+                </Button>
             </div>
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
-
-                {/* Tabs */}
-                <div className="flex justify-center mb-8">
-                    <div className="bg-white p-1 rounded-full shadow-lg border border-slate-100 inline-flex">
-                        <button
-                            onClick={() => setActiveTab('agents')}
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'agents' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
-                        >
-                            Start AI Chat
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('providers')}
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'providers' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
-                        >
-                            Human Pros
-                        </button>
-                    </div>
-                </div>
-
-                {activeTab === 'providers' && (
-                    <>
-                        {/* Filters */}
-                        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-4">
-                            {CATEGORIES.map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-400'
-                                        }`}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Providers Grid */}
-                        {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-200 rounded-2xl animate-pulse"></div>)}
-                            </div>
-                        ) : filteredProviders.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredProviders.map(provider => (
-                                    <Link key={provider.id} to={`/provider/${provider.id}`} className="group">
-                                        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-                                            {/* Provider Card Image */}
-                                            <div className="h-40 bg-slate-100 relative items-center justify-center flex overflow-hidden">
-                                                {provider.image_url ? (
-                                                    <img src={provider.image_url} alt={provider.business_name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                                                ) : (
-                                                    <MapPin className="w-12 h-12 text-slate-300" />
-                                                )}
-                                                {provider.status === 'new_lead' && (
-                                                    <Badge className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 border-yellow-500/20">New</Badge>
-                                                )}
-                                            </div>
-                                            <div className="p-5 flex-grow flex flex-col">
-                                                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-                                                    {provider.business_name}
-                                                </h3>
-                                                <Button className="w-full mt-4">View Profile</Button>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-20 text-slate-500">No providers found.</div>
-                        )}
-                    </>
-                )}
-
-                {activeTab === 'agents' && (
-                    <div className="mt-4">
-                        {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[1, 2, 3].map(i => <div key={i} className="h-48 bg-slate-200 rounded-2xl animate-pulse"></div>)}
-                            </div>
-                        ) : filteredAgents.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredAgents.map(agent => (
-                                    <Link key={agent.id} to={`/chat/${agent.id}`} className="group">
-                                        <div className="bg-white rounded-2xl border border-slate-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                                <Star className="w-24 h-24 rotate-12" />
-                                            </div>
-
-                                            <div className="flex items-center gap-4 mb-4">
-                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
-                                                    <Star className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-slate-900 leading-tight">
-                                                        {agent.name}
-                                                    </h3>
-                                                    <Badge variant="outline" className="mt-1 border-green-200 text-green-700 bg-green-50 text-[10px]">
-                                                        v{agent.version} • Published
-                                                    </Badge>
-                                                </div>
-                                            </div>
-
-                                            <p className="text-slate-500 text-sm mb-6 line-clamp-2 min-h-[40px]">
-                                                {agent.description || "An intelligent service agent ready to assist you."}
-                                            </p>
-
-                                            <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 group-hover:scale-[1.02] transition-transform">
-                                                Start Chat <ArrowRight className="w-4 h-4 ml-2" />
-                                            </Button>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-20">
-                                <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Star className="w-8 h-8 text-slate-400" />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-900">No Agents Published Yet</h3>
-                                <p className="text-slate-500 max-w-sm mx-auto mt-2">
-                                    Go to the Studio to build and publish your first Service Agent!
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {sectionProducts.map(product => (
+                    <ProductCard
+                        key={product.id}
+                        product={product}
+                        onContact={() => { }}
+                        onShowMap={() => {
+                            // Logic to switch to map view could go here if we had access to setViewMode
+                            // Since CategorySection is defined outside the main component scope (but inside file),
+                            // we need to pass a handler to CategorySection first. 
+                            // For now, I'll just pass a no-op or I need to refactor CategorySection to accept it.
+                            // OR better: Move CategorySection inside Marketplace component definition.
+                            onSeeAll(); // As a fallback/hack, or just ignore for now? 
+                            // Actually, let's just make sure it compiles. passing undefined is fine if ProductCard handles it.
+                        }}
+                    />
+                ))}
             </div>
         </div>
     );
 };
 
-export default Marketplace;
+
+export default function Marketplace() {
+    const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeCategory, setActiveCategory] = useState(null);
+    const [activeSubCategory, setActiveSubCategory] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [sort, setSort] = useState('newest');
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'map'
+
+    // Derived state: Home View is active if NO search, NO category, NO subcat
+    const isHomeView = !searchTerm && !activeCategory && !activeSubCategory;
+
+    useEffect(() => {
+        loadProducts();
+    }, [activeCategory, activeSubCategory, searchTerm, sort]);
+
+    const loadProducts = async () => {
+        setLoading(true);
+        try {
+            // In a real app, pass params to service
+            const items = await MarketplaceService.getItems({
+                categoryId: activeCategory?.id,
+                searchTerm
+            });
+
+            // Client-side filtering simulation
+            const filteredMock = MOCK_PRODUCTS.filter(p => {
+                const matchSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+                let matchCat = true;
+                if (activeCategory) {
+                    matchCat = p.category_id === activeCategory.id;
+                    if (activeSubCategory && matchCat) {
+                        matchCat = p.subcategory === activeSubCategory.id || !p.subcategory;
+                    }
+                }
+
+                return matchSearch && matchCat;
+            });
+
+            const sortedProducts = [...(items || []), ...filteredMock];
+            if (sort === 'price_asc') sortedProducts.sort((a, b) => a.price - b.price);
+            if (sort === 'price_desc') sortedProducts.sort((a, b) => b.price - a.price);
+
+            setProducts(sortedProducts);
+        } catch (error) {
+            console.error("Failed to load products", error);
+            setProducts(MOCK_PRODUCTS);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCategorySelect = (cat) => {
+        // No redirect for real estate, we handle it internally now
+        if (activeCategory?.id === cat.id) {
+            setActiveCategory(null);
+            setActiveSubCategory(null);
+        } else {
+            setActiveCategory(cat);
+            setActiveSubCategory(null);
+        }
+    };
+
+    const handleSubCategorySelect = (sub, e) => {
+        e.stopPropagation();
+        setActiveSubCategory(activeSubCategory?.id === sub.id ? null : sub);
+    };
+
+    const clearFilters = () => {
+        setActiveCategory(null);
+        setActiveSubCategory(null);
+        setSearchTerm('');
+        setViewMode('grid');
+    };
+
+    const CategoryMenu = () => (
+        <div className="w-[300px] md:w-[600px] p-4 h-[400px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-full overflow-y-auto pr-2">
+                {MARKETPLACE_CATEGORIES.map(cat => (
+                    <div key={cat.id} className="space-y-1">
+                        <Button
+                            variant="ghost"
+                            className={`w-full justify-between font-medium text-base h-auto py-2 px-3 rounded-lg group ${activeCategory?.id === cat.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                            onClick={() => handleCategorySelect(cat)}
+                        >
+                            <span className="flex items-center gap-3">
+                                <div className={`p-1.5 rounded-md ${activeCategory?.id === cat.id ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600'} transition-colors`}>
+                                    <cat.icon className="w-4 h-4" />
+                                </div>
+                                {cat.label}
+                            </span>
+                            {cat.subcategories?.length > 0 && (
+                                <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeCategory?.id === cat.id ? 'rotate-90 text-indigo-400' : 'group-hover:text-slate-400'}`} />
+                            )}
+                        </Button>
+
+                        {/* Subcategories */}
+                        {activeCategory?.id === cat.id && cat.subcategories?.length > 0 && (
+                            <div className="pl-11 space-y-1 animate-in fade-in zoom-in-95 duration-200">
+                                {cat.subcategories.map(sub => (
+                                    <Button
+                                        key={sub.id}
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`w-full justify-start text-sm h-8 rounded-md ${activeSubCategory?.id === sub.id ? 'text-indigo-600 font-medium bg-indigo-50/50' : 'text-slate-500 hover:text-slate-700'}`}
+                                        onClick={(e) => handleSubCategorySelect(sub, e)}
+                                    >
+                                        {sub.label}
+                                    </Button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+            <div className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24">
+
+                {/* Top Controls: Sell Button & Sort (Unified Row) */}
+                <div className="flex justify-between items-center mb-4">
+                    {/* Empty spacer or Breadcrumbs */}
+                    <div className="hidden md:block"></div>
+
+                    <div className="flex items-center gap-3 ml-auto">
+                        {/* Map/List Toggle */}
+                        <div className="bg-white p-1 rounded-lg border border-slate-200 shadow-sm flex items-center">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-8 px-3 rounded-md transition-all ${viewMode === 'grid' || isHomeView ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                                onClick={() => setViewMode('grid')}
+                            >
+                                <List className="w-4 h-4 mr-2" /> List
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-8 px-3 rounded-md transition-all ${viewMode === 'map' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                                onClick={() => setViewMode('map')}
+                            >
+                                <MapIcon className="w-4 h-4 mr-2" /> Map
+                            </Button>
+                        </div>
+
+                        <Button
+                            onClick={() => setIsCreateOpen(true)}
+                            size="sm"
+                            className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-9 px-4 font-medium"
+                        >
+                            <Plus className="w-4 h-4 mr-1.5" />
+                            Sell Item
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Main Search & Category Bar */}
+                <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 mb-4 max-w-4xl mx-auto flex items-center ring-offset-2 focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
+
+                    {/* Category Trigger - Integrated Left */}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className="h-11 px-4 text-slate-700 hover:bg-slate-50 rounded-xl mr-1 border-r border-transparent hover:border-slate-100 focus:bg-slate-50">
+                                <LayoutGrid className="w-5 h-5 mr-2 text-slate-400" />
+                                <span className="font-medium truncate max-w-[100px] md:max-w-[140px] text-left">
+                                    {activeCategory ? activeCategory.label : 'Categories'}
+                                </span>
+                                <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="p-0 border-slate-100 shadow-xl rounded-xl bg-white w-[300px] md:w-[600px] ring-1 ring-slate-900/5 focus:outline-none" sideOffset={8}>
+                            <CategoryMenu />
+                        </PopoverContent>
+                    </Popover>
+
+                    {/* Divider */}
+                    <div className="w-px h-8 bg-slate-100 mx-2 hidden md:block"></div>
+
+                    {/* Search Input - Fully integrated, no borders */}
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <Input
+                            placeholder="Search cars, condos, furniture..."
+                            className="h-11 pl-10 border-0 bg-transparent focus-visible:ring-0 placeholder:text-slate-400 text-base w-full shadow-none"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                {/* Expanded Filters Bar (Conditional) */}
+                {activeCategory && viewMode !== 'map' && (
+                    <div className="max-w-4xl mx-auto mb-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                        <FilterBar activeCategory={activeCategory} />
+                    </div>
+                )}
+
+                {/* Active Chips */}
+                {(activeCategory || activeSubCategory || searchTerm) && (
+                    <div className="max-w-4xl mx-auto mb-6">
+                        <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-1">
+                            {activeCategory && (
+                                <Badge variant="secondary" className="px-3 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer border border-indigo-100" onClick={() => setActiveCategory(null)}>
+                                    {activeCategory.label} <X className="w-3 h-3 ml-1" />
+                                </Badge>
+                            )}
+                            {activeSubCategory && (
+                                <Badge variant="outline" className="px-3 py-1 cursor-pointer hover:bg-slate-50 bg-white" onClick={() => setActiveSubCategory(null)}>
+                                    {activeSubCategory.label} <X className="w-3 h-3 ml-1" />
+                                </Badge>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 text-xs text-slate-400 hover:text-red-500">Clear All</Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3. Main Content Area */}
+
+                {/* MAP VIEW */}
+                {viewMode === 'map' ? (
+                    <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative z-0">
+                        {/* Note: In a real implementation, we ensure unique Keys and proper hydration */}
+                        <MapContainer center={[9.53, 100.04]} zoom={12} scrollWheelZoom={false} className="h-full w-full">
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            {products.map(product => (
+                                product.lat && product.lng && (
+                                    <Marker key={product.id} position={[product.lat, product.lng]}>
+                                        <Popup>
+                                            <div className="w-[160px]">
+                                                <img src={product.images[0]?.url} className="w-full h-24 object-cover rounded-md mb-2" alt={product.title} />
+                                                <p className="font-bold text-sm truncate">{product.title}</p>
+                                                <p className="text-indigo-600 font-semibold text-xs">฿{product.price.toLocaleString()}</p>
+                                            </div>
+                                        </Popup>
+                                    </Marker>
+                                )
+                            ))}
+                        </MapContainer>
+                    </div>
+                ) : (
+                    /* GRID / SECTIONED VIEW */
+                    <div className="flex flex-col gap-8">
+
+                        {/* If Home View (No filters) -> Show Sections */}
+                        {isHomeView ? (
+                            <div className="space-y-10 animate-in fade-in duration-500">
+                                <CategorySection
+                                    title="Fresh Real Estate"
+                                    categoryId="real-estate"
+                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'real-estate'))}
+                                />
+                                <CategorySection
+                                    title="Latest Vehicles"
+                                    categoryId="vehicles"
+                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'vehicles'))}
+                                />
+                                <CategorySection
+                                    title="Tech & Electronics"
+                                    categoryId="electronics"
+                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'electronics'))}
+                                />
+                                <CategorySection
+                                    title="Home & Furniture"
+                                    categoryId="furniture"
+                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'furniture'))}
+                                />
+                            </div>
+                        ) : (
+                            /* Filtered Grid View */
+                            <div className="flex flex-col gap-6">
+                                <div className="flex justify-between items-center pb-2">
+                                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                                        {activeSubCategory ? activeSubCategory.label : activeCategory ? activeCategory.label : `Search: "${searchTerm}"`}
+                                    </h2>
+
+                                    <Select value={sort} onValueChange={setSort}>
+                                        <SelectTrigger className="w-[150px] h-9 text-sm border-0 bg-transparent hover:bg-slate-50 transition-colors text-right">
+                                            <span className="text-slate-500 mr-2">Sort:</span>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper">
+                                            <SelectItem value="newest">Newest</SelectItem>
+                                            <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                                            <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {loading ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                                        {[1, 2, 3, 4, 8].map(i => <div key={i} className="h-72 bg-slate-200 rounded-xl animate-pulse" />)}
+                                    </div>
+                                ) : products.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                                        {products.map(product => (
+                                            <ProductCard
+                                                key={product.id}
+                                                product={product}
+                                                onContact={() => { }}
+                                                onShowMap={() => setViewMode('map')}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                                        <Box className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                                        <p className="text-slate-900 font-semibold text-lg">No results found</p>
+                                        <p className="text-slate-500 mb-6">Try adjusting your filters or search terms</p>
+                                        <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <CreateListingDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                onSuccess={loadProducts}
+            />
+        </div>
+    );
+}

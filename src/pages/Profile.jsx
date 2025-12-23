@@ -21,7 +21,8 @@ import {
   Heart,
   MessageSquare,
   Clock,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Wallet
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { GlassCard } from "@/components/ui/GlassCard"; // Assuming generic GlassCard exists, or we style manually
@@ -53,10 +54,13 @@ export default function Profile() {
 
   // Redirect if not logged in
   useEffect(() => {
+    console.log("Profile Page User Object:", user);
+    console.log("Profile Page User Metadata:", user?.user_metadata);
+
     if (!isLoadingAuth && !isAuthenticated) {
       navigate(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
     }
-  }, [isLoadingAuth, isAuthenticated, navigate]);
+  }, [isLoadingAuth, isAuthenticated, navigate, user]);
 
   if (isLoadingAuth) {
     return (
@@ -95,21 +99,23 @@ export default function Profile() {
           </div>
 
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 relative z-10">
-            {user?.profile_image ? (
+            {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
               <img
-                src={user.profile_image}
-                alt={user.full_name}
+                src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                alt={user.user_metadata.full_name || user.email}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white/10 shadow-xl"
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-white/10 shadow-xl">
-                {user?.full_name?.charAt(0)?.toUpperCase() || <User />}
+                {(user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
               </div>
             )}
 
             <div className="flex-1 text-center md:text-left rtl:md:text-right">
               <div className="flex items-center justify-center md:justify-start rtl:md:justify-start gap-3 mb-2">
-                <h2 className="text-3xl font-bold text-white tracking-tight">{user?.full_name || t('profile.default_user')}</h2>
+                <h2 className="text-3xl font-bold text-white tracking-tight">
+                  {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || t('profile.default_user')}
+                </h2>
                 {user?.role === "admin" && (
                   <Badge className="bg-purple-500/20 text-purple-200 border-purple-500/30">
                     <Crown className="w-3 h-3 mr-1" />
@@ -132,102 +138,128 @@ export default function Profile() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Sections Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Sections Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-          {/* My Activity */}
-          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:bg-white/10 transition-colors">
-            <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-400" />
-              {t('profile.my_activity')}
-            </h3>
-            <div className="space-y-2">
-              {[
-                { label: t('myReviews'), icon: Star, count: myReviews?.length, color: 'text-yellow-400', path: "MyReviews" },
-                { label: t('favorites.label'), icon: Heart, count: null, color: 'text-red-400', path: "Favorites" },
-                { label: t('recentSearches'), icon: SearchIcon, count: null, color: 'text-slate-400', path: "RecentSearches" },
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => navigate(createPageUrl(item.path))}
-                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors`}>
-                      <item.icon className={`w-5 h-5 ${item.color}`} />
-                    </div>
-                    <span className="text-slate-200 group-hover:text-white font-medium">{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {item.count !== undefined && item.count !== null && (
-                      <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-slate-300">{item.count}</span>
-                    )}
-                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors rtl:rotate-180" />
-                  </div>
-                </button>
-              ))}
+
+        {/* Wallet & Payments */}
+        <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:bg-white/10 transition-colors">
+          <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+              <Wallet className="w-5 h-5" />
+            </div>
+            {t('wallet.title') || "Wallet & Payments"}
+          </h3>
+
+          <div className="bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl p-5 border border-white/5 mb-4">
+            <p className="text-slate-400 text-sm mb-1">{t('wallet.balance') || "Current Balance"}</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">฿0.00</span>
+              <span className="text-sm text-slate-400">THB</span>
             </div>
           </div>
 
-          {/* Business Center */}
-          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:bg-white/10 transition-colors">
-            <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-              <Store className="w-5 h-5 text-green-400" />
-              {t('profile.business_owners')}
-            </h3>
-
-            {myBusiness && myBusiness.length > 0 ? (
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                <div className="flex items-start gap-4 mb-4">
-                  {myBusiness[0].images?.[0] ? (
-                    <img src={myBusiness[0].images[0]} className="w-12 h-12 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400 font-bold">
-                      {myBusiness[0].business_name[0]}
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="text-white font-medium line-clamp-1">{myBusiness[0].business_name}</h4>
-                    <p className="text-xs text-slate-400">{myBusiness[0].category}</p>
-                  </div>
-                </div>
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/20"
-                  onClick={() => navigate(createPageUrl("BusinessDashboard"))}
-                >
-                  {t('profile.manage_business')}
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-slate-400 mb-6 leading-relaxed">
-                  {t('profile.guest_desc')}
-                </p>
-                <Button
-                  className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/10"
-                  onClick={() => navigate(createPageUrl("BusinessRegistration"))}
-                >
-                  {t('registerNewBusiness')}
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Global actions */}
-        <div className="grid grid-cols-1 gap-4">
           <Button
-            variant="destructive"
-            className="w-full py-6 rounded-2xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
-            onClick={() => logout()}
+            className="w-full bg-blue-600/80 hover:bg-blue-600 text-white"
+            onClick={() => navigate('/wallet')}
           >
-            <LogOut className="w-5 h-5 mr-2" />
-            {t('logout')}
+            {t('wallet.manage') || "Open Wallet"}
           </Button>
         </div>
 
+        {/* My Activity */}
+        <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:bg-white/10 transition-colors">
+          <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-blue-400" />
+            {t('profile.my_activity')}
+          </h3>
+          <div className="space-y-2">
+            {[
+              { label: t('myReviews'), icon: Star, count: myReviews?.length, color: 'text-yellow-400', path: "MyReviews" },
+              { label: t('favorites.label'), icon: Heart, count: null, color: 'text-red-400', path: "Favorites" },
+              { label: t('recentSearches'), icon: SearchIcon, count: null, color: 'text-slate-400', path: "RecentSearches" },
+            ].map((item, i) => (
+              <button
+                key={i}
+                onClick={() => navigate(createPageUrl(item.path))}
+                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors`}>
+                    <item.icon className={`w-5 h-5 ${item.color}`} />
+                  </div>
+                  <span className="text-slate-200 group-hover:text-white font-medium">{item.label}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {item.count !== undefined && item.count !== null && (
+                    <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-slate-300">{item.count}</span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors rtl:rotate-180" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Business Center */}
+        <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:bg-white/10 transition-colors">
+          <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+            <Store className="w-5 h-5 text-green-400" />
+            {t('profile.business_owners')}
+          </h3>
+
+          {myBusiness && myBusiness.length > 0 ? (
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+              <div className="flex items-start gap-4 mb-4">
+                {myBusiness[0].images?.[0] ? (
+                  <img src={myBusiness[0].images[0]} className="w-12 h-12 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400 font-bold">
+                    {myBusiness[0].business_name[0]}
+                  </div>
+                )}
+                <div>
+                  <h4 className="text-white font-medium line-clamp-1">{myBusiness[0].business_name}</h4>
+                  <p className="text-xs text-slate-400">{myBusiness[0].category}</p>
+                </div>
+              </div>
+              <Button
+                className="w-full bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/20"
+                onClick={() => navigate(createPageUrl("BusinessDashboard"))}
+              >
+                {t('profile.manage_business')}
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                {t('profile.guest_desc')}
+              </p>
+              <Button
+                className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/10"
+                onClick={() => navigate(createPageUrl("BusinessRegistration"))}
+              >
+                {t('registerNewBusiness')}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Global actions */}
+      <div className="grid grid-cols-1 gap-4">
+        <Button
+          variant="destructive"
+          className="w-full py-6 rounded-2xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+          onClick={() => logout()}
+        >
+          <LogOut className="w-5 h-5 mr-2" />
+          {t('logout')}
+        </Button>
+      </div>
+
     </div>
   );
 }

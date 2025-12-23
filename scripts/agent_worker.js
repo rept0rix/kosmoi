@@ -132,6 +132,7 @@ import { agents } from '../src/features/agents/services/AgentRegistry.js';
 import { clearMemory } from '../src/features/agents/services/memorySupabase.js';
 import { StripeService } from '../src/services/payments/StripeService.js'; // Import StripeService
 import './WorkflowTools.js'; // Register Workflow Tools (Node only)
+import { MCPClientManager } from './mcp_client.js'; // Import MCP Manager
 
 // Config loaded
 import { createClient } from '@supabase/supabase-js';
@@ -180,6 +181,9 @@ if (isUniversal) {
 }
 
 console.log(`📂 Project Root: ${PROJECT_ROOT}`);
+
+// Initialize MCP Manager
+const mcpManager = new MCPClientManager();
 
 let agent; // Declare global agent variable
 
@@ -441,6 +445,14 @@ async function executeTool(toolName, payload) {
                 return `Subject: Hello from Kosmoi\n\nDear Lead,\n\nWe saw you are interested in... [Generated Content Stub]`;
 
             default:
+                // Check if it's an MCP Tool
+                const mcpTools = mcpManager.getTools();
+                const mcpTool = mcpTools.find(t => t.name === toolName);
+
+                if (mcpTool) {
+                    return await mcpManager.callTool(toolName, payload);
+                }
+
                 return `Tool ${toolName} not supported in Worker Mode.`;
         }
     } catch (e) { return `Tool Execution Failed: ${e.message}`; }
@@ -476,7 +488,10 @@ AVAILABLE TOOLS:
 - write_code: Write files
 - send_email: Send real emails (Resend/SMTP configured)
 - create_lead: Add CRM headers
+- create_lead: Add CRM headers
 - create_task: Delegate work
+
+${mcpManager.formatToolsSystemPrompt()}
 
 If you need to run commands, use 'execute_command'.
 If you need to write code, use 'write_code'.
@@ -705,6 +720,7 @@ async function checkDbSchema() {
 async function main() {
     setupChatConsole(); // <--- Enable Chat
     await checkDbSchema(); // <--- Verify DB
+    await mcpManager.init(); // <--- Init MCP (Connects to Chrome, etc.)
     await checkForUpdates();
     console.log("🚀 Worker Loop Started. Polling for tasks...");
     console.log("💡 TIP: You can type here to send commands to the Board Room!");
