@@ -107,7 +107,9 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
         <div className="absolute bottom-3 right-3">
           <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded-lg shadow-lg flex items-center gap-1 border border-slate-100 dark:border-slate-800">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{provider.average_rating?.toFixed(1) || 'NEW'}</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {(typeof provider.average_rating === 'number' ? provider.average_rating.toFixed(1) : parseFloat(provider.average_rating || 0).toFixed(1)) || 'NEW'}
+            </span>
             {provider.total_reviews > 0 && (
               <span className="text-[10px] text-slate-400">({provider.total_reviews})</span>
             )}
@@ -122,10 +124,10 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
             <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-0 text-[10px] uppercase tracking-wider font-semibold px-2">
               {getSubCategoryLabel(provider.category, language)}
             </Badge>
-            {showDistance && provider.distance !== null && (
+            {showDistance && provider.distance != null && !isNaN(provider.distance) && (
               <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
                 <NavigationIcon className="w-3 h-3 text-blue-500" />
-                <span>{provider.distance.toFixed(1)} km</span>
+                <span>{Number(provider.distance).toFixed(1)} km</span>
               </div>
             )}
           </div>

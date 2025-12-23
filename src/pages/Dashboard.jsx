@@ -553,15 +553,7 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        <div className="mb-4">
-          <Button
-            variant="outline"
-            className="w-full border-dashed border-gray-400 text-gray-700 bg-yellow-50 hover:bg-yellow-100 h-12 text-lg"
-            onClick={() => navigate(createPageUrl("AdminImporter"))}
-          >
-            {t('dashboard.import_tool')}
-          </Button>
-        </div>
+
 
         <div className="mb-6">
           <div className="space-y-8 animate-in fade-in duration-500">

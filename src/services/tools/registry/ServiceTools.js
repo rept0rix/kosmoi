@@ -36,3 +36,15 @@ ToolRegistry.register("create_payment_link", async (payload) => {
 }, "Create a Stripe payment link. Params: { productName, amount, currency, businessName? }");
 
 console.log("✅ ServiceTools Registered");
+
+import { mimoService } from "../../ai/MimoService.js";
+
+ToolRegistry.register("ask_mimo", async (payload) => {
+    // payload: { prompt: string, temperature?: number }
+    try {
+        const response = await mimoService.generateText(payload.prompt, undefined, payload.temperature);
+        return `[Mimo] ${response}`;
+    } catch (e) {
+        return `[Error] Mimo generation failed: ${e.message}`;
+    }
+}, "Ask Xiaomi Mimo V2 Flash (faster/cheaper LLM). Params: { prompt: 'string' }");

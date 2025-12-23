@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("Auth check timed out, forcing load completion");
       setIsLoadingAuth(false);
       setIsLoadingPublicSettings(false);
-    }, 10000); // Improved: Increased to 10s
+    }, 15000); // Improved: Increased to 15s
 
     try {
       setIsLoadingPublicSettings(true);
@@ -88,7 +88,8 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(false);
 
       // 2. Strict / Server Verification (can happen in background or parallel)
-      await checkUserAuth(!!session?.user);
+      // If we found a session optimistically, we run this in BACKGROUND (don't block UI)
+      await checkUserAuth(!!session?.user, !!session?.user);
 
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -103,48 +104,69 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkUserAuth = async (hasOptimisticSession) => {
+  const checkUserAuth = async (hasOptimisticSession, runInBackground = false) => {
     try {
-      setIsLoadingAuth(true);
-      // Use standard getUser()
-      const { data: { user: currentUser }, error } = await db.auth.getUser();
+      // PRO TIP: If we already have a user from local storage, don't show "Loading..." spinner again.
+      // Just verify in the background.
+      if (!runInBackground) {
+        setIsLoadingAuth(true);
+      }
 
-      if (error) throw error;
+      // Create a promise that handles BOTH user and role fetching
+      const fetchUserAndRole = async () => {
+        const { data: { user: currentUser }, error: userError } = await db.auth.getUser();
+        if (userError) throw userError;
 
-      if (currentUser) {
+        if (!currentUser) return null;
+
         // Fetch Role
         let userRole = 'user';
-        if (currentUser) {
-          const { data: roleData, error: roleError } = await supabase.from('user_roles')
-            .select('role')
-            .eq('user_id', currentUser.id)
-            .single();
-          
-           if (roleData) {
-            userRole = roleData.role;
-          } else if (roleError) {
-             console.warn("Failed to fetch user role, defaulting to user", roleError);
-          }
+        const { data: roleData, error: roleError } = await supabase.from('user_roles')
+          .select('role')
+          .eq('user_id', currentUser.id)
+          .single();
+
+        if (roleData) {
+          userRole = roleData.role;
+        } else if (roleError) {
+          console.warn("Failed to fetch user role, defaulting to user", roleError);
         }
-        setUser({ ...currentUser, role: userRole });
+
+        return { ...currentUser, role: userRole };
+      };
+
+      // Race the entire operation against a timeout
+      // Increased timeout to 10s to account for potential Supabase cold starts
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Auth verification timed out")), 10000)
+      );
+
+      const authenticatedUser = await Promise.race([
+        fetchUserAndRole(),
+        timeoutPromise
+      ]);
+
+      if (authenticatedUser) {
+        setUser(authenticatedUser);
         setIsAuthenticated(true);
       } else {
         setUser(null);
         setIsAuthenticated(false);
       }
+
     } catch (error) {
       console.error('User auth check failed:', error);
-      
+
       // Improved: Offline Support
       // If we have an optimistic session and this is a network error, DO NOT LOGOUT.
-      const isNetworkError = error.message?.includes('fetch') || error.message?.includes('network') || error.status === 500;
-      
+      const isNetworkError = error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('timeout') || error.status === 500;
+
       if (hasOptimisticSession && isNetworkError) {
-          console.warn("Network error during auth check. Keeping optimistic session (Offline Mode).");
-          // Keep existing user and isAuthenticated=true
+        console.warn("Network error during auth check. Keeping optimistic session (Offline Mode).");
+        // Keep existing user and isAuthenticated=true
       } else {
-          setIsAuthenticated(false);
-          setUser(null);
+        setIsAuthenticated(false);
+        setUser(null);
       }
     } finally {
       setIsLoadingAuth(false);

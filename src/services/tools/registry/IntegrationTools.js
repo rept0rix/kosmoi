@@ -49,16 +49,18 @@ ToolRegistry.register("scheduler", async (payload, options) => {
 
 
 // --- FINTECH TOOLS ---
-ToolRegistry.register("create_payment_link", async (payload) => {
-    try {
-        const result = await CreatePaymentLink(payload);
-        if (result.error) return `[Error] Failed to create payment link: ${result.error}`;
-        if (result.simulated) return `[System] Payment Link Simulated: ${result.url}`;
-        return `[System] Payment Link Created: ${result.url}`;
-    } catch (e) {
-        return `[Error] Payment link creation failed: ${e.message}`;
-    }
-});
+
+// ToolRegistry.register("create_payment_link", async (payload) => {
+//     try {
+//         const result = await CreatePaymentLink(payload);
+//         if (result.error) return `[Error] Failed to create payment link: ${result.error}`;
+//         if (result.simulated) return `[System] Payment Link Simulated: ${result.url}`;
+//         return `[System] Payment Link Created: ${result.url}`;
+//     } catch (e) {
+//         return `[Error] Payment link creation failed: ${e.message}`;
+//     }
+// });
+
 
 ToolRegistry.register("payment-gateway", async (payload) => {
     const { action } = payload;

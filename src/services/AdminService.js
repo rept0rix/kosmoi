@@ -9,6 +9,7 @@ export const AdminService = {
     /**
      * Get all users (Signups)
      * Note: This fetches from 'users' public table which mirrors auth.users
+     * @returns {Promise<{data: any[], error: any}>}
      */
     getUsers: async () => {
         try {
@@ -16,12 +17,12 @@ export const AdminService = {
 
             if (error) {
                 console.warn("AdminService: Users fetch failed", error);
-                return [];
+                return { data: [], error };
             }
-            return data;
+            return { data, error: null };
         } catch (e) {
             console.error("AdminService Error:", e);
-            return [];
+            return { data: [], error: e };
         }
     },
 
@@ -56,7 +57,7 @@ export const AdminService = {
 
             // Fallback: Client-side calculation if RPC not created yet
             console.warn("RPC get_admin_stats missing, calculating client-side...");
-            const users = await AdminService.getUsers();
+            const { data: users } = await AdminService.getUsers();
             const businesses = await AdminService.getBusinesses();
 
             let mrr = 0;

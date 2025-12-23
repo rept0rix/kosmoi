@@ -95,11 +95,11 @@ export function visualEditPlugin() {
 		enforce: 'pre',
 		order: 'pre',
 		// Inject Tailwind CDN for visual editing capabilities
-		transformIndexHtml(html) {
-			// Inject the Tailwind CSS CDN script right before the closing </head> tag
-			const tailwindScript = `    <!-- Tailwind CSS CDN for visual editing -->\n    <script src="https://cdn.tailwindcss.com"></script>\n  `;
-			return html.replace('</head>', tailwindScript + '</head>');
-		},
+		// transformIndexHtml(html) {
+		// 	// Inject the Tailwind CSS CDN script right before the closing </head> tag
+		// 	const tailwindScript = `    <!-- Tailwind CSS CDN for visual editing -->\n    <script src="https://cdn.tailwindcss.com"></script>\n  `;
+		// 	return html.replace('</head>', tailwindScript + '</head>');
+		// },
 		transform(code, id) {
 			// Skip node_modules and visual-edit-agent itself
 			if (id.includes('node_modules') || id.includes('visual-edit-agent')) {

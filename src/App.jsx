@@ -40,7 +40,11 @@ import Blog from '@/pages/Blog';
 import BlogPostDetail from '@/pages/BlogPostDetail';
 import CalendarView from '@/pages/vendor/CalendarView';
 import MyBookings from '@/pages/MyBookings';
-import Marketplace from '@/pages/Marketplace';
+import Marketplace from '@/pages/Marketplace.jsx';
+import ProductDetails from '@/pages/ProductDetails';
+import ChatHub from '@/pages/ChatHub';
+import Notifications from '@/pages/Notifications';
+import Organizer from '@/pages/Organizer.jsx';
 
 import RealEstateHub from '@/pages/RealEstateHub';
 import CommandCenter from '@/features/agents/pages/CommandCenter';
@@ -156,6 +160,8 @@ const AuthenticatedApp = () => {
             {/* Public Super App Routes */}
             <Route path="/real-estate" element={<RealEstateHub />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace/:id" element={<ProductDetails />} />
+            <Route path="/organizer" element={<Organizer />} />
             <Route path="/vendor-signup" element={<VendorSignup />} />
             <Route path="/login" element={<Pages.Login />} />
             <Route path="/complete-signup" element={<Pages.CompleteSignup />} />
@@ -163,6 +169,8 @@ const AuthenticatedApp = () => {
 
             <Route path="/provider/:providerId" element={<ProviderProfile />} />
             <Route path="/chat/:workflowId" element={<Pages.AgentChat />} />
+            <Route path="/chat-hub" element={<ChatHub />} />
+            <Route path="/notifications" element={<Notifications />} />
 
             {/* Admin & Vendor Routes */}
             <Route path="/command-center" element={<CommandCenter />} />
@@ -200,6 +208,7 @@ const AuthenticatedApp = () => {
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
                 <Route path="importer" element={<AdminImporter />} />
                 <Route path="sitemap" element={<AdminSitemap />} />
+                <Route path="wiki" element={<Pages.AdminWiki />} />
               </Route>
             </Route>
 

@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { AppConfigProvider, useAppConfig } from "@/components/AppConfigContext";
 import DebugRoleSwitcher from "@/components/DebugRoleSwitcher";
 import MiniWeather from "@/components/MiniWeather";
-import { Home, Search, User, Map, Languages, Sparkles, LayoutDashboard, Briefcase, ExternalLink, ShieldAlert, Monitor } from "lucide-react";
+import { Home, Search, User, Map, Languages, Sparkles, LayoutDashboard, Briefcase, ExternalLink, ShieldAlert, Monitor, Store, Calendar, QrCode, Menu, MessageCircle, Bell } from "lucide-react";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
 import UserMenu from "@/components/UserMenu";
 import PageTransition from "@/components/PageTransition";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 // --- Configuration ---
@@ -42,31 +42,18 @@ const LayoutContent = ({ children }) => {
     return children;
   }
 
-  // --- Styles ---
-  const themeColors = {}; // Placeholder if needed
-
   // --- Navigation Items ---
-  // Only for APP Zone
-  let appNavItems = [
-    { title: t('nav.marketplace'), url: createPageUrl("App"), icon: Home },
-    { title: t('nav.search'), url: createPageUrl("ServiceProviders"), icon: Search },
+  // New Structure: Home, Chat, PAY (Center), Marketplace, Organizer
+  const appNavItems = [
+    { title: t('nav.home'), url: createPageUrl("App"), icon: Home },
     { title: t('nav.ai'), url: createPageUrl("AIChat"), icon: Sparkles },
-    { title: t('nav.map'), url: createPageUrl("MapView"), icon: Map },
-    { title: t('nav.trip'), url: createPageUrl("TripPlanner"), icon: Map },
-    { title: t('nav.profile'), url: createPageUrl("Profile"), icon: User },
+    // Center Button (Pay) - Special Styling
+    { title: 'PAY', url: createPageUrl("Wallet"), icon: QrCode, isSpecial: true },
+    { title: 'Market', url: '/marketplace', icon: Store },
+    { title: 'Organizer', url: '/organizer', icon: Calendar },
   ];
 
-  // Inject Business Links based on Role (Admin links removed from here as requested)
-  if (debugRole === 'business') {
-    appNavItems.push({ title: t('nav.vendor'), url: '/vendor-dashboard', icon: Briefcase });
-  }
-
-  // Admin links removed from Bottom Nav to declutter
-
-
-
-
-  // Render Header (Different for zones?)
+  // Render Header
   const renderHeader = () => {
     // Landing Page handles its own specialized header
     if (currentPath === '/') return null;
@@ -95,9 +82,6 @@ const LayoutContent = ({ children }) => {
                     }
                   }}
                 />
-                <span className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent ${isAdminZone ? 'from-white to-slate-400' : ''}`} style={{ display: 'none' }}>
-                  {isAdminZone ? 'Kosmoi ADMIN' : (isBusinessZone ? 'Kosmoi BUSINESS' : config.appName)}
-                </span>
               </>
             )}
           </Link>
@@ -137,9 +121,22 @@ const LayoutContent = ({ children }) => {
               </>
             )}
 
-            {!isAdminZone && !isBusinessZone && <MiniWeather />}
+            {!isAdminZone && !isBusinessZone && (
+              <div className="flex items-center gap-1 mr-2">
+                <Link to="/chat-hub">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-indigo-600 rounded-full">
+                    <MessageCircle className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link to="/notifications">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-indigo-600 rounded-full">
+                    <Bell className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <div className="mx-2"><MiniWeather /></div>
+              </div>
+            )}
 
-            {/* Replaced legacy toggle with new component */}
             <LanguageSwitcher />
 
             <UserMenu />
@@ -154,7 +151,7 @@ const LayoutContent = ({ children }) => {
       {renderHeader()}
 
       {/* Main Content */}
-      <main className={`flex-1 ${isAppZone ? 'pb-20' : ''} relative`}>
+      <main className={`flex-1 ${isAppZone ? 'pb-24' : ''} relative`}>
         <PageTransition key={currentPath}>
           {children}
         </PageTransition>
@@ -165,19 +162,45 @@ const LayoutContent = ({ children }) => {
 
       {/* Bottom Navigation - ONLY FOR APP ZONE */}
       {isAppZone && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg safe-area-pb">
-          <div className="max-w-7xl mx-auto px-2">
-            <div className="flex items-center justify-around overflow-x-auto">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-slate-200 dark:bg-slate-950/90 dark:border-slate-800 z-50 safe-area-pb shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
+          <div className="max-w-md mx-auto px-4">
+            <div className="flex items-center justify-between relative">
+
               {appNavItems.map((item) => {
                 const isActive = location.pathname === item.url;
+
+                if (item.isSpecial) {
+                  // CENTER BUTTON (SCAN/PAY)
+                  return (
+                    <div key={item.title} className="relative -top-6">
+                      <Link to={item.url}>
+                        <motion.div
+                          whileTap={{ scale: 0.9 }}
+                          className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg shadow-blue-500/40 border-4 border-white dark:border-slate-950 flex items-center justify-center"
+                        >
+                          <item.icon size={28} />
+                        </motion.div>
+                      </Link>
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.title}
                     to={item.url}
-                    className={`flex flex-col items-center py-3 px-3 min-w-[64px] transition-colors ${isActive ? 'text-blue-600' : 'text-gray-600'}`}
+                    className={`flex flex-col items-center py-3 min-w-[60px] transition-colors relative group ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   >
-                    <item.icon className={`w-6 h-6 ${isActive ? 'text-blue-600' : 'text-gray-600'}`} />
-                    <span className="text-xs mt-1 font-medium whitespace-nowrap">{item.title}</span>
+                    <div className="relative">
+                      <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                      {isActive && (
+                        <motion.div
+                          layoutId="navIndicator"
+                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"
+                        />
+                      )}
+                    </div>
+                    <span className="text-[10px] mt-1 font-medium">{item.title}</span>
                   </Link>
                 );
               })}
@@ -186,7 +209,7 @@ const LayoutContent = ({ children }) => {
         </nav>
       )}
 
-      {/* Footer - Only for Public Zone (excluding Landing which is handled separately) / Business */}
+      {/* Footer - Only for Public Zone */}
       {((isPublicZone && currentPath !== '/') || isBusinessZone) && (
         <Footer />
       )}

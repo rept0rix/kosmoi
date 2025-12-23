@@ -53,11 +53,35 @@ export const WalletService = {
     },
 
     /**
-     * Simulate a Top-Up (Demo Only).
-     * In production, this would be a server-side webhook from Stripe/Omise.
-     * For MVP, we call the 'process_transaction' RPC.
+     * Initiate a Real Top-Up via Stripe.
      */
-    topUp: async (amount) => {
+    initiateTopUp: async (amount) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("No session");
+
+            const { data, error } = await supabase.functions.invoke('create-topup-session', {
+                body: { amount, currency: 'thb', returnUrl: window.location.origin + '/wallet' }
+            });
+
+            if (error) throw error;
+
+            // Redirect to Stripe
+            if (data?.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("No checkout URL returned");
+            }
+        } catch (error) {
+            console.error("TopUp Init Error:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Simulate a Top-Up (Demo Only - Deprecated but kept for fallback).
+     */
+    simulateTopUp: async (amount) => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
@@ -95,6 +119,67 @@ export const WalletService = {
             return data;
         } catch (error) {
             console.error("Payment Error:", error);
+            throw error;
+        }
+    },
+    /**
+     * Initiate Card Link (Setup Session).
+     */
+    initiateCardSetup: async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("No session");
+
+            const { data, error } = await supabase.functions.invoke('create-setup-session', {
+                body: { returnUrl: window.location.origin + '/wallet' }
+            });
+
+            if (error) throw error;
+
+            if (data?.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("No setup URL returned");
+            }
+        } catch (error) {
+            console.error("Card Setup Error:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get Saved Payment Methods.
+     */
+    getPaymentMethods: async () => {
+        try {
+            const { data, error } = await supabase.functions.invoke('list-payment-methods');
+            if (error) throw error;
+            return data?.data || [];
+        } catch (error) {
+            console.error("Fetch Cards Error:", error);
+            return [];
+        }
+    },
+
+    /**
+     * Transfer funds to another wallet (P2P).
+     */
+    transferFunds: async (recipientWalletId, amount, note = '') => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("No user logged in");
+
+            const { data, error } = await supabase.rpc('transfer_funds', {
+                p_sender_id: user.id,
+                p_recipient_wallet_id: recipientWalletId,
+                p_amount: amount,
+                p_note: note
+            });
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error("Transfer Error:", error);
             throw error;
         }
     }
