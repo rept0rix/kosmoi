@@ -36,6 +36,7 @@ import AdminInfra from './pages/admin/AdminInfra';
 import Blog from './pages/Blog';
 import BlogPostDetail from './pages/BlogPostDetail';
 import __Layout from './Layout.jsx';
+import { lazy } from 'react';
 
 
 export const PAGES = {
@@ -75,6 +76,7 @@ export const PAGES = {
     "CommandCenter": CommandCenter,
     "Blog": Blog,
     "BlogPostDetail": BlogPostDetail,
+    "AdminWiki": lazy(() => import('./pages/admin/AdminWiki'))
 }
 
 export const pagesConfig = {
