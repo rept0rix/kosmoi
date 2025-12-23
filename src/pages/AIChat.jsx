@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, Sparkles, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight, Trash2, PlusCircle, MessageSquare, History, Menu, Phone, ExternalLink } from 'lucide-react';
+import { Bot, Send, Sparkles, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight, Trash2, PlusCircle, MessageSquare, History, ChevronUp, ChevronDown, Search, Crosshair, Palmtree, UtensilsCrossed, Martini, ShoppingBag, Flower, Landmark, Car } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { db } from '@/api/supabaseClient';
 import GoogleMap from "@/components/GoogleMap";
 import { useQuery } from "@tanstack/react-query";
 import { getCategoryIcon } from "@/shared/utils/mapIcons";
-import MapProviderCard from "@/components/MapProviderCard";
 import { useWeather, getWeatherDescription } from '@/shared/hooks/useWeather';
 import { samuiKnowledge } from '@/data/samuiKnowledge';
 import { CONCIERGE_AGENT } from '@/features/agents/services/registry/ConciergeAgent';
@@ -20,14 +19,27 @@ const quickActions = [
     { id: 'tour_guide', label: 'Tour Guide', icon: MapIcon, prompt: "Act as a local tour guide. What are the must-see places in Koh Samui?" },
     { id: 'build_trip', label: 'Build a Trip', icon: Sparkles, prompt: "I want to build a trip itinerary for Koh Samui. Can you help me plan?" },
     { id: 'local_info', label: 'Local Info', icon: Info, prompt: "What interesting places are near my current location?" },
-    { id: 'taxi', label: 'Taxi', category: 'taxi' },
-    { id: 'food', label: 'Food', category: 'restaurant' },
+    { id: 'beaches', label: 'Beaches', category: 'beach', icon: Palmtree },
+    { id: 'restaurants', label: 'Restaurants', category: 'restaurant', icon: UtensilsCrossed },
+    { id: 'nightlife', label: 'Nightlife', category: 'bar', icon: Martini },
+    { id: 'shopping', label: 'Shopping', category: 'shopping', icon: ShoppingBag },
+    { id: 'spas', label: 'Spas', category: 'spa', icon: Flower },
+    { id: 'temples', label: 'Temples', category: 'temple', icon: Landmark },
+    { id: 'taxi', label: 'Taxi', category: 'taxi', icon: Car },
 ];
 
 export default function AIChat() {
     const navigate = useNavigate();
     const locationState = useLocation().state;
     const { user } = useAuth();
+
+    // --- SCROLL LOCK ---
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
 
     // --- Session Management ---
     const [sessions, setSessions] = useState(() => {
@@ -42,20 +54,20 @@ export default function AIChat() {
     });
 
     const [messages, setMessages] = useState([]);
-    const [showSidebar, setShowSidebar] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(false);
 
     // Initialize/Load Session
     useEffect(() => {
         if (sessions[currentSessionId]) {
             setMessages(sessions[currentSessionId].messages);
         } else {
-            // New Session
             setMessages([{ role: 'assistant', content: 'Sawadee krup! 🙏 I am your Koh Samui Concierge. How can I help you today?' }]);
         }
         localStorage.setItem('kosmoi_current_session_id', currentSessionId);
     }, [currentSessionId]);
 
-    // Save Messages to Session
+    // Save Messages
     useEffect(() => {
         if (messages.length > 0) {
             setSessions(prev => {
@@ -77,7 +89,6 @@ export default function AIChat() {
     const createNewSession = () => {
         const newId = Date.now().toString();
         setCurrentSessionId(newId);
-        setShowSidebar(false); // Mobile UX
     };
 
     const deleteSession = (id, e) => {
@@ -95,15 +106,16 @@ export default function AIChat() {
 
     // --- UI State ---
     const [input, setInput] = useState('');
+    const [miniInput, setMiniInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef(null);
 
     // --- Map State ---
     const [userLocation, setUserLocation] = useState(null);
-    const [mapCenter, setMapCenter] = useState({ lat: 9.5, lng: 100.0 });
-    const [mapZoom, setMapZoom] = useState(13);
+    const [mapCenter, setMapCenter] = useState({ lat: 9.53, lng: 100.05 });
+    // Increased default zoom as requested
+    const [mapZoom, setMapZoom] = useState(15);
     const [selectedProvider, setSelectedProvider] = useState(null);
-    const [isMapExpanded, setIsMapExpanded] = useState(false);
 
     const { data: providers } = useQuery({
         queryKey: ["serviceProviders"],
@@ -119,13 +131,12 @@ export default function AIChat() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, showHistory, isMinimized]);
 
-    // Handle Incoming Context (e.g. from Dashboard)
+    // Handle Incoming Context
     useEffect(() => {
         if (locationState?.category) {
             const prompt = `I'm interested in ${locationState.label || locationState.category}. What can you recommend?`;
-            // Only trigger if it's a new empty session or explicit user intent
             if (messages.length <= 1) {
                 setMessages(prev => [...prev, { role: 'user', content: prompt }]);
                 processMessage(prompt);
@@ -134,20 +145,27 @@ export default function AIChat() {
     }, [locationState]);
 
     // Geolocation
-    useEffect(() => {
+    const locateUser = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     setUserLocation(loc);
-                    setMapCenter(loc);
-                    setMapZoom(15);
+                    // Shift center South (-0.0025) so the user location dot appears higher on screen
+                    setMapCenter({ lat: loc.lat - 0.0025, lng: loc.lng });
+                    setMapZoom(16); // High zoom on find
                 },
-                () => console.warn("Location denied")
+                (err) => {
+                    console.warn("Location denied", err);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         }
-    }, []);
+    };
 
+    useEffect(() => {
+        locateUser();
+    }, []);
 
     const processMessage = async (text, context = "") => {
         setIsTyping(true);
@@ -156,9 +174,8 @@ export default function AIChat() {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) throw new Error("API Key Missing");
 
-            // Context Building
             const providersContext = providers.map(p =>
-                `- ${p.business_name} (${p.category}): ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Phone: ${p.phone}, Location: ${p.latitude},${p.longitude})`
+                `- ${p.business_name} (${p.category}): ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Location: ${p.latitude},${p.longitude})`
             ).join('\n');
 
             let weatherContext = "Weather data unavailable.";
@@ -182,10 +199,10 @@ Structure the response to be highly interactive.
       "title": "Business Name",
       "description": "Short description covering key features.",
       "image": "https://url...",
-      "phone": "+66...", // OPTIONAL: Only if available
-      "whatsapp": "66...", // OPTIONAL: Clean number format
-      "location": { "lat": 0.0, "lng": 0.0 }, // OPTIONAL: For map link
-      "actionLabel": "View Details" // Button text
+      "phone": "+66...", 
+      "whatsapp": "66...",
+      "location": { "lat": 0.0, "lng": 0.0 },
+      "actionLabel": "View Details"
     }
   ],
   "choices": ["Option 1", "Option 2"]
@@ -195,6 +212,7 @@ Structure the response to be highly interactive.
 Weather: ${weatherContext}
 Knowledge: ${JSON.stringify(samuiKnowledge)}
 Providers: ${providersContext}
+User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Unknown'}
 `;
 
             const history = messages.map(msg => ({
@@ -216,7 +234,6 @@ Providers: ${providersContext}
 
             let parsed;
             try {
-                // Extract JSON block
                 const match = responseText.match(/\{[\s\S]*\}/);
                 parsed = match ? JSON.parse(match[0]) : { message: responseText };
             } catch (e) {
@@ -240,10 +257,21 @@ Providers: ${providersContext}
 
     const handleSend = (e) => {
         e?.preventDefault();
-        if (!input.trim()) return;
+        const txt = input.trim();
+        if (!txt) return;
 
-        const txt = input;
         setInput('');
+        setMessages(prev => [...prev, { role: 'user', content: txt }]);
+        processMessage(txt, userLocation ? `Loc: ${userLocation.lat},${userLocation.lng}` : "");
+    };
+
+    const handleMiniSend = (e) => {
+        e?.preventDefault();
+        const txt = miniInput.trim();
+        if (!txt) return;
+
+        setIsMinimized(false);
+        setMiniInput('');
         setMessages(prev => [...prev, { role: 'user', content: txt }]);
         processMessage(txt, userLocation ? `Loc: ${userLocation.lat},${userLocation.lng}` : "");
     };
@@ -254,224 +282,281 @@ Providers: ${providersContext}
         processMessage(prompt);
     };
 
-    const ActionButton = ({ icon: Icon, label, onClick, className }) => (
-        <button onClick={onClick} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${className}`}>
-            <Icon className="w-3.5 h-3.5" />
-            {label}
-        </button>
-    );
+    const allMarkers = [
+        ...providers.map(p => ({
+            lat: p.latitude,
+            lng: p.longitude,
+            title: p.business_name,
+            icon: getCategoryIcon(p.category),
+            onClick: () => {
+                setSelectedProvider(p);
+                // Shift center South so marker appears above chat
+                setMapCenter({ lat: p.latitude - 0.0025, lng: p.longitude });
+            }
+        }))
+    ];
 
     return (
-        <div className="flex h-[calc(100vh-56px)] bg-slate-50 relative overflow-hidden">
+        <div className="fixed inset-0 top-0 left-0 w-full h-full z-0 overflow-hidden bg-slate-50">
             <SEO title="Concierge AI | Kosmoi" />
 
-            {/* --- SIDEBAR --- */}
-            <div className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0`}>
-                <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                        <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                            <History className="w-5 h-5 text-blue-600" />
-                            History
-                        </h2>
-                        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowSidebar(false)}>
-                            <Minimize2 className="w-5 h-5" />
-                        </Button>
-                    </div>
-
-                    {/* New Chat Button */}
-                    <div className="p-3">
-                        <Button onClick={createNewSession} className="w-full justify-start gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-xl">
-                            <PlusCircle className="w-4 h-4" />
-                            New Topic
-                        </Button>
-                    </div>
-
-                    {/* Session List */}
-                    <ScrollArea className="flex-1 px-3">
-                        <div className="space-y-1 py-2">
-                            {Object.values(sessions).sort((a, b) => b.timestamp - a.timestamp).map(session => (
-                                <div
-                                    key={session.id}
-                                    onClick={() => { setCurrentSessionId(session.id); setShowSidebar(false); }}
-                                    className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${currentSessionId === session.id ? 'bg-blue-50 border-blue-100 ring-1 ring-blue-200' : 'hover:bg-slate-50 border border-transparent'}`}
-                                >
-                                    <div className="flex flex-col overflow-hidden">
-                                        <span className={`text-sm font-medium truncate ${currentSessionId === session.id ? 'text-blue-700' : 'text-slate-700'}`}>
-                                            {session.title || 'New Chat'}
-                                        </span>
-                                        <span className="text-xs text-slate-400">
-                                            {format(session.timestamp, 'MMM d, h:mm a')}
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={(e) => deleteSession(session.id, e)}
-                                        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 hover:text-red-500 rounded-md transition-all"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollArea>
-                </div>
+            {/* --- MAP BACKGROUND --- */}
+            <div className="absolute inset-0 z-0 w-full h-full pointer-events-auto">
+                <GoogleMap
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    height="100%"
+                    markers={allMarkers}
+                    userLocation={userLocation}
+                    userAvatar={user?.user_metadata?.avatar_url || user?.user_metadata?.picture}
+                    options={{ disableDefaultUI: true, zoomControl: false, mapTypeControl: false, streetViewControl: false }}
+                />
             </div>
 
-            {/* --- MAIN CHAT AREA --- */}
-            <div className="flex-1 flex flex-col h-full w-full relative">
+            {/* --- CHAT POPUP OVERLAY --- */}
+            <div
+                className={`fixed z-40 bg-white/95 backdrop-blur-md shadow-2xl flex flex-col overflow-hidden border border-white/20 transition-all duration-300 ease-in-out ${isMinimized
+                    ? 'h-[64px] rounded-2xl shadow-lg ring-1 ring-black/5'
+                    : 'rounded-3xl' // Changed from rounded-t-3xl to rounded-3xl to round bottom corners too
+                    }`}
+                style={{
+                    left: '1rem',
+                    right: '1rem',
+                    maxWidth: isMinimized ? '600px' : 'none',
+                    margin: isMinimized && window.innerWidth > 768 ? '0 auto' : '0',
 
-                {/* Mobile Header */}
-                <div className="md:hidden flex items-center justify-between px-4 py-2 bg-white border-b border-slate-100 shrink-0">
-                    <Button variant="ghost" size="icon" onClick={() => setShowSidebar(true)}>
-                        <Menu className="w-5 h-5 text-slate-600" />
-                    </Button>
-                    <span className="font-semibold text-slate-700">Kosmoi AI</span>
-                    <div className="w-9" />
-                </div>
+                    bottom: isMinimized ? '100px' : (window.innerWidth > 768 ? '5%' : '90px'),
+                    top: isMinimized ? 'auto' : '45%',
+                }}
+            >
+                {/* HEADERS */}
+                {isMinimized ? (
+                    <div className="flex items-center w-full h-full px-2 gap-2">
+                        {/* Minimized: Find Location Button (Replaces Sparkles for now or added next to it) */}
+                        <div
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 cursor-pointer hover:bg-blue-100 transition-colors shrink-0"
+                            onClick={() => {
+                                setIsMinimized(false);
+                            }}
+                        >
+                            <Sparkles className="w-5 h-5" />
+                        </div>
 
-                {/* Map View */}
-                <div className={`relative w-full transition-all duration-500 ease-in-out bg-slate-100 ${isMapExpanded ? 'flex-[2]' : 'h-48 shrink-0'}`}>
-                    <GoogleMap
-                        center={mapCenter}
-                        zoom={mapZoom}
-                        height="100%"
-                        markers={providers.map(p => ({
-                            lat: p.latitude, lng: p.longitude,
-                            title: p.business_name,
-                            icon: getCategoryIcon(p.category),
-                            onClick: () => { setSelectedProvider(p); setMapCenter({ lat: p.latitude, lng: p.longitude }); }
-                        }))}
-                        options={{ disableDefaultUI: true }}
-                    />
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute top-4 right-4 z-10 bg-white/90 shadow-lg hover:scale-105 transition-transform rounded-full"
-                        onClick={() => setIsMapExpanded(!isMapExpanded)}
-                    >
-                        {isMapExpanded ? <Minimize2 className="w-5 h-5 text-blue-600" /> : <Maximize2 className="w-5 h-5 text-blue-600" />}
-                    </Button>
-                </div>
-
-                {/* Messages Feed */}
-                <ScrollArea className="flex-1 bg-slate-50/50 p-4">
-                    <div className="space-y-6 pb-4 max-w-3xl mx-auto">
-                        {messages.map((msg, idx) => (
-                            <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                {msg.role === 'assistant' && (
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm ring-2 ring-white">
-                                        <Sparkles className="w-4 h-4 text-white" />
-                                    </div>
-                                )}
-
-                                <div className={`flex flex-col gap-2 max-w-[90%] md:max-w-[75%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                    {/* Text Bubble */}
-                                    {msg.content && (
-                                        <div className={`p-3.5 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                                                ? 'bg-blue-600 text-white rounded-tr-none'
-                                                : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'
-                                            }`}>
-                                            {msg.content}
-                                        </div>
-                                    )}
-
-                                    {/* Rich Carousel */}
-                                    {msg.carousel && (
-                                        <div className="flex gap-3 overflow-x-auto pb-2 w-full snap-x scrollbar-hide">
-                                            {msg.carousel.map((card, i) => (
-                                                <div key={i} className="snap-center shrink-0 w-64 bg-white rounded-xl shadow-md border border-slate-100 overflow-hidden flex flex-col group hover:shadow-lg transition-all">
-                                                    {card.image && (
-                                                        <div className="h-32 bg-slate-200 relative overflow-hidden">
-                                                            <img src={card.image} alt={card.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                                                            <h3 className="absolute bottom-2 left-3 font-bold text-white shadow-black/20 text-sm truncate w-[90%]">{card.title}</h3>
-                                                        </div>
-                                                    )}
-                                                    <div className="p-3 flex flex-col gap-2 flex-1">
-                                                        {!card.image && <h3 className="font-bold text-slate-800">{card.title}</h3>}
-                                                        <p className="text-xs text-slate-500 line-clamp-2">{card.description}</p>
-
-                                                        {/* Action Buttons */}
-                                                        <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                                                            {card.phone && (
-                                                                <ActionButton
-                                                                    icon={Phone}
-                                                                    label="Call"
-                                                                    className="bg-green-50 text-green-700 hover:bg-green-100 border-green-100"
-                                                                    onClick={() => window.location.href = `tel:${card.phone}`}
-                                                                />
-                                                            )}
-                                                            {card.whatsapp && (
-                                                                <ActionButton
-                                                                    icon={MessageSquare}
-                                                                    label="Chat"
-                                                                    className="bg-green-50 text-green-700 hover:bg-green-100 border-green-100"
-                                                                    onClick={() => window.open(`https://wa.me/${card.whatsapp.replace(/[^0-9]/g, "")}`, "_blank")}
-                                                                />
-                                                            )}
-                                                            {card.location && (
-                                                                <ActionButton
-                                                                    icon={MapIcon}
-                                                                    label="Map"
-                                                                    className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100 ml-auto"
-                                                                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${card.location.lat},${card.location.lng}`, "_blank")}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Choice Chips */}
-                                    {msg.choices && (
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                            {msg.choices.map((choice, i) => (
-                                                <button key={i} onClick={() => { setInput(choice); handleSend(); }} className="px-3 py-1.5 bg-white border border-blue-100 text-blue-600 rounded-full text-xs font-semibold hover:bg-blue-50 transition-colors">
-                                                    {choice}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                        <div ref={messagesEndRef} />
-                    </div>
-                </ScrollArea>
-
-                {/* Input Area */}
-                <div className="p-4 bg-white border-t border-slate-100 shrink-0 max-w-4xl mx-auto w-full">
-                    {/* Quick Prompts - Horizontal Scroll */}
-                    <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
-                        {quickActions.map(action => (
-                            <button
-                                key={action.id}
-                                onClick={() => handleQuickAction(action)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-full border border-slate-200 transition-colors whitespace-nowrap"
-                            >
-                                {action.icon && <action.icon className="w-3 h-3" />}
-                                {action.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <form onSubmit={handleSend} className="relative flex items-center gap-2">
-                        <div className="relative flex-1">
+                        <form onSubmit={handleMiniSend} className="flex-1 relative">
                             <Input
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                placeholder="Start a new topic or ask a question..."
-                                className="pr-12 py-6 rounded-2xl border-slate-200 bg-slate-50 focus:bg-white transition-all shadow-sm"
+                                value={miniInput}
+                                onChange={(e) => setMiniInput(e.target.value)}
+                                placeholder="Ask Concierge..."
+                                className="h-10 bg-transparent border-transparent focus-visible:ring-0 px-2 text-base placeholder:text-slate-400"
+                                autoFocus={false}
                             />
-                            <Button type="submit" size="icon" disabled={!input.trim() || isTyping} className="absolute right-1.5 top-1.5 h-9 w-9 bg-blue-600 hover:bg-blue-500 rounded-xl transition-all disabled:opacity-50">
-                                <Send className="w-4 h-4 text-white" />
+                        </form>
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-slate-400 hover:text-blue-600 rounded-full shrink-0"
+                            onClick={miniInput.trim() ? handleMiniSend : () => setIsMinimized(false)}
+                        >
+                            {miniInput.trim() ? <Send className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                        </Button>
+                    </div>
+                ) : (
+                    <div
+                        className="flex-none flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white/80 cursor-pointer h-14"
+                        onClick={() => setIsMinimized(true)}
+                    >
+                        <div className="flex items-center gap-2">
+                            {/* MOVED HISTORY BUTTON FROM HERE */}
+                            <div className="flex flex-col">
+                                <h2 className="font-bold text-slate-800 text-sm">{showHistory ? 'History' : 'Kosmoi Concierge'}</h2>
+                                {!showHistory && (
+                                    <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                        Online
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* RIGHT SIDE ACTIONS */}
+                        <div className="flex items-center gap-1">
+                            {/* NEW LOCATION BUTTON */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full hover:bg-slate-100 text-slate-500"
+                                onClick={(e) => { e.stopPropagation(); locateUser(); }}
+                                title="Find My Location"
+                            >
+                                <Crosshair className="w-5 h-5" />
+                            </Button>
+
+                            {/* MOVED HISTORY BUTTON TO HERE, NEXT TO MINIMIZE */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-8 w-8 rounded-full hover:bg-slate-100 ${showHistory ? 'text-blue-600 bg-blue-50' : 'text-slate-500'}`}
+                                onClick={(e) => { e.stopPropagation(); setShowHistory(!showHistory); }}
+                                title="Chat History"
+                            >
+                                <History className="w-5 h-5" />
+                            </Button>
+
+                            {showHistory && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-blue-50 text-blue-600" onClick={(e) => { e.stopPropagation(); createNewSession(); setShowHistory(false); }}>
+                                    <PlusCircle className="w-5 h-5" />
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full hover:bg-slate-100 text-slate-500"
+                                onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
+                            >
+                                <ChevronDown className="w-5 h-5" />
                             </Button>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                )}
 
+                {/* Content... */}
+                {!isMinimized && (
+                    <>
+                        {showHistory ? (
+                            <ScrollArea className="flex-1 bg-slate-50/50 p-2">
+                                <div className="space-y-2 p-2">
+                                    <Button onClick={() => { createNewSession(); setShowHistory(false); }} className="w-full justify-start gap-3 bg-white border border-dashed border-slate-300 text-slate-600 hover:border-blue-500 hover:text-blue-600 h-12">
+                                        <PlusCircle className="w-5 h-5" />
+                                        Start New Chat
+                                    </Button>
+
+                                    {Object.values(sessions).sort((a, b) => b.timestamp - a.timestamp).map(session => (
+                                        <div
+                                            key={session.id}
+                                            onClick={() => { setCurrentSessionId(session.id); setShowHistory(false); }}
+                                            className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border ${currentSessionId === session.id ? 'bg-white border-blue-200 shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-slate-100'}`}
+                                        >
+                                            <div className="flex flex-col overflow-hidden text-left">
+                                                <span className={`text-sm font-medium truncate ${currentSessionId === session.id ? 'text-blue-700' : 'text-slate-700'}`}>
+                                                    {session.title || 'New Chat'}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">
+                                                    {format(session.timestamp, 'MMM d, h:mm a')}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={(e) => deleteSession(session.id, e)}
+                                                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 hover:text-red-500 rounded transition-all"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {Object.keys(sessions).length === 0 && (
+                                        <div className="text-center text-slate-400 py-8 text-xs">No conversation history</div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        ) : (
+                            <>
+                                <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 scrollbar-hide">
+                                    <div className="space-y-6 max-w-3xl mx-auto pb-4">
+                                        {messages.map((msg, idx) => (
+                                            <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                {msg.role === 'assistant' && (
+                                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 mt-1">
+                                                        <Bot className="w-3 h-3 text-white" />
+                                                    </div>
+                                                )}
+
+                                                <div className={`flex flex-col gap-1 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                                    {msg.content && (
+                                                        <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm leading-relaxed ${msg.role === 'user'
+                                                            ? 'bg-blue-600 text-white rounded-tr-none'
+                                                            : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'
+                                                            }`}>
+                                                            {msg.content}
+                                                        </div>
+                                                    )}
+
+                                                    {msg.carousel && (
+                                                        <div className="flex gap-2 overflow-x-auto pb-2 w-full snap-x scrollbar-hide mt-2 max-w-full">
+                                                            {msg.carousel.map((card, i) => (
+                                                                <div key={i} className="snap-center shrink-0 w-48 bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                                                                    {card.image && (
+                                                                        <div className="h-24 bg-slate-200 relative">
+                                                                            <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="p-2 flex flex-col gap-1">
+                                                                        <h4 className="font-bold text-xs text-slate-800 line-clamp-1">{card.title}</h4>
+                                                                        <p className="text-[10px] text-slate-500 line-clamp-2">{card.description}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {msg.choices && (
+                                                        <div className="flex flex-wrap gap-1.5 mt-1">
+                                                            {msg.choices.map((choice, i) => (
+                                                                <button key={i} onClick={() => { setInput(choice); handleSend(); }} className="px-2.5 py-1 bg-white border border-blue-100 text-blue-600 rounded-full text-[10px] font-medium hover:bg-blue-50">
+                                                                    {choice}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isTyping && (
+                                            <div className="flex gap-3 justify-start">
+                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 mt-1">
+                                                    <Bot className="w-3 h-3 text-white" />
+                                                </div>
+                                                <div className="px-4 py-2.5 bg-white border border-slate-100 text-slate-500 rounded-2xl rounded-tl-none text-xs flex items-center gap-1 shadow-sm">
+                                                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                </div>
+
+                                <div className="flex-none p-3 bg-white border-t border-slate-100 mt-auto">
+                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-1">
+                                        {quickActions.map(action => (
+                                            <button
+                                                key={action.id}
+                                                onClick={() => handleQuickAction(action)}
+                                                className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-full border border-slate-200 whitespace-nowrap"
+                                            >
+                                                {action.icon && <action.icon className="w-3 h-3" />}
+                                                {action.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <form onSubmit={handleSend} className="relative flex items-center gap-2">
+                                        <Input
+                                            value={input}
+                                            onChange={e => setInput(e.target.value)}
+                                            placeholder="Ask anything..."
+                                            className="pr-10 h-10 rounded-xl bg-slate-50 text-base border-slate-200 focus:bg-white"
+                                        />
+                                        <Button type="submit" size="icon" disabled={!input.trim() || isTyping} className="absolute right-1 w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg">
+                                            <Send className="w-4 h-4 text-white" />
+                                        </Button>
+                                    </form>
+                                </div>
+                            </>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
