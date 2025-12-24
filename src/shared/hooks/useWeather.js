@@ -37,13 +37,13 @@ export const useWeather = (lat = 9.5120, lng = 100.0136) => {
         queryKey: ["weather", lat, lng],
         queryFn: async () => {
             const response = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FBangkok`
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FBangkok&forecast_days=3`
             );
             if (!response.ok) {
                 throw new Error("Weather fetch failed");
             }
             return response.json();
         },
-        staleTime: 1000 * 60 * 30, // 30 minutes
+        staleTime: 1000 * 60 * 15, // 15 minutes (weather changes fast)
     });
 };

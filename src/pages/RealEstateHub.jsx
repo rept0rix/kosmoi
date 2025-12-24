@@ -207,12 +207,13 @@ export default function RealEstateHub() {
 
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
-                                <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                                <MapPin className="absolute start-3 top-3 text-gray-400 w-5 h-5" />
                                 <Input
                                     placeholder="City, Neighborhood, or Address"
-                                    className="pl-10 h-12 text-lg"
+                                    className="ps-10 h-12 text-lg text-start"
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
+                                // dir="auto" // Optional: let input auto-detect source language
                                 />
                             </div>
                             <Select value={priceRange} onValueChange={setPriceRange}>
@@ -226,7 +227,7 @@ export default function RealEstateHub() {
                                     <SelectItem value="15m-plus">15M+ THB</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Button size="lg" className="h-12 bg-primary hover:bg-primary/90">
+                            <Button size="lg" className="h-12 bg-primary hover:bg-primary/90 w-full md:w-auto">
                                 Search
                             </Button>
                         </div>

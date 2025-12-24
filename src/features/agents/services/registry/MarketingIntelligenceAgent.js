@@ -7,7 +7,7 @@ export const MARKETING_INTELLIGENCE_AGENT = {
     model: "gemini-1.5-flash",
     icon: "Search",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה סוכן המודיעין השיווקי. אתה מקשיב לרחוב. מה אנשים מחפשים? 'אינסטלטור דחוף'? 'השכרת אופנוע אמינה'? אתה מזהה את הכאבים היומיומיים ומכוון את השיווק לשם.`,
-    allowedTools: ["browser", "trend-scanner", "social-scan"],
+    allowedTools: ["browser", "trend-scanner", "social-scan", "generate_bar_chart", "generate_line_chart", "generate_pie_chart", "generate_data_table"],
     memory: { type: "midterm", ttlDays: 120 },
     maxRuntimeSeconds: 3600
 };

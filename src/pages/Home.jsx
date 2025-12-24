@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import SEO from '@/components/SEO';
+import Footer from '@/components/Footer';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -30,7 +32,7 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen relative overflow-hidden font-sans text-white">
+        <div className="min-h-screen relative font-sans text-white">
             <SEO
                 title={isRTL ? 'קוסמוי - המדריך החכם' : 'Kosmoi - Samui Intelligent Guide'}
                 description={isRTL ? 'תכננו את החופשה המושלמת בקוסמוי עם המדריך החכם שלנו.' : 'Plan your perfect trip to Koh Samui with our intelligent AI concierge.'}
@@ -62,14 +64,17 @@ export default function Home() {
                     {/* <span className="text-2xl font-bold tracking-tight text-white">Kosmoi</span> */}
                 </div>
 
-                {/* Optional: Login button for direct access if needed */}
-                <Button
-                    variant="ghost"
-                    className="text-white hover:bg-white/10"
-                    onClick={() => navigate('/login')}
-                >
-                    {isRTL ? 'כניסה' : 'Login'}
-                </Button>
+                <div className="flex items-center gap-4">
+                    <LanguageSwitcher />
+                    {/* Optional: Login button for direct access if needed */}
+                    <Button
+                        variant="ghost"
+                        className="text-white hover:bg-white/10"
+                        onClick={() => navigate('/login')}
+                    >
+                        {isRTL ? 'כניסה' : 'Login'}
+                    </Button>
+                </div>
             </nav>
 
             {/* Main Content */}
@@ -170,6 +175,7 @@ export default function Home() {
                 </motion.div>
 
             </div>
+            <Footer />
         </div>
     );
 }

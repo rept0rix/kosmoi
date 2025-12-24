@@ -603,6 +603,25 @@ export default function ServiceProviders() {
         providerId={bookingProvider?.id}
         serviceName={bookingProvider?.business_name || "General Service"}
       />
-    </div >
+
+      {/* Floating Ask AI Button */}
+      <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <Button
+          onClick={() => navigate('/aichat', {
+            state: {
+              initialMessage: searchQuery
+                ? `${t('search.ask_ai_prefix')} "${searchQuery}"`
+                : t('search.ask_ai_general')
+            }
+          })}
+          className="h-14 w-14 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-xl border-2 border-white/20 flex items-center justify-center group transition-all hover:scale-110"
+        >
+          <Sparkles className="w-6 h-6 text-white animate-pulse" />
+          <span className="absolute right-full mr-3 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            {t('search.ask_ai_tooltip')}
+          </span>
+        </Button>
+      </div>
+    </div>
   );
 }

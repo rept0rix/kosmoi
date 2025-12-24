@@ -1,0 +1,25 @@
+[project]
+name = "backend-agents"
+version = "0.1.0"
+description = "AWS Strands Agents Service"
+requires-python = ">=3.10"
+dependencies = [
+    "strands-agents",
+    "strands-agents-tools",
+    "mcp",
+    "ragie",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-dotenv",
+    "httpx"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "ruff"
+]

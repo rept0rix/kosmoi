@@ -243,11 +243,13 @@ export default function AgentChat() {
                             </div>
 
                             <div className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
-                                <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed
+                                <div
+                                    dir="auto"
+                                    className={`px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed
                                     ${isUser
-                                        ? 'bg-slate-900 text-white rounded-tr-none'
-                                        : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none'
-                                    }`}>
+                                            ? 'bg-slate-900 text-white rounded-tr-none'
+                                            : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none'
+                                        }`}>
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
                                         className="prose prose-sm dark:prose-invert max-w-none break-words"
@@ -283,6 +285,7 @@ export default function AgentChat() {
             <div className="p-4 bg-white border-t relative z-20">
                 <div className="max-w-3xl mx-auto flex gap-2">
                     <Input
+                        dir="auto"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}

@@ -79,9 +79,9 @@ export default function Notifications() {
                                         <h3 className={`text-sm font-semibold ${notif.unread ? 'text-slate-900' : 'text-slate-700'}`}>
                                             {notif.title}
                                         </h3>
-                                        <span className="text-xs text-slate-400 whitespace-nowrap ml-2">{notif.time}</span>
+                                        <span className="text-xs text-slate-400 whitespace-nowrap ms-2">{notif.time}</span>
                                     </div>
-                                    <p className="text-sm text-slate-600 leading-relaxed pr-6">
+                                    <p className="text-sm text-slate-600 leading-relaxed pe-6" dir="auto">
                                         {notif.description}
                                     </p>
                                 </div>
