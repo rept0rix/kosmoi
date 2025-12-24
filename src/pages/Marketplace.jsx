@@ -165,9 +165,10 @@ const FilterBar = ({ activeCategory }) => {
 };
 
 // Section Component for "Home View"
-const CategorySection = ({ title, categoryId, onSeeAll }) => {
-    // Mock filtering for section
-    const sectionProducts = MOCK_PRODUCTS.filter(p => p.category_id === categoryId).slice(0, 4);
+// Section Component for "Home View"
+const CategorySection = ({ title, categoryId, products, onSeeAll }) => {
+    // Filter from passed real products
+    const sectionProducts = products.filter(p => p.category_id === categoryId).slice(0, 4);
 
     if (sectionProducts.length === 0) return null;
 
@@ -185,15 +186,7 @@ const CategorySection = ({ title, categoryId, onSeeAll }) => {
                         key={product.id}
                         product={product}
                         onContact={() => { }}
-                        onShowMap={() => {
-                            // Logic to switch to map view could go here if we had access to setViewMode
-                            // Since CategorySection is defined outside the main component scope (but inside file),
-                            // we need to pass a handler to CategorySection first. 
-                            // For now, I'll just pass a no-op or I need to refactor CategorySection to accept it.
-                            // OR better: Move CategorySection inside Marketplace component definition.
-                            onSeeAll(); // As a fallback/hack, or just ignore for now? 
-                            // Actually, let's just make sure it compiles. passing undefined is fine if ProductCard handles it.
-                        }}
+                        onShowMap={() => onSeeAll()}
                     />
                 ))}
             </div>
@@ -229,29 +222,21 @@ export default function Marketplace() {
                 searchTerm
             });
 
-            // Client-side filtering simulation
-            const filteredMock = MOCK_PRODUCTS.filter(p => {
-                const matchSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
+            // If we have search/filter, do it on the server (MarketplaceService handles it).
+            // Fallback to MOCK_PRODUCTS if MarketplaceService returns empty array (for demo purposes)
+            const finalProducts = (items && items.length > 0) ? items : MOCK_PRODUCTS;
 
-                let matchCat = true;
-                if (activeCategory) {
-                    matchCat = p.category_id === activeCategory.id;
-                    if (activeSubCategory && matchCat) {
-                        matchCat = p.subcategory === activeSubCategory.id || !p.subcategory;
-                    }
-                }
+            // Client-Side sorting
+            let sortedProducts = [...finalProducts]; // Clone to avoid mutating original
 
-                return matchSearch && matchCat;
-            });
-
-            const sortedProducts = [...(items || []), ...filteredMock];
             if (sort === 'price_asc') sortedProducts.sort((a, b) => a.price - b.price);
             if (sort === 'price_desc') sortedProducts.sort((a, b) => b.price - a.price);
+            // Newest is default / mock order
 
             setProducts(sortedProducts);
         } catch (error) {
             console.error("Failed to load products", error);
-            setProducts(MOCK_PRODUCTS);
+            setProducts([]); // No mocks on error, show empty state or error
         } finally {
             setLoading(false);
         }
@@ -460,21 +445,25 @@ export default function Marketplace() {
                                 <CategorySection
                                     title="Fresh Real Estate"
                                     categoryId="real-estate"
+                                    products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'real-estate'))}
                                 />
                                 <CategorySection
                                     title="Latest Vehicles"
                                     categoryId="vehicles"
+                                    products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'vehicles'))}
                                 />
                                 <CategorySection
                                     title="Tech & Electronics"
                                     categoryId="electronics"
+                                    products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'electronics'))}
                                 />
                                 <CategorySection
                                     title="Home & Furniture"
                                     categoryId="furniture"
+                                    products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'furniture'))}
                                 />
                             </div>

@@ -5,8 +5,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Search, Send, Phone, Video, MoreVertical, Image as ImageIcon, MapPin, Smile, Paperclip } from 'lucide-react';
+import { Search, Send, Phone, Video, MoreVertical, Image as ImageIcon, MapPin, Smile, Paperclip, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 // MOCK CONVERSATIONS
 const MOCK_CHATS = [
@@ -17,6 +33,16 @@ const MOCK_CHATS = [
         avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150',
         lastMessage: 'Here are the top 3 island tours for tomorrow.',
         time: 'Now',
+        unread: 1,
+        isAi: true
+    },
+    {
+        id: 'c4',
+        name: 'העוזר האישי',
+        subtitle: 'נציג וירטואלי',
+        avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150',
+        lastMessage: 'מצאתי עבורך 3 וילות שמתאימות לתקציב.',
+        time: 'עכשיו',
         unread: 1,
         isAi: true
     },
@@ -60,6 +86,24 @@ const MOCK_MESSAGES = {
             time: '10:01 AM'
         }
     ],
+    'c4': [
+        { id: 1, sender: 'ai', text: 'שלום! אני העוזר האישי שלך ב-Kosmoi. איך אני יכול לעזור לך היום?', time: '10:00' },
+        { id: 2, sender: 'me', text: 'אני מחפש וילה למשפחה בצ׳אוונג נוי.', time: '10:01' },
+        { id: 3, sender: 'ai', text: 'מעולה. מצאתי כמה אפשרויות מצוינות באזור הזה:', time: '10:01' },
+        {
+            id: 4,
+            sender: 'ai',
+            type: 'rich-card',
+            content: {
+                title: 'וילה יוקרתית עם בריכת אינסוף',
+                price: '25,000,000 ₪',
+                image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600',
+                rating: 5.0,
+                action: 'צפה בפרטים'
+            },
+            time: '10:02'
+        }
+    ],
     'c2': [
         { id: 1, sender: 'me', text: 'Hi Sarah, is the villa still available?', time: 'Mon' },
         { id: 2, sender: 'sarah', text: 'Yes it is! Would you like to schedule a viewing?', time: 'Mon' },
@@ -70,11 +114,19 @@ const MOCK_MESSAGES = {
 export default function ChatHub() {
     const [selectedChat, setSelectedChat] = useState(MOCK_CHATS[0]);
     const [messageInput, setMessageInput] = useState('');
+
     const [messages, setMessages] = useState(MOCK_MESSAGES['c1']);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    // The "Array behind it" - storing bookings
+    // The "Array behind it" - storing bookings
+    const [bookings, setBookings] = useState([]);
+    const [showMobileChat, setShowMobileChat] = useState(false);
+    const { toast } = useToast();
 
     const handleChatSelect = (chat) => {
         setSelectedChat(chat);
         setMessages(MOCK_MESSAGES[chat.id] || []);
+        setShowMobileChat(true);
     };
 
     const handleSendMessage = (e) => {
@@ -92,15 +144,28 @@ export default function ChatHub() {
         setMessageInput('');
     };
 
+    const handleBooking = (item) => {
+        // Add to backend array (simulated)
+        setBookings([...bookings, { ...item, status: 'pending', timestamp: new Date() }]);
+
+        toast({
+            title: "Booking Request Sent",
+            description: `We've received your request for ${item.title}. An agent will confirm shortly.`,
+            variant: "default",
+        });
+    };
+
     return (
-        <div className="flex bg-white h-[calc(100vh-64px)] overflow-hidden">
+        // Adjusted height to account for Header (~64px) and Bottom Nav/Padding (~80-90px)
+        // This prevents the whole page from scrolling and ensures the input stays visible above the bottom nav
+        <div className="flex bg-white h-[calc(100vh-140px)] overflow-hidden rounded-xl border border-slate-200 shadow-sm mx-4 mt-2">
             {/* Sidebar List */}
-            <div className="w-full md:w-[350px] border-r border-slate-200 flex flex-col bg-slate-50/50">
+            <div className={`w-full md:w-[350px] border-e border-slate-200 flex-col bg-slate-50/50 ${showMobileChat ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-slate-100 bg-white">
                     <h1 className="text-xl font-bold mb-4">Messages</h1>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <Input placeholder="Search chats..." className="pl-9 bg-slate-100 border-0" />
+                        <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Input placeholder="Search chats..." className="ps-9 bg-slate-100 border-0" />
                     </div>
                 </div>
 
@@ -117,12 +182,12 @@ export default function ChatHub() {
                                         <AvatarImage src={chat.avatar} />
                                         <AvatarFallback>{chat.name[0]}</AvatarFallback>
                                     </Avatar>
-                                    {chat.isOnline && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>}
+                                    {chat.isOnline && <span className="absolute bottom-0 end-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>}
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 text-start">
                                     <div className="flex justify-between items-start mb-0.5">
                                         <span className={`font-semibold truncate ${selectedChat?.id === chat.id ? 'text-indigo-900' : 'text-slate-900'}`}>{chat.name}</span>
-                                        <span className="text-xs text-slate-400 whitespace-nowrap ml-2">{chat.time}</span>
+                                        <span className="text-xs text-slate-400 whitespace-nowrap ms-2">{chat.time}</span>
                                     </div>
                                     <p className={`text-sm truncate ${chat.unread ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>{chat.lastMessage}</p>
                                 </div>
@@ -136,26 +201,61 @@ export default function ChatHub() {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col bg-white">
+            <div className={`flex-1 flex-col bg-white relative ${showMobileChat ? 'flex' : 'hidden md:flex'}`}>
                 {/* Chat Header */}
                 <div className="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
-                    <div className="flex items-center gap-3">
+                    <div
+                        className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setIsProfileOpen(true)}
+                    >
+                        {/* Back Button for Mobile */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="md:hidden text-slate-500 mr-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowMobileChat(false);
+                            }}
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
                         <Avatar className="w-10 h-10">
                             <AvatarImage src={selectedChat.avatar} />
                             <AvatarFallback>{selectedChat.name[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <h2 className="font-bold text-slate-900 leading-tight">{selectedChat.name}</h2>
+                            <h2 className="font-bold text-slate-900 leading-tight text-start">{selectedChat.name}</h2>
                             <p className="text-xs text-slate-500 flex items-center gap-1">
                                 {selectedChat.isAi ? <span className="text-indigo-500 font-medium">AI Concierge</span> : selectedChat.isOnline ? 'Online' : 'Offline'}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600"><Phone className="w-5 h-5" /></Button>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600"><Video className="w-5 h-5" /></Button>
+                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600" onClick={() => alert("Voice calling coming soon!")}>
+                            <Phone className="w-5 h-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600" onClick={() => alert("Video calling coming soon!")}>
+                            <Video className="w-5 h-5" />
+                        </Button>
                         <Separator orientation="vertical" className="h-6 mx-1" />
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600"><MoreVertical className="w-5 h-5" /></Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600">
+                                    <MoreVertical className="w-5 h-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
+                                    View Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
+                                <DropdownMenuItem>Search in Conversation</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600">Block User</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
@@ -168,7 +268,10 @@ export default function ChatHub() {
 
                                     {/* Text Message Bubble */}
                                     {msg.text && (
-                                        <div className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${msg.sender === 'me' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'}`}>
+                                        <div
+                                            dir="auto"
+                                            className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${msg.sender === 'me' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'}`}
+                                        >
                                             {msg.text}
                                         </div>
                                     )}
@@ -182,10 +285,14 @@ export default function ChatHub() {
                                                     ★ {msg.content.rating}
                                                 </Badge>
                                             </div>
-                                            <CardContent className="p-3">
+                                            <CardContent className="p-3 text-start">
                                                 <h3 className="font-bold text-slate-900 text-sm mb-1">{msg.content.title}</h3>
                                                 <p className="text-indigo-600 font-bold text-lg mb-3">{msg.content.price}</p>
-                                                <Button size="sm" className="w-full bg-slate-900 hover:bg-black text-white rounded-lg">
+                                                <Button
+                                                    size="sm"
+                                                    className="w-full bg-slate-900 hover:bg-black text-white rounded-lg"
+                                                    onClick={() => handleBooking(msg.content)}
+                                                >
                                                     {msg.content.action}
                                                 </Button>
                                             </CardContent>
@@ -208,6 +315,7 @@ export default function ChatHub() {
                             <Paperclip className="w-5 h-5" />
                         </Button>
                         <textarea
+                            dir="auto"
                             value={messageInput}
                             onChange={(e) => setMessageInput(e.target.value)}
                             onKeyDown={(e) => {
@@ -228,6 +336,48 @@ export default function ChatHub() {
                         </Button>
                     </div>
                 </div>
+
+                {/* Profile Dialog */}
+                <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>User Profile</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center gap-4 py-4">
+                            <Avatar className="w-24 h-24">
+                                <AvatarImage src={selectedChat.avatar} />
+                                <AvatarFallback>{selectedChat.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="text-center">
+                                <h3 className="text-xl font-bold">{selectedChat.name}</h3>
+                                <p className="text-sm text-slate-500">{selectedChat.subtitle}</p>
+                                {selectedChat.isOnline && (
+                                    <Badge variant="outline" className="mt-2 border-green-200 text-green-700 bg-green-50">Online Now</Badge>
+                                )}
+                            </div>
+
+                            <div className="w-full space-y-2 mt-4">
+                                <div className="flex justify-between text-sm py-2 border-b">
+                                    <span className="text-slate-500">Role</span>
+                                    <span className="font-medium">{selectedChat.subtitle}</span>
+                                </div>
+                                <div className="flex justify-between text-sm py-2 border-b">
+                                    <span className="text-slate-500">Location</span>
+                                    <span className="font-medium">Koh Samui, Thailand</span>
+                                </div>
+                                <div className="flex justify-between text-sm py-2 border-b">
+                                    <span className="text-slate-500">Member Since</span>
+                                    <span className="font-medium">December 2024</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 w-full mt-2">
+                                <Button className="flex-1" variant="outline" onClick={() => setIsProfileOpen(false)}>Close</Button>
+                                <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700">Message</Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );

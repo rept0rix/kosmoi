@@ -1,8 +1,8 @@
 import React from "react";
-import { 
-  UtensilsCrossed, 
-  Wrench, 
-  ShoppingBag, 
+import {
+  UtensilsCrossed,
+  Wrench,
+  ShoppingBag,
   PartyPopper,
   Plane,
   HandHeart,
@@ -30,23 +30,21 @@ export default function SuperCategories({ onSelect, selectedCategory }) {
   ];
 
   return (
-    <div className="flex flex-wrap justify-center gap-4">
+    <div className="flex flex-wrap justify-center gap-6 py-4">
       {superCategories.map((category) => {
         const isSelected = selectedCategory === category.id;
         return (
           <button
             key={category.id}
-            className={`flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition-all ${
-              isSelected ? 'scale-110' : ''
-            }`}
+            className={`flex flex-col items-center gap-2 cursor-pointer hover:opacity-80 transition-all duration-200 ${isSelected ? 'scale-110' : 'hover:scale-105'
+              }`}
             onClick={() => onSelect(category.id)}
           >
-            <div className={`w-12 h-12 rounded-full ${category.color} flex items-center justify-center ${
-              isSelected ? 'ring-4 ring-blue-500' : ''
-            }`}>
-              <category.icon className="w-6 h-6" />
+            <div className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center shadow-sm ${isSelected ? 'ring-4 ring-blue-500 shadow-md' : ''
+              }`}>
+              <category.icon className="w-8 h-8" />
             </div>
-            <p className={`text-xs font-medium ${isSelected ? 'text-blue-600 font-bold' : 'text-gray-900'}`}>
+            <p className={`text-sm font-medium ${isSelected ? 'text-blue-600 font-bold' : 'text-gray-900'}`}>
               {category.name}
             </p>
           </button>

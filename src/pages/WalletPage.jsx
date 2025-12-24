@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import ShimmerButton from '@/components/animations/ShimmerButton';
 import { Wallet, QrCode, ArrowUpRight, ArrowDownLeft, History, RefreshCcw, CreditCard, Plus, Send, X } from 'lucide-react';
 import { WalletService } from '@/services/WalletService';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -20,18 +21,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import MagneticButton from '@/components/animations/MagneticButton';
+
 const ActionButton = ({ icon: Icon, label, onClick, colorClass = "bg-primary" }) => (
-    <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={onClick}
+    <MagneticButton
         className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-white/5 transition-colors"
+        strength={0.2}
     >
-        <div className={`p-4 rounded-full ${colorClass} text-white shadow-lg`}>
-            <Icon size={24} />
+        <div onClick={onClick} className="cursor-pointer w-full flex flex-col items-center">
+            <div className={`p-4 rounded-full ${colorClass} text-white shadow-lg`}>
+                <Icon size={24} />
+            </div>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-2">{label}</span>
         </div>
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-    </motion.button>
+    </MagneticButton>
 );
 
 const TransactionItem = ({ txn }) => {
@@ -238,9 +241,14 @@ export default function WalletPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Payment Methods</h3>
-                        <Button variant="outline" size="sm" onClick={() => WalletService.initiateCardSetup()}>
-                            <Plus size={16} className="mr-2" /> Add Card
-                        </Button>
+                        <ShimmerButton
+                            onClick={() => WalletService.initiateCardSetup()}
+                            className="bg-slate-900 text-white dark:bg-white dark:text-black px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-shadow"
+                        >
+                            <div className="flex items-center">
+                                <Plus size={16} className="mr-2" /> Add Card
+                            </div>
+                        </ShimmerButton>
                     </div>
 
                     <div className="grid gap-4">

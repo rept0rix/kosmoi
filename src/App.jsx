@@ -6,6 +6,7 @@ import VisualEditAgent from '@/shared/lib/VisualEditAgent'
 
 import { usePageDirection } from '@/shared/hooks/usePageDirection';
 import { pagesConfig } from './pages.config'
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { setupIframeMessaging } from '@/shared/lib/iframe-messaging';
 import { AuthProvider, useAuth } from '@/features/auth/context/AuthContext';
@@ -13,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // import AgentCommandCenter from '@/pages/AgentCommandCenter'; // Unused?
 import AdminImporter from '@/pages/AdminImporter';
 import { ProtectedAdminRoute, ProtectedUserRoute } from '@/components/RouteGuards';
+import * as RouteGuards from '@/components/RouteGuards'; // Import all as RouteGuards for the new route
 import { RequireRole } from '@/components/RequireRole';
 
 import VendorSignup from '@/features/vendors/pages/Signup';
@@ -21,7 +23,8 @@ import VendorSignup from '@/features/vendors/pages/Signup';
 import { AppConfigProvider } from '@/components/AppConfigContext';
 import { RxDBProvider } from '@/core/db/RxDBProvider';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
-import PersistenceTestPage from '@/pages/PersistenceTest';
+const PersistenceTest = lazy(() => import('./pages/PersistenceTest'));
+const MemoryLab = lazy(() => import('./pages/MemoryLab'));
 import { SpeedInsights } from "@vercel/speed-insights/react"
 // import Footer from '@/components/Footer'; // Unused in main layout?
 
@@ -218,11 +221,12 @@ const AuthenticatedApp = () => {
               <Route path="/provider-dashboard" element={<Pages.ProviderDashboard />} />
               <Route path="/vendor/calendar" element={<CalendarView />} />
               <Route path="/my-bookings" element={<MyBookings />} />
-
+              <Route path="/memory-lab" element={<MemoryLab />} />
             </Route>
 
             <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay data={{}} /></div>} />
-            <Route path="/test-persistence" element={<PersistenceTestPage />} />
+            <Route path="/persistence-test" element={<PersistenceTest />} />
+            <Route path="/persistence-test" element={<PersistenceTest />} />
 
             {/* Trust Pages */}
             <Route path="/about" element={<AboutUs />} />
@@ -257,7 +261,7 @@ function App() {
               <Router>
 
                 <AuthenticatedApp />
-                <VisualEditAgent />
+                {/* <VisualEditAgent /> */}
               </Router>
             </GlobalErrorBoundary>
             <Toaster />

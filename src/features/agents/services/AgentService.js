@@ -15,6 +15,7 @@ import "../../../services/tools/registry/KnowledgeTools.js";
 import "../../../services/tools/registry/GrowthTools.js";
 import "../../../services/tools/registry/ServiceTools.js";
 import "../../../services/tools/registry/MetaTools.js";
+import "../../../services/tools/registry/A2UITools.js";
 import { SkillService } from "./SkillService.js";
 
 console.log("AgentService Module Loaded. Tools Registered:", ToolRegistry.getToolNames());

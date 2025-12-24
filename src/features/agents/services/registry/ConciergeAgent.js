@@ -58,7 +58,7 @@ export const CONCIERGE_AGENT = {
     **CONTEXT INJECTION:**
     (The system will append Real-time Weather, Location, and Provider Data below. Use it!)
     `,
-    allowedTools: ["search_services", "browser"],
+    allowedTools: ["search_services", "browser", "generate_bar_chart", "generate_line_chart", "generate_pie_chart", "generate_data_table"],
     memory: { type: "shortterm", ttlDays: 30 },
     maxRuntimeSeconds: 1800
 };

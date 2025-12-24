@@ -1,7 +1,7 @@
 
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import LandingHero from "@/components/LandingHero";
+// LandingHero removed
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -32,14 +32,10 @@ import { autoSync } from "@/services/syncService";
 import { offlineQuery } from "@/services/offlineQuery";
 import WeatherWidget from "@/components/WeatherWidget";
 
-const predefinedLocations = [
-  { name: "בו-פוט", latitude: 9.5297, longitude: 100.0626 },
-  { name: "לאמאי", latitude: 9.5137, longitude: 100.0512 },
-  { name: "צ'אוונג", latitude: 9.5381, longitude: 100.0564 },
-  { name: "מאנם", latitude: 9.5485, longitude: 100.0311 },
-  { name: "בנג רק", latitude: 9.4835, longitude: 99.9851 },
-  { name: "נאתון", latitude: 9.5091, longitude: 99.9568 },
-];
+import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
+import {
+  History,
+} from "lucide-react";
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
@@ -71,7 +67,8 @@ export default function Dashboard() {
   const [suggestions, setSuggestions] = useState([]);
   const [selectedSuperCategory, setSelectedSuperCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+
+  const [locationHistory, setLocationHistory] = useState([]);
 
   // Reverse Geocoding - convert coordinates to address in both English and Thai using Google API
   const getAddressFromCoordinates = async (latitude, longitude) => {
@@ -115,6 +112,15 @@ export default function Dashboard() {
     const savedLocationName = localStorage.getItem('locationName');
     const savedLocationAddressEn = localStorage.getItem('locationAddressEn');
     const savedLocationAddressTh = localStorage.getItem('locationAddressTh');
+
+    const savedHistory = localStorage.getItem('locationHistory');
+    if (savedHistory) {
+      try {
+        setLocationHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Failed to parse location history", e);
+      }
+    }
 
     if (savedLocation) {
       try {
@@ -202,7 +208,23 @@ export default function Dashboard() {
     checkLocation();
   };
 
-  const handleSelectPredefinedLocation = async (location) => {
+  const addToHistory = (location) => {
+    const newHistoryItem = {
+      name: location.name,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      timestamp: new Date().getTime()
+    };
+
+    // Filter out duplicates (by name or very close coordinates)
+    const filteredHistory = locationHistory.filter(item => item.name !== location.name);
+
+    const newHistory = [newHistoryItem, ...filteredHistory].slice(0, 5); // Keep last 5
+    setLocationHistory(newHistory);
+    localStorage.setItem('locationHistory', JSON.stringify(newHistory));
+  };
+
+  const handleSelectLocation = async (location) => {
     const newLocation = {
       latitude: location.latitude,
       longitude: location.longitude
@@ -213,10 +235,14 @@ export default function Dashboard() {
     setLocationError(null);
     setShowLocationDialog(false);
 
+    addToHistory(location);
+
     setLoadingAddress(true);
     try {
+      // If we already have the address from autocomplete, use it (though specific formatted might vary)
+      // Standardize by fetching again or use what we have? 
+      // Existing logic fetches EN/TH. Let's keep fetching for consistency of data structure.
       const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-      // console.log('Fetched addresses for predefined location:', addresses);
 
       if (addresses.en) {
         setLocationAddressEn(addresses.en);
@@ -352,149 +378,182 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <OfflineIndicator />
+      {/* Hero Section with Search & Categories */}
+      <div className="relative isolate overflow-hidden bg-slate-900 pb-12 pt-24 sm:pb-32 lg:pb-32 lg:pt-32 mb-8">
+        <img
+          src="https://images.unsplash.com/photo-1540206395-688085723adb?w=1600&auto=format&fit=crop&q=80"
+          alt="Dashboard Background"
+          className="absolute inset-0 -z-10 h-full w-full object-cover opacity-20 blur-sm"
+        />
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center relative z-10">
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl font-display mb-6 drop-shadow-lg">
+            {t('dashboard.hero_title')}
+          </h1>
+          <p className="mt-4 text-xl leading-8 text-gray-200 max-w-2xl mx-auto mb-10 drop-shadow-md">
+            {t('dashboard.hero_subtitle')}
+          </p>
 
-      {/* Marketing Hero */}
-      <LandingHero />
-
-      {/* Main Search Section */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 py-4 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="w-full max-w-3xl mx-auto">
-            <div className="relative flex gap-2">
-              <div className="flex-1 relative">
-                <Input
-                  placeholder={t('searchService')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  onFocus={() => searchQuery && setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="text-base h-12 bg-gray-50 border-gray-300 focus:bg-white transition-colors text-lg pe-12 ps-12"
-                />
-                <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-auto">
-                    {suggestions.map((provider) => (
-                      <div
-                        key={provider.id}
-                        onClick={() => handleSelectSuggestion(provider)}
-                        className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 flex items-center gap-3"
-                      >
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          {provider.images?.[0] ? (
-                            <img src={provider.images[0]} alt="" className="w-full h-full object-cover rounded-lg" />
-                          ) : (
-                            <span className="text-gray-500 font-bold">{provider.business_name?.charAt(0)}</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">{provider.business_name}</p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {provider.category}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Button
-                onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 h-12 px-6"
-              >
-                <Search className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Location Bar */}
-            {userLocation && (
-              <div className="mt-3 flex items-center gap-2 justify-center text-sm text-gray-600">
-                <MapPin className="w-4 h-4 text-blue-500" />
-                <span className="font-medium">{selectedLocationName}</span>
-                <span className="text-gray-300">|</span>
-                <button
-                  onClick={() => setShowLocationDialog(true)}
-                  className="text-blue-600 hover:underline"
+          {/* Integrated Search Bar */}
+          <div className="max-w-3xl mx-auto mb-16 relative">
+            <div className="relative flex items-center">
+              <Input
+                className="h-14 pl-6 pr-16 rounded-full bg-white/95 backdrop-blur-sm border-0 text-lg shadow-xl focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 text-slate-800 placeholder:text-slate-500"
+                placeholder={t('dashboard.search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onFocus={() => searchQuery && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              />
+              <div className="absolute right-2 flex items-center gap-1">
+                <Button
+                  size="icon"
+                  className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition-all hover:scale-105"
+                  onClick={handleSearch}
                 >
-                  {t('change')}
-                </button>
+                  <Search className="h-5 w-5" />
+                </Button>
+                <Button
+                  size="icon"
+                  className="h-10 w-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg transition-all hover:scale-105 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x"
+                  onClick={() => navigate('/ai-chat')}
+                  title={t('search.ask_ai_tooltip')}
+                >
+                  <Sparkles className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+            {/* Suggestions Dropdown can be absolutely positioned here if needed */}
+          </div>
+
+          {/* Super Categories */}
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+            {/* <h3 className="text-white/80 font-medium text-sm uppercase tracking-wider mb-6">
+                {t('dashboard.categories')}
+             </h3> */}
+            <SuperCategories
+              onSelect={handleSuperCategoryClick}
+              selectedCategory={selectedSuperCategory}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+        <div className="mb-4">
+          <div className="space-y-4">
+
+            {selectedSuperCategory && (
+              <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                {/* Sub Categories Pills */}
+                <div className="mb-2 flex justify-center">
+                  <SubCategorySelector
+                    superCategory={selectedSuperCategory}
+                    selectedSubCategory={selectedSubCategory}
+                    onSelectSubCategory={handleSubCategoryClick}
+                    language={language}
+                  />
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {/* Location Bar & Status */}
+      <div className="max-w-7xl mx-auto px-4 mb-6">
+        {userLocation && (
+          <div className="flex items-center gap-2 justify-center text-sm text-gray-600 bg-white/50 py-2 rounded-full backdrop-blur-sm max-w-md mx-auto border border-gray-100 shadow-sm">
+            <MapPin className="w-4 h-4 text-blue-500" />
+            <span className="font-medium">{selectedLocationName}</span>
+            <span className="text-gray-300">|</span>
+            <button
+              onClick={() => setShowLocationDialog(true)}
+              className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+            >
+              {t('change')}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Location Permission UI Blocks */}
-      {locationPermission === 'loading' && (
-        <div className="bg-blue-500 text-white px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-sm font-medium">{t('locatingYou')}</span>
+      {
+        locationPermission === 'loading' && (
+          <div className="bg-blue-500 text-white px-4 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm font-medium">{t('locatingYou')}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {locationPermission === 'denied' && (
-        <div className="bg-orange-500 text-white px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <NavigationIcon className="w-5 h-5" />
-              <div>
-                <span className="text-sm font-medium block">{t('cannotAccessLocation')}</span>
-                <span className="text-xs opacity-90">{locationError || t('allowLocationAccess')}</span>
+      {
+        locationPermission === 'denied' && (
+          <div className="bg-orange-500 text-white px-4 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <NavigationIcon className="w-5 h-5" />
+                <div>
+                  <span className="text-sm font-medium block">{t('cannotAccessLocation')}</span>
+                  <span className="text-xs opacity-90">{locationError || t('allowLocationAccess')}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowLocationDialog(true)}
+                  size="sm"
+                  className="bg-white text-orange-600 hover:bg-gray-100 font-semibold"
+                >
+                  {t('selectLocation')}
+                </Button>
+                <Button
+                  onClick={requestLocation}
+                  size="sm"
+                  variant="outline"
+                  className="bg-transparent border-white text-white hover:bg-white/20"
+                >
+                  {t('tryAgain')}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setShowLocationDialog(true)}
-                size="sm"
-                className="bg-white text-orange-600 hover:bg-gray-100 font-semibold"
-              >
-                {t('selectLocation')}
-              </Button>
-              <Button
-                onClick={requestLocation}
-                size="sm"
-                variant="outline"
-                className="bg-transparent border-white text-white hover:bg-white/20"
-              >
-                {t('tryAgain')}
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {locationPermission === 'pending' && (
-        <div className="bg-blue-600 text-white px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <NavigationIcon className="w-5 h-5" />
-              <div>
-                <span className="text-sm font-medium block">{t('confirmLocationAccess')}</span>
-                <span className="text-xs opacity-90">{t('toFindNearbyProviders')}</span>
+      {
+        locationPermission === 'pending' && (
+          <div className="bg-blue-600 text-white px-4 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <NavigationIcon className="w-5 h-5" />
+                <div>
+                  <span className="text-sm font-medium block">{t('confirmLocationAccess')}</span>
+                  <span className="text-xs opacity-90">{t('toFindNearbyProviders')}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowLocationDialog(true)}
+                  size="sm"
+                  className="bg-white text-blue-600 hover:bg-gray-100 font-semibold"
+                >
+                  {t('selectLocation')}
+                </Button>
+                <Button
+                  onClick={requestLocation}
+                  size="sm"
+                  variant="outline"
+                  className="bg-transparent border-white text-white hover:bg-white/20"
+                >
+                  {t('allowLocation')}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setShowLocationDialog(true)}
-                size="sm"
-                className="bg-white text-blue-600 hover:bg-gray-100 font-semibold"
-              >
-                {t('selectLocation')}
-              </Button>
-              <Button
-                onClick={requestLocation}
-                size="sm"
-                variant="outline"
-                className="bg-transparent border-white text-white hover:bg-white/20"
-              >
-                {t('allowLocation')}
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
         <DialogContent className="sm:max-w-md">
@@ -507,13 +566,11 @@ export default function Dashboard() {
           <div className="space-y-3 py-4">
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <Input
+                <GooglePlacesAutocomplete
                   placeholder={t('dashboard.search_location_placeholder')}
-                  value={locationSearchQuery}
-                  onChange={(e) => setLocationSearchQuery(e.target.value)}
+                  onPlaceSelected={handleSelectLocation}
                   className="text-base h-12 pe-10 ps-10"
                 />
-                <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
               <Button
                 onClick={handleUseCurrentLocation}
@@ -523,97 +580,34 @@ export default function Dashboard() {
               </Button>
             </div>
 
-            <div className="border-t pt-3">
-              <p className="text-sm font-medium text-gray-700 mb-2">{t('orSelectArea')}</p>
-              <div className="space-y-2">
-                {predefinedLocations.map((location) => (
-                  <Button
-                    key={location.name}
-                    onClick={() => handleSelectPredefinedLocation(location)}
-                    variant="outline"
-                    className="w-full justify-start h-12"
-                  >
-                    <MapPin className="w-4 h-4 me-2 text-gray-500" />
-                    {location.name}
-                  </Button>
-                ))}
+            {locationHistory.length > 0 && (
+              <div className="border-t pt-3">
+                <p className="text-sm font-medium text-gray-700 mb-2">{t('recentSearches') || "Recent Locations"}</p>
+                <div className="space-y-2">
+                  {locationHistory.map((location, index) => (
+                    <Button
+                      key={`${location.name}-${index}`}
+                      onClick={() => handleSelectLocation(location)}
+                      variant="outline"
+                      className="w-full justify-start h-12"
+                    >
+                      <History className="w-4 h-4 me-2 text-gray-500" />
+                      {location.name}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Categories Section */}
-      <div className="bg-blue-600 py-3">
-        <div className="max-w-7xl mx-auto px-4">
-          <h3 className="text-white text-center font-semibold text-lg">
-            {t('categories')}
-          </h3>
-        </div>
-      </div>
+
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
 
 
         <div className="mb-6">
-          <div className="space-y-8 animate-in fade-in duration-500">
-            <SuperCategories
-              onSelect={handleSuperCategoryClick}
-              selectedCategory={selectedSuperCategory}
-            />
-
-            {selectedSuperCategory && (
-              <div className="mt-8 animate-in fade-in slide-in-from-top-4 duration-500">
-
-                {/* Question Bubble */}
-                <div className="flex justify-center mb-6">
-                  <div className="bg-blue-50 text-blue-800 px-6 py-3 rounded-2xl rounded-bl-sm relative shadow-sm border border-blue-100 max-w-xs text-center">
-                    <p className="font-medium text-lg">
-                      {t(selectedSuperCategory + '_question') || `${t(selectedSuperCategory)}?`}
-                    </p>
-                    {/* Triangle tail */}
-                    <div className="absolute -bottom-2 left-4 w-4 h-4 bg-blue-50 border-b border-l border-blue-100 transform -rotate-45"></div>
-                  </div>
-                </div>
-
-                {/* Sub Categories Pills */}
-                <div className="mb-6">
-                  <SubCategorySelector
-                    superCategory={selectedSuperCategory}
-                    selectedSubCategory={selectedSubCategory}
-                    onSelectSubCategory={handleSubCategoryClick}
-                    language={language}
-                  />
-                </div>
-
-                {/* Reveal with AI Button */}
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => navigate('/aichat', { state: { category: selectedSuperCategory, label: t(selectedSuperCategory) } })}
-                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all rounded-full px-8 py-6 h-auto flex flex-col items-center gap-1 group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 animate-pulse" />
-                      <span className="text-lg font-bold">{t('dashboard.ai_chat_button')}</span>
-                    </div>
-                    <span className="text-xs text-indigo-100 opacity-90 group-hover:opacity-100">
-                      {t('dashboard.ai_chat_subtext')}
-                    </span>
-                  </Button>
-                </div>
-
-              </div>
-            )}
-
-            {!selectedSuperCategory && (
-              <div className="mt-12 text-center opacity-70">
-                <p className="text-sm text-gray-400">
-                  {t('dashboard.select_category_prompt')}
-                </p>
-              </div>
-            )}
-          </div>
-
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">
@@ -649,6 +643,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

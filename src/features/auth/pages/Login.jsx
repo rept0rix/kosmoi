@@ -150,36 +150,57 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleEmailLogin = async (e) => {
+    // Registration State
+    const [isLogin, setIsLogin] = useState(true);
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const handleAuthSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // Validation for Register
+        if (!isLogin && password !== confirmPassword) {
+            setError("Passwords do not match");
+            setLoading(false);
+            return;
+        }
+
         try {
-            const { error: signInError } = await db.auth.signIn(email, password);
+            if (isLogin) {
+                // LOGIN
+                await db.auth.signIn(email, password);
+                console.log("Sign in successful, updating state...");
+            } else {
+                // REGISTER
+                const { user: newUser, session } = await db.auth.signUp(email, password, {
+                    role: 'user',
+                    registered_at: new Date().toISOString()
+                });
 
-            if (signInError) throw signInError;
+                if (!session && !newUser) {
+                    // Should verify email if configured
+                    alert("Registration successful! Please check your email to confirm your account.");
+                    setIsLogin(true); // Switch to login
+                    setLoading(false);
+                    return;
+                }
 
-            // Wait for AuthContext, but don't hang forever
-            console.log("Sign in successful, updating state...");
+                console.log("Registration successful", newUser);
+            }
 
-            // Try updating state
+            // Common Success Flow
             await checkAppState();
-
-            // If checkAppState implies success (we are verified), the useEffect will pick it up.
-            // But if it's slow, we manually check if we have a session and force redirect after a moment
 
             setTimeout(() => {
                 if (window.location.pathname === '/login') {
-                    console.warn("Auth state update slow, forcing manual redirect check...");
-                    // Default assumption: if no error was thrown, we are likely good.
-                    // We can try to redirect to profile manually if still here.
-                    // But strictly speaking, we rely on isAuthenticated.
+                    // Check again? or just let the effect handle it
                 }
             }, 2000);
 
         } catch (err) {
-            console.error('Login error:', err);
-            setError(err.message || 'Login failed. Please check your credentials.');
+            console.error('Auth error:', err);
+            setError(err.message || (isLogin ? 'Login failed.' : 'Registration failed.'));
             setLoading(false);
         }
     };
@@ -262,26 +283,20 @@ export default function Login() {
             <div className="relative z-10 w-full max-w-5xl mx-auto p-6 flex flex-col md:flex-row items-stretch gap-8 md:gap-16">
 
                 {/* Left Side: Brand & Value Props (Glassmorphism) */}
-                <div className="flex-1 flex flex-col justify-center text-white space-y-8">
+                <div className="flex-1 flex flex-col justify-center text-white space-y-2 md:space-y-8">
                     <div>
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-                                <span className="font-bold text-xl">K</span>
-                            </div>
-                            <span className="font-medium tracking-wide text-white/80 uppercase">Kosmoi OS</span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
-                            Your Intelligent <br />
+                        {/* KOSMOI OS Badge Removed */}
+                        <h1 className="text-xl md:text-5xl font-bold leading-tight mb-1 md:mb-4">
+                            Your Intelligent <br className="hidden md:block" />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">
                                 Island Companion
                             </span>
                         </h1>
-                        <p className="text-lg text-slate-200/90 font-light max-w-md">
+                        <p className="text-xs md:text-lg text-slate-200/90 font-light max-w-md">
                             Join the exclusive network of travelers and locals unlocking the best of Koh Samui with AI.
                         </p>
                     </div>
-
-                    <div className="space-y-4">
+                    <div className="hidden md:block space-y-4">
                         {[
                             { icon: ShieldCheck, text: "Verified Listings & Services", sub: "No scams, just quality." },
                             { icon: Sparkles, text: "AI Travel Concierge", sub: "Itinerary planning in seconds." },
@@ -307,8 +322,12 @@ export default function Login() {
 
                     <div className="relative z-10">
                         <div className="text-center mb-8">
-                            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-                            <p className="text-slate-300 text-sm">Enter you credentials to access your dashboard</p>
+                            <h2 className="text-2xl font-bold text-white mb-2">
+                                {isLogin ? 'Sign In' : 'Create Account'}
+                            </h2>
+                            <p className="text-slate-300 text-sm">
+                                {isLogin ? 'Access your account' : 'Join the community'}
+                            </p>
                         </div>
 
                         {error && (
@@ -318,8 +337,8 @@ export default function Login() {
                             </div>
                         )}
 
-                        {/* DEV SHORTCUT */}
-                        {import.meta.env.DEV && (
+                        {/* DEV SHORTCUT (Only in Login Mode) */}
+                        {import.meta.env.DEV && isLogin && (
                             <button
                                 onClick={handleDevLogin}
                                 className="w-full mb-4 py-2 text-xs font-mono bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 border border-purple-500/30 rounded-lg transition-colors"
@@ -328,65 +347,11 @@ export default function Login() {
                             </button>
                         )}
 
-                        <form onSubmit={handleEmailLogin} className="space-y-5">
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-slate-300 uppercase tracking-wider ml-1">Email Address</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
-                                    placeholder="name@example.com"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center ml-1">
-                                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Password</label>
-                                    <button
-                                        type="button"
-                                        onClick={handleForgotPassword}
-                                        className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
-                                    >
-                                        Forgot?
-                                    </button>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
-                                        placeholder="••••••••"
-                                    />
-                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                                </div>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full py-6 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition-all rounded-xl"
-                            >
-                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Log In'}
-                            </Button>
-                        </form>
-
-                        <div className="relative py-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-white/10" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-transparent px-2 text-slate-400">Or continue with</span>
-                            </div>
-                        </div>
-
                         <Button
                             onClick={handleGoogleLogin}
                             disabled={loading}
                             variant="outline"
-                            className="w-full py-6 border-white/10 bg-white/5 hover:bg-white/10 text-white hover:text-white flex items-center justify-center gap-3 rounded-xl transition-all"
+                            className="w-full py-6 border-white/10 bg-white/5 hover:bg-white/10 text-white hover:text-white flex items-center justify-center gap-3 rounded-xl transition-all mb-6"
                         >
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -410,20 +375,116 @@ export default function Login() {
                                     />
                                 </svg>
                             )}
-                            Sign in with Google
+                            {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
                         </Button>
 
-                        <div className="mt-8 text-center">
-                            <p className="text-slate-400 text-sm">
+                        <div className="relative py-2 mb-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-white/10" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-transparent px-2 text-slate-400">Or with email</span>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleAuthSubmit} className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-300 uppercase tracking-wider ml-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
+                                    placeholder="name@example.com"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Password</label>
+                                    {isLogin && (
+                                        <button
+                                            type="button"
+                                            onClick={handleForgotPassword}
+                                            className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
+                                        >
+                                            Forgot?
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="password"
+                                        required
+                                        minLength={6}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
+                                        placeholder="••••••••"
+                                    />
+                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                </div>
+                            </div>
+
+                            {!isLogin && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider ml-1">Confirm Password</label>
+                                    <div className="relative">
+                                        <input
+                                            type="password"
+                                            required
+                                            minLength={6}
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:bg-white/10 focus:ring-2 focus:ring-blue-400/50 transition-all outline-none"
+                                            placeholder="••••••••"
+                                        />
+                                        <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                    </div>
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-6 text-base font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/10 shadow-lg transition-all rounded-xl"
+                            >
+                                {loading ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    isLogin ? 'Log In' : 'Create Account'
+                                )}
+                            </Button>
+                        </form>
+
+                        <div className="mt-6 text-center">
+                            <button
+                                onClick={() => {
+                                    setIsLogin(!isLogin);
+                                    setError(null);
+                                    setConfirmPassword('');
+                                }}
+                                className="text-slate-400 text-sm hover:text-white transition-colors"
+                            >
+                                {isLogin ? (
+                                    <>Don't have an account? <span className="text-blue-300 font-medium">Sign Up</span></>
+                                ) : (
+                                    <>Already have an account? <span className="text-blue-300 font-medium">Sign In</span></>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="mt-4 text-center border-t border-white/5 pt-4">
+                            <p className="text-slate-500 text-xs">
                                 Want to join as a professional?{' '}
-                                <button onClick={() => navigate('/vendor-signup')} className="text-blue-300 hover:text-white font-medium transition-colors">
-                                    Apply Here
+                                <button onClick={() => navigate('/vendor-signup')} className="text-slate-400 hover:text-white transition-colors underline">
+                                    Apply as Vendor
                                 </button>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

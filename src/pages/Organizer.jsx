@@ -5,39 +5,28 @@ import { Calendar, CheckSquare, Luggage } from 'lucide-react';
 
 export default function Organizer() {
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 pb-24">
-            <h1 className="text-2xl font-bold font-['Outfit'] mb-6 text-slate-800 dark:text-white">Organizer</h1>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 pb-24 font-sans animate-in fade-in duration-500">
+            <h1 className="text-2xl font-bold font-['Outfit'] mb-6 text-slate-800 dark:text-white text-start">Organizer</h1>
 
             <div className="space-y-4">
-                <GlassCard className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full text-blue-600 dark:text-blue-400">
-                        <Luggage size={24} />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-lg">Trip Planner</h3>
-                        <p className="text-sm text-slate-500">Manage your itinerary</p>
-                    </div>
-                </GlassCard>
-
-                <GlassCard className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full text-purple-600 dark:text-purple-400">
-                        <Calendar size={24} />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-lg">My Calendar</h3>
-                        <p className="text-sm text-slate-500">Upcoming events & bookings</p>
-                    </div>
-                </GlassCard>
-
-                <GlassCard className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full text-green-600 dark:text-green-400">
-                        <CheckSquare size={24} />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-lg">Tasks</h3>
-                        <p className="text-sm text-slate-500">To-do list & reminders</p>
-                    </div>
-                </GlassCard>
+                {[
+                    { title: 'Trip Planner', desc: 'Manage your itinerary', icon: Luggage, color: 'text-blue-600 bg-blue-100', delay: 'delay-[0ms]' },
+                    { title: 'My Calendar', desc: 'Upcoming events & bookings', icon: Calendar, color: 'text-purple-600 bg-purple-100', delay: 'delay-[100ms]' },
+                    { title: 'Tasks', desc: 'To-do list & reminders', icon: CheckSquare, color: 'text-green-600 bg-green-100', delay: 'delay-[200ms]' }
+                ].map((item, idx) => (
+                    <GlassCard
+                        key={idx}
+                        className={`p-6 flex items-center gap-4 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] animate-in slide-in-from-bottom-4 fade-in fill-mode-backwards ${item.delay}`}
+                    >
+                        <div className={`${item.color} dark:bg-opacity-20 p-3 rounded-full`}>
+                            <item.icon size={24} />
+                        </div>
+                        <div className="text-start">
+                            <h3 className="font-semibold text-lg text-slate-900 dark:text-white">{item.title}</h3>
+                            <p className="text-sm text-slate-500">{item.desc}</p>
+                        </div>
+                    </GlassCard>
+                ))}
             </div>
         </div>
     );

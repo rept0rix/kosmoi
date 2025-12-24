@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, Sparkles, Map as MapIcon, Info, User, Maximize2, Minimize2, ArrowRight, Trash2, PlusCircle, MessageSquare, History, ChevronUp, ChevronDown, Search, Crosshair, Palmtree, UtensilsCrossed, Martini, ShoppingBag, Flower, Landmark, Car } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Bot, Send, Sparkles, Map as MapIcon, Info, ArrowRight, Trash2, PlusCircle, History, ChevronUp, ChevronDown, Crosshair, Palmtree, UtensilsCrossed, Martini, ShoppingBag, Flower, Landmark, Car, Bike } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { db } from '@/api/supabaseClient';
 import GoogleMap from "@/components/GoogleMap";
@@ -14,11 +14,14 @@ import { CONCIERGE_AGENT } from '@/features/agents/services/registry/ConciergeAg
 import SEO from '@/components/SEO';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
+import { memoryService } from '@/services/ai/MemoryService';
+import A2UIRenderer from "@/components/a2ui/A2UIRenderer";
 
 const quickActions = [
     { id: 'tour_guide', label: 'Tour Guide', icon: MapIcon, prompt: "Act as a local tour guide. What are the must-see places in Koh Samui?" },
     { id: 'build_trip', label: 'Build a Trip', icon: Sparkles, prompt: "I want to build a trip itinerary for Koh Samui. Can you help me plan?" },
     { id: 'local_info', label: 'Local Info', icon: Info, prompt: "What interesting places are near my current location?" },
+    { id: 'rentals', label: 'Rentals', category: 'rental', icon: Bike },
     { id: 'beaches', label: 'Beaches', category: 'beach', icon: Palmtree },
     { id: 'restaurants', label: 'Restaurants', category: 'restaurant', icon: UtensilsCrossed },
     { id: 'nightlife', label: 'Nightlife', category: 'bar', icon: Martini },
@@ -28,8 +31,26 @@ const quickActions = [
     { id: 'taxi', label: 'Taxi', category: 'taxi', icon: Car },
 ];
 
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        ;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d.toFixed(1);
+}
+
+function deg2rad(deg) {
+    return deg * (Math.PI / 180);
+}
+
 export default function AIChat() {
-    const navigate = useNavigate();
     const locationState = useLocation().state;
     const { user } = useAuth();
 
@@ -114,8 +135,9 @@ export default function AIChat() {
     const [userLocation, setUserLocation] = useState(null);
     const [mapCenter, setMapCenter] = useState({ lat: 9.53, lng: 100.05 });
     // Increased default zoom as requested
-    const [mapZoom, setMapZoom] = useState(15);
+    const [mapZoom, setMapZoom] = useState(14);
     const [selectedProvider, setSelectedProvider] = useState(null);
+    const [mapPolylines, setMapPolylines] = useState([]);
 
     const { data: providers } = useQuery({
         queryKey: ["serviceProviders"],
@@ -174,9 +196,16 @@ export default function AIChat() {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) throw new Error("API Key Missing");
 
-            const providersContext = providers.map(p =>
-                `- ${p.business_name} (${p.category}): ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Location: ${p.latitude},${p.longitude})`
-            ).join('\n');
+            const providersContext = providers.map(p => {
+                let distInfo = "";
+                if (userLocation) {
+                    const dist = calculateDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
+                    if (dist) {
+                        distInfo = ` (Distance: ~${dist}km from user)`;
+                    }
+                }
+                return `- ${p.business_name} (${p.category})${distInfo}: ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Location: ${p.latitude},${p.longitude})`;
+            }).join('\n');
 
             let weatherContext = "Weather data unavailable.";
             if (weatherData?.current) {
@@ -190,10 +219,21 @@ ${CONCIERGE_AGENT.systemPrompt}
 **STRICT RESPONSE FORMAT:**
 You MUST return valid JSON. Do not return plain text.
 Structure the response to be highly interactive.
+Use the provided distance context to explicitly mention how far places are if relevant (e.g. "It's a 10 min drive" or "Just a 5 min walk").
+
+**A2UI CAPABILITY:**
+You can now render rich UI components using the 'a2ui_content' field.
+Use this for tables, forms, dashboards, or complex layouts.
+Supported types: 'container', 'row', 'col', 'text', 'heading', 'button', 'input', 'card', 'badge', 'alert', 'bar-chart', 'line-chart', 'pie-chart', 'area-chart', 'stat-card', 'data-table'.
 
 **OUTPUT SCHEMA:**
 {
   "message": "Conversational response...",
+  "a2ui_content": { 
+     "type": "card", 
+     "props": { "title": "Example" }, 
+     "children": { "type": "text", "content": "Hello World" } 
+  },
   "carousel": [ 
     {
       "title": "Business Name",
@@ -211,9 +251,21 @@ Structure the response to be highly interactive.
 **CONTEXT:**
 Weather: ${weatherContext}
 Knowledge: ${JSON.stringify(samuiKnowledge)}
-Providers: ${providersContext}
+Providers (with approximated distances): ${providersContext}
 User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Unknown'}
 `;
+
+            // MEMORY INJECTION
+            let memoryContext = "";
+            if (user?.id) {
+                // Fire and forget learning (don't await)
+                memoryService.textToMemory(user.id, text).catch(err => console.error("Memory learning failed", err));
+
+                // Fetch context for this turn
+                memoryContext = await memoryService.getSystemContext(user.id);
+            }
+
+            const finalSystemInstruction = systemInstruction + memoryContext;
 
             const history = messages.map(msg => ({
                 role: msg.role === 'assistant' ? 'model' : 'user',
@@ -224,7 +276,7 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: systemInstruction }] },
+                    systemInstruction: { parts: [{ text: finalSystemInstruction }] },
                     contents: [...history, { role: 'user', parts: [{ text: context ? `${context}\n\n${text}` : text }] }]
                 })
             });
@@ -240,11 +292,37 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                 parsed = { message: responseText };
             }
 
+            // --- POLYLINE LOGIC ---
+            if (parsed.carousel && parsed.carousel.length > 0 && userLocation) {
+                const newPolylines = parsed.carousel
+                    .filter(item => item.location && item.location.lat && item.location.lng)
+                    .map(item => ({
+                        path: [
+                            { lat: userLocation.lat, lng: userLocation.lng },
+                            { lat: item.location.lat, lng: item.location.lng }
+                        ],
+                        strokeColor: "#3B82F6", // Blue-500
+                        strokeOpacity: 0.6,
+                        strokeWeight: 4,
+                        options: {
+                            geodesic: true,
+                            icons: [{
+                                icon: { path: 2, scale: 2 }, // Forward arrow
+                                offset: '100%'
+                            }]
+                        }
+                    }));
+                setMapPolylines(newPolylines);
+            } else {
+                setMapPolylines([]);
+            }
+
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: parsed.message || "Here is what I found:",
                 carousel: parsed.carousel,
-                choices: parsed.choices
+                choices: parsed.choices,
+                a2ui_content: parsed.a2ui_content
             }]);
 
         } catch (error) {
@@ -309,6 +387,7 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                     markers={allMarkers}
                     userLocation={userLocation}
                     userAvatar={user?.user_metadata?.avatar_url || user?.user_metadata?.picture}
+                    polylines={mapPolylines}
                     options={{ disableDefaultUI: true, zoomControl: false, mapTypeControl: false, streetViewControl: false }}
                 />
             </div>
@@ -325,7 +404,7 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                     maxWidth: isMinimized ? '600px' : 'none',
                     margin: isMinimized && window.innerWidth > 768 ? '0 auto' : '0',
 
-                    bottom: isMinimized ? '100px' : (window.innerWidth > 768 ? '5%' : '90px'),
+                    bottom: isMinimized ? '100px' : (window.innerWidth > 768 ? '10%' : '120px'), // Raised from 5%/90px to 10%/120px
                     top: isMinimized ? 'auto' : '45%',
                 }}
             >
@@ -481,6 +560,13 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                                         </div>
                                                     )}
 
+                                                    {/* A2UI RENDERER INTEGRATION */}
+                                                    {msg.a2ui_content && (
+                                                        <div className="w-full mt-2">
+                                                            <A2UIRenderer content={msg.a2ui_content} />
+                                                        </div>
+                                                    )}
+
                                                     {msg.carousel && (
                                                         <div className="flex gap-2 overflow-x-auto pb-2 w-full snap-x scrollbar-hide mt-2 max-w-full">
                                                             {msg.carousel.map((card, i) => (
@@ -512,11 +598,8 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                             </div>
                                         ))}
                                         {isTyping && (
-                                            <div className="flex gap-3 justify-start">
-                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 mt-1">
-                                                    <Bot className="w-3 h-3 text-white" />
-                                                </div>
-                                                <div className="px-4 py-2.5 bg-white border border-slate-100 text-slate-500 rounded-2xl rounded-tl-none text-xs flex items-center gap-1 shadow-sm">
+                                            <div className="flex justify-start">
+                                                <div className="bg-slate-100 px-4 py-2.5 rounded-2xl rounded-tl-none text-slate-500 text-xs flex items-center gap-1">
                                                     <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                                                     <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                                                     <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
@@ -527,32 +610,44 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                     </div>
                                 </div>
 
-                                <div className="flex-none p-3 bg-white border-t border-slate-100 mt-auto">
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-1">
-                                        {quickActions.map(action => (
-                                            <button
-                                                key={action.id}
-                                                onClick={() => handleQuickAction(action)}
-                                                className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-full border border-slate-200 whitespace-nowrap"
-                                            >
-                                                {action.icon && <action.icon className="w-3 h-3" />}
-                                                {action.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                {/* INPUT AREA */}
+                                <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-50 relative z-20">
+                                    {messages.length < 2 && (
+                                        <ScrollArea className="w-full whitespace-nowrap mb-3 pb-1">
+                                            <div className="flex gap-2">
+                                                {quickActions.map(action => (
+                                                    <button
+                                                        key={action.id}
+                                                        type="button"
+                                                        onClick={() => handleQuickAction(action)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-full text-xs font-medium transition-colors border border-slate-100"
+                                                    >
+                                                        <action.icon className="w-3.5 h-3.5" />
+                                                        {action.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    )}
 
-                                    <form onSubmit={handleSend} className="relative flex items-center gap-2">
-                                        <Input
-                                            value={input}
-                                            onChange={e => setInput(e.target.value)}
-                                            placeholder="Ask anything..."
-                                            className="pr-10 h-10 rounded-xl bg-slate-50 text-base border-slate-200 focus:bg-white"
-                                        />
-                                        <Button type="submit" size="icon" disabled={!input.trim() || isTyping} className="absolute right-1 w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg">
-                                            <Send className="w-4 h-4 text-white" />
-                                        </Button>
-                                    </form>
-                                </div>
+                                    <div className="relative flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <Input
+                                                value={input}
+                                                onChange={(e) => setInput(e.target.value)}
+                                                placeholder="Ask your concierge..."
+                                                className="pr-10 rounded-full border-slate-200 focus-visible:ring-blue-500/20 bg-slate-50 focus:bg-white transition-all h-11"
+                                            />
+                                            <Button
+                                                type="submit"
+                                                disabled={!input.trim()}
+                                                className="absolute right-1 top-1 h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm p-0 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <ArrowRight className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </form>
                             </>
                         )}
                     </>
