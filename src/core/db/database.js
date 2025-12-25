@@ -8,14 +8,21 @@ import { replicateCollection } from './replication';
 import { removeRxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 
-let dbPromise = null;
+// True Global Singleton Service
+// This ensures that even if this module is imported multiple times (e.g. via different paths),
+// we only ever have ONE active database creation promise.
 
 export const DatabaseService = {
-    get: async () => {
-        if (dbPromise) return dbPromise;
+    async get() {
+        // Check window global first
+        if (window.__KOSMOI_DB_PROMISE__) {
+            return window.__KOSMOI_DB_PROMISE__;
+        }
 
         console.log("DatabaseService: Initializing RxDB...");
-        dbPromise = (async () => {
+
+        // Start creation and assign to window immediately to block race conditions
+        const promise = (async () => {
             try {
                 if (typeof createDatabase !== 'function') {
                     throw new Error("createDatabase is not a function. Check rxdb-config.js export.");
@@ -60,7 +67,6 @@ export const DatabaseService = {
 
                 // Start Replication (Fire and forget, but with better error logging)
                 console.log('Starting replication...');
-
                 const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
 
                 replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
@@ -71,45 +77,44 @@ export const DatabaseService = {
                 return db;
             } catch (err) {
                 console.error("DatabaseService: Critical Failed during DB creation", err);
-                dbPromise = null; // Reset promise so we can retry
+                // If it fails, clear the global promise so we can retry on next call
+                window.__KOSMOI_DB_PROMISE__ = null;
                 throw err;
             }
         })();
 
-        return dbPromise;
+        window.__KOSMOI_DB_PROMISE__ = promise;
+        return promise;
     },
 
-    /**
-     * Re-initializes the database (useful for testing or resets)
-     */
     reset: () => {
-        dbPromise = null;
+        window.__KOSMOI_DB_PROMISE__ = null;
     },
 
-    /**
-     * Destroys the local database completely.
-     * Useful for recovering from corruption or schema mismatch glitches.
-     */
+    // Destroys the local database completely
     destroy: async () => {
         console.warn("DatabaseService: DESTROYING DATABASE...");
 
         // Try to close existing connection first
-        if (dbPromise) {
+        const currentPromise = window.__KOSMOI_DB_PROMISE__;
+        if (currentPromise) {
             try {
-                const db = await dbPromise;
-                await db.destroy();
+                const db = await currentPromise;
+                if (db && !db.destroyed) {
+                    await db.destroy();
+                }
                 console.log("DatabaseService: Closed existing connection");
             } catch (err) {
                 console.warn("DatabaseService: Failed to close existing connection during destroy", err);
             }
-            dbPromise = null;
+            window.__KOSMOI_DB_PROMISE__ = null;
         }
 
         try {
-            // Import storage dynamically or assume it's imported at top (we will fix imports next)
+            // Import storage dynamically prevents circular dependency issues in some builds
             const { storage } = await import('./rxdb-config');
-            await removeRxDatabase('kosmoidb_v5', storage);
-            console.log("DatabaseService: Database destroyed.");
+            await removeRxDatabase('kosmoidb_v6', storage);
+            console.log("DatabaseService: Database and storage destroyed.");
             return true;
         } catch (e) {
             console.error("DatabaseService: Failed to destroy DB", e);
