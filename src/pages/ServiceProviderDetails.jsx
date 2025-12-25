@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs imports removed
 import {
   Phone,
   MessageCircle,
@@ -306,175 +306,216 @@ export default function ServiceProviderDetails() {
           {/* Left Column: Main Content */}
           <div className="md:col-span-2 space-y-6">
             <Card className="shadow-lg overflow-hidden border-none">
-              <Tabs defaultValue="overview" className="w-full">
-                <div className="border-b px-4 bg-white">
-                  <TabsList className="w-full justify-start h-14 bg-transparent p-0">
-                    <TabsTrigger value="overview" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:shadow-none bg-transparent">סקירה</TabsTrigger>
-                    <TabsTrigger value="info" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:shadow-none bg-transparent">מידע וזמינות</TabsTrigger>
-                    <TabsTrigger value="reviews" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:shadow-none bg-transparent">ביקורות</TabsTrigger>
-                  </TabsList>
+              <div className="space-y-8">
+                {/* About Section */}
+                <div id="about" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    אודות העסק
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line text-lg">
+                    {provider.description || "אין תיאור זמין לעסק זה."}
+                  </p>
                 </div>
 
-                <div className="p-6 bg-white min-h-[300px]">
-                  <TabsContent value="overview" className="mt-0 space-y-6">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-3">אודות העסק</h3>
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                        {provider.description || "אין תיאור זמין לעסק זה."}
-                      </p>
+                {/* Gallery Section */}
+                {provider.images && provider.images.length > 1 && (
+                  <div id="gallery" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-purple-600" />
+                      גלריה
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {provider.images.slice(1).map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Gallery ${idx}`}
+                          className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all hover:scale-105 transform duration-300"
+                          onClick={() => window.open(img, '_blank')}
+                        />
+                      ))}
                     </div>
+                  </div>
+                )}
 
-                    {provider.images && provider.images.length > 1 && (
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-3">גלריה</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {provider.images.slice(1).map((img, idx) => (
-                            <img
-                              key={idx}
-                              src={img}
-                              alt={`Gallery ${idx}`}
-                              className="w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => window.open(img, '_blank')}
-                            />
-                          ))}
+                {/* Info Grid */}
+                <div id="info" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-yellow-500" />
+                    מידע וזמינות
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                        <h4 className="font-semibold text-gray-900">שעות פעילות</h4>
+                      </div>
+                      <p className="text-gray-600 text-sm">{provider.available_hours || "לא צויין"}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Globe className="w-5 h-5 text-blue-600" />
+                        <h4 className="font-semibold text-gray-900">אתר אינטרנט</h4>
+                      </div>
+                      {provider.website ? (
+                        <a href={provider.website} target="_blank" rel="noreferrer" className="text-blue-600 text-sm hover:underline truncate block">
+                          {provider.website}
+                        </a>
+                      ) : (
+                        <p className="text-gray-600 text-sm">לא צויין</p>
+                      )}
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Mail className="w-5 h-5 text-blue-600" />
+                        <h4 className="font-semibold text-gray-900">אימייל</h4>
+                      </div>
+                      <p className="text-gray-600 text-sm">{provider.email || "לא צויין"}</p>
+                    </div>
+                    {provider.line_id && (
+                      <div className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
+                        <div className="flex items-center gap-3 mb-2">
+                          <MessageCircle className="w-5 h-5 text-green-600" />
+                          <h4 className="font-semibold text-gray-900">Line ID</h4>
                         </div>
+                        <p className="text-gray-600 text-sm font-medium">{provider.line_id}</p>
                       </div>
                     )}
-                  </TabsContent>
-
-                  <TabsContent value="info" className="mt-0 space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Clock className="w-5 h-5 text-blue-600" />
-                          <h4 className="font-semibold">שעות פעילות</h4>
-                        </div>
-                        <p className="text-gray-600 text-sm">{provider.available_hours || "לא צויין"}</p>
+                    <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors sm:col-span-2">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Languages className="w-5 h-5 text-blue-600" />
+                        <h4 className="font-semibold text-gray-900">שפות שירות</h4>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Globe className="w-5 h-5 text-blue-600" />
-                          <h4 className="font-semibold">אתר אינטרנט</h4>
-                        </div>
-                        {provider.website ? (
-                          <a href={provider.website} target="_blank" rel="noreferrer" className="text-blue-600 text-sm hover:underline truncate block">
-                            {provider.website}
-                          </a>
+                      <div className="flex flex-wrap gap-2">
+                        {provider.languages && provider.languages.length > 0 ? (
+                          provider.languages.map(lang => (
+                            <Badge key={lang} variant="outline" className="text-sm bg-white px-3 py-1">
+                              {lang}
+                            </Badge>
+                          ))
                         ) : (
                           <p className="text-gray-600 text-sm">לא צויין</p>
                         )}
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Mail className="w-5 h-5 text-blue-600" />
-                          <h4 className="font-semibold">אימייל</h4>
-                        </div>
-                        <p className="text-gray-600 text-sm">{provider.email || "לא צויין"}</p>
-                      </div>
-                      {provider.line_id && (
-                        <div className="p-4 bg-gray-50 rounded-xl">
-                          <div className="flex items-center gap-3 mb-2">
-                            <MessageCircle className="w-5 h-5 text-green-600" />
-                            <h4 className="font-semibold">Line ID</h4>
-                          </div>
-                          <p className="text-gray-600 text-sm">{provider.line_id}</p>
-                        </div>
-                      )}
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <div className="flex items-center gap-3 mb-2">
-                          <MessageCircle className="w-5 h-5 text-blue-600" />
-                          <h4 className="font-semibold">שפות שירות</h4>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {provider.languages && provider.languages.length > 0 ? (
-                            provider.languages.map(lang => (
-                              <Badge key={lang} variant="secondary" className="text-xs bg-white border border-gray-200">
-                                {lang}
-                              </Badge>
-                            ))
-                          ) : (
-                            <p className="text-gray-600 text-sm">לא צויין</p>
-                          )}
-                        </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reviews Section */}
+                <div id="reviews" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                        <Star className="w-5 h-5 text-yellow-400" />
+                        ביקורות לקוחות
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        מבוסס על {provider.total_reviews || 0} ביקורות מאומתות
                       </div>
                     </div>
-                  </TabsContent>
+                    <Button onClick={() => setShowReviewForm(!showReviewForm)} className="shadow-sm">
+                      כתוב ביקורת
+                    </Button>
+                  </div>
 
-                  <TabsContent value="reviews" className="mt-0">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-3xl font-bold text-gray-900">{provider.average_rating?.toFixed(1) || "0.0"}</span>
-                          <div className="flex flex-col">
-                            <div className="flex text-yellow-400">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star key={star} className={`w-4 h-4 ${star <= (provider.average_rating || 0) ? "fill-current" : "text-gray-300"}`} />
-                              ))}
-                            </div>
-                            <span className="text-xs text-gray-500">{provider.total_reviews || 0} ביקורות</span>
+                  <div className="flex items-center gap-6 mb-8 p-6 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex flex-col items-center justify-center p-4 border-l border-slate-200 pl-8">
+                      <span className="text-5xl font-bold text-gray-900">{provider.average_rating?.toFixed(1) || "0.0"}</span>
+                      <div className="flex text-yellow-400 my-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className={`w-5 h-5 ${star <= (provider.average_rating || 0) ? "fill-current" : "text-gray-300"}`} />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-500">ציון ממוצע</span>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      {/* Mock Bars just for visual */}
+                      {[5, 4, 3, 2, 1].map(num => (
+                        <div key={num} className="flex items-center gap-2 text-sm">
+                          <span className="w-3">{num}</span>
+                          <Star className="w-3 h-3 text-slate-300" />
+                          <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-400" style={{ width: num === 5 ? '70%' : num === 4 ? '20%' : '5%' }}></div>
                           </div>
                         </div>
-                      </div>
-                      <Button onClick={() => setShowReviewForm(!showReviewForm)}>
-                        כתוב ביקורת
-                      </Button>
+                      ))}
                     </div>
+                  </div>
 
-                    {/* Review Form (Same as before) */}
-                    {showReviewForm && (
-                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <div className="space-y-3">
-                          <Input
-                            value={newReview.reviewer_name}
-                            onChange={(e) => setNewReview({ ...newReview, reviewer_name: e.target.value })}
-                            placeholder="שמך המלא"
-                            className="bg-white"
-                          />
+
+                  {/* Review Form */}
+                  {showReviewForm && (
+                    <div className="mb-8 p-6 bg-blue-50/50 rounded-xl border border-blue-100 animate-in fade-in slide-in-from-top-4">
+                      <h4 className="font-semibold mb-4">כתוב את הביקורת שלך</h4>
+                      <div className="space-y-4">
+                        <Input
+                          value={newReview.reviewer_name}
+                          onChange={(e) => setNewReview({ ...newReview, reviewer_name: e.target.value })}
+                          placeholder="שמך המלא"
+                          className="bg-white"
+                        />
+                        <div className="flex flex-col gap-2">
+                          <span className="text-sm text-gray-600">דרג את החוויה שלך:</span>
                           <div className="flex gap-2">
                             {[1, 2, 3, 4, 5].map((rating) => (
-                              <button key={rating} onClick={() => setNewReview({ ...newReview, rating })}>
-                                <Star className={`w-8 h-8 ${rating <= newReview.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                              <button key={rating} onClick={() => setNewReview({ ...newReview, rating })} className="transition-transform hover:scale-110 focus:outline-none">
+                                <Star className={`w-8 h-8 ${rating <= newReview.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300 hover:text-yellow-200"}`} />
                               </button>
                             ))}
                           </div>
-                          <Textarea
-                            value={newReview.comment}
-                            onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                            placeholder="שתף את החוויה שלך..."
-                            className="bg-white"
-                            rows={3}
-                          />
-                          <div className="flex gap-2">
-                            <Button onClick={handleSubmitReview} className="flex-1">פרסם</Button>
-                            <Button onClick={() => setShowReviewForm(false)} variant="outline" className="flex-1">ביטול</Button>
-                          </div>
+                        </div>
+                        <Textarea
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                          placeholder="שתף את החוויה שלך עם ספק זה..."
+                          className="bg-white min-h-[100px]"
+                        />
+                        <div className="flex gap-3 pt-2">
+                          <Button onClick={handleSubmitReview} className="flex-1 bg-blue-600 hover:bg-blue-700">פרסם ביקורת</Button>
+                          <Button onClick={() => setShowReviewForm(false)} variant="outline" className="flex-1">ביטול</Button>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Reviews List */}
-                    <div className="space-y-4">
-                      {reviews.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">אין עדיין ביקורות. היה הראשון לדרג!</p>
-                      ) : (
-                        reviews.map((review) => (
-                          <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
-                            <div className="flex justify-between mb-2">
-                              <h4 className="font-semibold">{review.reviewer_name}</h4>
-                              <div className="flex text-yellow-400">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className={`w-3 h-3 ${star <= review.rating ? "fill-current" : "text-gray-300"}`} />
-                                ))}
+                  {/* Reviews List */}
+                  <div className="space-y-6">
+                    {reviews.length === 0 ? (
+                      <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-gray-500 font-medium">אין עדיין ביקורות</p>
+                        <p className="text-gray-400 text-sm">היה הראשון לשתף את דעתך על עסק זה</p>
+                      </div>
+                    ) : (
+                      reviews.map((review) => (
+                        <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                                {review.reviewer_name.charAt(0)}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-gray-900">{review.reviewer_name}</h4>
+                                <div className="flex text-yellow-400 text-xs">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star key={star} className={`w-3 h-3 ${star <= review.rating ? "fill-current" : "text-gray-300"}`} />
+                                  ))}
+                                  <span className="text-gray-400 ml-2">• לפני 2 ימים</span>
+                                </div>
                               </div>
                             </div>
-                            <p className="text-gray-600 text-sm">{review.comment}</p>
+                            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                              App Review
+                            </Badge>
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </TabsContent>
+                          <p className="text-gray-600 text-sm leading-relaxed mt-2 mr-14">{review.comment}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </Tabs>
+              </div>
             </Card>
           </div>
 

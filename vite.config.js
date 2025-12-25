@@ -40,8 +40,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0', // Bind to all interfaces for container access
-      port: 6565,
-      strictPort: true,
+      port: 5173,
+      strictPort: false,
       // Allow all hosts - essential for Modal tunnel URLs
       allowedHosts: true,
       cors: true,

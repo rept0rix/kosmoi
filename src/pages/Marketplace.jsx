@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Filter, Tag, ChevronDown, ChevronRight, X, LayoutGrid, Box, Map as MapIcon, List, Home, Car, Smartphone, Sofa } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { ProductCard } from '@/components/marketplace/ProductCard';
 import { CreateListingDialog } from '@/components/marketplace/CreateListingDialog';
@@ -76,6 +76,18 @@ const MOCK_PRODUCTS = [
         images: [{ url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' }],
         status: 'active',
         lat: 9.55, lng: 100.02
+    },
+    {
+        id: 'm-ark',
+        title: 'Ark Bar Beach Club VIP Table',
+        price: 5000,
+        description: 'Premium VIP table package at the famous Ark Bar Beach Club. Includes bottle service and best view.',
+        location: 'Chaweng Beach',
+        category_id: 'services',
+        subcategory: 'entertainment',
+        images: [{ url: 'https://images.unsplash.com/photo-1544422116-2d1d02c2f623?w=800&q=80' }],
+        status: 'active',
+        lat: 9.532, lng: 100.06
     },
     {
         id: 'm5',
@@ -195,12 +207,16 @@ const CategorySection = ({ title, categoryId, products, onSeeAll }) => {
 };
 
 
+
+
 export default function Marketplace() {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchParams] = useSearchParams(); // Get URL params
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || ''); // Init from URL
     const [activeCategory, setActiveCategory] = useState(null);
     const [activeSubCategory, setActiveSubCategory] = useState(null);
     const [products, setProducts] = useState([]);
+
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [sort, setSort] = useState('newest');
@@ -208,6 +224,13 @@ export default function Marketplace() {
 
     // Derived state: Home View is active if NO search, NO category, NO subcat
     const isHomeView = !searchTerm && !activeCategory && !activeSubCategory;
+
+    useEffect(() => {
+        const querySearch = searchParams.get('search');
+        if (querySearch && querySearch !== searchTerm) {
+            setSearchTerm(querySearch);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         loadProducts();
@@ -224,7 +247,24 @@ export default function Marketplace() {
 
             // If we have search/filter, do it on the server (MarketplaceService handles it).
             // Fallback to MOCK_PRODUCTS if MarketplaceService returns empty array (for demo purposes)
-            const finalProducts = (items && items.length > 0) ? items : MOCK_PRODUCTS;
+            let finalProducts = (items && items.length > 0) ? items : MOCK_PRODUCTS;
+
+            // If we fell back to MOCK_PRODUCTS, we must filter them client-side to respect the user's search/category
+            if (!items || items.length === 0) {
+                if (activeCategory) {
+                    finalProducts = finalProducts.filter(p => p.category_id === activeCategory.id);
+                }
+                if (activeSubCategory) {
+                    finalProducts = finalProducts.filter(p => p.subcategory === activeSubCategory.id || p.category_id === activeSubCategory.id); // Loose matching
+                }
+                if (searchTerm) {
+                    const lowerTerm = searchTerm.toLowerCase();
+                    finalProducts = finalProducts.filter(p =>
+                        p.title.toLowerCase().includes(lowerTerm) ||
+                        p.description.toLowerCase().includes(lowerTerm)
+                    );
+                }
+            }
 
             // Client-Side sorting
             let sortedProducts = [...finalProducts]; // Clone to avoid mutating original

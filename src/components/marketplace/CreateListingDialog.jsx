@@ -10,6 +10,7 @@ import { MarketplaceService } from '@/services/MarketplaceService';
 import { toast } from 'sonner';
 // Import the shared data structure
 import { MARKETPLACE_CATEGORIES } from '@/data/marketplaceData';
+import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
 
@@ -26,6 +27,8 @@ export function CreateListingDialog({ open, onOpenChange, onSuccess }) {
         condition: '',
         description: '',
         location: 'Koh Samui',
+        latitude: null,
+        longitude: null,
         // Dynamic fields container
         extras: {}
     });
@@ -76,13 +79,15 @@ ${formData.description}
             await MarketplaceService.createItem({
                 ...formData,
                 description: enhancedDescription,
-                price: parseFloat(formData.price)
+                price: parseFloat(formData.price),
+                lat: formData.latitude,
+                lng: formData.longitude
             }, selectedImages);
 
             toast.success("Listing created successfully!");
             onSuccess();
             onOpenChange(false);
-            setFormData({ title: '', price: '', category_id: '', subcategory: '', condition: '', description: '', location: 'Koh Samui', extras: {} });
+            setFormData({ title: '', price: '', category_id: '', subcategory: '', condition: '', description: '', location: 'Koh Samui', latitude: null, longitude: null, extras: {} });
             setSelectedImages([]);
         } catch (error) {
             console.error(error);
@@ -124,11 +129,16 @@ ${formData.description}
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="location">Location</Label>
-                            <Input
-                                id="location"
-                                value={formData.location}
-                                onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                            <label htmlFor="location" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Location</label>
+                            <GooglePlacesAutocomplete
+                                placeholder="Search location..."
+                                onPlaceSelected={(place) => setFormData(prev => ({
+                                    ...prev,
+                                    location: place.name,
+                                    latitude: place.latitude,
+                                    longitude: place.longitude
+                                }))}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
                             />
                         </div>
                     </div>

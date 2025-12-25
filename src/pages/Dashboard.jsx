@@ -13,258 +13,62 @@ import { useTranslation } from "react-i18next";
 import {
   Search,
   MapPin,
-  Navigation as NavigationIcon,
   Sparkles,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import ProviderCard from "../components/ProviderCard";
 import SuperCategories from "../components/SuperCategories";
 import SubCategorySelector from "../components/SubCategorySelector";
-import SyncStatus from "../components/SyncStatus";
 import OfflineIndicator from "../components/OfflineIndicator";
 import { autoSync } from "@/services/syncService";
 import { offlineQuery } from "@/services/offlineQuery";
-import WeatherWidget from "@/components/WeatherWidget";
 
-import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
+import SubtleLocationIndicator from "@/components/SubtleLocationIndicator";
+
 import {
-  History,
+  Users,
 } from "lucide-react";
+import { useUserProfile } from "@/contexts/UserProfileContext";
+import ProfileSelectionDialog from "@/components/ProfileSelectionDialog";
 
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  return distance;
-};
+import { useLocationContext } from "@/contexts/LocationContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
+  const {
+    userLocation,
+    locationName: selectedLocationName,
+    locationHistory,
+    updateLocation,
+    calculateDistance
+  } = useLocationContext(); // Renaming to match existing variable usage for minimal diff
+
+  // selectedLocationName managed by context
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationPermission, setLocationPermission] = useState('pending');
-  const [locationError, setLocationError] = useState(null);
-  const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [selectedLocationName, setSelectedLocationName] = useState(null);
-  const [locationAddressEn, setLocationAddressEn] = useState(null);
-  const [locationAddressTh, setLocationAddressTh] = useState(null);
-  const [loadingAddress, setLoadingAddress] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [selectedSuperCategory, setSelectedSuperCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-
-  const [locationHistory, setLocationHistory] = useState([]);
-
-  // Reverse Geocoding - convert coordinates to address in both English and Thai using Google API
-  const getAddressFromCoordinates = async (latitude, longitude) => {
-    try {
-      const isDevelopment = import.meta.env.DEV;
-
-      if (isDevelopment) {
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-        const urlEn = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}&language=en`;
-        const responseEn = await fetch(urlEn);
-        const dataEn = await responseEn.json();
-
-        const urlTh = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}&language=th`;
-        const responseTh = await fetch(urlTh);
-        const dataTh = await responseTh.json();
-
-        return {
-          en: dataEn.results?.[0]?.formatted_address || null,
-          th: dataTh.results?.[0]?.formatted_address || null
-        };
-      }
-
-      const response = await db.functions.invoke('geocode', {
-        latitude,
-        longitude
-      });
-
-      return {
-        en: response.data.en,
-        th: response.data.th
-      };
-    } catch (error) {
-      console.error('Error getting address:', error);
-      return { en: null, th: null };
-    }
-  };
+  // locationHistory managed by context
+  const { hasSelectedProfile, userProfile, PROFILES } = useUserProfile();
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
 
   useEffect(() => {
-    const savedLocation = localStorage.getItem('userLocation');
-    const savedLocationName = localStorage.getItem('locationName');
-    const savedLocationAddressEn = localStorage.getItem('locationAddressEn');
-    const savedLocationAddressTh = localStorage.getItem('locationAddressTh');
-
-    const savedHistory = localStorage.getItem('locationHistory');
-    if (savedHistory) {
-      try {
-        setLocationHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error("Failed to parse location history", e);
-      }
+    if (!hasSelectedProfile) {
+      const timer = setTimeout(() => setShowProfileDialog(true), 1500); // Small delay for better UX
+      return () => clearTimeout(timer);
     }
+  }, [hasSelectedProfile]);
 
-    if (savedLocation) {
-      try {
-        const location = JSON.parse(savedLocation);
-        setUserLocation(location);
-        setSelectedLocationName(savedLocationName || t('dashboard.my_location'));
-        setLocationAddressEn(savedLocationAddressEn);
-        setLocationAddressTh(savedLocationAddressTh);
-        setLocationPermission('granted');
-      } catch (error) {
-        console.error('Error parsing saved location:', error);
-        checkLocation();
-      }
-    } else {
-      checkLocation();
-    }
-  }, []);
+  // Removed legacy location logic in favor of LocationSelectorDialog
 
   useEffect(() => {
     autoSync().catch(err => {
       console.error('Auto-sync failed:', err);
     });
   }, []);
-
-  const checkLocation = async () => {
-    if (!navigator.geolocation) {
-      setLocationPermission('denied');
-      setLocationError(t('dashboard.location_error_api'));
-      return;
-    }
-
-    setLocationPermission('loading');
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const location = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        };
-        setUserLocation(location);
-        setSelectedLocationName(t('currentLocation'));
-        setLocationPermission('granted');
-        setLocationError(null);
-
-        setLoadingAddress(true);
-        try {
-          const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-          // console.log('Fetched addresses:', addresses);
-
-          if (addresses.en) {
-            setLocationAddressEn(addresses.en);
-            localStorage.setItem('locationAddressEn', addresses.en);
-          }
-          if (addresses.th) {
-            setLocationAddressTh(addresses.th);
-            localStorage.setItem('locationAddressTh', addresses.th);
-          }
-        } catch (error) {
-          console.error('Error fetching addresses:', error);
-        }
-        setLoadingAddress(false);
-
-        localStorage.setItem('userLocation', JSON.stringify(location));
-        localStorage.setItem('locationName', t('currentLocation'));
-      },
-      (error) => {
-        // console.log("Location access error:", error);
-        setLocationPermission('denied');
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationError(t('dashboard.location_error_denied'));
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          setLocationError(t('dashboard.location_error_unavailable'));
-        } else {
-          setLocationError(t('dashboard.location_error_generic'));
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  };
-
-  const requestLocation = () => {
-    checkLocation();
-  };
-
-  const addToHistory = (location) => {
-    const newHistoryItem = {
-      name: location.name,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      timestamp: new Date().getTime()
-    };
-
-    // Filter out duplicates (by name or very close coordinates)
-    const filteredHistory = locationHistory.filter(item => item.name !== location.name);
-
-    const newHistory = [newHistoryItem, ...filteredHistory].slice(0, 5); // Keep last 5
-    setLocationHistory(newHistory);
-    localStorage.setItem('locationHistory', JSON.stringify(newHistory));
-  };
-
-  const handleSelectLocation = async (location) => {
-    const newLocation = {
-      latitude: location.latitude,
-      longitude: location.longitude
-    };
-    setUserLocation(newLocation);
-    setSelectedLocationName(location.name);
-    setLocationPermission('granted');
-    setLocationError(null);
-    setShowLocationDialog(false);
-
-    addToHistory(location);
-
-    setLoadingAddress(true);
-    try {
-      // If we already have the address from autocomplete, use it (though specific formatted might vary)
-      // Standardize by fetching again or use what we have? 
-      // Existing logic fetches EN/TH. Let's keep fetching for consistency of data structure.
-      const addresses = await getAddressFromCoordinates(location.latitude, location.longitude);
-
-      if (addresses.en) {
-        setLocationAddressEn(addresses.en);
-        localStorage.setItem('locationAddressEn', addresses.en);
-      }
-      if (addresses.th) {
-        setLocationAddressTh(addresses.th);
-        localStorage.setItem('locationAddressTh', addresses.th);
-      }
-    } catch (error) {
-      console.error('Error fetching addresses:', error);
-    }
-    setLoadingAddress(false);
-
-    localStorage.setItem('userLocation', JSON.stringify(newLocation));
-    localStorage.setItem('locationName', location.name);
-  };
-
-  const handleUseCurrentLocation = () => {
-    setShowLocationDialog(false);
-    checkLocation();
-  };
 
   const { data: allProviders = [] } = useQuery({
     queryKey: ['allProviders'],
@@ -285,6 +89,7 @@ export default function Dashboard() {
       if (userLocation) {
         filteredProviders = filteredProviders.map(provider => {
           if (provider.latitude && provider.longitude) {
+            // Use calculateDistance from Context
             const distance = calculateDistance(
               userLocation.latitude,
               userLocation.longitude,
@@ -393,6 +198,51 @@ export default function Dashboard() {
             {t('dashboard.hero_subtitle')}
           </p>
 
+          {/* Profile Switcher */}
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={() => setShowProfileDialog(true)}
+              className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md transition-all text-white text-sm font-medium"
+            >
+              <Users className="w-4 h-4 text-purple-300 group-hover:text-purple-200" />
+              <span>
+                {userProfile === PROFILES.TOURIST && t('profiles.tourist.title', 'Tourist')}
+                {userProfile === PROFILES.NOMAD && t('profiles.nomad.title', 'Digital Nomad')}
+                {userProfile === PROFILES.RESIDENT && t('profiles.resident.title', 'Resident')}
+                {!userProfile && t('profiles.select_profile', 'Select Profile')}
+              </span>
+            </button>
+          </div>
+
+          {/* Location Bar & Status */}
+          <div className="max-w-7xl mx-auto px-4 mb-6 flex justify-center">
+            <SubtleLocationIndicator className="py-2 px-4 shadow-lg backdrop-blur-md bg-white/10" />
+          </div>
+
+          {/* Super Categories */}
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 mb-6">
+            <SuperCategories
+              onSelect={handleSuperCategoryClick}
+              selectedCategory={selectedSuperCategory}
+            />
+          </div>
+
+          {/* Sub Categories */}
+          <div className="mb-8">
+            {selectedSuperCategory && (
+              <div className="animate-in fade-in slide-in-from-top-4 duration-500 flex justify-center">
+                <SubCategorySelector
+                  superCategory={selectedSuperCategory}
+                  selectedSubCategory={selectedSubCategory}
+                  onSelectSubCategory={handleSubCategoryClick}
+                  language={language}
+                  limit={7}
+                  onViewMore={() => navigate(`/service-providers?super_category=${selectedSuperCategory}`)}
+                />
+              </div>
+            )}
+          </div>
+
           {/* Integrated Search Bar */}
           <div className="max-w-3xl mx-auto mb-16 relative">
             <div className="relative flex items-center">
@@ -423,186 +273,18 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
-            {/* Suggestions Dropdown can be absolutely positioned here if needed */}
-          </div>
-
-          {/* Super Categories */}
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
-            {/* <h3 className="text-white/80 font-medium text-sm uppercase tracking-wider mb-6">
-                {t('dashboard.categories')}
-             </h3> */}
-            <SuperCategories
-              onSelect={handleSuperCategoryClick}
-              selectedCategory={selectedSuperCategory}
-            />
+            {/* Suggestions can go here */}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
-        <div className="mb-4">
-          <div className="space-y-4">
+      {/* Location Permission UI Blocks (Moved here or kept below?) Keeping below Hero/inside main content usually fine, but let's check structure. 
+          The previous structure had Permission blocks after Hero. I will keep them there.
+      */}
 
-            {selectedSuperCategory && (
-              <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                {/* Sub Categories Pills */}
-                <div className="mb-2 flex justify-center">
-                  <SubCategorySelector
-                    superCategory={selectedSuperCategory}
-                    selectedSubCategory={selectedSubCategory}
-                    onSelectSubCategory={handleSubCategoryClick}
-                    language={language}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Location Permission UI Blocks Removed */}
 
-      {/* Location Bar & Status */}
-      <div className="max-w-7xl mx-auto px-4 mb-6">
-        {userLocation && (
-          <div className="flex items-center gap-2 justify-center text-sm text-gray-600 bg-white/50 py-2 rounded-full backdrop-blur-sm max-w-md mx-auto border border-gray-100 shadow-sm">
-            <MapPin className="w-4 h-4 text-blue-500" />
-            <span className="font-medium">{selectedLocationName}</span>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => setShowLocationDialog(true)}
-              className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
-            >
-              {t('change')}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Location Permission UI Blocks */}
-      {
-        locationPermission === 'loading' && (
-          <div className="bg-blue-500 text-white px-4 py-3">
-            <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-sm font-medium">{t('locatingYou')}</span>
-            </div>
-          </div>
-        )
-      }
-
-      {
-        locationPermission === 'denied' && (
-          <div className="bg-orange-500 text-white px-4 py-3">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <NavigationIcon className="w-5 h-5" />
-                <div>
-                  <span className="text-sm font-medium block">{t('cannotAccessLocation')}</span>
-                  <span className="text-xs opacity-90">{locationError || t('allowLocationAccess')}</span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setShowLocationDialog(true)}
-                  size="sm"
-                  className="bg-white text-orange-600 hover:bg-gray-100 font-semibold"
-                >
-                  {t('selectLocation')}
-                </Button>
-                <Button
-                  onClick={requestLocation}
-                  size="sm"
-                  variant="outline"
-                  className="bg-transparent border-white text-white hover:bg-white/20"
-                >
-                  {t('tryAgain')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {
-        locationPermission === 'pending' && (
-          <div className="bg-blue-600 text-white px-4 py-3">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <NavigationIcon className="w-5 h-5" />
-                <div>
-                  <span className="text-sm font-medium block">{t('confirmLocationAccess')}</span>
-                  <span className="text-xs opacity-90">{t('toFindNearbyProviders')}</span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setShowLocationDialog(true)}
-                  size="sm"
-                  className="bg-white text-blue-600 hover:bg-gray-100 font-semibold"
-                >
-                  {t('selectLocation')}
-                </Button>
-                <Button
-                  onClick={requestLocation}
-                  size="sm"
-                  variant="outline"
-                  className="bg-transparent border-white text-white hover:bg-white/20"
-                >
-                  {t('allowLocation')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('selectLocation')}</DialogTitle>
-            <DialogDescription>
-              {t('dashboard.search_location_description')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <GooglePlacesAutocomplete
-                  placeholder={t('dashboard.search_location_placeholder')}
-                  onPlaceSelected={handleSelectLocation}
-                  className="text-base h-12 pe-10 ps-10"
-                />
-              </div>
-              <Button
-                onClick={handleUseCurrentLocation}
-                className="bg-blue-600 hover:bg-blue-700 h-12 px-4"
-              >
-                <NavigationIcon className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {locationHistory.length > 0 && (
-              <div className="border-t pt-3">
-                <p className="text-sm font-medium text-gray-700 mb-2">{t('recentSearches') || "Recent Locations"}</p>
-                <div className="space-y-2">
-                  {locationHistory.map((location, index) => (
-                    <Button
-                      key={`${location.name}-${index}`}
-                      onClick={() => handleSelectLocation(location)}
-                      variant="outline"
-                      className="w-full justify-start h-12"
-                    >
-                      <History className="w-4 h-4 me-2 text-gray-500" />
-                      {location.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-
+      {/* Integrated Location Dialog via SubtleLocationIndicator (Self-contained) */}
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
 
@@ -643,6 +325,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <ProfileSelectionDialog open={showProfileDialog} onOpenChange={setShowProfileDialog} />
     </div >
   );
 }

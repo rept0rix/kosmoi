@@ -80,14 +80,16 @@ export const subCategoriesBySuperCategory = {
   ],
   get_service: [
     "all_services",
+    "money_exchange",
     "laundry",
-    "visa_agents",
+    "visa_services",
     "real_estate",
+    "health_clinics",
+    "cannabis_shops",
+    "coworking",
     "photographers",
-    "hair_salons",
-    "nail_salons",
-    "tattoo_studios",
-    "coworking"
+    "legal_accounting",
+    "digital_nomad"
   ],
   get_info: [
     "all_info",
@@ -112,6 +114,13 @@ export const subCategoryTranslations = {
     locksmith: "מנעולן",
     painter: "צבע",
     solar_energy: "אנרגיה סולארית",
+
+    // Services (New)
+    money_exchange: "כסף וצ'יינג'",
+    health_clinics: "מרפאות ובריאות",
+    legal_accounting: "עריכת דין וחשבון",
+    digital_nomad: "נוודים דיגיטליים",
+    cannabis_shops: "קנאביס",
 
     // Get Service additions
     laundry: "מכבסה",
@@ -242,6 +251,13 @@ export const subCategoryTranslations = {
     painter: "Painter",
     solar_energy: "Solar Energy",
 
+    // Services (New)
+    money_exchange: "Money Exchange & Crypto",
+    health_clinics: "Health Clinics",
+    legal_accounting: "Legal & Accounting",
+    digital_nomad: "Digital Nomad",
+    cannabis_shops: "Cannabis",
+
     // Get Service additions
     laundry: "Laundry",
     housekeeping: "Housekeeping",
@@ -371,6 +387,13 @@ export const subCategoryTranslations = {
     painter: "ช่างทาสี",
     solar_energy: "พลังงานแสงอาทิตย์",
 
+    // Services (New)
+    money_exchange: "แลกเปลี่ยนเงินตรา",
+    health_clinics: "คลินิกสุขภาพ",
+    legal_accounting: "กฎหมายและบัญชี",
+    digital_nomad: "ดิจิทัลโนแมด",
+    cannabis_shops: "กัญชา",
+
     // Get Service additions
     laundry: "ซักรีด",
     housekeeping: "แม่บ้าน",
@@ -499,6 +522,13 @@ export const subCategoryTranslations = {
     locksmith: "Слесарь",
     painter: "Маляр",
     solar_energy: "Солнечная энергия",
+
+    // Services (New)
+    money_exchange: "Обмен валюты",
+    health_clinics: "Медицинские клиники",
+    legal_accounting: "Юридические услуги",
+    digital_nomad: "Цифровой кочевник",
+    cannabis_shops: "Каннабис",
 
     // Get Service additions
     laundry: "Прачечная",

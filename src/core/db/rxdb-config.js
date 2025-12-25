@@ -31,7 +31,7 @@ export const createDatabase = async () => {
         : rawStorage;
 
     const db = await createRxDatabase({
-        name: 'kosmoidb_v2',
+        name: 'kosmoidb_v3',
         storage,
         multiInstance: true,
         eventReduce: true,

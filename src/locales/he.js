@@ -384,5 +384,23 @@ export const he = {
     "highestRated": "דירוג גבוה",
     "mostReviewed": "הכי מבוקר",
     "minRating": "דירוג מינימלי",
-    "minReviews": "ביקורות מינימליות"
+    "minReviews": "ביקורות מינימליות",
+
+    // Experiences
+    "experiences.hero_title": "גלה חוויות בלתי נשכחות",
+    "experiences.hero_subtitle": "הזמן סיורים, פעילויות והרפתקאות מקומיות בקו סמוי.",
+    "experiences.search_placeholder": "חפש סיורים, פעילויות...",
+    "experiences.category_all": "הכל",
+    "experiences.category_adventure": "הרפתקה",
+    "experiences.category_food": "אוכל",
+    "experiences.category_culture": "תרבות",
+    "experiences.category_nature": "טבע",
+    "experiences.category_nightlife": "חיי לילה",
+    "experiences.book_btn": "הזמן עכשיו",
+    "experiences.duration": "משך",
+    "experiences.guests": "אורחים",
+    "experiences.inquiry_title": "הזמן חוויה",
+    "experiences.inquiry_desc": "שלח בקשה עבור",
+    "experiences.inquiry_success": "הבקשה נשלחה! סוכן ייצור איתך קשר לאישור.",
+    "experiences.price_person": "לאדם"
 };

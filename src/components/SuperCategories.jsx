@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageContext";
 import { getTranslation } from "@/components/translations";
+import { useUserProfile } from "@/contexts/UserProfileContext";
 
 export default function SuperCategories({ onSelect, selectedCategory }) {
   const { language } = useLanguage();
@@ -25,13 +26,28 @@ export default function SuperCategories({ onSelect, selectedCategory }) {
     { id: "go_out", name: t("go_out"), icon: Home, color: "bg-green-100 text-green-600" },
     { id: "travel", name: t("travel"), icon: Plane, color: "bg-cyan-100 text-cyan-600" },
     { id: "help", name: t("help"), icon: HandHeart, color: "bg-red-100 text-red-600" },
-    { id: "get_service", name: t("get_service"), icon: Briefcase, color: "bg-indigo-100 text-indigo-600" },
-    { id: "get_info", name: t("get_info"), icon: Info, color: "bg-yellow-100 text-yellow-600" },
+    { id: "get_service", name: t("all_services"), icon: Briefcase, color: "bg-teal-100 text-teal-600" },
   ];
 
+  const { userProfile, PROFILES } = useUserProfile();
+
+  const categoryOrder = {
+    [PROFILES.TOURIST]: ['eat', 'enjoy', 'travel', 'shop', 'go_out', 'get_service', 'fix', 'help'],
+    [PROFILES.NOMAD]: ['get_service', 'eat', 'enjoy', 'travel', 'shop', 'go_out', 'fix', 'help'],
+    [PROFILES.RESIDENT]: ['fix', 'get_service', 'shop', 'help', 'eat', 'enjoy', 'travel', 'go_out']
+  };
+
+  const currentOrder = categoryOrder[userProfile] || categoryOrder[PROFILES.TOURIST];
+
+  const sortedCategories = [...superCategories].sort((a, b) => {
+    const indexA = currentOrder.indexOf(a.id);
+    const indexB = currentOrder.indexOf(b.id);
+    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+  });
+
   return (
-    <div className="flex flex-wrap justify-center gap-6 py-4">
-      {superCategories.map((category) => {
+    <div className="grid grid-cols-4 gap-4 py-4 justify-items-center">
+      {sortedCategories.map((category) => {
         const isSelected = selectedCategory === category.id;
         return (
           <button
@@ -40,11 +56,11 @@ export default function SuperCategories({ onSelect, selectedCategory }) {
               }`}
             onClick={() => onSelect(category.id)}
           >
-            <div className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center shadow-sm ${isSelected ? 'ring-4 ring-blue-500 shadow-md' : ''
+            <div className={`w-14 h-14 rounded-2xl ${category.color} flex items-center justify-center shadow-sm ${isSelected ? 'ring-4 ring-blue-500 shadow-md' : ''
               }`}>
-              <category.icon className="w-8 h-8" />
+              <category.icon className="w-7 h-7" />
             </div>
-            <p className={`text-sm font-medium ${isSelected ? 'text-blue-600 font-bold' : 'text-gray-900'}`}>
+            <p className={`text-xs font-medium text-center leading-tight ${isSelected ? 'text-blue-400 font-bold' : 'text-gray-100'}`}>
               {category.name}
             </p>
           </button>

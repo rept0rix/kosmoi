@@ -387,5 +387,23 @@ export const en = {
     "highestRated": "Highest Rated",
     "mostReviewed": "Most Reviewed",
     "minRating": "Min Rating",
-    "minReviews": "Min Reviews"
+    "minReviews": "Min Reviews",
+
+    // Experiences
+    "experiences.hero_title": "Discover Unforgettable Experiences",
+    "experiences.hero_subtitle": "Book tours, activities, and local adventures in Koh Samui.",
+    "experiences.search_placeholder": "Search tours, activities...",
+    "experiences.category_all": "All",
+    "experiences.category_adventure": "Adventure",
+    "experiences.category_food": "Food",
+    "experiences.category_culture": "Culture",
+    "experiences.category_nature": "Nature",
+    "experiences.category_nightlife": "Nightlife",
+    "experiences.book_btn": "Book Now",
+    "experiences.duration": "Duration",
+    "experiences.guests": "Guests",
+    "experiences.inquiry_title": "Book Experience",
+    "experiences.inquiry_desc": "Send request for",
+    "experiences.inquiry_success": "Request Sent! An agent will contact you to confirm.",
+    "experiences.price_person": "per person"
 };

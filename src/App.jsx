@@ -6,8 +6,8 @@ import VisualEditAgent from '@/shared/lib/VisualEditAgent'
 
 import { usePageDirection } from '@/shared/hooks/usePageDirection';
 import { pagesConfig } from './pages.config'
-import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams } from 'react-router-dom';
 import { setupIframeMessaging } from '@/shared/lib/iframe-messaging';
 import { AuthProvider, useAuth } from '@/features/auth/context/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -21,14 +21,20 @@ import VendorSignup from '@/features/vendors/pages/Signup';
 // import VendorLite from '@/pages/VendorLite'; // Unused?
 
 import { AppConfigProvider } from '@/components/AppConfigContext';
+import { UserProfileProvider } from '@/contexts/UserProfileContext';
+import { LocationProvider } from '@/contexts/LocationContext';
 import { RxDBProvider } from '@/core/db/RxDBProvider';
 import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 const PersistenceTest = lazy(() => import('./pages/PersistenceTest'));
 const MemoryLab = lazy(() => import('./pages/MemoryLab'));
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import KosmoiLoader from '@/components/ui/KosmoiLoader';
 // import Footer from '@/components/Footer'; // Unused in main layout?
 
 import GlobalErrorBoundary from '@/components/GlobalErrorBoundary';
+import ScrollToTop from '@/components/ScrollToTop';
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { LanguageProvider, useLanguage } from '@/components/LanguageContext';
 
 // Content Sprint Pages
 import AboutUs from '@/pages/AboutUs';
@@ -100,10 +106,13 @@ const LayoutWrapper = ({ children, currentPageName }) => {
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const location = useLocation();
+  const { language } = useLanguage();
   usePageDirection();
 
   // Allow public access to diagnostics
-  if (location.pathname === '/diagnostics') {
+  // Updated to be rigorous about path matching regardless of language prefix
+  const isDiagnostics = location.pathname.endsWith('/diagnostics');
+  if (isDiagnostics) {
     const DiagnosticsPage = Pages['Diagnostics'];
     return <DiagnosticsPage />;
   }
@@ -111,9 +120,9 @@ const AuthenticatedApp = () => {
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center flex-col gap-4">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-        <p className="text-sm text-gray-500">Loading... (Auth: {isLoadingAuth ? 'Checking' : 'Done'}, Settings: {isLoadingPublicSettings ? 'Loading' : 'Done'})</p>
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
+        <KosmoiLoader />
+        {/* <p className="text-sm text-gray-500 mt-4">Loading... (Auth: {isLoadingAuth ? 'Checking' : 'Done'}, Settings: {isLoadingPublicSettings ? 'Loading' : 'Done'})</p> */}
       </div>
     );
   }
@@ -124,12 +133,14 @@ const AuthenticatedApp = () => {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
       // Redirect to login automatically
+      // TODO: Handle language-aware redirect
       navigateToLogin();
       return null;
     }
   }
 
   const MapViewPage = Pages['MapView'];
+  const isMapView = location.pathname.endsWith('/mapview');
 
   // Render the main app
   return (
@@ -137,17 +148,18 @@ const AuthenticatedApp = () => {
       <div className="flex flex-col min-h-screen">
         <div className="flex-1">
           {/* Persistent MapView */}
-          <div style={{ display: location.pathname.toLowerCase() === '/mapview' ? 'block' : 'none', height: '100%' }}>
+          <div style={{ display: isMapView ? 'block' : 'none', height: '100%' }}>
             <MapViewPage />
           </div>
 
           <Routes>
+            {/* Note: All paths here are relative to the parent Route (language prefix or root) */}
             <Route path="/" element={<MainPage />} />
             {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
-            <Route path="/mapview" element={null} />
+            <Route path="mapview" element={null} />
 
             {/* Protected Business Route */}
-            <Route path="/business" element={
+            <Route path="business" element={
               <RequireRole role="vendor">
                 <Pages.Business />
               </RequireRole>
@@ -157,36 +169,37 @@ const AuthenticatedApp = () => {
               .filter(([path]) => path !== 'MapView')
               .filter(([path]) => !['Wallet', 'ProviderDashboard', 'RealEstate', 'Experiences'].includes(path)) // Exclude Super App pages for manual routing
               .map(([path, Page]) => (
-                <Route key={path} path={`/${path.toLowerCase()}`} element={<Page />} />
+                <Route key={path} path={`${path.toLowerCase()}`} element={<Page />} />
               ))}
 
             {/* Public Super App Routes */}
-            <Route path="/real-estate" element={<RealEstateHub />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/marketplace/:id" element={<ProductDetails />} />
-            <Route path="/organizer" element={<Organizer />} />
-            <Route path="/vendor-signup" element={<VendorSignup />} />
-            <Route path="/login" element={<Pages.Login />} />
-            <Route path="/complete-signup" element={<Pages.CompleteSignup />} />
-            <Route path="/experiences" element={<Pages.Experiences />} />
+            <Route path="real-estate" element={<RealEstateHub />} />
+            <Route path="marketplace" element={<Marketplace />} />
+            <Route path="marketplace/:id" element={<ProductDetails />} />
+            <Route path="organizer" element={<Organizer />} />
+            <Route path="vendor-signup" element={<VendorSignup />} />
+            <Route path="login" element={<Pages.Login />} />
+            <Route path="complete-signup" element={<Pages.CompleteSignup />} />
+            <Route path="experiences" element={<Pages.Experiences />} />
+            <Route path="experiences/:id" element={<Pages.ExperienceDetails />} />
 
-            <Route path="/provider/:providerId" element={<ProviderProfile />} />
-            <Route path="/chat/:workflowId" element={<Pages.AgentChat />} />
-            <Route path="/chat-hub" element={<ChatHub />} />
-            <Route path="/notifications" element={<Notifications />} />
+            <Route path="provider/:providerId" element={<ProviderProfile />} />
+            <Route path="chat/:workflowId" element={<Pages.AgentChat />} />
+            <Route path="chat-hub" element={<ChatHub />} />
+            <Route path="notifications" element={<Notifications />} />
 
             {/* Admin & Vendor Routes */}
-            <Route path="/command-center" element={<CommandCenter />} />
-            <Route path="/board-room" element={<BoardRoom />} />
+            <Route path="command-center" element={<CommandCenter />} />
+            <Route path="board-room" element={<BoardRoom />} />
 
             {/* Admin Routes (New Layout) */}
             <Route element={<ProtectedAdminRoute />}>
-              <Route path="/admin" element={
+              <Route path="admin" element={
                 <RequireRole role="admin">
                   <AdminLayout />
                 </RequireRole>
               }>
-                <Route index element={<Navigate to="/admin/command-center" replace />} />
+                <Route index element={<Navigate to="command-center" replace />} />
                 <Route path="command-center" element={<CommandCenter />} />
                 <Route path="board-room" element={<BoardRoom />} />
                 <Route path="users" element={<AdminUsers />} />
@@ -217,31 +230,35 @@ const AuthenticatedApp = () => {
 
 
             <Route element={<ProtectedUserRoute />}>
-              <Route path="/wallet" element={<Pages.Wallet />} />
-              <Route path="/provider-dashboard" element={<Pages.ProviderDashboard />} />
-              <Route path="/vendor/calendar" element={<CalendarView />} />
-              <Route path="/my-bookings" element={<MyBookings />} />
-              <Route path="/memory-lab" element={<MemoryLab />} />
+              <Route path="wallet" element={<Pages.Wallet />} />
+              <Route path="wallet/scan" element={<Pages.WalletScan />} />
+              <Route path="wallet/send" element={<Pages.WalletSend />} />
+              <Route path="wallet/receive" element={<Pages.WalletReceive />} />
+              <Route path="wallet/card" element={<Pages.WalletCard />} />
+              <Route path="provider-dashboard" element={<Pages.ProviderDashboard />} />
+              <Route path="vendor/calendar" element={<CalendarView />} />
+              <Route path="my-bookings" element={<MyBookings />} />
+              <Route path="memory-lab" element={<MemoryLab />} />
             </Route>
 
-            <Route path="/earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay data={{}} /></div>} />
-            <Route path="/persistence-test" element={<PersistenceTest />} />
-            <Route path="/persistence-test" element={<PersistenceTest />} />
+            <Route path="earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay data={{}} /></div>} />
+            <Route path="persistence-test" element={<PersistenceTest />} />
+            <Route path="persistence-test" element={<PersistenceTest />} />
 
             {/* Trust Pages */}
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/use-cases" element={<UseCases />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/legal/terms" element={<Terms />} />
-            <Route path="/legal/privacy" element={<Privacy />} />
-            <Route path="/legal/accessibility" element={<Accessibility />} />
-            <Route path="/business-info" element={<BusinessInfo />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPostDetail />} />
+            <Route path="about" element={<AboutUs />} />
+            <Route path="use-cases" element={<UseCases />} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="legal/terms" element={<Terms />} />
+            <Route path="legal/privacy" element={<Privacy />} />
+            <Route path="legal/accessibility" element={<Accessibility />} />
+            <Route path="business-info" element={<BusinessInfo />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="blog" element={<Blog />} />
+            <Route path="blog/:slug" element={<BlogPostDetail />} />
 
-            <Route path="/local-brain" element={<LocalBrain />} />
-            <Route path="/health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />
+            <Route path="local-brain" element={<LocalBrain />} />
+            <Route path="health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
@@ -250,25 +267,50 @@ const AuthenticatedApp = () => {
   );
 };
 
+const LanguageRoot = ({ lang }) => {
+  const { setLanguage } = useLanguage();
+  useEffect(() => {
+    if (lang) {
+      setLanguage(lang);
+    } else {
+      setLanguage('en');
+    }
+  }, [lang, setLanguage]);
+
+  return <AuthenticatedApp />;
+};
+
 function App() {
 
   return (
     <AuthProvider>
-      <AppConfigProvider>
-        <RxDBProvider>
-          <QueryClientProvider client={queryClientInstance}>
-            <GlobalErrorBoundary>
-              <Router>
-
-                <AuthenticatedApp />
-                {/* <VisualEditAgent /> */}
-              </Router>
-            </GlobalErrorBoundary>
-            <Toaster />
-          </QueryClientProvider>
-        </RxDBProvider>
-        <SpeedInsights />
-      </AppConfigProvider>
+      <UserProfileProvider>
+        <LocationProvider>
+          <LanguageProvider>
+            <AppConfigProvider>
+              <RxDBProvider>
+                <QueryClientProvider client={queryClientInstance}>
+                  <GlobalErrorBoundary>
+                    <Router>
+                      <ScrollToTop />
+                      <Routes>
+                        <Route path="/he/*" element={<LanguageRoot lang="he" />} />
+                        <Route path="/th/*" element={<LanguageRoot lang="th" />} />
+                        <Route path="/ru/*" element={<LanguageRoot lang="ru" />} />
+                        <Route path="/*" element={<LanguageRoot lang="en" />} />
+                      </Routes>
+                      {/* <VisualEditAgent /> */}
+                    </Router>
+                  </GlobalErrorBoundary>
+                  <Toaster />
+                  <SonnerToaster />
+                </QueryClientProvider>
+              </RxDBProvider>
+              <SpeedInsights />
+            </AppConfigProvider>
+          </LanguageProvider>
+        </LocationProvider>
+      </UserProfileProvider>
     </AuthProvider>
   )
 }

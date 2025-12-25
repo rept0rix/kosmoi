@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
  */
 
 /**
- * @type {React.ForwardRefExoticComponent<GlassCardProps & React.RefAttributes<HTMLDivElement>>}
+ * @type {React.ForwardRefExoticComponent<GlassCardProps & import('framer-motion').HTMLMotionProps<"div"> & React.RefAttributes<HTMLDivElement>>}
  */
 const GlassCard = React.forwardRef(({ className, children, hoverEffect = false, ...props }, ref) => {
     return (

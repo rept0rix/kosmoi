@@ -261,7 +261,7 @@ const LayoutContent = ({ children }) => {
                   if (item.isSpecial) {
                     // CENTER BUTTON (Action FAB)
                     return (
-                      <div key={item.title} className="relative -top-12 z-50">
+                      <div key={item.title} className="relative -top-6 z-50">
                         <QuickActionsFab />
                       </div>
                     );
