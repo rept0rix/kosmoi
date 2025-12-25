@@ -32,13 +32,28 @@ export const RxDBProvider = ({ children }) => {
     }, []);
 
     const handleHardReset = async () => {
-        try {
-            if (confirm("This will clear your local database cache and reload. Your data is safe in the cloud. Continue?")) {
-                await DatabaseService.destroy();
+        if (confirm("This will clear your local database cache and reload. Your data is safe in the cloud. Continue?")) {
+            try {
+                // Attempt graceful destroy
+                try {
+                    await DatabaseService.destroy();
+                } catch (e) {
+                    console.warn("Graceful destroy failed, forcing manual cleanup", e);
+                }
+
+                // Force clear IndexedDB
+                const dbs = await window.indexedDB.databases();
+                dbs.forEach(db => window.indexedDB.deleteDatabase(db.name));
+
+                // Clear Local Storage
+                localStorage.clear();
+
+                window.location.reload();
+            } catch (e) {
+                console.error("Hard reset failed", e);
+                // Last resort: force reload anyway
                 window.location.reload();
             }
-        } catch (e) {
-            alert("Failed to reset database: " + e.message);
         }
     };
 
@@ -51,7 +66,19 @@ export const RxDBProvider = ({ children }) => {
                 <div className="text-slate-400 text-base max-w-md text-center leading-relaxed">
                     {isTimeout
                         ? "The local database is taking too long to load. This might be due to a corruption or stuck lock."
-                        : (error?.message || "An unexpected error occurred while loading the database.")
+                        : (
+                            <div className="flex flex-col gap-2">
+                                <span>{error?.message || "An unexpected error occurred."}</span>
+                                {error?.parameters?.database && (
+                                    <span className="text-xs font-mono text-slate-500 bg-slate-800 p-1 rounded">
+                                        DB: {error.parameters.database}
+                                    </span>
+                                )}
+                                <span className="text-xs text-slate-600 mt-2">
+                                    If this persists, please Hard Reset.
+                                </span>
+                            </div>
+                        )
                     }
                 </div>
                 <div className="flex gap-4">
