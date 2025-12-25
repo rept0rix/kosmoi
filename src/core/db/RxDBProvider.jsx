@@ -31,49 +31,51 @@ export const RxDBProvider = ({ children }) => {
         return () => clearTimeout(timeoutId);
     }, []);
 
+    const [isResetting, setIsResetting] = useState(false);
+
     const handleHardReset = async () => {
-        if (confirm("This will clear your local database cache and reload. Your data is safe in the cloud. Continue?")) {
+        setIsResetting(true);
+        console.log("Initiating Nuclear Hard Reset...");
+
+        try {
+            // Attempt graceful destroy
             try {
-                // Attempt graceful destroy
-                try {
-                    await DatabaseService.destroy();
-                } catch (e) {
-                    console.warn("Graceful destroy failed, forcing manual cleanup", e);
-                }
-
-                // Nuclear Option: Unregister any Service Workers
-                if ('serviceWorker' in navigator) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (const registration of registrations) {
-                        await registration.unregister();
-                    }
-                }
-
-                // Force clear IndexedDB
-                const dbs = await window.indexedDB.databases();
-                await Promise.all(dbs.map(db => new Promise((resolve, reject) => {
-                    const req = window.indexedDB.deleteDatabase(db.name);
-                    req.onsuccess = () => resolve();
-                    req.onerror = () => resolve(); // Ignore errors, just try
-                    req.onblocked = () => resolve();
-                })));
-
-                // Clear Local Storage
-                localStorage.clear();
-                sessionStorage.clear();
-
-                // Clear Cache API
-                if ('caches' in window) {
-                    const cacheKeys = await caches.keys();
-                    await Promise.all(cacheKeys.map(key => caches.delete(key)));
-                }
-
-                window.location.reload();
+                await DatabaseService.destroy();
             } catch (e) {
-                console.error("Hard reset failed", e);
-                // Last resort: force reload anyway
-                window.location.reload();
+                console.warn("Graceful destroy failed, forcing manual cleanup", e);
             }
+
+            // Nuclear Option: Unregister any Service Workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+
+            // Force clear IndexedDB
+            const dbs = await window.indexedDB.databases();
+            await Promise.all(dbs.map(db => new Promise((resolve) => {
+                const req = window.indexedDB.deleteDatabase(db.name);
+                req.onsuccess = () => resolve();
+                req.onerror = () => resolve();
+                req.onblocked = () => resolve();
+            })));
+
+            // Clear Storage
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Clear Cache API
+            if ('caches' in window) {
+                const cacheKeys = await caches.keys();
+                await Promise.all(cacheKeys.map(key => caches.delete(key)));
+            }
+        } catch (e) {
+            console.error("Hard reset failed", e);
+        } finally {
+            console.log("Reloading...");
+            window.location.reload();
         }
     };
 
@@ -113,9 +115,10 @@ export const RxDBProvider = ({ children }) => {
                     </button>
                     <button
                         onClick={handleHardReset}
-                        className="px-6 py-2 bg-red-600 rounded hover:bg-red-700 transition-colors font-medium border border-red-500 shadow-lg shadow-red-900/20"
+                        disabled={isResetting}
+                        className="px-6 py-2 bg-red-600 rounded hover:bg-red-700 transition-colors font-medium border border-red-500 shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        HARD RESET (Nuclear)
+                        {isResetting ? "NUKING..." : "HARD RESET (Nuclear)"}
                     </button>
                 </div>
             </div>
