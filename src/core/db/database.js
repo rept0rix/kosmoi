@@ -32,8 +32,9 @@ export const DatabaseService = {
                 console.log("DatabaseService: DB Instance created", db.name);
 
                 // Add collections
-                // Add collections only if they don't exist (Prevent DB9)
-                if (!db.collections.vendors) {
+                // Add collections with robust error handling
+                // We use try-catch instead of checking state to be 100% sure we don't crash
+                try {
                     await db.addCollections({
                         vendors: {
                             schema: vendorSchema,
@@ -66,8 +67,12 @@ export const DatabaseService = {
                         stages: { schema: stageSchema }
                     });
                     console.log("DatabaseService: Collections added");
-                } else {
-                    console.log("DatabaseService: Collections already exist, skipping addition.");
+                } catch (e) {
+                    if (e.message.includes('DB9') || e.code === 'DB9') {
+                        console.warn("DatabaseService: Collections already exist (DB9 caught), proceeding...");
+                    } else {
+                        throw e; // Re-throw other errors
+                    }
                 }
 
                 // Start Replication (Fire and forget, but with better error logging)
