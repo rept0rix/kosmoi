@@ -19,9 +19,9 @@ import initialCompanyState from '@/data/company_state.json';
 import { CoreLoop } from '@/services/loops/CoreLoop';
 
 // Initialize direct Supabase client for Realtime support
-// Initialize direct Supabase client for Realtime support
 import { realSupabase as supabase } from '@/api/supabaseClient';
-import { useRxQuery, useRxDB } from '@/services/rxdb/hooks';
+import { useRxQuery } from '@/shared/hooks/useRxQuery';
+import { useRxDB } from '@/core/db/RxDBProvider';
 
 export function useBoardRoom() {
     // Start Autonomous Engine
