@@ -23,7 +23,7 @@ import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 
 // Singleton Storage Instance
 const rawStorage = getRxStorageDexie();
-const storage = import.meta.env.DEV
+export const storage = import.meta.env.DEV
     ? wrappedValidateAjvStorage({ storage: rawStorage })
     : rawStorage;
 
