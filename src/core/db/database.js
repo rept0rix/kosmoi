@@ -32,38 +32,43 @@ export const DatabaseService = {
                 console.log("DatabaseService: DB Instance created", db.name);
 
                 // Add collections
-                await db.addCollections({
-                    vendors: {
-                        schema: vendorSchema,
-                        migrationStrategies: {
-                            1: (oldDoc) => {
-                                oldDoc.vibes = oldDoc.vibes || [];
-                                oldDoc.images = oldDoc.images || [];
-                                oldDoc.price_level = oldDoc.price_level || null;
-                                oldDoc.instagram_handle = oldDoc.instagram_handle || null;
-                                oldDoc.open_status = oldDoc.open_status || 'closed';
-                                return oldDoc;
+                // Add collections only if they don't exist (Prevent DB9)
+                if (!db.collections.vendors) {
+                    await db.addCollections({
+                        vendors: {
+                            schema: vendorSchema,
+                            migrationStrategies: {
+                                1: (oldDoc) => {
+                                    oldDoc.vibes = oldDoc.vibes || [];
+                                    oldDoc.images = oldDoc.images || [];
+                                    oldDoc.price_level = oldDoc.price_level || null;
+                                    oldDoc.instagram_handle = oldDoc.instagram_handle || null;
+                                    oldDoc.open_status = oldDoc.open_status || 'closed';
+                                    return oldDoc;
+                                }
                             }
-                        }
-                    },
-                    tasks: {
-                        schema: taskSchema,
-                        migrationStrategies: {
-                            1: (oldDoc) => oldDoc,
-                            2: (oldDoc) => {
-                                oldDoc.meeting_id = oldDoc.meeting_id || "";
-                                oldDoc.priority = oldDoc.priority || "medium";
-                                oldDoc.description = oldDoc.description || "";
-                                oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
-                                oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
-                                return oldDoc;
+                        },
+                        tasks: {
+                            schema: taskSchema,
+                            migrationStrategies: {
+                                1: (oldDoc) => oldDoc,
+                                2: (oldDoc) => {
+                                    oldDoc.meeting_id = oldDoc.meeting_id || "";
+                                    oldDoc.priority = oldDoc.priority || "medium";
+                                    oldDoc.description = oldDoc.description || "";
+                                    oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
+                                    oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
+                                    return oldDoc;
+                                }
                             }
-                        }
-                    },
-                    contacts: { schema: contactSchema },
-                    stages: { schema: stageSchema }
-                });
-                console.log("DatabaseService: Collections added");
+                        },
+                        contacts: { schema: contactSchema },
+                        stages: { schema: stageSchema }
+                    });
+                    console.log("DatabaseService: Collections added");
+                } else {
+                    console.log("DatabaseService: Collections already exist, skipping addition.");
+                }
 
                 // Start Replication (Fire and forget, but with better error logging)
                 console.log('Starting replication...');
