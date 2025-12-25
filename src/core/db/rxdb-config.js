@@ -32,7 +32,7 @@ export const storage = import.meta.env.DEV
  */
 export const createDatabase = async () => {
     const db = await createRxDatabase({
-        name: 'kosmoidb_v3',
+        name: 'kosmoidb_v4',
         storage,
         multiInstance: true,
         eventReduce: true,
