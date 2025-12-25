@@ -21,15 +21,16 @@ if (import.meta.env.DEV) {
 // RxDB Storage setup
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 
+// Singleton Storage Instance
+const rawStorage = getRxStorageDexie();
+const storage = import.meta.env.DEV
+    ? wrappedValidateAjvStorage({ storage: rawStorage })
+    : rawStorage;
+
 /**
  * Creates and configures the RxDB database instance
  */
 export const createDatabase = async () => {
-    const rawStorage = getRxStorageDexie();
-    const storage = import.meta.env.DEV
-        ? wrappedValidateAjvStorage({ storage: rawStorage })
-        : rawStorage;
-
     const db = await createRxDatabase({
         name: 'kosmoidb_v3',
         storage,
