@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DatabaseService } from './database';
+import { DB_NAME } from './rxdb-config';
 
 const RxDBContext = createContext(null);
 
@@ -97,7 +98,7 @@ export const RxDBProvider = ({ children }) => {
                                     </span>
                                 )}
                                 <span className="text-xs font-mono text-green-400 bg-green-900/30 p-1 rounded border border-green-800">
-                                    Expected DB: kosmoidb_v6
+                                    Expected DB: {DB_NAME}
                                 </span>
                                 <span className="text-xs text-slate-600 mt-2">
                                     If this persists, please Hard Reset.
