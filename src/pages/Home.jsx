@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import SEO from '@/components/SEO';
 import Footer from '@/components/Footer';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import SubtleLocationIndicator from '@/components/SubtleLocationIndicator';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -87,9 +88,18 @@ export default function Home() {
                     transition={{ duration: 0.8 }}
                     className="text-center space-y-6 max-w-4xl mx-auto"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-slate-200">
-                        <MapPin className="w-4 h-4 text-rose-500" />
-                        <span>{isRTL ? 'המדריך החכם של קוסמוי' : 'Samui\'s Intelligent City Guide'}</span>
+                    <div className="flex flex-col items-center gap-4">
+                        {/* Digital Nomad Button */}
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-slate-200 cursor-pointer hover:bg-white/20 transition-colors">
+                            <Briefcase className="w-4 h-4 text-emerald-400" />
+                            <span>{isRTL ? 'נווד דיגיטלי' : 'Digital Nomad'}</span>
+                        </div>
+
+                        {/* Intelligent Guide Pill (Optional: keep or remove? User mentioned Digital Nomad button... let's keep both stacked or replace? I'll Keep Nomad as requested "above") */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-xs font-medium text-slate-300">
+                            <MapPin className="w-3 h-3 text-rose-500" />
+                            <span>{isRTL ? 'המדריך החכם של קוסמוי' : 'Samui\'s Intelligent City Guide'}</span>
+                        </div>
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
@@ -111,11 +121,11 @@ export default function Home() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
-                    className="w-full max-w-2xl mt-12"
+                    className="w-full max-w-2xl mt-12 flex flex-col items-center gap-3"
                 >
                     <div
                         onClick={handleInteraction}
-                        className="group relative flex items-center gap-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 backdrop-blur-xl rounded-2xl p-4 cursor-pointer transition-all shadow-2xl hover:shadow-blue-500/20"
+                        className="w-full group relative flex items-center gap-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 backdrop-blur-xl rounded-2xl p-4 cursor-pointer transition-all shadow-2xl hover:shadow-blue-500/20"
                     >
                         <Search className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
                         <div className="flex-1 text-left">
@@ -124,9 +134,12 @@ export default function Home() {
                             </span>
                         </div>
                         <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
-                            <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
+                            <ArrowRight className={`w - 5 h - 5 ${isRTL ? 'rotate-180' : ''} `} />
                         </div>
                     </div>
+
+                    {/* Subtle Location Indicator */}
+                    <SubtleLocationIndicator className="mt-2" />
                 </motion.div>
 
                 {/* Categories Grid */}
@@ -134,7 +147,7 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6, duration: 0.6 }}
-                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-12 w-full max-w-5xl"
+                    className="flex flex-wrap justify-center gap-4 mt-12 w-full max-w-6xl"
                 >
                     {categories.map((cat, idx) => (
                         <button
@@ -146,10 +159,10 @@ export default function Home() {
                                     handleInteraction();
                                 }
                             }}
-                            className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group"
+                            className="flex flex-col items-center justify-center w-[140px] h-[100px] p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group hover:-translate-y-1"
                         >
-                            <cat.icon className={`w-6 h-6 mb-3 ${cat.color} opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all`} />
-                            <span className="text-sm font-medium text-slate-300 group-hover:text-white">{cat.label}</span>
+                            <cat.icon className={`w - 6 h - 6 mb - 2 ${cat.color} opacity - 80 group - hover: opacity - 100 group - hover: scale - 110 transition - all`} />
+                            <span className="text-sm font-medium text-slate-300 group-hover:text-white text-center leading-tight px-1">{cat.label}</span>
                         </button>
                     ))}
                 </motion.div>

@@ -1,16 +1,19 @@
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { supabase } from '@/api/supabaseClient';
+import { SalesService as CrmService } from '@/services/SalesService';
+import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Star, Clock, Users, ArrowRight, Search, Calendar, Loader2 } from 'lucide-react';
+import { MapPin, Clock, Heart, Filter, Loader2, Star } from 'lucide-react';
 import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
-import { SalesService } from '@/services/SalesService';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import {
     Dialog,
     DialogContent,
@@ -18,64 +21,87 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-// ... (MOCK DATA remains unchanged - implicit in replacement if not touched, but since I'm targeting a large block I need to be careful.
-// Actually, let's target specific blocks to be safer and smaller edits.)
-
-
-// MOCK DATA: Experiences
-const EXPERIENCES = [
+// MOCK DATA for Demo
+const MOCK_EXPERIENCES = [
     {
         id: 'exp-1',
-        title: 'Ang Thong Marine Park Full Day',
-        price: 1800,
-        rating: 4.9,
-        reviews: 245,
-        duration: '8 Hours',
-        image: 'https://images.unsplash.com/photo-1534008897995-27a23e859048?w=800&q=80',
-        category: 'Adventure'
+        title: 'Ang Thong Marine Park Safari',
+        location: 'Nathon Pier',
+        price: 2500,
+        category: 'adventure',
+        duration: '8 hours',
+        rating: 4.8,
+        reviews_count: 124,
+        images: [{ url: 'https://images.unsplash.com/photo-1534008897995-27a23e859048?w=800&q=80' }]
     },
     {
         id: 'exp-2',
-        title: 'Ethical Elephant Sanctuary',
-        price: 2500,
-        rating: 5.0,
-        reviews: 180,
-        duration: '4 Hours',
-        image: 'https://images.unsplash.com/photo-1585970280421-2e3fb731c362?w=800&q=80',
-        category: 'Nature'
+        title: 'Authentic Thai Cooking Class',
+        location: 'Bophut',
+        price: 1800,
+        category: 'food',
+        duration: '4 hours',
+        rating: 4.9,
+        reviews_count: 85,
+        images: [{ url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80' }]
     },
     {
         id: 'exp-3',
-        title: 'Sunset Dinner Cruise',
-        price: 3200,
-        rating: 4.8,
-        reviews: 120,
-        duration: '3 Hours',
-        image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800&q=80',
-        category: 'Relaxation'
+        title: 'Sunrise Yoga on the Beach',
+        location: 'Lamai Beach',
+        price: 500,
+        category: 'nature',
+        duration: '1.5 hours',
+        rating: 4.7,
+        reviews_count: 42,
+        images: [{ url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80' }]
     },
     {
         id: 'exp-4',
-        title: 'Thai Cooking Class',
-        price: 1500,
-        rating: 4.7,
-        reviews: 95,
-        duration: '3 Hours',
-        image: 'https://images.unsplash.com/photo-1566559535070-d9da8dd74521?w=800&q=80',
-        category: 'Culture'
+        title: 'Jungle Jeep 4x4 Tour',
+        location: 'Maenam',
+        price: 1900,
+        category: 'adventure',
+        duration: '6 hours',
+        rating: 4.6,
+        reviews_count: 210,
+        images: [{ url: 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=800&q=80' }]
     },
+    {
+        id: 'exp-5',
+        title: 'Private Sunset Cruise',
+        location: 'Bangrak',
+        price: 15000,
+        category: 'nightlife',
+        duration: '3 hours',
+        rating: 5.0,
+        reviews_count: 18,
+        images: [{ url: 'https://images.unsplash.com/photo-1520645521318-f03a712f0e67?w=800&q=80' }]
+    },
+    {
+        id: 'exp-6',
+        title: 'Big Buddha & Temple Tour',
+        location: 'Plai Laem',
+        price: 1200,
+        category: 'culture',
+        duration: '4 hours',
+        rating: 4.5,
+        reviews_count: 150,
+        images: [{ url: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=800&q=80' }]
+    }
 ];
 
-import { supabase } from '@/api/supabaseClient';
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 export default function ExperiencesHub() {
-    const [activeCategory, setActiveCategory] = useState('All');
+    const navigate = useNavigate();
+    const { t } = useTranslation();
+    const [activeCategory, setActiveCategory] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Inquiry State
     const [selectedExperience, setSelectedExperience] = useState(null);
@@ -85,40 +111,81 @@ export default function ExperiencesHub() {
         name: '',
         email: '',
         phone: '',
-        date: '',
+        message: '',
         guests: 2,
-        message: ''
+        date: ''
     });
 
-    const handleBookClick = (exp) => {
-        setSelectedExperience(exp);
+    // Fetch Experiences from DB
+    const { data: dbExperiences, isLoading } = useQuery({
+        queryKey: ['experiences', activeCategory, searchTerm],
+        queryFn: async () => {
+            // Ensure 'experiences' table exists or this will fail gracefully
+            let query = supabase.from('experiences').select('*');
+
+            if (activeCategory !== 'all') {
+                query = query.eq('category', activeCategory);
+            }
+
+            if (searchTerm) {
+                query = query.or(`title.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%`);
+            }
+
+            const { data, error } = await query;
+            if (error) {
+                // If table doesn't exist yet, return null to use mock data
+                console.warn("Error fetching experiences (using mock data):", error);
+                return null;
+            }
+            return data;
+        },
+        placeholderData: keepPreviousData
+    });
+
+    // Merge Mock Data
+    const experiences = (dbExperiences && dbExperiences.length > 0) ? dbExperiences : MOCK_EXPERIENCES.filter(e => {
+        const matchesCategory = activeCategory === 'all' || e.category === activeCategory;
+        const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.location.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
+
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('en-TH', {
+            style: 'currency',
+            currency: 'THB',
+            maximumFractionDigits: 0
+        }).format(price);
+    };
+
+    const handleBookClick = (experience) => {
+        setSelectedExperience(experience);
         setInquiryForm({
             name: '',
             email: '',
             phone: '',
-            date: '',
+            message: `Booking request for ${experience.title}`,
             guests: 2,
-            message: `I'd like to book ${exp.title}.`
+            date: new Date().toISOString().split('T')[0]
         });
         setIsInquiryOpen(true);
     };
 
     const handleInquirySubmit = async () => {
         if (!inquiryForm.name || !inquiryForm.email) {
-            toast.error("Name and Email are required");
+            toast.error(t('favorites.login_desc') || "Details required"); // Fallback
             return;
         }
 
         setSubmitting(true);
         try {
-            // 1. Get Pipeline (for Stage ID)
-            const pipelines = await SalesService.getPipelines();
+            // 1. Get Pipeline
+            const pipelines = await CrmService.getPipelines();
             const salesPipeline = pipelines.find(p => p.name === 'General Sales') || pipelines[0];
 
             let stageId = null;
             if (salesPipeline) {
-                const stages = await SalesService.getStages(salesPipeline.id);
-                // Look for 'New Lead' or first stage
+                const stages = await CrmService.getStages(salesPipeline.id);
                 const firstStage = stages.find(s => s.name === 'New Lead') || stages[0];
                 if (firstStage) stageId = firstStage.id;
             }
@@ -129,192 +196,162 @@ export default function ExperiencesHub() {
                 last_name: inquiryForm.name.split(' ').slice(1).join(' ') || '',
                 email: inquiryForm.email,
                 phone: inquiryForm.phone,
-                company: 'Individual', // Add company fallback as it might be required
-                // notes field removed ensuring schema compliance
+                notes: `Experience Booking: ${selectedExperience?.title} (${selectedExperience?.duration})\nDate: ${inquiryForm.date}\nGuests: ${inquiryForm.guests}\nMessage: ${inquiryForm.message}`,
                 source: 'Experiences Hub',
                 stage_id: stageId,
-                value: selectedExperience?.price ? (selectedExperience.price * inquiryForm.guests) : 0
+                value: selectedExperience?.price ? selectedExperience.price * inquiryForm.guests : 0
             };
 
-            const newLead = await SalesService.createLead(leadData);
+            await CrmService.createLead(leadData);
 
-            // 3. Create Interaction for the message
-            if (inquiryForm.message || selectedExperience) {
-                const noteContent = `Booking Request for: ${selectedExperience?.title}\nCategory: ${selectedExperience?.category}\nDate: ${inquiryForm.date}\nGuests: ${inquiryForm.guests}\n\nMessage: ${inquiryForm.message}`;
-                await SalesService.createInteraction(newLead.id, 'note', noteContent);
-            }
-
-            toast.success("Booking request sent! We will confirm availability shortly.");
+            toast.success(t('experiences.inquiry_success'));
             setIsInquiryOpen(false);
         } catch (error) {
             console.error("Booking failed:", error);
-            toast.error("Failed to send request.");
+            toast.error(t('provider.error_generic'));
         } finally {
             setSubmitting(false);
         }
     };
 
-    const categories = ['All', 'Adventure', 'Relaxation', 'Culture', 'Nature', 'Water Sports'];
-
-    // Fetch from DB
-    const { data: realExperiences, isLoading } = useQuery({
-        queryKey: ['experiences'],
-        queryFn: async () => {
-            const { data, error } = await supabase.from('experiences')
-                .select('*, image:image_url, reviews:reviews_count')
-                .eq('category', activeCategory === 'All' ? '*' : activeCategory);
-            // Note: simple filtering here, or client side. 
-            // Let's fetch ALL for client side filtering to match current behavior for simplicity
-
-            const { data: allData, error: allError } = await supabase.from('experiences')
-                .select('*, image:image_url, reviews:reviews_count');
-
-            if (allError) throw allError;
-            return allData;
-        }
-    });
-
-    const experiences = (realExperiences && realExperiences.length > 0) ? realExperiences : EXPERIENCES;
-
-    const filteredExperiences = activeCategory === 'All'
-        ? experiences
-        : experiences.filter(e => e.category === activeCategory);
+    const categories = [
+        { id: 'all', label: t('experiences.category_all') },
+        { id: 'adventure', label: t('experiences.category_adventure') },
+        { id: 'food', label: t('experiences.category_food') },
+        { id: 'culture', label: t('experiences.category_culture') },
+        { id: 'nature', label: t('experiences.category_nature') },
+        { id: 'nightlife', label: t('experiences.category_nightlife') },
+    ];
 
     return (
-        <div className="min-h-screen bg-white font-sans flex flex-col">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <NavigationBar />
 
             {/* Hero Section */}
-            <div className="relative h-[60vh] overflow-hidden">
-                <video
-                    autoPlay loop muted playsInline
-                    className="absolute inset-0 w-full h-full object-cover"
-                    poster="https://images.unsplash.com/photo-1589394815804-984bb00b65ce?w=1600"
-                >
-                    {/* Use a placeholder video or image if real video not available */}
-                    <source src="https://assets.mixkit.co/videos/preview/mixkit-beach-waves-loop-video-1216-large.mp4" type="video/mp4" />
-                </video>
-                <div className="absolute inset-0 bg-black/40" />
+            <div className="relative h-[400px] md:h-[500px] w-full bg-slate-900 flex items-center justify-center">
+                <img
+                    src="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?w=1600&q=80"
+                    alt="Experiences"
+                    className="absolute inset-0 w-full h-full object-cover opacity-50"
+                />
+                <div className="relative z-10 w-full max-w-4xl px-4 text-center">
+                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-md font-display">
+                        {t('experiences.hero_title')}
+                    </h1>
+                    <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-sm">
+                        {t('experiences.hero_subtitle')}
+                    </p>
 
-                <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-xl"
-                    >
-                        Unforgettable Experiences
-                    </motion.h1>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-xl text-white/90 mb-10 max-w-2xl"
-                    >
-                        Discover top-rated tours, activities, and hidden gems in Koh Samui.
-                        Book instantly with Kosmoi Pay.
-                    </motion.p>
-
-                    {/* Search Bar */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="bg-white rounded-full p-2 pl-6 flex items-center w-full max-w-2xl shadow-2xl"
-                    >
-                        <Search className="text-gray-400 w-5 h-5 mr-3" />
-                        <input
-                            type="text"
-                            placeholder="What do you want to do?"
-                            className="flex-1 bg-transparent border-none outline-none text-gray-800 placeholder:text-gray-400"
-                        />
-                        <div className="h-8 w-[1px] bg-gray-200 mx-2" />
-                        <div className="flex items-center gap-2 px-4 text-gray-500 cursor-pointer hover:text-gray-800">
-                            <Calendar className="w-4 h-4" />
-                            <span className="text-sm font-medium">Dates</span>
+                    {/* Search Box */}
+                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 max-w-3xl mx-auto">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="relative flex-1">
+                                <MapPin className="absolute start-3 top-3.5 text-gray-400 w-5 h-5" />
+                                <Input
+                                    placeholder={t('experiences.search_placeholder')}
+                                    className="ps-10 h-12 text-lg border-transparent bg-gray-50 focus:bg-white transition-all"
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <Button size="lg" className="h-12 bg-primary hover:bg-primary/90 w-full md:w-auto px-8 rounded-xl shadow-lg shadow-primary/20">
+                                {t('nav.search')}
+                            </Button>
                         </div>
-                        <Button size="lg" className="rounded-full px-8 bg-rose-500 hover:bg-rose-600">
-                            Search
-                        </Button>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
 
-            {/* Categories */}
-            <div className="max-w-7xl mx-auto px-4 py-8 w-full">
-                <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar">
-                    {categories.map(cat => (
-                        <Button
-                            key={cat}
-                            variant={activeCategory === cat ? 'default' : 'outline'}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`rounded-full ${activeCategory === cat ? 'bg-rose-500 hover:bg-rose-600' : ''}`}
+            {/* Content Section */}
+            <div className="max-w-7xl mx-auto px-4 py-12 w-full flex-1">
+
+                {/* Category Tabs */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+                    {categories.map((cat) => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setActiveCategory(cat.id)}
+                            className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${activeCategory === cat.id
+                                ? 'bg-primary text-white shadow-md transform scale-105'
+                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                }`}
                         >
-                            {cat}
-                        </Button>
+                            {cat.label}
+                        </button>
                     ))}
                 </div>
-            </div>
 
-            {/* Grid */}
-            <div className="max-w-7xl mx-auto px-4 pb-16 w-full flex-1">
-                <h2 className="text-2xl font-bold mb-8">Top Rated in Samui</h2>
+                <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                        {activeCategory === 'all' ? t('search.results_found', { count: experiences.length }) : categories.find(c => c.id === activeCategory)?.label}
+                    </h2>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm"><Filter className="w-4 h-4 rtl:ml-2 ltr:mr-2" /> {t('search.clear_filters')}</Button>
+                    </div>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {filteredExperiences.map(exp => (
-                        <Card key={exp.id} className="group border-none shadow-md hover:shadow-xl transition-all overflow-hidden cursor-pointer">
-                            <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
+                {/* Experience Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {experiences.map((experience) => (
+                        <Card key={experience.id} className="group overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                            <div className="relative h-64 overflow-hidden cursor-pointer" onClick={() => navigate(`/experiences/${experience.id}`)}>
                                 <img
-                                    src={exp.image}
-                                    alt={exp.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    src={experience.images?.[0]?.url || experience.images?.[0] || 'https://via.placeholder.com/800x600'}
+                                    alt={experience.title}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
-                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 text-xs font-bold shadow-sm">
-                                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                                    {exp.rating} <span className="text-gray-400 font-normal">({exp.reviews})</span>
-                                </div>
+                                <Badge className="absolute top-4 left-4 bg-black/50 backdrop-blur-md text-white border-none px-3 py-1">
+                                    {t(`experiences.category_${experience.category}`) || experience.category}
+                                </Badge>
+                                <Button size="icon" variant="ghost" className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white hover:bg-white hover:text-red-500 rounded-full">
+                                    <Heart className="w-5 h-5" />
+                                </Button>
                             </div>
-                            <CardContent className="p-4">
-                                <div className="text-xs text-rose-500 font-semibold mb-1 uppercase tracking-wide">{exp.category}</div>
-                                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2 h-12 leading-tight">
-                                    {exp.title}
-                                </h3>
-                                <div className="flex items-center text-gray-500 text-sm mb-4">
-                                    <Clock className="w-4 h-4 mr-1" /> {exp.duration}
+
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center text-yellow-500 text-sm font-bold">
+                                        <Star className="w-4 h-4 fill-current mr-1" />
+                                        {experience.rating} <span className="text-gray-400 font-normal ml-1">({experience.reviews_count})</span>
+                                    </div>
+                                    <div className="flex items-center text-gray-500 text-sm">
+                                        <Clock className="w-4 h-4 mr-1" />
+                                        {experience.duration}
+                                    </div>
                                 </div>
-                                <div className="flex items-center justify-between mt-auto">
-                                    <div>
-                                        <span className="text-xs text-gray-400 block">From</span>
-                                        <span className="font-bold text-lg text-gray-900">฿{exp.price}</span>
+
+                                <h3
+                                    className="text-xl font-bold text-gray-900 mb-2 truncate group-hover:text-primary transition-colors cursor-pointer"
+                                    onClick={() => navigate(`/experiences/${experience.id}`)}
+                                >
+                                    {experience.title}
+                                </h3>
+
+                                <p className="text-gray-500 flex items-center mb-4 text-sm">
+                                    <MapPin className="w-4 h-4 mr-1" /> {experience.location}
+                                </p>
+
+                                <div className="flex items-center justify-between mt-4">
+                                    <div onClick={() => navigate(`/experiences/${experience.id}`)} className="cursor-pointer">
+                                        <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('experiences.price_person')}</p>
+                                        <p className="text-2xl font-bold text-primary">
+                                            {formatPrice(experience.price)}
+                                        </p>
                                     </div>
                                     <Button
-                                        size="sm"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white border-none"
-                                        onClick={() => handleBookClick(exp)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleBookClick(experience);
+                                        }}
+                                        className="rounded-xl px-6"
                                     >
-                                        Book Now
+                                        {t('experiences.book_btn')}
                                     </Button>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
-
-                {/* Banner */}
-                <div className="mt-16 bg-slate-900 rounded-2xl p-8 md:p-12 relative overflow-hidden">
-                    <div className="relative z-10 max-w-xl">
-                        <h3 className="text-3xl font-bold text-white mb-4">Curated by Locals, Powered by AI</h3>
-                        <p className="text-slate-300 mb-8">
-                            Our AI concierge suggests experiences based on your preferences and previous trips.
-                            Get personalized itineraries in seconds.
-                        </p>
-                        <Button size="lg" variant="secondary">Try AI Planner</Button>
-                    </div>
-                    <img
-                        src="https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800"
-                        className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-20 hidden md:block"
-                    />
-                </div>
-
             </div>
 
             <Footer />
@@ -323,78 +360,77 @@ export default function ExperiencesHub() {
             <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Book Experience</DialogTitle>
+                        <DialogTitle>{t('experiences.inquiry_title')}</DialogTitle>
                         <DialogDescription>
-                            Request a booking for "{selectedExperience?.title}".
+                            {t('experiences.inquiry_desc')} "{selectedExperience?.title}"
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Full Name</Label>
+                            <Label htmlFor="name">{t('businessName') || "Name"}</Label>
                             <Input
                                 id="name"
                                 value={inquiryForm.name}
                                 onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                                placeholder="Jane Doe"
+                                placeholder="John Doe"
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid lg:grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{t('email')}</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     value={inquiryForm.email}
                                     onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                                    placeholder="jane@example.com"
+                                    placeholder="email@example.com"
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">Phone</Label>
+                                <Label htmlFor="phone">{t('phone')}</Label>
                                 <Input
                                     id="phone"
                                     type="tel"
                                     value={inquiryForm.phone}
                                     onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                                    placeholder="+1 234..."
+                                    placeholder="+66..."
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid lg:grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="date">Preferred Date</Label>
+                                <Label>{t('experiences.guests')}</Label>
                                 <Input
-                                    id="date"
+                                    type="number"
+                                    min="1"
+                                    value={inquiryForm.guests}
+                                    onChange={(e) => setInquiryForm({ ...inquiryForm, guests: parseInt(e.target.value) })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Date</Label>
+                                <Input
                                     type="date"
                                     value={inquiryForm.date}
                                     onChange={(e) => setInquiryForm({ ...inquiryForm, date: e.target.value })}
                                 />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="guests">Guests</Label>
-                                <Input
-                                    id="guests"
-                                    type="number"
-                                    min={1}
-                                    value={inquiryForm.guests}
-                                    onChange={(e) => setInquiryForm({ ...inquiryForm, guests: parseInt(e.target.value) })}
-                                />
-                            </div>
                         </div>
+
                         <div className="grid gap-2">
-                            <Label htmlFor="message">Special Requests</Label>
+                            <Label htmlFor="message">{t('description')}</Label>
                             <Textarea
                                 id="message"
                                 value={inquiryForm.message}
                                 onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
-                                rows={2}
+                                rows={3}
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button disabled={submitting} onClick={handleInquirySubmit} type="submit" className="bg-rose-500 hover:bg-rose-600 w-full text-white">
+                        <Button disabled={submitting} onClick={handleInquirySubmit} type="submit" className="w-full">
                             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Request Booking
+                            {t('experiences.book_btn')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

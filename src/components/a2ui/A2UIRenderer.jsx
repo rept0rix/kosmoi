@@ -1,5 +1,5 @@
 
-import React, { Suspense, useMemo } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,14 +8,24 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Loader2, TrendingUp, TrendingDown, DollarSign, Users, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users, Activity, MapPin, Clock, Star } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+import VibeCard from './VibeCard';
 
 // --- A2UI Component Registry ---
 // Maps "string" types from the JSON to actual React Components.
 
 const ComponentRegistry = {
+    // Vibe Discovery System
+    'vibe-card': (props) => <VibeCard {...props} />,
+    'experience-card': (props) => <VibeCard {...props} />, // Alias for continuity
+    'carousel-vibe': ({ children }) => (
+        <div className="flex gap-4 overflow-x-auto pb-4 pt-2 w-full snap-x scrollbar-hide px-1 items-start">
+            {children}
+        </div>
+    ),
     // Basic Layout
     'container': ({ children, className, style }) => <div className={className} style={style}>{children}</div>,
     'row': ({ children, className }) => <div className={`flex flex-row gap-2 ${className || ''}`}>{children}</div>,
@@ -149,25 +159,23 @@ const ComponentRegistry = {
     ),
 
     // --- Complex Components ---
-    'stat-card': ({ title, value, change, trend, icon, description }) => {
-        const icons = { dollar: DollarSign, users: Users, activity: Activity };
-        const Icon = icons[icon] || Activity;
-        const trendColor = trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-slate-500';
-        const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : null;
+    'stat-card': ({ title, value, change, trend = "up", icon, color = "blue" }) => {
+        const TrendIcon = trend === "down" ? TrendingDown : TrendingUp;
+        const trendColor = trend === "down" ? "text-red-500" : "text-green-500";
+        const Icon = icon === "users" ? Users : icon === "dollar" ? DollarSign : Activity; // Simple icon mapping
 
         return (
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <Icon className={`h-4 w-4 text-${color}-500`} />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{value}</div>
-                    {(change || description) && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            {TrendIcon && <TrendIcon className={`h-3 w-3 ${trendColor}`} />}
-                            <span className={trendColor}>{change}</span>
-                            {description && <span className="ml-1 opacity-70">{description}</span>}
+                    {change && (
+                        <p className={`text-xs ${trendColor} flex items-center`}>
+                            <TrendIcon className="mr-1 h-3 w-3" />
+                            {change}
                         </p>
                     )}
                 </CardContent>

@@ -11,10 +11,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export default function SearchFiltersPanel({ 
-  filters, 
-  onFiltersChange, 
-  language = 'he' 
+export default function SearchFiltersPanel({
+  filters,
+  onFiltersChange,
+  language = 'he',
+  compact = false
 }) {
   const [openPopover, setOpenPopover] = useState(null);
 
@@ -54,13 +55,13 @@ export default function SearchFiltersPanel({
   ].filter(Boolean).length;
 
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={`w-full ${compact ? 'w-auto' : ''}`}>
+      <div className={`flex items-center gap-2 ${compact ? 'flex-nowrap' : 'flex-wrap'}`}>
         {/* Rating Filter with Popover */}
         <Popover open={openPopover === 'rating'} onOpenChange={(open) => setOpenPopover(open ? 'rating' : null)}>
           <PopoverTrigger asChild>
-            <Badge 
-              variant={filters.minRating > 0 ? "default" : "outline"} 
+            <Badge
+              variant={filters.minRating > 0 ? "default" : "outline"}
               className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
             >
               <Star className="w-3.5 h-3.5 ml-1" />
@@ -93,7 +94,7 @@ export default function SearchFiltersPanel({
         {/* Distance Filter with Popover */}
         <Popover open={openPopover === 'distance'} onOpenChange={(open) => setOpenPopover(open ? 'distance' : null)}>
           <PopoverTrigger asChild>
-            <Badge 
+            <Badge
               variant={filters.maxDistance < 50 ? "default" : "outline"}
               className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
             >
@@ -128,7 +129,7 @@ export default function SearchFiltersPanel({
         {/* Price Range Filter with Popover */}
         <Popover open={openPopover === 'price'} onOpenChange={(open) => setOpenPopover(open ? 'price' : null)}>
           <PopoverTrigger asChild>
-            <Badge 
+            <Badge
               variant={(filters.priceRanges || []).length > 0 ? "default" : "outline"}
               className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
             >
@@ -159,7 +160,7 @@ export default function SearchFiltersPanel({
         </Popover>
 
         {/* Verified */}
-        <Badge 
+        <Badge
           variant={filters.verifiedOnly ? "default" : "outline"}
           className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
           onClick={() => updateFilter('verifiedOnly', !filters.verifiedOnly)}
@@ -168,7 +169,7 @@ export default function SearchFiltersPanel({
         </Badge>
 
         {/* Emergency */}
-        <Badge 
+        <Badge
           variant={filters.emergencyService ? "default" : "outline"}
           className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
           onClick={() => updateFilter('emergencyService', !filters.emergencyService)}

@@ -1,6 +1,6 @@
 export const vendorSchema = {
     title: 'vendor schema',
-    version: 0,
+    version: 1,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -24,6 +24,27 @@ export const vendorSchema = {
         updated_at: {
             type: 'string',
             format: 'date-time'
+        },
+        vibes: {
+            type: 'array',
+            items: {
+                type: 'string'
+            }
+        },
+        images: {
+            type: 'array',
+            items: {
+                type: 'string'
+            }
+        },
+        price_level: {
+            type: 'string'
+        },
+        instagram_handle: {
+            type: 'string'
+        },
+        open_status: {
+            type: 'string'
         }
     },
     required: ['id', 'business_name', 'status']

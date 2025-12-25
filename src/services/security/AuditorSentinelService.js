@@ -7,7 +7,7 @@ export const AuditorSentinelService = {
 
     // Thresholds
     THRESHOLDS: {
-        RAPID_FIRE_LIMIT: 3,     // Actions per minute (Lowered for testing)
+        RAPID_FIRE_LIMIT: 10,     // Actions per minute
         ERROR_LOOP_LIMIT: 5,      // Consecutive errors
         GUARDRAIL_SPIKE_LIMIT: 3  // Security blocks per analysis window
     },
@@ -27,7 +27,7 @@ export const AuditorSentinelService = {
             // 1. Rapid Fire Detection
             if (stats.actionCount > this.THRESHOLDS.RAPID_FIRE_LIMIT) {
                 alerts.push({
-                    level: 'WARNING',
+                    level: 'CRITICAL',
                     agentId,
                     issue: 'RAPID_FIRE',
                     details: `Agent performed ${stats.actionCount} actions (Limit: ${this.THRESHOLDS.RAPID_FIRE_LIMIT}).`

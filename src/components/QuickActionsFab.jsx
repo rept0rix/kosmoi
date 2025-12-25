@@ -30,17 +30,18 @@ export default function QuickActionsFab() {
 
     const itemVariants = {
         open: (index) => {
-            // Calculate position on a circle
-            const angle = (index / (actions.length - 1)) * 180; // Spread over 180 degrees (top semi-circle) or just fanned out
-            // Let's do a fan out effect upwards
-            // Angle range: -150 to -30 degrees (from left to right upwards)
-            // 4 items: -135, -105, -75, -45 degrees
+            // Symmetrical Arc: -135 to -45 degrees (Top-Left to Top-Right fan)
+            // 90 degree spread centered upwards
+            const startAngle = -135;
+            const endAngle = -45;
+            const totalSpread = endAngle - startAngle;
+            // For N items, we want them distributed evenly. 
+            // If 1 item -> -90
+            // If > 1 -> start + index * (total / (N-1))
+            const step = actions.length > 1 ? totalSpread / (actions.length - 1) : 0;
 
-            const startAngle = -150;
-            const endAngle = -30;
-            const step = (endAngle - startAngle) / (actions.length - 1);
             const theta = (startAngle + index * step) * (Math.PI / 180);
-            const radius = 90; // distance from center
+            const radius = 85;
 
             const x = radius * Math.cos(theta);
             const y = radius * Math.sin(theta);
@@ -70,13 +71,8 @@ export default function QuickActionsFab() {
         }
     };
 
-    const labelVariants = {
-        open: { opacity: 1, y: 0, transition: { duration: 0.2 } },
-        closed: { opacity: 0, y: 10, transition: { duration: 0.2 } }
-    };
-
     return (
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-center w-16 h-16">
             {/* Dimmed Background Overlay */}
             <AnimatePresence>
                 {isOpen && (
@@ -90,37 +86,40 @@ export default function QuickActionsFab() {
                 )}
             </AnimatePresence>
 
-            <div className="relative z-50">
+            {/* Actions Items Wrapper - Anchored to Center */}
+            <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
                 <motion.div
                     variants={containerVariants}
                     initial="closed"
                     animate={isOpen ? "open" : "closed"}
-                    className="relative"
+                    className="relative w-0 h-0" // Zero size center point
                 >
                     {actions.map((action, index) => (
                         <motion.div
                             key={action.label}
                             custom={index}
                             variants={itemVariants}
-                            className="absolute bottom-0 left-0 -ml-6 -mb-6" // Center the absolute items relative to the FAB center
+                            className="absolute -ml-6 -mt-6 pointer-events-auto" // Center the 48px button on the point
                         >
                             <Link to={action.url} className="relative group flex flex-col items-center justify-center">
-                                <div className={`w-12 h-12 rounded-full ${action.color} text-white flex items-center justify-center shadow-lg hover:brightness-110 active:scale-95 transition-all`}>
+                                <div className={`w-12 h-12 rounded-full ${action.color} text-white flex items-center justify-center shadow-lg hover:brightness-110 active:scale-95 transition-all transform`}>
                                     <action.icon size={20} />
                                 </div>
+                                <span className="absolute -top-8 px-2 py-1 bg-white text-gray-800 text-xs rounded-md shadow opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                    {action.label}
+                                </span>
                             </Link>
                         </motion.div>
                     ))}
                 </motion.div>
+            </div>
 
-                {/* Extended Labels - Rendered separately to avoid rotation/transform issues if we used rotation */}
-                {/* Actually, let's keep it simple. The icons verify the circular spread. Labels can be tooltips or simplified. */}
-
-                {/* Main FAB Toggle */}
+            {/* Main FAB Toggle */}
+            <div className="relative z-50">
                 <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={toggleOpen}
-                    className={`w-16 h-16 rounded-full shadow-xl flex items-center justify-center text-white text-2xl z-50 transition-colors ${isOpen ? 'bg-red-500' : 'bg-gradient-to-tr from-blue-600 to-indigo-600'}`}
+                    className={`w-16 h-16 rounded-full shadow-xl flex items-center justify-center text-white text-2xl transition-colors ${isOpen ? 'bg-slate-800' : 'bg-gradient-to-tr from-blue-600 to-indigo-600'}`}
                 >
                     <motion.div
                         animate={{ rotate: isOpen ? 45 : 0 }}

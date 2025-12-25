@@ -11,6 +11,9 @@ import { getCategoryIcon } from "@/shared/utils/mapIcons";
 import { useWeather, getWeatherDescription } from '@/shared/hooks/useWeather';
 import { samuiKnowledge } from '@/data/samuiKnowledge';
 import { CONCIERGE_AGENT } from '@/features/agents/services/registry/ConciergeAgent';
+import { agents } from '@/features/agents/services/AgentRegistry';
+import VideoUpload from '@/components/agents/VideoUpload';
+import { Check, ChevronRight } from 'lucide-react';
 import SEO from '@/components/SEO';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
@@ -77,6 +80,10 @@ export default function AIChat() {
     const [messages, setMessages] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
+
+    // Agent Selection State
+    const [currentAgent, setCurrentAgent] = useState(CONCIERGE_AGENT);
+    const [showAgentSelector, setShowAgentSelector] = useState(false);
 
     // Initialize/Load Session
     useEffect(() => {
@@ -204,7 +211,7 @@ export default function AIChat() {
                         distInfo = ` (Distance: ~${dist}km from user)`;
                     }
                 }
-                return `- ${p.business_name} (${p.category})${distInfo}: ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Location: ${p.latitude},${p.longitude})`;
+                return `- ${p.business_name} (${p.category})${distInfo}\n  Vibes: ${p.vibes?.join(', ') || 'N/A'}\n  Status: ${p.open_status || 'N/A'}\n  Price: ${p.price_level || 'N/A'}\n  Desc: ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Location: ${p.latitude},${p.longitude})`;
             }).join('\n');
 
             let weatherContext = "Weather data unavailable.";
@@ -214,7 +221,7 @@ export default function AIChat() {
             }
 
             const systemInstruction = `
-${CONCIERGE_AGENT.systemPrompt}
+${currentAgent.systemPrompt}
 
 **STRICT RESPONSE FORMAT:**
 You MUST return valid JSON. Do not return plain text.
@@ -224,7 +231,8 @@ Use the provided distance context to explicitly mention how far places are if re
 **A2UI CAPABILITY:**
 You can now render rich UI components using the 'a2ui_content' field.
 Use this for tables, forms, dashboards, or complex layouts.
-Supported types: 'container', 'row', 'col', 'text', 'heading', 'button', 'input', 'card', 'badge', 'alert', 'bar-chart', 'line-chart', 'pie-chart', 'area-chart', 'stat-card', 'data-table'.
+Supported types: 'container', 'row', 'col', 'text', 'heading', 'button', 'input', 'card', 'experience-card', 'badge', 'alert', 'bar-chart', 'line-chart', 'pie-chart', 'area-chart', 'stat-card', 'data-table'.
+For tours/activities, ALWAYS use 'experience-card' with props: { title, location, price, duration, rating, image, url }.
 
 **OUTPUT SCHEMA:**
 {
@@ -446,14 +454,57 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                         onClick={() => setIsMinimized(true)}
                     >
                         <div className="flex items-center gap-2">
-                            {/* MOVED HISTORY BUTTON FROM HERE */}
-                            <div className="flex flex-col">
-                                <h2 className="font-bold text-slate-800 text-sm">{showHistory ? 'History' : 'Kosmoi Concierge'}</h2>
-                                {!showHistory && (
-                                    <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        Online
-                                    </p>
+                            {/* AGENT SELECTOR */}
+                            <div className="relative">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setShowAgentSelector(!showAgentSelector); }}
+                                    className="flex flex-col items-start hover:bg-slate-50 px-2 py-1 rounded-md transition-colors"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <h2 className="font-bold text-slate-800 text-sm">{currentAgent.name || currentAgent.role.replace(/_/g, ' ')}</h2>
+                                        <ChevronDown className="w-3 h-3 text-slate-400" />
+                                    </div>
+                                    {!showHistory && (
+                                        <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                            Online
+                                        </p>
+                                    )}
+                                </button>
+
+                                {/* AGENT DROPDOWN */}
+                                {showAgentSelector && (
+                                    <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="p-2 bg-slate-50 border-b border-slate-100">
+                                            <p className="text-xs font-semibold text-slate-500 px-2">Select Agent</p>
+                                        </div>
+                                        <ScrollArea className="h-64">
+                                            <div className="p-1">
+                                                {agents.map(agent => (
+                                                    <button
+                                                        key={agent.id}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCurrentAgent(agent);
+                                                            setShowAgentSelector(false);
+                                                            setMessages([{ role: 'assistant', content: `Switched to ${agent.name || agent.role}. How can I help?` }]);
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors ${currentAgent.id === agent.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50 text-slate-700'}`}
+                                                    >
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${currentAgent.id === agent.id ? 'bg-blue-100' : 'bg-slate-100'}`}>
+                                                            {/* Simple icon fallback */}
+                                                            <Bot className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex-1 overflow-hidden">
+                                                            <p className="text-xs font-semibold truncate">{agent.name || agent.role}</p>
+                                                            <p className="text-[10px] text-slate-500 truncate">{agent.role}</p>
+                                                        </div>
+                                                        {currentAgent.id === agent.id && <Check className="w-3 h-3" />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -608,6 +659,13 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                         )}
                                         <div ref={messagesEndRef} />
                                     </div>
+
+                                    {/* VIDEO UPLOAD AREA (Only for Video Agent) */}
+                                    {currentAgent.id === 'video-agent' && (
+                                        <div className="px-4 pb-4">
+                                            <VideoUpload />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* INPUT AREA */}

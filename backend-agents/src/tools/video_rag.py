@@ -9,50 +9,75 @@ class VideoRAGTool:
         if not self.api_key:
             print("Warning: RAGIE_API_KEY not set")
 
-    async def ingest_video(self, video_url: str) -> Dict[str, Any]:
-        """Ingests a video URL into Ragie for indexing."""
+    async def ingest_file(self, file_path: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Ingests a file into Ragie."""
         if not self.api_key:
             return {"error": "RAGIE_API_KEY not configured"}
             
         async with httpx.AsyncClient() as client:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
+                # Content-Type is auto-set by httpx for multipart
             }
-            # This is a hypothetical endpoint structure based on typical RAG APIs
-            response = await client.post(
-                f"{self.base_url}/documents",
-                headers=headers,
-                json={"url": video_url, "type": "video"}
-            )
+            
+            with open(file_path, "rb") as f:
+                files = {"file": (os.path.basename(file_path), f)}
+                data = {"mode": "fast"}
+                if metadata:
+                    import json
+                    data["metadata"] = json.dumps(metadata)
+                
+                response = await client.post(
+                    f"{self.base_url}/documents",
+                    headers=headers,
+                    data=data,
+                    files=files
+                )
+                
             if response.status_code >= 400:
+                print(f"Ingest Error: {response.text}")
                 return {"error": response.text}
             return response.json()
 
     async def retrieve(self, query: str) -> str:
-        """Retrieves relevant video segments for a query."""
+        """Retrieves relevant segments."""
         if not self.api_key:
             return "Error: RAGIE_API_KEY not configured"
 
         async with httpx.AsyncClient() as client:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            # Updated based on user guide
             response = await client.post(
                 f"{self.base_url}/retrievals",
                 headers=headers,
-                json={"query": query}
+                json={
+                    "query": query,
+                    "rerank": True,
+                    # "filter": {"scope": "tutorial"} # Optional
+                }
             )
             if response.status_code >= 400:
                 return f"Error retrieving data: {response.text}"
             
             data = response.json()
-            # Format the output for the LLM
-            segments = []
-            for item in data.get("results", []):
-                segments.append(f"- [{item.get('timestamp')}] {item.get('content')}")
+            results = data.get("scored_chunks", []) or data.get("results", [])
             
-            return "\n".join(segments) if segments else "No relevant video segments found."
+            segments = []
+            for item in results:
+                content = item.get("data", {}).get("chunk", "") or item.get("content", "")
+                score = item.get("score", 0)
+                segments.append(f"- (Score: {score:.2f}) {content}")
+            
+            return "\n".join(segments) if segments else "No relevant information found."
+
+
+from strands import tool
 
 # Standalone function for Strands/MCP to call
+@tool
 async def video_query(query: str) -> str:
     """Queries the video knowledge base."""
     tool = VideoRAGTool()

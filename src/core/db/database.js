@@ -26,7 +26,19 @@ export const DatabaseService = {
 
                 // Add collections
                 await db.addCollections({
-                    vendors: { schema: vendorSchema },
+                    vendors: {
+                        schema: vendorSchema,
+                        migrationStrategies: {
+                            1: (oldDoc) => {
+                                oldDoc.vibes = oldDoc.vibes || [];
+                                oldDoc.images = oldDoc.images || [];
+                                oldDoc.price_level = oldDoc.price_level || null;
+                                oldDoc.instagram_handle = oldDoc.instagram_handle || null;
+                                oldDoc.open_status = oldDoc.open_status || 'closed';
+                                return oldDoc;
+                            }
+                        }
+                    },
                     tasks: {
                         schema: taskSchema,
                         migrationStrategies: {
@@ -82,7 +94,7 @@ export const DatabaseService = {
         console.warn("DatabaseService: DESTROYING DATABASE...");
         dbPromise = null;
         try {
-            await removeRxDatabase('kosmoidb_v2', getRxStorageDexie());
+            await removeRxDatabase('kosmoidb_v3', getRxStorageDexie());
             console.log("DatabaseService: Database destroyed.");
             return true;
         } catch (e) {

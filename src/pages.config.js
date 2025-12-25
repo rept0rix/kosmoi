@@ -3,6 +3,7 @@ import WalletPage from './pages/WalletPage';
 import ProviderDashboard from './pages/ProviderDashboard';
 import RealEstateHub from './pages/RealEstateHub';
 import ExperiencesHub from './pages/ExperiencesHub';
+import ExperienceDetails from './pages/ExperienceDetails';
 import BusinessLanding from './pages/BusinessLanding';
 import Dashboard from './pages/Dashboard';
 import ServiceProviders from './pages/ServiceProviders';
@@ -38,6 +39,12 @@ import BlogPostDetail from './pages/BlogPostDetail';
 import __Layout from './Layout.jsx';
 import { lazy } from 'react';
 
+// Wallet Pages
+import WalletScan from './pages/wallet/Scan';
+import WalletSend from './pages/wallet/Send';
+import WalletReceive from './pages/wallet/Receive';
+import WalletCard from './pages/wallet/Card';
+
 
 export const PAGES = {
     "Home": Home,       // Root / (Consumer)
@@ -45,12 +52,18 @@ export const PAGES = {
     "ProviderDashboard": ProviderDashboard, // /provider-dashboard (Drivers)
     "RealEstate": RealEstateHub, // /real-estate (Zillow Style)
     "Experiences": ExperiencesHub, // /experiences (GetYourGuide Style)
+    "ExperienceDetails": ExperienceDetails, // /experiences/:id
     "Business": BusinessLanding, // /business (Provider)
     "App": Dashboard,    // Main App Dashboard
     "Dashboard": Dashboard, // Keep alias for backward compat if needed
     "Welcome": BusinessLanding, // Keeping Welcome as Business for now, or maybe alias to Home? Let's alias to Business as that was the old Welcome context.
     "BusinessInfo": BusinessInfo, // Added
     "Team": Team, // Added
+    // Wallet Sub-pages
+    "WalletScan": WalletScan,
+    "WalletSend": WalletSend,
+    "WalletReceive": WalletReceive,
+    "WalletCard": WalletCard,
     "ServiceProviders": ServiceProviders,
     "ServiceProviderDetails": ServiceProviderDetails,
     "MapView": MapView,

@@ -1,4 +1,5 @@
 import { callAgentInteraction } from '../../../api/geminiInteractions.js';
+import { callStrandsInteraction } from '../../../api/strandsInteractions.js';
 import { callGroqInteraction } from '../../../api/groqInteractions.js';
 import { getModelConfig, AI_PROVIDERS } from '../../../services/ai/ModelRegistry.js';
 import { db } from '../../../api/supabaseClient.js';
@@ -148,6 +149,11 @@ Use "thought_process" to reason before you speak.
         prompt: prompt,
         system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
         jsonSchema: AGENT_RESPONSE_SCHEMA
+      });
+    } else if (agent.provider === 'STRANDS' || modelConfig.provider === 'STRANDS') {
+      data = await callStrandsInteraction({
+        model: agent.model,
+        prompt: prompt
       });
     } else {
       data = await callAgentInteraction({

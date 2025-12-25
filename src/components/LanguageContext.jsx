@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const LanguageContext = createContext();
+const LanguageContext = createContext(null);
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
@@ -20,6 +20,12 @@ export const LanguageProvider = ({ children }) => {
     const isRTL = language === 'he';
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
+    import('../i18n').then(({ default: i18n }) => {
+      if (i18n.language !== language) {
+        i18n.changeLanguage(language);
+      }
+    });
+
   }, [language]);
 
   const toggleLanguage = () => {

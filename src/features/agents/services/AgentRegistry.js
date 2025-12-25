@@ -42,6 +42,7 @@ import { SUPPORT_AGENT } from "./registry/SupportAgent.js";
 import { BOOKING_AGENT } from "./registry/BookingAgent.js";
 import { SALES_PITCH_AGENT } from "./registry/SalesPitchAgent.js";
 import { CRM_SALES_AGENT } from "./registry/CRMSalesAgent.js";
+import { VIDEO_AGENT } from "./registry/VideoAgent.js";
 import { VECTOR_SEARCH_AGENT } from "./registry/VectorSearchAgent.js";
 import { CODE_REFACTOR_AGENT } from "./registry/CodeRefactorAgent.js";
 import { PRODUCT_VISION_AGENT } from "./registry/ProductVisionAgent.js";
@@ -108,7 +109,8 @@ export const agents = [
     SUPPORT_AGENT,
     BOOKING_AGENT,
     SALES_PITCH_AGENT,
-    CRM_SALES_AGENT, // <--- New Agent
+    CRM_SALES_AGENT,
+    VIDEO_AGENT,
     VECTOR_SEARCH_AGENT,
     CODE_REFACTOR_AGENT,
 
