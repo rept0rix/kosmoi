@@ -15,8 +15,8 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 export const DatabaseService = {
     async get() {
         // Check window global first
-        if (window.__KOSMOI_DB_PROMISE__) {
-            return window.__KOSMOI_DB_PROMISE__;
+        if (window['__KOSMOI_DB_PROMISE__']) {
+            return window['__KOSMOI_DB_PROMISE__'];
         }
 
         console.log("DatabaseService: Initializing RxDB...");
@@ -88,17 +88,17 @@ export const DatabaseService = {
             } catch (err) {
                 console.error("DatabaseService: Critical Failed during DB creation", err);
                 // If it fails, clear the global promise so we can retry on next call
-                window.__KOSMOI_DB_PROMISE__ = null;
+                window['__KOSMOI_DB_PROMISE__'] = null;
                 throw err;
             }
         })();
 
-        window.__KOSMOI_DB_PROMISE__ = promise;
+        window['__KOSMOI_DB_PROMISE__'] = promise;
         return promise;
     },
 
     reset: () => {
-        window.__KOSMOI_DB_PROMISE__ = null;
+        window['__KOSMOI_DB_PROMISE__'] = null;
     },
 
     // Destroys the local database completely
@@ -106,7 +106,7 @@ export const DatabaseService = {
         console.warn("DatabaseService: DESTROYING DATABASE...");
 
         // Try to close existing connection first
-        const currentPromise = window.__KOSMOI_DB_PROMISE__;
+        const currentPromise = window['__KOSMOI_DB_PROMISE__'];
         if (currentPromise) {
             try {
                 const db = await currentPromise;
@@ -117,7 +117,7 @@ export const DatabaseService = {
             } catch (err) {
                 console.warn("DatabaseService: Failed to close existing connection during destroy", err);
             }
-            window.__KOSMOI_DB_PROMISE__ = null;
+            window['__KOSMOI_DB_PROMISE__'] = null;
         }
 
         try {
