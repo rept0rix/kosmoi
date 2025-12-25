@@ -92,9 +92,23 @@ export const DatabaseService = {
      */
     destroy: async () => {
         console.warn("DatabaseService: DESTROYING DATABASE...");
-        dbPromise = null;
+
+        // Try to close existing connection first
+        if (dbPromise) {
+            try {
+                const db = await dbPromise;
+                await db.destroy();
+                console.log("DatabaseService: Closed existing connection");
+            } catch (err) {
+                console.warn("DatabaseService: Failed to close existing connection during destroy", err);
+            }
+            dbPromise = null;
+        }
+
         try {
-            await removeRxDatabase('kosmoidb_v3', getRxStorageDexie());
+            // Import storage dynamically or assume it's imported at top (we will fix imports next)
+            const { storage } = await import('./rxdb-config');
+            await removeRxDatabase('kosmoidb_v3', storage);
             console.log("DatabaseService: Database destroyed.");
             return true;
         } catch (e) {
