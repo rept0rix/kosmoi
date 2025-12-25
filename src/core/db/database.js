@@ -108,7 +108,7 @@ export const DatabaseService = {
         try {
             // Import storage dynamically or assume it's imported at top (we will fix imports next)
             const { storage } = await import('./rxdb-config');
-            await removeRxDatabase('kosmoidb_v4', storage);
+            await removeRxDatabase('kosmoidb_v5', storage);
             console.log("DatabaseService: Database destroyed.");
             return true;
         } catch (e) {
