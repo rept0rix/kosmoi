@@ -37,12 +37,15 @@ const getGlobalStorage = () => {
 
 export const storage = getGlobalStorage();
 
+// Database Context
+export const DB_NAME = 'kosmoidb_v7';
+
 /**
  * Creates and configures the RxDB database instance
  */
 export const createDatabase = async () => {
     const db = await createRxDatabase({
-        name: 'kosmoidb_v6',
+        name: DB_NAME,
         storage,
         multiInstance: true,
         eventReduce: true,

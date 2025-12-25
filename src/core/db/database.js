@@ -1,4 +1,4 @@
-import { createDatabase } from './rxdb-config';
+import { createDatabase, DB_NAME } from './rxdb-config';
 import { vendorSchema } from './schemas/vendor.schema';
 import { taskSchema } from './schemas/task.schema';
 import { contactSchema } from './schemas/contact.schema';
@@ -19,7 +19,7 @@ export const DatabaseService = {
             return window['__KOSMOI_DB_PROMISE__'];
         }
 
-        console.log("DatabaseService: Initializing RxDB...");
+        console.log(`DatabaseService: Initializing RxDB (${DB_NAME})...`);
 
         // Start creation and assign to window immediately to block race conditions
         const promise = (async () => {
@@ -123,8 +123,8 @@ export const DatabaseService = {
         try {
             // Import storage dynamically prevents circular dependency issues in some builds
             const { storage } = await import('./rxdb-config');
-            await removeRxDatabase('kosmoidb_v6', storage);
-            console.log("DatabaseService: Database and storage destroyed.");
+            await removeRxDatabase(DB_NAME, storage);
+            console.log(`DatabaseService: Database (${DB_NAME}) and storage destroyed.`);
             return true;
         } catch (e) {
             console.error("DatabaseService: Failed to destroy DB", e);
