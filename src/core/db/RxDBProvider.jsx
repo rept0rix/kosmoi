@@ -41,17 +41,32 @@ export const RxDBProvider = ({ children }) => {
                     console.warn("Graceful destroy failed, forcing manual cleanup", e);
                 }
 
+                // Nuclear Option: Unregister any Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+
                 // Force clear IndexedDB
                 const dbs = await window.indexedDB.databases();
                 await Promise.all(dbs.map(db => new Promise((resolve, reject) => {
                     const req = window.indexedDB.deleteDatabase(db.name);
                     req.onsuccess = () => resolve();
-                    req.onerror = () => reject();
-                    req.onblocked = () => resolve(); // Proceed anyway if blocked
+                    req.onerror = () => resolve(); // Ignore errors, just try
+                    req.onblocked = () => resolve();
                 })));
 
                 // Clear Local Storage
                 localStorage.clear();
+                sessionStorage.clear();
+
+                // Clear Cache API
+                if ('caches' in window) {
+                    const cacheKeys = await caches.keys();
+                    await Promise.all(cacheKeys.map(key => caches.delete(key)));
+                }
 
                 window.location.reload();
             } catch (e) {
@@ -76,9 +91,12 @@ export const RxDBProvider = ({ children }) => {
                                 <span>{error?.message || "An unexpected error occurred."}</span>
                                 {error?.parameters?.database && (
                                     <span className="text-xs font-mono text-slate-500 bg-slate-800 p-1 rounded">
-                                        DB: {error.parameters.database}
+                                        DB Error Source: {error.parameters.database}
                                     </span>
                                 )}
+                                <span className="text-xs font-mono text-green-400 bg-green-900/30 p-1 rounded border border-green-800">
+                                    Expected DB: kosmoidb_v6
+                                </span>
                                 <span className="text-xs text-slate-600 mt-2">
                                     If this persists, please Hard Reset.
                                 </span>
@@ -95,9 +113,9 @@ export const RxDBProvider = ({ children }) => {
                     </button>
                     <button
                         onClick={handleHardReset}
-                        className="px-6 py-2 bg-red-600 rounded hover:bg-red-700 transition-colors font-medium"
+                        className="px-6 py-2 bg-red-600 rounded hover:bg-red-700 transition-colors font-medium border border-red-500 shadow-lg shadow-red-900/20"
                     >
-                        Hard Reset & Reload
+                        HARD RESET (Nuclear)
                     </button>
                 </div>
             </div>
@@ -105,7 +123,10 @@ export const RxDBProvider = ({ children }) => {
     }
 
     if (!db) {
-        return <div className="flex h-screen items-center justify-center text-slate-400 animate-pulse">Loading Database...</div>;
+        return <div className="flex h-screen items-center justify-center text-slate-400 animate-pulse flex-col gap-4">
+            <div className="w-12 h-12 border-4 border-slate-600 border-t-slate-300 rounded-full animate-spin"></div>
+            <span>Loading Database (v6)...</span>
+        </div>;
     }
 
     return (
