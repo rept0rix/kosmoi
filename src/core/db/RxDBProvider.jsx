@@ -43,7 +43,12 @@ export const RxDBProvider = ({ children }) => {
 
                 // Force clear IndexedDB
                 const dbs = await window.indexedDB.databases();
-                dbs.forEach(db => window.indexedDB.deleteDatabase(db.name));
+                await Promise.all(dbs.map(db => new Promise((resolve, reject) => {
+                    const req = window.indexedDB.deleteDatabase(db.name);
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject();
+                    req.onblocked = () => resolve(); // Proceed anyway if blocked
+                })));
 
                 // Clear Local Storage
                 localStorage.clear();
