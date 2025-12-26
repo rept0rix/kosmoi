@@ -68,18 +68,19 @@ export const DatabaseService = {
                     });
                     console.log("DatabaseService: Collections added");
                 } catch (e) {
-                    // Check more broadly for the "Collection already exists" error (DB9)
-                    const msg = e.message || '';
+                    // Check broadly for "Collection already exists" (DB9)
+                    // We check toString(), message, and code to be absolutely sure we catch it.
+                    const errString = (e.toString() || '') + (e.message || '') + (e.code || '');
+
                     if (
-                        msg.includes('DB9') ||
-                        e.code === 'DB9' ||
-                        msg.includes('already exists') ||
+                        errString.includes('DB9') ||
+                        errString.includes('already exists') ||
                         (e.parameters && e.parameters.code === 'DB9')
                     ) {
-                        console.warn("DatabaseService: Collections checks - already exist (DB9 caught), proceeding...");
+                        console.warn("DatabaseService: DB9 Error caught (Collections already exist). proceeding...");
                     } else {
                         console.error("DatabaseService: Failed to add collections", e);
-                        throw e; // Re-throw other errors
+                        throw e;
                     }
                 }
 
