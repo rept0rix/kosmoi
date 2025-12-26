@@ -55,13 +55,24 @@ export const RxDBProvider = ({ children }) => {
             }
 
             // Force clear IndexedDB
-            const dbs = await window.indexedDB.databases();
-            await Promise.all(dbs.map(db => new Promise((resolve) => {
-                const req = window.indexedDB.deleteDatabase(db.name);
-                req.onsuccess = () => resolve();
-                req.onerror = () => resolve();
-                req.onblocked = () => resolve();
-            })));
+            try {
+                const dbs = await window.indexedDB.databases();
+                await Promise.all(dbs.map(db => new Promise((resolve) => {
+                    const req = window.indexedDB.deleteDatabase(db.name);
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => resolve();
+                    req.onblocked = () => resolve();
+                })));
+            } catch (e) {
+                console.warn("Standard DB listing failed, trying fallback lists...", e);
+                // Fallback for browsers that don't support databases() or if it fails
+                const knownDBs = [DB_NAME, 'kosmoidb_v6', 'kosmoidb_v5', 'rxdb-dexie-' + DB_NAME];
+                knownDBs.forEach(name => {
+                    try {
+                        window.indexedDB.deleteDatabase(name);
+                    } catch (err) { /* ignore */ }
+                });
+            }
 
             // Clear Storage
             localStorage.clear();
@@ -129,7 +140,7 @@ export const RxDBProvider = ({ children }) => {
     if (!db) {
         return <div className="flex h-screen items-center justify-center text-slate-400 animate-pulse flex-col gap-4">
             <div className="w-12 h-12 border-4 border-slate-600 border-t-slate-300 rounded-full animate-spin"></div>
-            <span>Loading Database (v6)...</span>
+            <span>Loading Database ({DB_NAME})...</span>
         </div>;
     }
 

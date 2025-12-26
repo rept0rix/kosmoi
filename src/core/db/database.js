@@ -68,9 +68,17 @@ export const DatabaseService = {
                     });
                     console.log("DatabaseService: Collections added");
                 } catch (e) {
-                    if (e.message.includes('DB9') || e.code === 'DB9') {
-                        console.warn("DatabaseService: Collections already exist (DB9 caught), proceeding...");
+                    // Check more broadly for the "Collection already exists" error (DB9)
+                    const msg = e.message || '';
+                    if (
+                        msg.includes('DB9') ||
+                        e.code === 'DB9' ||
+                        msg.includes('already exists') ||
+                        (e.parameters && e.parameters.code === 'DB9')
+                    ) {
+                        console.warn("DatabaseService: Collections checks - already exist (DB9 caught), proceeding...");
                     } else {
+                        console.error("DatabaseService: Failed to add collections", e);
                         throw e; // Re-throw other errors
                     }
                 }
@@ -80,9 +88,9 @@ export const DatabaseService = {
                 const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
 
                 replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
-                replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
-                replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
-                replicateCollection(db.stages, 'crm_stages').catch(err => logError('stages', err));
+                if (db.tasks) replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
+                if (db.contacts) replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
+                if (db.stages) replicateCollection(db.stages, 'crm_stages').catch(err => logError('stages', err));
 
                 return db;
             } catch (err) {

@@ -17,7 +17,7 @@ describe('categoryMapping Util', () => {
         expect(getSuperCategory('pubs')).toBe('go_out')
         expect(getSuperCategory('taxis')).toBe('travel')
         expect(getSuperCategory('hospitals')).toBe('help')
-        expect(getSuperCategory('visa_agents')).toBe('get_service')
+        expect(getSuperCategory('visa_services')).toBe('travel')
         // Wait, looking at subCategories.jsx:
         // fix: [..., 'laundry', ...]
         // get_service: [..., 'laundry', ...]
