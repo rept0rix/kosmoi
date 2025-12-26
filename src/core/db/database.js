@@ -34,54 +34,65 @@ export const DatabaseService = {
                 // Add collections
                 // Add collections with robust error handling
                 // We use try-catch instead of checking state to be 100% sure we don't crash
-                try {
-                    await db.addCollections({
-                        vendors: {
-                            schema: vendorSchema,
-                            migrationStrategies: {
-                                1: (oldDoc) => {
-                                    oldDoc.vibes = oldDoc.vibes || [];
-                                    oldDoc.images = oldDoc.images || [];
-                                    oldDoc.price_level = oldDoc.price_level || null;
-                                    oldDoc.instagram_handle = oldDoc.instagram_handle || null;
-                                    oldDoc.open_status = oldDoc.open_status || 'closed';
-                                    return oldDoc;
-                                }
+                // Define desired collections
+                const collectionDefinitions = {
+                    vendors: {
+                        schema: vendorSchema,
+                        migrationStrategies: {
+                            1: (oldDoc) => {
+                                oldDoc.vibes = oldDoc.vibes || [];
+                                oldDoc.images = oldDoc.images || [];
+                                oldDoc.price_level = oldDoc.price_level || null;
+                                oldDoc.instagram_handle = oldDoc.instagram_handle || null;
+                                oldDoc.open_status = oldDoc.open_status || 'closed';
+                                return oldDoc;
                             }
-                        },
-                        tasks: {
-                            schema: taskSchema,
-                            migrationStrategies: {
-                                1: (oldDoc) => oldDoc,
-                                2: (oldDoc) => {
-                                    oldDoc.meeting_id = oldDoc.meeting_id || "";
-                                    oldDoc.priority = oldDoc.priority || "medium";
-                                    oldDoc.description = oldDoc.description || "";
-                                    oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
-                                    oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
-                                    return oldDoc;
-                                }
+                        }
+                    },
+                    tasks: {
+                        schema: taskSchema,
+                        migrationStrategies: {
+                            1: (oldDoc) => oldDoc,
+                            2: (oldDoc) => {
+                                oldDoc.meeting_id = oldDoc.meeting_id || "";
+                                oldDoc.priority = oldDoc.priority || "medium";
+                                oldDoc.description = oldDoc.description || "";
+                                oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
+                                oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
+                                return oldDoc;
                             }
-                        },
-                        contacts: { schema: contactSchema },
-                        stages: { schema: stageSchema }
-                    });
-                    console.log("DatabaseService: Collections added");
-                } catch (e) {
-                    // Check broadly for "Collection already exists" (DB9)
-                    // We check toString(), message, and code to be absolutely sure we catch it.
-                    const errString = (e.toString() || '') + (e.message || '') + (e.code || '');
+                        }
+                    },
+                    contacts: { schema: contactSchema },
+                    stages: { schema: stageSchema }
+                };
 
-                    if (
-                        errString.includes('DB9') ||
-                        errString.includes('already exists') ||
-                        (e.parameters && e.parameters.code === 'DB9')
-                    ) {
-                        console.warn("DatabaseService: DB9 Error caught (Collections already exist). proceeding...");
+                // Filter out collections that already exist to prevent DB9 error
+                const collectionsToAdd = {};
+                const existingCollections = Object.keys(db.collections || {});
+
+                Object.keys(collectionDefinitions).forEach(name => {
+                    if (!existingCollections.includes(name)) {
+                        collectionsToAdd[name] = collectionDefinitions[name];
                     } else {
+                        console.log(`DatabaseService: Collection "${name}" already exists. Skipping.`);
+                    }
+                });
+
+                // Add only the missing collections
+                if (Object.keys(collectionsToAdd).length > 0) {
+                    try {
+                        await db.addCollections(collectionsToAdd);
+                        console.log("DatabaseService: New collections added:", Object.keys(collectionsToAdd));
+                    } catch (e) {
                         console.error("DatabaseService: Failed to add collections", e);
+                        // If it fails here, it's a real error (e.g. schema mismatch), so we probably should throw
+                        // But for robustness in production, we log and try to proceed if possible, 
+                        // though a missing collection is critical.
                         throw e;
                     }
+                } else {
+                    console.log("DatabaseService: All collections already exist. Skipping addCollections.");
                 }
 
                 // Start Replication (Fire and forget, but with better error logging)
