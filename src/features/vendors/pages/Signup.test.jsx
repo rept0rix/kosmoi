@@ -18,7 +18,7 @@ vi.mock('@/api/supabaseClient', () => ({
             ServiceProvider: {
                 create: vi.fn()
             },
-            Review: { // Also mock Review as it might be used in other tests or init
+            Review: {
                 filter: vi.fn().mockResolvedValue([])
             }
         },
@@ -27,11 +27,24 @@ vi.mock('@/api/supabaseClient', () => ({
                 UploadFile: vi.fn()
             }
         }
+    },
+    supabase: {
+        auth: {
+            signInWithOtp: vi.fn().mockResolvedValue({ error: null })
+        },
+        from: vi.fn(() => ({
+            select: vi.fn(() => ({
+                ilike: vi.fn(() => ({
+                    limit: vi.fn().mockResolvedValue({ data: [], error: null })
+                }))
+            })),
+            insert: vi.fn().mockResolvedValue({ error: null })
+        }))
     }
 }))
 
 // We need to import the mocked object to spy on it
-import { db } from '@/api/supabaseClient'
+import { db, supabase } from '@/api/supabaseClient'
 
 const renderWithRouter = (ui) => {
     return render(ui, { wrapper: BrowserRouter })
@@ -71,8 +84,7 @@ describe('VendorSignup Page', () => {
         const emailInput = container.querySelector('input[name="email"]')
         await user.type(emailInput, 'test@example.com')
 
-        const passwordInput = container.querySelector('input[name="password"]')
-        await user.type(passwordInput, 'password123')
+
 
         // There is no input named 'contact_info' in the JSX form based on view_file! 
         // It seems 'owner_name' is used for contact person.
@@ -93,16 +105,20 @@ describe('VendorSignup Page', () => {
 
         // Verify API called
         await waitFor(() => {
-            expect(db.entities.ServiceProvider.create).toHaveBeenCalledWith(expect.objectContaining({
-                business_name: 'My Great Restaurant',
-                description: 'Best pad thai',
-                location: 'Chaweng Beach',
-                owner_name: 'Mr. Chef',
-                status: 'new_lead'
+            expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith(expect.objectContaining({
+                email: 'test@example.com',
+                options: expect.objectContaining({
+                    data: expect.objectContaining({
+                        business_name: 'My Great Restaurant',
+                        description: 'Best pad thai',
+                        location: 'Chaweng Beach',
+                        owner_name: 'Mr. Chef'
+                    })
+                })
             }))
         })
 
         // Verify success message
-        expect(await screen.findByText(/בקשתך התקבלה/i)).toBeVisible()
+        expect(await screen.findByText(/נרשמת בהצלחה/i)).toBeVisible()
     })
 })
