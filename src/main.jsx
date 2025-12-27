@@ -24,13 +24,11 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <HelmetProvider>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </HelmetProvider>
-  </React.StrictMode>,
+  <HelmetProvider>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </HelmetProvider>,
 )
 
 if (import.meta.hot) {
