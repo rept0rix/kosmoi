@@ -61,20 +61,44 @@ export const RxDBProvider = ({ children }) => {
             // Nuke IndexedDB natively (The "Nuclear Option")
             if ('indexedDB' in window) {
                 console.warn("Hard Reset: Nuking IndexedDB natively...");
+
+                const deleteDB = (name) => {
+                    return new Promise((resolve, reject) => {
+                        console.log(`Attempting to delete IDB: ${name}`);
+                        const request = window.indexedDB.deleteDatabase(name);
+                        request.onsuccess = () => {
+                            console.log(`Deleted IDB: ${name}`);
+                            resolve();
+                        };
+                        request.onerror = (e) => {
+                            console.error(`Failed to delete IDB: ${name}`, e);
+                            resolve(); // Resolve anyway to continue
+                        };
+                        request.onblocked = () => {
+                            console.warn(`Delete blocked for IDB: ${name} (Close other tabs)`);
+                            resolve();
+                        };
+                    });
+                };
+
                 try {
+                    // Try to list databases
                     const dbs = await window.indexedDB.databases();
-                    for (const dbInfo of dbs) {
-                        if (dbInfo.name && (dbInfo.name.includes('kosmoi') || dbInfo.name.includes('rxdb'))) {
-                            console.warn(`Deleting IndexedDB: ${dbInfo.name}`);
-                            window.indexedDB.deleteDatabase(dbInfo.name);
-                        }
-                    }
+                    await Promise.all(
+                        dbs
+                            .filter(db => db.name && (db.name.includes('kosmoi') || db.name.includes('rxdb')))
+                            .map(db => deleteDB(db.name))
+                    );
                 } catch (err) {
-                    console.error("Native IndexedDB delete failed (fallback to hard name delete)", err);
-                    // Fallback for browsers that don't support databases()
-                    window.indexedDB.deleteDatabase(DB_NAME);
-                    window.indexedDB.deleteDatabase('kosmoidb_v7');
-                    window.indexedDB.deleteDatabase('kosmoidb_v8');
+                    console.error("Native IDB list failed, falling back to known names", err);
+                    // Fallback names
+                    await Promise.all([
+                        deleteDB(DB_NAME),
+                        deleteDB('kosmoidb_v7'),
+                        deleteDB('kosmoidb_v8'),
+                        deleteDB('rxdb-dexie-kosmoidb_v8--0'), // Internal Dexie name often used by RxDB
+                        deleteDB('rxdb-dexie-kosmoidb_v8--1')
+                    ]);
                 }
             }
 
