@@ -1,4 +1,4 @@
-import { createDatabase, DB_NAME } from './rxdb-config';
+import { createDatabase, DB_NAME, storage } from './rxdb-config';
 import { vendorSchema } from './schemas/vendor.schema';
 import { taskSchema } from './schemas/task.schema';
 import { contactSchema } from './schemas/contact.schema';
@@ -21,6 +21,7 @@ export const DatabaseService = {
             window.__DB_LOGS__ = [];
         }
         const log = (msg) => {
+            // @ts-ignore
             const entry = `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${msg}`;
             // @ts-ignore
             window.__DB_LOGS__.push(entry);
@@ -82,12 +83,14 @@ export const DatabaseService = {
                             };
 
                             // Filter out collections that already exist (Double check)
+                            // @ts-ignore
                             const collectionsToAdd = {};
                             const existingCollections = Object.keys(db.collections || {});
                             log(`[${reqId}] [Mutex] Existing: ${JSON.stringify(existingCollections)}`);
 
                             Object.keys(collectionDefinitions).forEach(name => {
                                 if (!existingCollections.includes(name)) {
+                                    // @ts-ignore
                                     collectionsToAdd[name] = collectionDefinitions[name];
                                 }
                             });
@@ -97,6 +100,7 @@ export const DatabaseService = {
 
                             if (keysToAdd.length > 0) {
                                 log(`[${reqId}] [Mutex] Calling addCollections...`);
+                                // @ts-ignore
                                 await db.addCollections(collectionsToAdd);
                                 log(`[${reqId}] [Mutex] addCollections SUCCESS`);
                             } else {
@@ -132,52 +136,59 @@ export const DatabaseService = {
 
                 return db;
             } catch (err) {
-                // SPECIAL HANDLER FOR DB9 (Collection already exists)
-                // If we get DB9, it usually means the database instance is ALREADY ALIVE in memory
-                // either from HMR (Hot Module Replacement) or a race condition.
-                // We typically find it in window.db (if in dev mode) or we can try to return the existing global promise result.
+                // SPECIAL HANDLER FOR DB9 (Collection/DB already exists)
+                // If we get DB9 here, it means createDatabase() failed, so we don't have a 'db' instance.
+                // This implies a 'Zombie State' where RxDB's internal map thinks it's open, but we lost the handle.
 
                 if (err?.code === 'DB9' || err?.message?.includes('DB9')) {
-                    log(`[${reqId}] CAUGHT DB9 ERROR. Attempting recovery...`);
+                    log(`[${reqId}] CAUGHT DB9 ERROR (Collision).`);
 
-                    // 1. Try variable from scope (if set before error)
+                    // 1. If we have a local instance partially created (unlikely if createDatabase threw), use it.
                     if (db) {
                         console.warn("Recovering from DB9: Using local instance.");
                         return db;
                     }
 
-                    // 2. Try window.db (Dev Mode helper)
+                    // 2. Try window.db fallback (Dev mode)
                     // @ts-ignore
                     if (window['db'] && window['db'].name === DB_NAME) {
-                        console.warn("Recovering from DB9: Found existing window.db instance.");
+                        console.warn("Recovering from DB9: Using window.db");
                         // @ts-ignore
                         return window['db'];
                     }
 
-                    // 3. Try to await the GLOBAL PROMISE again (maybe it resolved in parallel?)
-                    // This creates a circular wait if we aren't careful, but if it resolved elsewhere...
-                    // @ts-ignore
-                    const existingPromise = window['__KOSMOI_DB_PROMISE__'];
-                    if (existingPromise) {
-                        console.warn("Recovering from DB9: Awaiting existing global promise...");
-                        try {
-                            const resolvedDB = await existingPromise;
-                            if (resolvedDB) return resolvedDB;
-                        } catch (e) {
-                            console.error("Recovery failed: Existing promise also rejected.", e);
-                        }
-                    }
+                    // 3. NUKE AND RETRY (The definitive fix for Zombies)
+                    // We cannot await the existing promise (Deadlock).
+                    // We cannot return a dummy.
+                    // We MUST clear the state and try again.
 
-                    // 4. Last Resort: Just return "true" or a dummy if we can't get the object? 
-                    // No, app needs the object to run queries. 
-                    // If we are here, we are truly stuck without a reference.
-                    console.error("Recovery failed: Could not find ANY reference to the existing DB.");
+                    console.warn(`[${reqId}] Zombie DB Detected. NUKE AND RETRY triggered...`);
+
+                    try {
+                        // Unset the global promise so the next call starts fresh
+                        // @ts-ignore
+                        window['__KOSMOI_DB_PROMISE__'] = null;
+
+                        // Force remove the database from RxDB/Dexie
+                        await removeRxDatabase(DB_NAME, storage);
+                        log(`[${reqId}] Nuke Successful. Retrying get()...`);
+
+                        // Recursive retry
+                        return await DatabaseService.get();
+                    } catch (retryErr) {
+                        // @ts-ignore
+                        console.error(`[${reqId}] Nuke and Retry FAILED.`, retryErr);
+                        // Convert to a critical error that RxDBProvider can display
+                        // @ts-ignore
+                        throw new Error(`Critical DB Failure: ${err.message} -> Retry Failed: ${retryErr.message}`);
+                    }
                 }
 
                 log(`[${reqId}] CRITICAL FAIL: ${err.message}`);
                 console.error(`[DB_DEBUG][${reqId}] Critical Failed`, err);
 
                 // Only nullify if we truly failed. If we recovered, we wouldn't be here.
+                // @ts-ignore
                 window['__KOSMOI_DB_PROMISE__'] = null;
                 throw err;
             }
