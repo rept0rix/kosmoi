@@ -31,73 +31,73 @@ export const DatabaseService = {
                 const db = await createDatabase();
                 console.log("DatabaseService: DB Instance created", db.name);
 
-                // Add collections
-                // Add collections with robust error handling
-                // We use try-catch instead of checking state to be 100% sure we don't crash
-                // Define desired collections
-                const collectionDefinitions = {
-                    vendors: {
-                        schema: vendorSchema,
-                        migrationStrategies: {
-                            1: (oldDoc) => {
-                                oldDoc.vibes = oldDoc.vibes || [];
-                                oldDoc.images = oldDoc.images || [];
-                                oldDoc.price_level = oldDoc.price_level || null;
-                                oldDoc.instagram_handle = oldDoc.instagram_handle || null;
-                                oldDoc.open_status = oldDoc.open_status || 'closed';
-                                return oldDoc;
+                // Mutex Lock: Ensure we only attempt to add collections ONCE per db instance.
+                // This resolves the race condition where multiple calls see empty collections and try to add.
+                if (!db['_kosmoi_collections_promise']) {
+                    db['_kosmoi_collections_promise'] = (async () => {
+                        console.log("DatabaseService: Starting exclusive collection creation...");
+
+                        // Define desired collections
+                        const collectionDefinitions = {
+                            vendors: {
+                                schema: vendorSchema,
+                                migrationStrategies: {
+                                    1: (oldDoc) => {
+                                        oldDoc.vibes = oldDoc.vibes || [];
+                                        oldDoc.images = oldDoc.images || [];
+                                        oldDoc.price_level = oldDoc.price_level || null;
+                                        oldDoc.instagram_handle = oldDoc.instagram_handle || null;
+                                        oldDoc.open_status = oldDoc.open_status || 'closed';
+                                        return oldDoc;
+                                    }
+                                }
+                            },
+                            tasks: {
+                                schema: taskSchema,
+                                migrationStrategies: {
+                                    1: (oldDoc) => oldDoc,
+                                    2: (oldDoc) => {
+                                        oldDoc.meeting_id = oldDoc.meeting_id || "";
+                                        oldDoc.priority = oldDoc.priority || "medium";
+                                        oldDoc.description = oldDoc.description || "";
+                                        oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
+                                        oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
+                                        return oldDoc;
+                                    }
+                                }
+                            },
+                            contacts: { schema: contactSchema },
+                            stages: { schema: stageSchema }
+                        };
+
+                        // Filter out collections that already exist (Double check)
+                        const collectionsToAdd = {};
+                        const existingCollections = Object.keys(db.collections || {});
+
+                        Object.keys(collectionDefinitions).forEach(name => {
+                            if (!existingCollections.includes(name)) {
+                                collectionsToAdd[name] = collectionDefinitions[name];
                             }
-                        }
-                    },
-                    tasks: {
-                        schema: taskSchema,
-                        migrationStrategies: {
-                            1: (oldDoc) => oldDoc,
-                            2: (oldDoc) => {
-                                oldDoc.meeting_id = oldDoc.meeting_id || "";
-                                oldDoc.priority = oldDoc.priority || "medium";
-                                oldDoc.description = oldDoc.description || "";
-                                oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
-                                oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
-                                return oldDoc;
+                        });
+
+                        if (Object.keys(collectionsToAdd).length > 0) {
+                            try {
+                                await db.addCollections(collectionsToAdd);
+                                console.log("DatabaseService: New collections added (Exclusive):", Object.keys(collectionsToAdd));
+                            } catch (e) {
+                                // BULLDOZER FIX (Keep as backup):
+                                console.warn("DatabaseService: Error adding collections inside Mutex (Swallowed):", e);
                             }
+                        } else {
+                            console.log("DatabaseService: Collections existing. Skipping (Exclusive).");
                         }
-                    },
-                    contacts: { schema: contactSchema },
-                    stages: { schema: stageSchema }
-                };
-
-                // Filter out collections that already exist to prevent DB9 error
-                const collectionsToAdd = {};
-                const existingCollections = Object.keys(db.collections || {});
-
-                Object.keys(collectionDefinitions).forEach(name => {
-                    if (!existingCollections.includes(name)) {
-                        collectionsToAdd[name] = collectionDefinitions[name];
-                    } else {
-                        console.log(`DatabaseService: Collection "${name}" already exists. Skipping.`);
-                    }
-                });
-
-                // Add only the missing collections
-                if (Object.keys(collectionsToAdd).length > 0) {
-                    try {
-                        await db.addCollections(collectionsToAdd);
-                        console.log("DatabaseService: New collections added:", Object.keys(collectionsToAdd));
-                    } catch (e) {
-                        // BULLDOZER FIX:
-                        // We explicitly swallow ALL errors here.
-                        // The persistence of DB9 (Collection already exists) suggests a deep race condition
-                        // or underlying storage sync issue. 
-                        // If addCollections fails, it's highly likely because they exist or partially exist.
-                        // We proceeding is safer than crashing the entire app.
-                        console.warn("DatabaseService: Error adding collections (Swallowed to ensure boot):", e);
-
-                        // We do NOT throw. We proceed to replication.
-                    }
+                    })();
                 } else {
-                    console.log("DatabaseService: All collections already exist. Skipping addCollections.");
+                    console.log("DatabaseService: Joining existing collection creation promise...");
                 }
+
+                // Wait for the exclusive promise to complete
+                await db['_kosmoi_collections_promise'];
 
                 // Start Replication (Fire and forget, but with better error logging)
                 console.log('Starting replication...');
