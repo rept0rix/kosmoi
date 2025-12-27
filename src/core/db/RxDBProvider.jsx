@@ -36,7 +36,8 @@ export const RxDBProvider = ({ children }) => {
                 if (isMounted) {
                     clearTimeout(timeoutId);
                     console.error("RxDB Initialization Failed (Graceful Fallback):", err);
-                    // Instead of blocking the app with setError(err), we enable Offline Mode
+                    // Enable Offline Mode and capture error for display
+                    setError(err);
                     setIsOfflineMode(true);
                     setIsLoading(false);
                 }
@@ -53,7 +54,8 @@ export const RxDBProvider = ({ children }) => {
     const [isResetting, setIsResetting] = useState(false);
 
     const handleHardReset = async () => {
-        // ... (Existing implementation) ...
+        if (!window.confirm("Are you sure? This will clear all local data and reload the app.")) return;
+
         setIsResetting(true);
         try {
             await DatabaseService.destroy();
@@ -96,8 +98,9 @@ export const RxDBProvider = ({ children }) => {
                         deleteDB(DB_NAME),
                         deleteDB('kosmoidb_v7'),
                         deleteDB('kosmoidb_v8'),
-                        deleteDB('rxdb-dexie-kosmoidb_v8--0'), // Internal Dexie name often used by RxDB
-                        deleteDB('rxdb-dexie-kosmoidb_v8--1')
+                        deleteDB('kosmoidb_v9'), // Self
+                        deleteDB('rxdb-dexie-kosmoidb_v8--0'),
+                        deleteDB('rxdb-dexie-kosmoidb_v9--0')
                     ]);
                 }
             }
@@ -106,9 +109,11 @@ export const RxDBProvider = ({ children }) => {
                 const registrations = await navigator.serviceWorker.getRegistrations();
                 for (const registration of registrations) await registration.unregister();
             }
-            // ... (Rest of logic) ...
+
+            // Clear standard storages
             localStorage.clear();
             sessionStorage.clear();
+
             if ('caches' in window) {
                 const cacheKeys = await caches.keys();
                 await Promise.all(cacheKeys.map(key => caches.delete(key)));
@@ -125,6 +130,7 @@ export const RxDBProvider = ({ children }) => {
             <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
                 <h2 className="text-xl font-semibold">Loading Kosmoi...</h2>
+                <div className="text-xs text-white/50 mt-2">v8.5-DEBUG</div>
             </div>
         );
     }
@@ -137,7 +143,9 @@ export const RxDBProvider = ({ children }) => {
         <RxDBContext.Provider value={db}>
             {isOfflineMode && (
                 <div className="fixed top-0 left-0 w-full bg-amber-600/95 text-white text-center text-xs font-bold py-1 z-[9999] flex items-center justify-center gap-3 shadow-md">
-                    <span>⚠️ OFFLINE MODE - Browser Database Issue Detected</span>
+                    <span title={error?.message || 'Unknown Error'}>
+                        ⚠️ OFFLINE MODE ({error?.code || 'ERR'}) - Browser Database Issue
+                    </span>
                     <button
                         onClick={handleHardReset}
                         disabled={isResetting}
