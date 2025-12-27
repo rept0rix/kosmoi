@@ -85,11 +85,19 @@ export const DatabaseService = {
                         await db.addCollections(collectionsToAdd);
                         console.log("DatabaseService: New collections added:", Object.keys(collectionsToAdd));
                     } catch (e) {
-                        console.error("DatabaseService: Failed to add collections", e);
-                        // If it fails here, it's a real error (e.g. schema mismatch), so we probably should throw
-                        // But for robustness in production, we log and try to proceed if possible, 
-                        // though a missing collection is critical.
-                        throw e;
+                        // DB9 Defense in Depth:
+                        // If checking keys failed (race condition), and we still hit DB9, catch it here.
+                        const errString = (e.toString() || '') + (e.message || '') + (e.code || '');
+                        if (
+                            errString.includes('DB9') ||
+                            errString.includes('already exists') ||
+                            (e.parameters && e.parameters.code === 'DB9')
+                        ) {
+                            console.warn("DatabaseService: DB9 Error caught despite check (Race condition?). Proceeding...");
+                        } else {
+                            console.error("DatabaseService: Failed to add collections", e);
+                            throw e;
+                        }
                     }
                 } else {
                     console.log("DatabaseService: All collections already exist. Skipping addCollections.");
