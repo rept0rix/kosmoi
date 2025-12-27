@@ -57,6 +57,27 @@ export const RxDBProvider = ({ children }) => {
         setIsResetting(true);
         try {
             await DatabaseService.destroy();
+
+            // Nuke IndexedDB natively (The "Nuclear Option")
+            if ('indexedDB' in window) {
+                console.warn("Hard Reset: Nuking IndexedDB natively...");
+                try {
+                    const dbs = await window.indexedDB.databases();
+                    for (const dbInfo of dbs) {
+                        if (dbInfo.name && (dbInfo.name.includes('kosmoi') || dbInfo.name.includes('rxdb'))) {
+                            console.warn(`Deleting IndexedDB: ${dbInfo.name}`);
+                            window.indexedDB.deleteDatabase(dbInfo.name);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Native IndexedDB delete failed (fallback to hard name delete)", err);
+                    // Fallback for browsers that don't support databases()
+                    window.indexedDB.deleteDatabase(DB_NAME);
+                    window.indexedDB.deleteDatabase('kosmoidb_v7');
+                    window.indexedDB.deleteDatabase('kosmoidb_v8');
+                }
+            }
+
             if ('serviceWorker' in navigator) {
                 const registrations = await navigator.serviceWorker.getRegistrations();
                 for (const registration of registrations) await registration.unregister();
