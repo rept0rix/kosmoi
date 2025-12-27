@@ -66,7 +66,7 @@ export const RxDBProvider = ({ children }) => {
             } catch (e) {
                 console.warn("Standard DB listing failed, trying fallback lists...", e);
                 // Fallback for browsers that don't support databases() or if it fails
-                const knownDBs = [DB_NAME, 'kosmoidb_v6', 'kosmoidb_v5', 'rxdb-dexie-' + DB_NAME];
+                const knownDBs = [DB_NAME, 'kosmoidb_v7', 'kosmoidb_v6', 'kosmoidb_v5', 'rxdb-dexie-' + DB_NAME];
                 knownDBs.forEach(name => {
                     try {
                         window.indexedDB.deleteDatabase(name);
