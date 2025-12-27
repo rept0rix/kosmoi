@@ -104,10 +104,9 @@ export const RxDBProvider = ({ children }) => {
                             <div className="flex flex-col gap-2">
                                 <span>{error?.message || "An unexpected error occurred."}</span>
                                 <span className="text-white/30 text-xs mt-2 block">DB Error Source: {error?.parameters?.database}</span>
-                                <span className="text-green-400/30 text-xs block">Expected DB: {DB_NAME} (v8.1-DEBUG)</span>
-                                <div className="mt-4 p-2 bg-black/30 rounded text-left text-[10px] text-gray-400 font-mono overflow-auto max-h-32">
-                                    {/* Display last few debug logs if available */}
-                                    Attempting Auto-Fix (Swallow Mode Active)...
+                                <span className="text-green-400/30 text-xs block">Expected DB: {DB_NAME} (v8.2-LOGGING)</span>
+                                <div className="mt-4 p-2 bg-black/50 rounded text-left text-[10px] text-green-400 font-mono overflow-auto max-h-60 whitespace-pre-wrap border border-white/10">
+                                    {window.__DB_LOGS__ ? window.__DB_LOGS__.join('\n') : "No logs captured."}
                                 </div>
                                 <span className="text-xs text-slate-600 mt-2">
                                     If this persists, please Hard Reset.

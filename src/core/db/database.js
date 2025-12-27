@@ -14,92 +14,98 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 
 export const DatabaseService = {
     async get() {
+        // Initialize Debug Logs Global
+        if (!window.__DB_LOGS__) window.__DB_LOGS__ = [];
+        const log = (msg) => {
+            const entry = `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${msg}`;
+            window.__DB_LOGS__.push(entry);
+            console.log(entry); // Keep console log just in case
+        };
+
         const reqId = Math.random().toString(36).substring(7);
-        console.log(`[DB_DEBUG][${reqId}] DatabaseService.get() called`);
+        log(`[${reqId}] DatabaseService.get() called`);
 
         // Check window global first
         if (window['__KOSMOI_DB_PROMISE__']) {
-            console.log(`[DB_DEBUG][${reqId}] Returning existing global promise`);
+            log(`[${reqId}] Returning existing global promise`);
             return window['__KOSMOI_DB_PROMISE__'];
         }
 
-        console.log(`[DB_DEBUG][${reqId}] Initializing RxDB (${DB_NAME})...`);
+        log(`[${reqId}] Initializing RxDB (${DB_NAME})...`);
 
         // Start creation and assign to window immediately to block race conditions
         const promise = (async () => {
             try {
                 if (typeof createDatabase !== 'function') {
-                    throw new Error("createDatabase is not a function. Check rxdb-config.js export.");
+                    throw new Error("createDatabase is not a function.");
                 }
 
-                console.log(`[DB_DEBUG][${reqId}] Calling createDatabase()...`);
+                log(`[${reqId}] Calling createDatabase()...`);
                 const db = await createDatabase();
 
                 // Tag the DB instance to see if we get duplicates
                 if (!db._debug_id) db._debug_id = Math.random().toString(36).substring(7);
-                console.log(`[DB_DEBUG][${reqId}] DB Instance created: ${db.name} (InstanceID: ${db._debug_id})`);
+                log(`[${reqId}] DB Created: ${db.name} (ID: ${db._debug_id})`);
 
                 // Mutex Lock
                 if (!db['_kosmoi_collections_promise']) {
-                    console.log(`[DB_DEBUG][${reqId}] Mutex not found. Creating Mutex...`);
+                    log(`[${reqId}] Mutex not found. Creating Mutex...`);
                     db['_kosmoi_collections_promise'] = (async () => {
-                        console.log(`[DB_DEBUG][${reqId}] [Mutex] Starting exclusive collection creation...`);
+                        log(`[${reqId}] [Mutex] STARTING EXCLUSIVE LOCK`);
+                        try {
+                            // Define desired collections
+                            const collectionDefinitions = {
+                                vendors: {
+                                    schema: vendorSchema,
+                                    migrationStrategies: { 1: (oldDoc) => oldDoc }
+                                },
+                                tasks: {
+                                    schema: taskSchema,
+                                    migrationStrategies: { 1: (oldDoc) => oldDoc }
+                                },
+                                contacts: { schema: contactSchema },
+                                stages: { schema: stageSchema }
+                            };
 
-                        // Define desired collections
-                        const collectionDefinitions = {
-                            vendors: {
-                                schema: vendorSchema,
-                                migrationStrategies: {
-                                    1: (oldDoc) => { return oldDoc; } // Simplified for debug
+                            // Filter out collections that already exist (Double check)
+                            const collectionsToAdd = {};
+                            const existingCollections = Object.keys(db.collections || {});
+                            log(`[${reqId}] [Mutex] Existing: ${JSON.stringify(existingCollections)}`);
+
+                            Object.keys(collectionDefinitions).forEach(name => {
+                                if (!existingCollections.includes(name)) {
+                                    collectionsToAdd[name] = collectionDefinitions[name];
                                 }
-                            },
-                            tasks: {
-                                schema: taskSchema,
-                                migrationStrategies: { 1: (oldDoc) => oldDoc }
-                            },
-                            contacts: { schema: contactSchema },
-                            stages: { schema: stageSchema }
-                        };
+                            });
 
-                        // Filter out collections that already exist (Double check)
-                        const collectionsToAdd = {};
-                        const existingCollections = Object.keys(db.collections || {});
-                        console.log(`[DB_DEBUG][${reqId}] [Mutex] Existing collections:`, existingCollections);
+                            const keysToAdd = Object.keys(collectionsToAdd);
+                            log(`[${reqId}] [Mutex] To Add: ${JSON.stringify(keysToAdd)}`);
 
-                        Object.keys(collectionDefinitions).forEach(name => {
-                            if (!existingCollections.includes(name)) {
-                                collectionsToAdd[name] = collectionDefinitions[name];
-                            }
-                        });
-
-                        const keysToAdd = Object.keys(collectionsToAdd);
-                        console.log(`[DB_DEBUG][${reqId}] [Mutex] Collections to add:`, keysToAdd);
-
-                        if (keysToAdd.length > 0) {
-                            try {
-                                console.log(`[DB_DEBUG][${reqId}] [Mutex] Calling db.addCollections()...`);
+                            if (keysToAdd.length > 0) {
+                                log(`[${reqId}] [Mutex] Calling addCollections...`);
                                 await db.addCollections(collectionsToAdd);
-                                console.log(`[DB_DEBUG][${reqId}] [Mutex] db.addCollections() SUCCESS`);
-                            } catch (e) {
-                                console.warn(`[DB_DEBUG][${reqId}] [Mutex] ERROR in addCollections (Swallowing):`, e);
+                                log(`[${reqId}] [Mutex] addCollections SUCCESS`);
+                            } else {
+                                log(`[${reqId}] [Mutex] Skipping (Empty list).`);
                             }
-                        } else {
-                            console.log(`[DB_DEBUG][${reqId}] [Mutex] Skipping addCollections (Empty list).`);
+                        } catch (err) {
+                            log(`[${reqId}] [Mutex] ERROR (Swallowed): ${err.message}`);
+                            // Intentionally swallowing error to allow app to proceed
                         }
                     })();
                 } else {
-                    console.log(`[DB_DEBUG][${reqId}] Mutex found. Waiting for existing promise...`);
+                    log(`[${reqId}] Mutex found. Waiting...`);
                 }
 
                 // Wait for the exclusive promise to complete
                 await db['_kosmoi_collections_promise'];
-                console.log(`[DB_DEBUG][${reqId}] Mutex released. Proceeding to replication.`);
+                log(`[${reqId}] Mutex released. Starting replication.`);
 
-                // Start Replication (Fire and forget, but with better error logging)
-                const logError = (context, err) => console.error(`[DB_DEBUG][${reqId}] [Replication Error] ${context}:`, err);
+                // Start Replication
+                const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
 
                 if (db.vendors) replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
-                else console.error(`[DB_DEBUG][${reqId}] db.vendors IS MISSING!`);
+                else log(`[${reqId}] ERROR: db.vendors MISSING after init!`);
 
                 if (db.tasks) replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
                 if (db.contacts) replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
@@ -107,7 +113,8 @@ export const DatabaseService = {
 
                 return db;
             } catch (err) {
-                console.error(`[DB_DEBUG][${reqId}] Critical Failed during DB creation`, err);
+                log(`[${reqId}] CRITICAL FAIL: ${err.message}`);
+                console.error(`[DB_DEBUG][${reqId}] Critical Failed`, err);
                 window['__KOSMOI_DB_PROMISE__'] = null;
                 throw err;
             }
