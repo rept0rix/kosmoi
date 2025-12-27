@@ -115,7 +115,7 @@ export const RxDBProvider = ({ children }) => {
             <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
                 <h2 className="text-xl font-semibold">Loading Kosmoi...</h2>
-                <span className="text-slate-500 text-sm mt-2">{statusMessage}</span>
+                {EMERGENCY_BYPASS && <span className="text-red-400 text-xs mt-2 animate-pulse">BYPASSING DATABASE...</span>}
             </div>
         );
     }
