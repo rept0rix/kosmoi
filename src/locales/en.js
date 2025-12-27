@@ -214,6 +214,7 @@ export const en = {
     "dashboard.ai_chat_button": "Discover more with AI Chat",
     "dashboard.ai_chat_subtext": "Get personalized recommendations",
     "dashboard.select_category_prompt": "Select a category to explore Koh Samui",
+    "dashboard.select_location": "Select Location",
 
     // Location
     "locatingYou": "Locating you...",
