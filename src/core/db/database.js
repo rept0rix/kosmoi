@@ -104,12 +104,16 @@ export const DatabaseService = {
                 // Start Replication
                 const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
 
+                // TEMPORARILY DISABLED TO STOP NETWORK FLOOD
+                /*
                 if (db.vendors) replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
                 else log(`[${reqId}] ERROR: db.vendors MISSING after init!`);
 
                 if (db.tasks) replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
                 if (db.contacts) replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
                 if (db.stages) replicateCollection(db.stages, 'crm_stages').catch(err => logError('stages', err));
+                */
+                log(`[${reqId}] Replication TEMPORARILY DISABLED for stability check.`);
 
                 return db;
             } catch (err) {
