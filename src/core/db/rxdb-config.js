@@ -38,7 +38,7 @@ const getGlobalStorage = () => {
 export const storage = getGlobalStorage();
 
 // Database Context
-export const DB_NAME = 'kosmoidb_v8';
+export const DB_NAME = 'kosmoidb_v9';
 
 /**
  * Creates and configures the RxDB database instance
