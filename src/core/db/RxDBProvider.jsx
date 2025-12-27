@@ -8,13 +8,32 @@ export const RxDBProvider = ({ children }) => {
     const [db, setDb] = useState(null);
     const [error, setError] = useState(null);
     const [isTimeout, setIsTimeout] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Added isLoading state
+
+    // EMERGENCY BYPASS - Use this to restore app access if DB is crashing
+    const EMERGENCY_BYPASS = true;
 
     useEffect(() => {
         let timeoutId;
-        const initDB = async () => {
+        let isMounted = true; // Added isMounted flag
+
+        if (EMERGENCY_BYPASS) {
+            console.warn("RxDBProvider: EMERGENCY_BYPASS ACTIVE. Skipping DB Init.");
+            setDb(null); // Explicit null
+            setIsLoading(false); // Done loading
+            return () => {
+                isMounted = false;
+                clearTimeout(timeoutId); // Ensure timeout is cleared if it was set before bypass
+            };
+        }
+
+        const init = async () => { // Renamed initDB to init
             // Set 15s timeout
             timeoutId = setTimeout(() => {
-                setIsTimeout(true);
+                if (isMounted) {
+                    setIsTimeout(true);
+                    setIsLoading(false); // Also set loading to false on timeout
+                }
             }, 15000);
 
             try {
@@ -91,7 +110,17 @@ export const RxDBProvider = ({ children }) => {
         }
     };
 
-    if (error || isTimeout) {
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+                <h2 className="text-xl font-semibold">Loading Kosmoi...</h2>
+                <span className="text-slate-500 text-sm mt-2">{statusMessage}</span>
+            </div>
+        );
+    }
+
+    if ((error || isTimeout) && !EMERGENCY_BYPASS) { // Only show error if NOT bypassed
         return (
             <div className="flex h-screen flex-col items-center justify-center gap-6 bg-slate-900 text-white p-4">
                 <div className="text-red-500 font-bold text-2xl">
@@ -132,13 +161,6 @@ export const RxDBProvider = ({ children }) => {
                 </div>
             </div>
         );
-    }
-
-    if (!db) {
-        return <div className="flex h-screen items-center justify-center text-slate-400 animate-pulse flex-col gap-4">
-            <div className="w-12 h-12 border-4 border-slate-600 border-t-slate-300 rounded-full animate-spin"></div>
-            <span>Loading Database ({DB_NAME})...</span>
-        </div>;
     }
 
     return (
