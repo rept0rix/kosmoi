@@ -91,8 +91,15 @@ export const RxDBProvider = ({ children }) => {
     return (
         <RxDBContext.Provider value={db}>
             {isOfflineMode && (
-                <div className="fixed top-0 left-0 w-full bg-amber-600/90 text-white text-center text-[10px] font-bold py-1 z-[9999] pointer-events-none">
-                    ⚠️ OFFLINE MODE - Local Storage Issue Detected (Browsing Only) ⚠️
+                <div className="fixed top-0 left-0 w-full bg-amber-600/95 text-white text-center text-xs font-bold py-1 z-[9999] flex items-center justify-center gap-3 shadow-md">
+                    <span>⚠️ OFFLINE MODE - Browser Database Issue Detected</span>
+                    <button
+                        onClick={handleHardReset}
+                        disabled={isResetting}
+                        className="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white px-2 py-0.5 rounded transition-colors cursor-pointer border border-white/30"
+                    >
+                        {isResetting ? 'Resetting...' : 'Fix Now (Reset App)'}
+                    </button>
                 </div>
             )}
             {children}
