@@ -14,12 +14,16 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 
 export const DatabaseService = {
     async get() {
+        const reqId = Math.random().toString(36).substring(7);
+        console.log(`[DB_DEBUG][${reqId}] DatabaseService.get() called`);
+
         // Check window global first
         if (window['__KOSMOI_DB_PROMISE__']) {
+            console.log(`[DB_DEBUG][${reqId}] Returning existing global promise`);
             return window['__KOSMOI_DB_PROMISE__'];
         }
 
-        console.log(`DatabaseService: Initializing RxDB (${DB_NAME})...`);
+        console.log(`[DB_DEBUG][${reqId}] Initializing RxDB (${DB_NAME})...`);
 
         // Start creation and assign to window immediately to block race conditions
         const promise = (async () => {
@@ -28,43 +32,30 @@ export const DatabaseService = {
                     throw new Error("createDatabase is not a function. Check rxdb-config.js export.");
                 }
 
+                console.log(`[DB_DEBUG][${reqId}] Calling createDatabase()...`);
                 const db = await createDatabase();
-                console.log("DatabaseService: DB Instance created", db.name);
 
-                // Mutex Lock: Ensure we only attempt to add collections ONCE per db instance.
-                // This resolves the race condition where multiple calls see empty collections and try to add.
+                // Tag the DB instance to see if we get duplicates
+                if (!db._debug_id) db._debug_id = Math.random().toString(36).substring(7);
+                console.log(`[DB_DEBUG][${reqId}] DB Instance created: ${db.name} (InstanceID: ${db._debug_id})`);
+
+                // Mutex Lock
                 if (!db['_kosmoi_collections_promise']) {
+                    console.log(`[DB_DEBUG][${reqId}] Mutex not found. Creating Mutex...`);
                     db['_kosmoi_collections_promise'] = (async () => {
-                        console.log("DatabaseService: Starting exclusive collection creation...");
+                        console.log(`[DB_DEBUG][${reqId}] [Mutex] Starting exclusive collection creation...`);
 
                         // Define desired collections
                         const collectionDefinitions = {
                             vendors: {
                                 schema: vendorSchema,
                                 migrationStrategies: {
-                                    1: (oldDoc) => {
-                                        oldDoc.vibes = oldDoc.vibes || [];
-                                        oldDoc.images = oldDoc.images || [];
-                                        oldDoc.price_level = oldDoc.price_level || null;
-                                        oldDoc.instagram_handle = oldDoc.instagram_handle || null;
-                                        oldDoc.open_status = oldDoc.open_status || 'closed';
-                                        return oldDoc;
-                                    }
+                                    1: (oldDoc) => { return oldDoc; } // Simplified for debug
                                 }
                             },
                             tasks: {
                                 schema: taskSchema,
-                                migrationStrategies: {
-                                    1: (oldDoc) => oldDoc,
-                                    2: (oldDoc) => {
-                                        oldDoc.meeting_id = oldDoc.meeting_id || "";
-                                        oldDoc.priority = oldDoc.priority || "medium";
-                                        oldDoc.description = oldDoc.description || "";
-                                        oldDoc.created_at = oldDoc.created_at || new Date().toISOString();
-                                        oldDoc.updated_at = oldDoc.updated_at || new Date().toISOString();
-                                        return oldDoc;
-                                    }
-                                }
+                                migrationStrategies: { 1: (oldDoc) => oldDoc }
                             },
                             contacts: { schema: contactSchema },
                             stages: { schema: stageSchema }
@@ -73,6 +64,7 @@ export const DatabaseService = {
                         // Filter out collections that already exist (Double check)
                         const collectionsToAdd = {};
                         const existingCollections = Object.keys(db.collections || {});
+                        console.log(`[DB_DEBUG][${reqId}] [Mutex] Existing collections:`, existingCollections);
 
                         Object.keys(collectionDefinitions).forEach(name => {
                             if (!existingCollections.includes(name)) {
@@ -80,38 +72,42 @@ export const DatabaseService = {
                             }
                         });
 
-                        if (Object.keys(collectionsToAdd).length > 0) {
+                        const keysToAdd = Object.keys(collectionsToAdd);
+                        console.log(`[DB_DEBUG][${reqId}] [Mutex] Collections to add:`, keysToAdd);
+
+                        if (keysToAdd.length > 0) {
                             try {
+                                console.log(`[DB_DEBUG][${reqId}] [Mutex] Calling db.addCollections()...`);
                                 await db.addCollections(collectionsToAdd);
-                                console.log("DatabaseService: New collections added (Exclusive):", Object.keys(collectionsToAdd));
+                                console.log(`[DB_DEBUG][${reqId}] [Mutex] db.addCollections() SUCCESS`);
                             } catch (e) {
-                                // BULLDOZER FIX (Keep as backup):
-                                console.warn("DatabaseService: Error adding collections inside Mutex (Swallowed):", e);
+                                console.warn(`[DB_DEBUG][${reqId}] [Mutex] ERROR in addCollections (Swallowing):`, e);
                             }
                         } else {
-                            console.log("DatabaseService: Collections existing. Skipping (Exclusive).");
+                            console.log(`[DB_DEBUG][${reqId}] [Mutex] Skipping addCollections (Empty list).`);
                         }
                     })();
                 } else {
-                    console.log("DatabaseService: Joining existing collection creation promise...");
+                    console.log(`[DB_DEBUG][${reqId}] Mutex found. Waiting for existing promise...`);
                 }
 
                 // Wait for the exclusive promise to complete
                 await db['_kosmoi_collections_promise'];
+                console.log(`[DB_DEBUG][${reqId}] Mutex released. Proceeding to replication.`);
 
                 // Start Replication (Fire and forget, but with better error logging)
-                console.log('Starting replication...');
-                const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
+                const logError = (context, err) => console.error(`[DB_DEBUG][${reqId}] [Replication Error] ${context}:`, err);
 
-                replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
+                if (db.vendors) replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
+                else console.error(`[DB_DEBUG][${reqId}] db.vendors IS MISSING!`);
+
                 if (db.tasks) replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
                 if (db.contacts) replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
                 if (db.stages) replicateCollection(db.stages, 'crm_stages').catch(err => logError('stages', err));
 
                 return db;
             } catch (err) {
-                console.error("DatabaseService: Critical Failed during DB creation", err);
-                // If it fails, clear the global promise so we can retry on next call
+                console.error(`[DB_DEBUG][${reqId}] Critical Failed during DB creation`, err);
                 window['__KOSMOI_DB_PROMISE__'] = null;
                 throw err;
             }
@@ -125,11 +121,8 @@ export const DatabaseService = {
         window['__KOSMOI_DB_PROMISE__'] = null;
     },
 
-    // Destroys the local database completely
     destroy: async () => {
         console.warn("DatabaseService: DESTROYING DATABASE...");
-
-        // Try to close existing connection first
         const currentPromise = window['__KOSMOI_DB_PROMISE__'];
         if (currentPromise) {
             try {
@@ -137,18 +130,13 @@ export const DatabaseService = {
                 if (db && !db.destroyed) {
                     await db.destroy();
                 }
-                console.log("DatabaseService: Closed existing connection");
-            } catch (err) {
-                console.warn("DatabaseService: Failed to close existing connection during destroy", err);
-            }
+            } catch (err) { }
             window['__KOSMOI_DB_PROMISE__'] = null;
         }
 
         try {
-            // Import storage dynamically prevents circular dependency issues in some builds
             const { storage } = await import('./rxdb-config');
             await removeRxDatabase(DB_NAME, storage);
-            console.log(`DatabaseService: Database (${DB_NAME}) and storage destroyed.`);
             return true;
         } catch (e) {
             console.error("DatabaseService: Failed to destroy DB", e);
