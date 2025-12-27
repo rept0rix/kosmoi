@@ -133,14 +133,51 @@ export const DatabaseService = {
                 return db;
             } catch (err) {
                 // SPECIAL HANDLER FOR DB9 (Collection already exists)
-                if ((err?.code === 'DB9' || err?.message?.includes('DB9')) && db) {
-                    log(`[${reqId}] CAUGHT DB9 ERROR. Interpreting as SUCCESS.`);
-                    console.warn("Recovering from DB9: Collections already exist.", err);
-                    return db; // RESCUE: Return the valid DB instance!
+                // If we get DB9, it usually means the database instance is ALREADY ALIVE in memory
+                // either from HMR (Hot Module Replacement) or a race condition.
+                // We typically find it in window.db (if in dev mode) or we can try to return the existing global promise result.
+
+                if (err?.code === 'DB9' || err?.message?.includes('DB9')) {
+                    log(`[${reqId}] CAUGHT DB9 ERROR. Attempting recovery...`);
+
+                    // 1. Try variable from scope (if set before error)
+                    if (db) {
+                        console.warn("Recovering from DB9: Using local instance.");
+                        return db;
+                    }
+
+                    // 2. Try window.db (Dev Mode helper)
+                    // @ts-ignore
+                    if (window['db'] && window['db'].name === DB_NAME) {
+                        console.warn("Recovering from DB9: Found existing window.db instance.");
+                        // @ts-ignore
+                        return window['db'];
+                    }
+
+                    // 3. Try to await the GLOBAL PROMISE again (maybe it resolved in parallel?)
+                    // This creates a circular wait if we aren't careful, but if it resolved elsewhere...
+                    // @ts-ignore
+                    const existingPromise = window['__KOSMOI_DB_PROMISE__'];
+                    if (existingPromise) {
+                        console.warn("Recovering from DB9: Awaiting existing global promise...");
+                        try {
+                            const resolvedDB = await existingPromise;
+                            if (resolvedDB) return resolvedDB;
+                        } catch (e) {
+                            console.error("Recovery failed: Existing promise also rejected.", e);
+                        }
+                    }
+
+                    // 4. Last Resort: Just return "true" or a dummy if we can't get the object? 
+                    // No, app needs the object to run queries. 
+                    // If we are here, we are truly stuck without a reference.
+                    console.error("Recovery failed: Could not find ANY reference to the existing DB.");
                 }
 
                 log(`[${reqId}] CRITICAL FAIL: ${err.message}`);
                 console.error(`[DB_DEBUG][${reqId}] Critical Failed`, err);
+
+                // Only nullify if we truly failed. If we recovered, we wouldn't be here.
                 window['__KOSMOI_DB_PROMISE__'] = null;
                 throw err;
             }
