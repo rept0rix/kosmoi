@@ -15,9 +15,14 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 export const DatabaseService = {
     async get() {
         // Initialize Debug Logs Global
-        if (!window.__DB_LOGS__) window.__DB_LOGS__ = [];
+        // @ts-ignore
+        if (!window.__DB_LOGS__) {
+            // @ts-ignore
+            window.__DB_LOGS__ = [];
+        }
         const log = (msg) => {
             const entry = `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${msg}`;
+            // @ts-ignore
             window.__DB_LOGS__.push(entry);
             console.log(entry); // Keep console log just in case
         };
@@ -26,8 +31,10 @@ export const DatabaseService = {
         log(`[${reqId}] DatabaseService.get() called`);
 
         // Check window global first
+        // @ts-ignore
         if (window['__KOSMOI_DB_PROMISE__']) {
             log(`[${reqId}] Returning existing global promise`);
+            // @ts-ignore
             return window['__KOSMOI_DB_PROMISE__'];
         }
 
@@ -35,25 +42,32 @@ export const DatabaseService = {
 
         // Start creation and assign to window immediately to block race conditions
         const promise = (async () => {
+            let db; // Hoisted for error recovery
             try {
                 if (typeof createDatabase !== 'function') {
                     throw new Error("createDatabase is not a function.");
                 }
 
                 log(`[${reqId}] Calling createDatabase()...`);
-                const db = await createDatabase();
+                // Assume createDatabase is safe or throws fatal error (if fatal, we can't recover anyway)
+                db = await createDatabase();
 
                 // Tag the DB instance to see if we get duplicates
+                // @ts-ignore
                 if (!db._debug_id) db._debug_id = Math.random().toString(36).substring(7);
+                // @ts-ignore
                 log(`[${reqId}] DB Created: ${db.name} (ID: ${db._debug_id})`);
 
                 // Mutex Lock
+                // @ts-ignore
                 if (!db['_kosmoi_collections_promise']) {
                     log(`[${reqId}] Mutex not found. Creating Mutex...`);
+                    // @ts-ignore
                     db['_kosmoi_collections_promise'] = (async () => {
                         log(`[${reqId}] [Mutex] STARTING EXCLUSIVE LOCK`);
                         try {
                             // Define desired collections
+                            // @ts-ignore
                             const collectionDefinitions = {
                                 vendors: {
                                     schema: vendorSchema,
@@ -90,7 +104,8 @@ export const DatabaseService = {
                             }
                         } catch (err) {
                             log(`[${reqId}] [Mutex] ERROR (Swallowed): ${err.message}`);
-                            // Intentionally swallowing error to allow app to proceed
+                            // ERROR MIGHT BUBBLE HERE IF NESTED PROMISE REJECTS
+                            throw err;
                         }
                     })();
                 } else {
@@ -99,7 +114,7 @@ export const DatabaseService = {
 
                 // Wait for the exclusive promise to complete
                 await db['_kosmoi_collections_promise'];
-                log(`[${reqId}] Mutex released. Starting replication.`);
+                log(`[${reqId}] Mutex released. Starting replication (Disabled).`);
 
                 // Start Replication
                 const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
@@ -117,6 +132,13 @@ export const DatabaseService = {
 
                 return db;
             } catch (err) {
+                // SPECIAL HANDLER FOR DB9 (Collection already exists)
+                if ((err?.code === 'DB9' || err?.message?.includes('DB9')) && db) {
+                    log(`[${reqId}] CAUGHT DB9 ERROR. Interpreting as SUCCESS.`);
+                    console.warn("Recovering from DB9: Collections already exist.", err);
+                    return db; // RESCUE: Return the valid DB instance!
+                }
+
                 log(`[${reqId}] CRITICAL FAIL: ${err.message}`);
                 console.error(`[DB_DEBUG][${reqId}] Critical Failed`, err);
                 window['__KOSMOI_DB_PROMISE__'] = null;
