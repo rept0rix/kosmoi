@@ -13,10 +13,10 @@ addRxPlugin(RxDBUpdatePlugin);
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBLeaderElectionPlugin);
 
-if (import.meta.env.DEV) {
-    addRxPlugin(RxDBDevModePlugin);
-    disableWarnings();
-}
+// if (import.meta.env.DEV) {
+//    addRxPlugin(RxDBDevModePlugin);
+//    disableWarnings();
+// }
 
 // RxDB Storage setup
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
