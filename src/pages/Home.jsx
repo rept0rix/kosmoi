@@ -24,19 +24,19 @@ export default function Home() {
     };
 
     const categories = [
-        { id: 'hotels', label: isRTL ? 'מלונות ווילות' : 'Hotels & Villas', icon: Hotel, color: 'text-rose-400' },
-        { id: 'food', label: isRTL ? 'מסעדות ואוכל' : 'Food & Dining', icon: Utensils, color: 'text-orange-400' },
-        { id: 'transport', label: isRTL ? 'מוניות והשכרות' : 'Taxis & Rentals', icon: Car, color: 'text-blue-400' },
-        { id: 'pro', label: isRTL ? 'בעלי מקצוע' : 'Professionals', icon: Hammer, color: 'text-yellow-400' },
-        { id: 'secondhand', label: isRTL ? 'יד שנייה' : 'Second Hand', icon: ShoppingBag, color: 'text-green-400' },
-        { id: 'ai', label: isRTL ? 'שאל את ה-AI' : 'Ask AI Anything', icon: Sparkles, color: 'text-purple-400' },
+        { id: 'hotels', label: t('categories.hotels'), icon: Hotel, color: 'text-rose-400' },
+        { id: 'food', label: t('categories.food'), icon: Utensils, color: 'text-orange-400' },
+        { id: 'transport', label: t('categories.transport'), icon: Car, color: 'text-blue-400' },
+        { id: 'pro', label: t('categories.pro'), icon: Hammer, color: 'text-yellow-400' },
+        { id: 'secondhand', label: t('categories.secondhand'), icon: ShoppingBag, color: 'text-green-400' },
+        { id: 'ai', label: t('categories.ai'), icon: Sparkles, color: 'text-purple-400' },
     ];
 
     return (
         <div className="min-h-screen relative font-sans text-white">
             <SEO
-                title={isRTL ? 'קוסמוי - המדריך החכם' : 'Kosmoi - Samui Intelligent Guide'}
-                description={isRTL ? 'תכננו את החופשה המושלמת בקוסמוי עם המדריך החכם שלנו.' : 'Plan your perfect trip to Koh Samui with our intelligent AI concierge.'}
+                title={t('home.seo_title')}
+                description={t('home.seo_desc')}
             />
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
@@ -73,7 +73,7 @@ export default function Home() {
                         className="text-white hover:bg-white/10"
                         onClick={() => navigate('/login')}
                     >
-                        {isRTL ? 'כניסה' : 'Login'}
+                        {t('profile.login_register')}
                     </Button>
                 </div>
             </nav>
@@ -92,27 +92,25 @@ export default function Home() {
                         {/* Digital Nomad Button */}
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-slate-200 cursor-pointer hover:bg-white/20 transition-colors">
                             <Briefcase className="w-4 h-4 text-emerald-400" />
-                            <span>{isRTL ? 'נווד דיגיטלי' : 'Digital Nomad'}</span>
+                            <span>{t('home.digital_nomad')}</span>
                         </div>
 
                         {/* Intelligent Guide Pill (Optional: keep or remove? User mentioned Digital Nomad button... let's keep both stacked or replace? I'll Keep Nomad as requested "above") */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-xs font-medium text-slate-300">
                             <MapPin className="w-3 h-3 text-rose-500" />
-                            <span>{isRTL ? 'המדריך החכם של קוסמוי' : 'Samui\'s Intelligent City Guide'}</span>
+                            <span>{t('home.city_guide')}</span>
                         </div>
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-                        {isRTL ? 'מה אתם מחפשים' : 'What are you looking for'} <br />
+                        {t('home.hero_title')} <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                            {isRTL ? 'היום?' : 'right now?'}
+                            {t('home.hero_title_suffix')}
                         </span>
                     </h1>
 
                     <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
-                        {isRTL
-                            ? 'הכל במקום אחד. מלונות, מסעדות, בעלי מקצוע, ויד-2. הכל מבוסס AI.'
-                            : 'Everything in one place. Hotels, food, pros, and marketplace. Powered by AI.'}
+                        {t('home.hero_subtitle')}
                     </p>
                 </motion.div>
 
@@ -130,11 +128,11 @@ export default function Home() {
                         <Search className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
                         <div className="flex-1 text-left">
                             <span className="text-xl text-slate-400 font-light group-hover:text-slate-200">
-                                {isRTL ? 'אני צריך...' : 'I need help with...'}
+                                {t('home.search_placeholder')}
                             </span>
                         </div>
                         <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
-                            <ArrowRight className={`w - 5 h - 5 ${isRTL ? 'rotate-180' : ''} `} />
+                            <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
                         </div>
                     </div>
 
@@ -175,7 +173,7 @@ export default function Home() {
                     className="absolute bottom-8 text-center"
                 >
                     <p className="text-slate-400 text-sm mb-3">
-                        {isRTL ? 'יש לך עסק בקוסמוי?' : 'Do you run a business in Samui?'}
+                        {t('home.business_cta')}
                     </p>
                     <Button
                         variant="outline"
@@ -183,7 +181,7 @@ export default function Home() {
                         className="rounded-full border-white/20 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm px-6"
                     >
                         <Briefcase className="w-4 h-4 mr-2" />
-                        {isRTL ? 'הצטרף ל-City OS' : 'Join the City OS'}
+                        {t('home.join_city_os')}
                     </Button>
                 </motion.div>
 

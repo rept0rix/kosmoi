@@ -209,18 +209,26 @@ const CategorySection = ({ title, categoryId, products, onSeeAll }) => {
 
 
 
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { LogIn, UserPlus } from 'lucide-react';
+
+// ... (existing imports remain, ensure no duplicates if adding new ones)
+
 export default function Marketplace() {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams(); // Get URL params
-    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || ''); // Init from URL
+    const { isAuthenticated, navigateToLogin } = useAuth(); // Import auth context
+    const [searchParams] = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
     const [activeCategory, setActiveCategory] = useState(null);
     const [activeSubCategory, setActiveSubCategory] = useState(null);
     const [products, setProducts] = useState([]);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [showLoginDialog, setShowLoginDialog] = useState(false); // State for login dialog
     const [loading, setLoading] = useState(true);
     const [sort, setSort] = useState('newest');
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'map'
+    const [viewMode, setViewMode] = useState('grid');
 
     // Derived state: Home View is active if NO search, NO category, NO subcat
     const isHomeView = !searchTerm && !activeCategory && !activeSubCategory;
@@ -239,23 +247,19 @@ export default function Marketplace() {
     const loadProducts = async () => {
         setLoading(true);
         try {
-            // In a real app, pass params to service
             const items = await MarketplaceService.getItems({
                 categoryId: activeCategory?.id,
                 searchTerm
             });
 
-            // If we have search/filter, do it on the server (MarketplaceService handles it).
-            // Fallback to MOCK_PRODUCTS if MarketplaceService returns empty array (for demo purposes)
             let finalProducts = (items && items.length > 0) ? items : MOCK_PRODUCTS;
 
-            // If we fell back to MOCK_PRODUCTS, we must filter them client-side to respect the user's search/category
             if (!items || items.length === 0) {
                 if (activeCategory) {
                     finalProducts = finalProducts.filter(p => p.category_id === activeCategory.id);
                 }
                 if (activeSubCategory) {
-                    finalProducts = finalProducts.filter(p => p.subcategory === activeSubCategory.id || p.category_id === activeSubCategory.id); // Loose matching
+                    finalProducts = finalProducts.filter(p => p.subcategory === activeSubCategory.id || p.category_id === activeSubCategory.id);
                 }
                 if (searchTerm) {
                     const lowerTerm = searchTerm.toLowerCase();
@@ -266,24 +270,21 @@ export default function Marketplace() {
                 }
             }
 
-            // Client-Side sorting
-            let sortedProducts = [...finalProducts]; // Clone to avoid mutating original
+            let sortedProducts = [...finalProducts];
 
             if (sort === 'price_asc') sortedProducts.sort((a, b) => a.price - b.price);
             if (sort === 'price_desc') sortedProducts.sort((a, b) => b.price - a.price);
-            // Newest is default / mock order
 
             setProducts(sortedProducts);
         } catch (error) {
             console.error("Failed to load products", error);
-            setProducts([]); // No mocks on error, show empty state or error
+            setProducts([]);
         } finally {
             setLoading(false);
         }
     };
 
     const handleCategorySelect = (cat) => {
-        // No redirect for real estate, we handle it internally now
         if (activeCategory?.id === cat.id) {
             setActiveCategory(null);
             setActiveSubCategory(null);
@@ -303,6 +304,15 @@ export default function Marketplace() {
         setActiveSubCategory(null);
         setSearchTerm('');
         setViewMode('grid');
+    };
+
+    // --- NEW: Handle Sell Click with Auth Check ---
+    const handleSellClick = () => {
+        if (!isAuthenticated) {
+            setShowLoginDialog(true);
+        } else {
+            setIsCreateOpen(true);
+        }
     };
 
     const CategoryMenu = () => (
@@ -326,7 +336,6 @@ export default function Marketplace() {
                             )}
                         </Button>
 
-                        {/* Subcategories */}
                         {activeCategory?.id === cat.id && cat.subcategories?.length > 0 && (
                             <div className="pl-11 space-y-1 animate-in fade-in zoom-in-95 duration-200">
                                 {cat.subcategories.map(sub => (
@@ -354,11 +363,9 @@ export default function Marketplace() {
 
                 {/* Top Controls: Sell Button & Sort (Unified Row) */}
                 <div className="flex justify-between items-center mb-4">
-                    {/* Empty spacer or Breadcrumbs */}
                     <div className="hidden md:block"></div>
 
                     <div className="flex items-center gap-3 ml-auto">
-                        {/* Map/List Toggle */}
                         <div className="bg-white p-1 rounded-lg border border-slate-200 shadow-sm flex items-center">
                             <Button
                                 variant="ghost"
@@ -379,7 +386,7 @@ export default function Marketplace() {
                         </div>
 
                         <Button
-                            onClick={() => setIsCreateOpen(true)}
+                            onClick={handleSellClick} // Use new handler
                             size="sm"
                             className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-9 px-4 font-medium"
                         >
@@ -392,7 +399,6 @@ export default function Marketplace() {
                 {/* Main Search & Category Bar */}
                 <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 mb-4 max-w-4xl mx-auto flex items-center ring-offset-2 focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
 
-                    {/* Category Trigger - Integrated Left */}
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" className="h-11 px-4 text-slate-700 hover:bg-slate-50 rounded-xl mr-1 border-r border-transparent hover:border-slate-100 focus:bg-slate-50">
@@ -408,10 +414,8 @@ export default function Marketplace() {
                         </PopoverContent>
                     </Popover>
 
-                    {/* Divider */}
                     <div className="w-px h-8 bg-slate-100 mx-2 hidden md:block"></div>
 
-                    {/* Search Input - Fully integrated, no borders */}
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <Input
@@ -430,7 +434,6 @@ export default function Marketplace() {
                     </div>
                 )}
 
-                {/* Active Chips */}
                 {(activeCategory || activeSubCategory || searchTerm) && (
                     <div className="max-w-4xl mx-auto mb-6">
                         <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-1">
@@ -449,12 +452,9 @@ export default function Marketplace() {
                     </div>
                 )}
 
-                {/* 3. Main Content Area */}
-
                 {/* MAP VIEW */}
                 {viewMode === 'map' ? (
                     <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative z-0">
-                        {/* Note: In a real implementation, we ensure unique Keys and proper hydration */}
                         <MapContainer center={[9.53, 100.04]} zoom={12} scrollWheelZoom={false} className="h-full w-full">
                             <TileLayer
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -476,10 +476,7 @@ export default function Marketplace() {
                         </MapContainer>
                     </div>
                 ) : (
-                    /* GRID / SECTIONED VIEW */
                     <div className="flex flex-col gap-8">
-
-                        {/* If Home View (No filters) -> Show Sections */}
                         {isHomeView ? (
                             <div className="space-y-10 animate-in fade-in duration-500">
                                 <CategorySection
@@ -508,7 +505,6 @@ export default function Marketplace() {
                                 />
                             </div>
                         ) : (
-                            /* Filtered Grid View */
                             <div className="flex flex-col gap-6">
                                 <div className="flex justify-between items-center pb-2">
                                     <h2 className="text-xl font-bold text-slate-900 tracking-tight">
@@ -562,6 +558,33 @@ export default function Marketplace() {
                 onOpenChange={setIsCreateOpen}
                 onSuccess={loadProducts}
             />
+
+            {/* LOGIN REQUIRED DIALOG */}
+            <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Sign in to Sell</DialogTitle>
+                        <DialogDescription>
+                            You need a Kosmoi account to post listings. This helps buyers contact you safely.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex gap-3 py-4">
+                        <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700" onClick={navigateToLogin}>
+                            <LogIn className="w-4 h-4 mr-2" />
+                            Log In
+                        </Button>
+                        <Button variant="outline" className="flex-1" onClick={() => navigate('/login?signup=true')}>
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Sign Up
+                        </Button>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setShowLoginDialog(false)} size="sm" className="w-full text-slate-500">
+                            Cancel
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

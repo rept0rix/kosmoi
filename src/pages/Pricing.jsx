@@ -18,7 +18,7 @@ const Pricing = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                     {/* Trial */}
                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col hover:border-blue-200 transition-all">
                         <div className="mb-8">
@@ -30,19 +30,56 @@ const Pricing = () => {
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             {[
-                                "Full Platform Access",
-                                "AI Agent Setup",
-                                "Unlimited Leads (Trial)",
-                                "No Credit Card Required"
+                                { t: "Full Platform Access", d: "Explore every feature without restrictions" },
+                                { t: "AI Agent Setup", d: "We build your first AI agent for free" },
+                                { t: "Unlimited Leads (Trial)", d: "See real customer requests in your area" },
+                                { t: "No Credit Card Required", d: "Zero risk, just sign up and start" }
                             ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 text-slate-600 text-sm">
-                                    <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    {item}
+                                <li key={i} className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3 text-slate-900 font-medium text-sm">
+                                        <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                        {item.t}
+                                    </div>
+                                    <p className="text-xs text-slate-500 pl-8">{item.d}</p>
                                 </li>
                             ))}
                         </ul>
                         <button className="w-full py-3 px-4 bg-slate-100 text-slate-900 rounded-xl font-bold hover:bg-slate-200 transition-colors">
                             Start Free Trial
+                        </button>
+                    </div>
+
+                    {/* $1 Trial - New Option */}
+                    <div className="bg-white p-8 rounded-2xl shadow-sm border-2 border-teal-500/50 flex flex-col hover:border-teal-500 transition-all relative overflow-hidden">
+                        <div className="absolute top-0 right-0 bg-teal-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
+                            LIMITED TIME
+                        </div>
+                        <div className="mb-8">
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">Test Drive</h3>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-extrabold text-teal-600">฿35</span>
+                                <span className="text-slate-400 text-sm">/ 24h</span>
+                            </div>
+                            <p className="text-slate-500 mt-4 text-sm">See exactly what Kosmoi can do for you. Live.</p>
+                        </div>
+                        <ul className="space-y-4 mb-8 flex-1">
+                            {[
+                                { t: "Instant Verified Status", d: "Get the blue checkmark for 24 hours" },
+                                { t: "Unlock 5 Live Leads", d: "Get contact details for 5 real customers" },
+                                { t: "Test AI Auto-Reply", d: "Watch our AI handle a simulated inquiry" },
+                                { t: "Premium Dashboard", d: "Access advanced analytics for a day" }
+                            ].map((item, i) => (
+                                <li key={i} className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3 text-slate-900 font-medium text-sm">
+                                        <Check className="w-5 h-5 text-teal-500 flex-shrink-0" />
+                                        {item.t}
+                                    </div>
+                                    <p className="text-xs text-slate-500 pl-8">{item.d}</p>
+                                </li>
+                            ))}
+                        </ul>
+                        <button className="w-full py-3 px-4 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/30">
+                            Try for $1
                         </button>
                     </div>
 
@@ -61,15 +98,18 @@ const Pricing = () => {
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             {[
-                                "Verified Business Badge",
-                                "Priority Search Listing",
-                                "24/7 AI Receptionist",
-                                "Direct WhatsApp Integration",
-                                "Monthly Performance Report"
+                                { t: "Verified Business Badge", d: "Build instant trust with the blue checkmark" },
+                                { t: "Priority Search Listing", d: "Appear at the top of local search results" },
+                                { t: "24/7 AI Receptionist", d: "Never miss a booking, even while you sleep" },
+                                { t: "WhatsApp Integration", d: "Direct line to customers on their favorite app" },
+                                { t: "Monthly ROI Report", d: "See exactly how much money we made you" }
                             ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 text-slate-300 text-sm">
-                                    <CheckCircle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-                                    {item}
+                                <li key={i} className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3 text-white font-medium text-sm">
+                                        <CheckCircle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+                                        {item.t}
+                                    </div>
+                                    <p className="text-xs text-slate-400 pl-8">{item.d}</p>
                                 </li>
                             ))}
                         </ul>
@@ -90,15 +130,18 @@ const Pricing = () => {
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             {[
-                                "Everything in Starter",
-                                "Advanced Analytics Dashboard",
-                                "Multi-User Access",
-                                "Marketing Campaign Boosts",
-                                "API Access"
+                                { t: "All Starter Features", d: "Everything in the Starter Pack included" },
+                                { t: "Deep Analytics", d: "Heatmaps, customer demographics & trends" },
+                                { t: "Multi-User Access", d: "Accounts for your staff and managers" },
+                                { t: "Campaign Boosts", d: "Push notifications to users near your shop" },
+                                { t: "API Access", d: "Connect Kosmoi to your existing CRM/POS" }
                             ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 text-slate-600 text-sm">
-                                    <Check className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                                    {item}
+                                <li key={i} className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3 text-slate-900 font-medium text-sm">
+                                        <Check className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                                        {item.t}
+                                    </div>
+                                    <p className="text-xs text-slate-500 pl-8">{item.d}</p>
                                 </li>
                             ))}
                         </ul>
