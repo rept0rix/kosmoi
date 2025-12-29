@@ -13,197 +13,206 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 // we only ever have ONE active database creation promise.
 
 export const DatabaseService = {
-    async get() {
-        // Initialize Debug Logs Global
-        // @ts-ignore
-        if (!window.__DB_LOGS__) {
-            // @ts-ignore
-            window.__DB_LOGS__ = [];
-        }
-        const log = (msg) => {
-            // @ts-ignore
-            const entry = `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${msg}`;
-            // @ts-ignore
-            window.__DB_LOGS__.push(entry);
-            console.log(entry); // Keep console log just in case
-        };
+    // STRICT MUTEX LOCK
+    // This ensures that even if 10 components ask for DB at once, we only init ONCE.
+    _isInitializing: false,
+    _initPromise: null,
 
-        const reqId = Math.random().toString(36).substring(7);
-        log(`[${reqId}] DatabaseService.get() called`);
-
-        // Check window global first
+    async get(retryCount = 0) {
+        // 1. If we already have a valid global promise, return it (Fast Path)
         // @ts-ignore
-        if (window['__KOSMOI_DB_PROMISE__']) {
-            log(`[${reqId}] Returning existing global promise`);
+        if (window['__KOSMOI_DB_PROMISE__'] && !window['__KOSMOI_DB_RECOVERING__']) {
             // @ts-ignore
             return window['__KOSMOI_DB_PROMISE__'];
         }
 
-        log(`[${reqId}] Initializing RxDB (${DB_NAME})...`);
+        // 2. If initialization is already in progress, wait for it (Queueing)
+        if (this._isInitializing && this._initPromise) {
+            console.log(`[DatabaseService] Waiting for existing initialization...`);
+            return this._initPromise;
+        }
 
-        // Start creation and assign to window immediately to block race conditions
-        const promise = (async () => {
-            let db; // Hoisted for error recovery
+        // 3. START INITIALIZATION (Critical Section)
+        this._isInitializing = true;
+        const reqId = Math.random().toString(36).substring(7);
+        console.log(`[${reqId}] DatabaseService: Starting Exclusive Initialization...`);
+
+        this._initPromise = (async () => {
             try {
-                if (typeof createDatabase !== 'function') {
-                    throw new Error("createDatabase is not a function.");
+                // @ts-ignore
+                if (window['__KOSMOI_DB_RECOVERING__']) {
+                    throw new Error("System is in Recovery Mode. Please Wait.");
                 }
 
-                log(`[${reqId}] Calling createDatabase()...`);
-                // Assume createDatabase is safe or throws fatal error (if fatal, we can't recover anyway)
-                db = await createDatabase();
+                // FORCE TIMEOUT on createDatabase
+                const createWithTimeout = Promise.race([
+                    createDatabase(),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('DB_INIT_TIMEOUT: createDatabase took > 15000ms')), 15000)
+                    )
+                ]);
 
-                // Tag the DB instance to see if we get duplicates
+                // @ts-ignore
+                const db = await createWithTimeout;
+
+                // Tag and Log
                 // @ts-ignore
                 if (!db._debug_id) db._debug_id = Math.random().toString(36).substring(7);
                 // @ts-ignore
-                log(`[${reqId}] DB Created: ${db.name} (ID: ${db._debug_id})`);
+                console.log(`[${reqId}] DB Created: ${db.name} (ID: ${db._debug_id})`);
 
-                // Mutex Lock
+                // Setup Collections (Idempotent)
+                await this._setupCollections(db, reqId);
+
+                // Persist Global Handle
                 // @ts-ignore
-                if (!db['_kosmoi_collections_promise']) {
-                    log(`[${reqId}] Mutex not found. Creating Mutex...`);
-                    // @ts-ignore
-                    db['_kosmoi_collections_promise'] = (async () => {
-                        log(`[${reqId}] [Mutex] STARTING EXCLUSIVE LOCK`);
-                        try {
-                            // Define desired collections
-                            // @ts-ignore
-                            const collectionDefinitions = {
-                                vendors: {
-                                    schema: vendorSchema,
-                                    migrationStrategies: { 1: (oldDoc) => oldDoc }
-                                },
-                                tasks: {
-                                    schema: taskSchema,
-                                    migrationStrategies: { 1: (oldDoc) => oldDoc }
-                                },
-                                contacts: { schema: contactSchema },
-                                stages: { schema: stageSchema }
-                            };
-
-                            // Filter out collections that already exist (Double check)
-                            // @ts-ignore
-                            const collectionsToAdd = {};
-                            const existingCollections = Object.keys(db.collections || {});
-                            log(`[${reqId}] [Mutex] Existing: ${JSON.stringify(existingCollections)}`);
-
-                            Object.keys(collectionDefinitions).forEach(name => {
-                                if (!existingCollections.includes(name)) {
-                                    // @ts-ignore
-                                    collectionsToAdd[name] = collectionDefinitions[name];
-                                }
-                            });
-
-                            const keysToAdd = Object.keys(collectionsToAdd);
-                            log(`[${reqId}] [Mutex] To Add: ${JSON.stringify(keysToAdd)}`);
-
-                            if (keysToAdd.length > 0) {
-                                log(`[${reqId}] [Mutex] Calling addCollections...`);
-                                // @ts-ignore
-                                await db.addCollections(collectionsToAdd);
-                                log(`[${reqId}] [Mutex] addCollections SUCCESS`);
-                            } else {
-                                log(`[${reqId}] [Mutex] Skipping (Empty list).`);
-                            }
-                        } catch (err) {
-                            log(`[${reqId}] [Mutex] ERROR (Swallowed): ${err.message}`);
-                            // ERROR MIGHT BUBBLE HERE IF NESTED PROMISE REJECTS
-                            throw err;
-                        }
-                    })();
-                } else {
-                    log(`[${reqId}] Mutex found. Waiting...`);
-                }
-
-                // Wait for the exclusive promise to complete
-                await db['_kosmoi_collections_promise'];
-                log(`[${reqId}] Mutex released. Starting replication (Disabled).`);
-
-                // Start Replication
-                const logError = (context, err) => console.error(`[Replication Error] ${context}:`, err);
-
-                // TEMPORARILY DISABLED TO STOP NETWORK FLOOD
-                /*
-                if (db.vendors) replicateCollection(db.vendors, 'service_providers').catch(err => logError('vendors', err));
-                else log(`[${reqId}] ERROR: db.vendors MISSING after init!`);
-
-                if (db.tasks) replicateCollection(db.tasks, 'agent_tasks').catch(err => logError('tasks', err));
-                if (db.contacts) replicateCollection(db.contacts, 'crm_leads').catch(err => logError('contacts', err));
-                if (db.stages) replicateCollection(db.stages, 'crm_stages').catch(err => logError('stages', err));
-                */
-                log(`[${reqId}] Replication TEMPORARILY DISABLED for stability check.`);
-
+                window['__KOSMOI_DB_PROMISE__'] = Promise.resolve(db);
                 return db;
+
             } catch (err) {
-                // SPECIAL HANDLER FOR DB9 (Collection/DB already exists)
-                // If we get DB9 here, it means createDatabase() failed, so we don't have a 'db' instance.
-                // This implies a 'Zombie State' where RxDB's internal map thinks it's open, but we lost the handle.
+                console.error(`[${reqId}] DB Init Failed:`, err);
 
-                if (err?.code === 'DB9' || err?.message?.includes('DB9')) {
-                    log(`[${reqId}] CAUGHT DB9 ERROR (Collision).`);
+                // HANDLE CRITICAL ERRORS (DB9 / Timeout)
+                const isDB9 = err?.code === 'DB9' || err?.message?.includes('DB9');
+                const isTimeout = err?.message?.includes('DB_INIT_TIMEOUT');
 
-                    // 1. If we have a local instance partially created (unlikely if createDatabase threw), use it.
-                    if (db) {
-                        console.warn("Recovering from DB9: Using local instance.");
-                        return db;
-                    }
-
-                    // 2. Try window.db fallback (Dev mode)
-                    // @ts-ignore
-                    if (window['db'] && window['db'].name === DB_NAME) {
-                        console.warn("Recovering from DB9: Using window.db");
-                        // @ts-ignore
-                        return window['db'];
-                    }
-
-                    // 3. NUKE AND RETRY (The definitive fix for Zombies)
-                    // We cannot await the existing promise (Deadlock).
-                    // We cannot return a dummy.
-                    // We MUST clear the state and try again.
-
-                    console.warn(`[${reqId}] Zombie DB Detected. NUKE AND RETRY triggered...`);
-
-                    try {
-                        // Unset the global promise so the next call starts fresh
-                        // @ts-ignore
-                        window['__KOSMOI_DB_PROMISE__'] = null;
-
-                        // Force remove the database from RxDB/Dexie
-                        await removeRxDatabase(DB_NAME, storage);
-                        log(`[${reqId}] Nuke Successful. Retrying get()...`);
-
-                        // Recursive retry
-                        return await DatabaseService.get();
-                    } catch (retryErr) {
-                        // @ts-ignore
-                        console.error(`[${reqId}] Nuke and Retry FAILED.`, retryErr);
-                        // Convert to a critical error that RxDBProvider can display
-                        // @ts-ignore
-                        throw new Error(`Critical DB Failure: ${err.message} -> Retry Failed: ${retryErr.message}`);
-                    }
+                if (isDB9 || isTimeout) {
+                    return await this._handleRecovery(reqId, retryCount);
                 }
 
-                log(`[${reqId}] CRITICAL FAIL: ${err.message}`);
-                console.error(`[DB_DEBUG][${reqId}] Critical Failed`, err);
-
-                // Only nullify if we truly failed. If we recovered, we wouldn't be here.
-                // @ts-ignore
-                window['__KOSMOI_DB_PROMISE__'] = null;
                 throw err;
+            } finally {
+                // Release Lock
+                this._isInitializing = false;
+                this._initPromise = null;
             }
         })();
 
-        window['__KOSMOI_DB_PROMISE__'] = promise;
-        return promise;
+        return this._initPromise;
+    },
+
+    // Extracted Collection Setup to keep get() clean
+    async _setupCollections(db, reqId) {
+        // @ts-ignore
+        if (db['_kosmoi_collections_promise']) return db['_kosmoi_collections_promise'];
+
+        // @ts-ignore
+        db['_kosmoi_collections_promise'] = (async () => {
+            // @ts-ignore
+            const collectionDefinitions = {
+                vendors: { schema: vendorSchema },
+                tasks: { schema: taskSchema },
+                contacts: { schema: contactSchema },
+                stages: { schema: stageSchema }
+            };
+
+            const existingCollections = Object.keys(db.collections || {});
+            // @ts-ignore
+            const collectionsToAdd = {};
+
+            Object.keys(collectionDefinitions).forEach(name => {
+                if (!existingCollections.includes(name)) {
+                    // @ts-ignore
+                    collectionsToAdd[name] = collectionDefinitions[name];
+                }
+            });
+
+            if (Object.keys(collectionsToAdd).length > 0) {
+                // @ts-ignore
+                await db.addCollections(collectionsToAdd);
+                console.log(`[${reqId}] Collections Added.`);
+            }
+        })();
+
+        // @ts-ignore
+        return db['_kosmoi_collections_promise'];
+    },
+
+    // Strict Serialized Recovery Logic
+    async _handleRecovery(reqId, retryCount) {
+        if (retryCount >= 3) {
+            console.error(`[${reqId}] Max Retries Reached. Returning MOCK DB.`);
+            return {
+                name: DB_NAME,
+                collections: {},
+                // @ts-ignore
+                addCollections: async () => { },
+                // @ts-ignore
+                destroy: async () => { },
+                // @ts-ignore
+                $: { subscribe: () => { } },
+                _isFallback: true
+            };
+        }
+
+        console.warn(`[${reqId}] RECOVERY MODE TRIGGERED (Attempt ${retryCount + 1})`);
+        // @ts-ignore
+        window['__KOSMOI_DB_PROMISE__'] = null;
+        // @ts-ignore
+        window['__KOSMOI_DB_RECOVERING__'] = true;
+
+        try {
+            // 1. Remove RxDB
+            try { await removeRxDatabase(DB_NAME, storage); } catch (e) { }
+
+            // 2. Kill Service Workers
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (const reg of regs) await reg.unregister();
+            }
+
+            // 3. Nuke IDB
+            await new Promise((resolve) => {
+                const req = window.indexedDB.deleteDatabase(DB_NAME);
+                // @ts-ignore
+                req.onsuccess = resolve;
+                // @ts-ignore
+                req.onerror = resolve;
+                // @ts-ignore
+                req.onblocked = resolve;
+                setTimeout(resolve, 3000);
+            });
+
+            console.log(`[${reqId}] Recovery Complete. Retrying...`);
+            // @ts-ignore
+            window['__KOSMOI_DB_RECOVERING__'] = false;
+
+            // Retry (will require acquiring the lock again if released, 
+            // but since we are inside the 'initPromise' stack, we just recurse logic)
+            // But strictness says we should call get() again which handles the lock.
+            // However, we are ALREADY holding the lock in the entry point.
+            // So we can't call get() or we deadlock if we logic wasn't careful.
+            // But our get() checks _isInitializing.
+            // Actually, we are IN the promise that _initPromise points to.
+            // So calling get() would return... US! (Deadlock waiting for self)
+
+            // FIX: We must NOT call get() recursively if it checks for existing promise.
+            // We should recursively calling the INTERNAL logic or just reset state?
+
+            // Better: Release the lock for a split second? No, race condition.
+
+            // Solution: We manually reset the lock flags before calling recursive get,
+            // essentially "passing the torch" to the new attempt.
+            this._isInitializing = false;
+            this._initPromise = null;
+            return this.get(retryCount + 1);
+
+        } catch (err) {
+            console.error("Recovery Failed", err);
+            // @ts-ignore
+            window['__KOSMOI_DB_RECOVERING__'] = false;
+            throw err;
+        }
     },
 
     reset: () => {
+        // @ts-ignore
         window['__KOSMOI_DB_PROMISE__'] = null;
     },
 
     destroy: async () => {
         console.warn("DatabaseService: DESTROYING DATABASE...");
+        // @ts-ignore
         const currentPromise = window['__KOSMOI_DB_PROMISE__'];
         if (currentPromise) {
             try {
@@ -212,11 +221,11 @@ export const DatabaseService = {
                     await db.destroy();
                 }
             } catch (err) { }
+            // @ts-ignore
             window['__KOSMOI_DB_PROMISE__'] = null;
         }
 
         try {
-            const { storage } = await import('./rxdb-config');
             await removeRxDatabase(DB_NAME, storage);
             return true;
         } catch (e) {

@@ -96,6 +96,14 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 setupIframeMessaging();
 
 const LayoutWrapper = ({ children, currentPageName }) => {
+  const location = useLocation();
+  // Check if we are on the contact page (supports localized routes like /he/contact)
+  const isContactPage = location.pathname.includes('/contact');
+
+  if (isContactPage) {
+    return <>{children}</>;
+  }
+
   const LayoutComponent = Layout;
   return LayoutComponent ?
     // @ts-ignore
@@ -129,13 +137,18 @@ const AuthenticatedApp = () => {
 
   // Handle authentication errors
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      // TODO: Handle language-aware redirect
-      navigateToLogin();
-      return null;
+    // Allow public access to Contact page even if auth fails
+    const isContactPage = location.pathname.includes('/contact');
+
+    if (!isContactPage) {
+      if (authError.type === 'user_not_registered') {
+        return <UserNotRegisteredError />;
+      } else if (authError.type === 'auth_required') {
+        // Redirect to login automatically
+        // TODO: Handle language-aware redirect
+        navigateToLogin();
+        return null;
+      }
     }
   }
 
@@ -297,6 +310,10 @@ function App() {
                         <Route path="/he/*" element={<LanguageRoot lang="he" />} />
                         <Route path="/th/*" element={<LanguageRoot lang="th" />} />
                         <Route path="/ru/*" element={<LanguageRoot lang="ru" />} />
+                        <Route path="/fr/*" element={<LanguageRoot lang="fr" />} />
+                        <Route path="/de/*" element={<LanguageRoot lang="de" />} />
+                        <Route path="/es/*" element={<LanguageRoot lang="es" />} />
+                        <Route path="/zh/*" element={<LanguageRoot lang="zh" />} />
                         <Route path="/*" element={<LanguageRoot lang="en" />} />
                       </Routes>
                       {/* <VisualEditAgent /> */}

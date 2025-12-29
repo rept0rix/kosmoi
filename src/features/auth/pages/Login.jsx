@@ -34,56 +34,14 @@ export default function Login() {
 
     // Handle OAuth Hash & Global Auth State
     useEffect(() => {
+        // Disabled manual hash parsing to let Supabase AuthContext handle it naturally
+        // This prevents race conditions where both try to set the session
         const handleOAuthCallback = async () => {
-            // 0. Prevent Double Processing
-            if (processingOAuth.current) return;
-
             // 1. Detect OAuth Hash
             if (location.hash && location.hash.includes('access_token')) {
-                console.log("🔐 OAuth Hash Detected, parsing manually...");
-                processingOAuth.current = true; // Mark as processing
+                console.log("🔐 OAuth Hash Detected - Waiting for AuthContext...");
+                // Just set verifying to show spinner while Context catches up
                 setVerifying(true);
-
-                try {
-                    // Extract tokens manually
-                    const params = new URLSearchParams(location.hash.substring(1)); // Remove #
-                    const access_token = params.get('access_token');
-                    const refresh_token = params.get('refresh_token');
-
-                    if (access_token && refresh_token) {
-                        console.log("🎟️ Tokens found, setting session manually...");
-
-                        // Clear Hash immediately to prevent re-triggering on any re-render
-                        window.location.hash = '';
-
-                        const { error } = await db.auth.setSession({
-                            access_token,
-                            refresh_token
-                        });
-
-                        if (error) throw error;
-
-                        console.log("✅ Session set successfully via hash. Forcing state update...");
-
-                        // 1. Force Global State Refresh
-                        await checkAppState();
-
-                        // 2. IMMEDIATE REDIRECT (Don't wait for effect)
-                        // Use Replace to clean history
-                        console.log("🚀 Force Redirecting to:", returnUrl);
-                        navigate(returnUrl, { replace: true });
-                        return; // Stop execution
-                    } else {
-                        // If no tokens found manually but hash exists, let Supabase handle it or fallback
-                        console.warn("⚠️ Hash present but tokens missing, relying on implicit flow");
-                        await checkAppState();
-                    }
-                } catch (error) {
-                    console.error("❌ Error setting session from hash:", error);
-                    setError("Failed to verify login. Please try again.");
-                    setVerifying(false);
-                    processingOAuth.current = false; // Reset on error
-                }
             }
         };
 
@@ -93,9 +51,7 @@ export default function Login() {
         const timer = setTimeout(() => {
             if (verifying && !isAuthenticated) {
                 console.warn("⚠️ OAuth verification timed out (Manual Handler)");
-                setVerifying(false);
-                setError("Verification timed out. Please try again.");
-                processingOAuth.current = false;
+                setVerifying(false); // Just stop spinning
             }
         }, 8000); // 8s timeout
 
@@ -260,10 +216,25 @@ export default function Login() {
     };
 
     // DEV ONLY: Quick Login
-    const handleDevLogin = async () => {
-        // Preset credentials for dev
-        setEmail('admin@kosmoi.site');
-        setPassword('password');
+    const handleDevLogin = async (e) => {
+        if (e) e.preventDefault();
+        const devEmail = 'admin@kosmoi.site';
+        const devPass = 'password';
+
+        setEmail(devEmail);
+        setPassword(devPass);
+
+        // Auto-submit
+        setLoading(true);
+        try {
+            await db.auth.signIn(devEmail, devPass);
+            console.log("Dev Login successful");
+            await checkAppState(); // This will trigger the redirect effect
+        } catch (err) {
+            console.error('Dev Login error:', err);
+            setError(err.message);
+            setLoading(false);
+        }
     };
 
     return (

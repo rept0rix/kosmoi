@@ -30,7 +30,8 @@ const Footer = () => {
                         <h3 className="text-white font-bold text-lg mb-6">{t('footer.information', 'Information')}</h3>
                         <ul className="space-y-3 text-sm">
                             <li><Link to="/app" className="hover:text-blue-400 transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3" /> {t('footer.enter_app', 'Enter App')}</Link></li>
-                            <li><Link to="/team" className="hover:text-blue-400 transition-colors">{t('footer.about_us', 'About Us')}</Link></li>
+                            <li><Link to="/team" className="hover:text-blue-400 transition-colors">{t('footer.team', 'Team')}</Link></li>
+                            <li><Link to="/about" className="hover:text-blue-400 transition-colors">{t('footer.about_us', 'About Us')}</Link></li>
                             <li><Link to="/business-info" className="hover:text-blue-400 transition-colors">{t('footer.partner_with_us', 'Partner With Us')}</Link></li>
                             <li><Link to="/pricing" className="hover:text-blue-400 transition-colors">{t('footer.pricing_plans', 'Plans & Pricing')}</Link></li>
                         </ul>

@@ -29,11 +29,6 @@ export default function UserMenu() {
 
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
-    // Quick Language Change for Settings
-    const changeLanguage = (lng) => {
-        const i18n = window.i18next; // Access global i18next if not available via hook directly or pass it
-        if (i18n) i18n.changeLanguage(lng);
-    };
 
     if (!user) {
         return (
@@ -133,8 +128,9 @@ export default function UserMenu() {
                         </>
                     )}
 
+
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem onClick={handleLogout} className="p-2 cursor-pointer rounded-md focus:bg-red-50 text-red-600 focus:text-red-700">
+                    <DropdownMenuItem onSelect={handleLogout} className="p-2 cursor-pointer rounded-md focus:bg-red-50 text-red-600 focus:text-red-700">
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>{t('nav.logout') || 'Log out'}</span>
                     </DropdownMenuItem>
@@ -188,22 +184,70 @@ function UserSettingsDialog({ open, onOpenChange }) {
                                 <span>Language</span>
                                 <span className="font-normal text-xs text-muted-foreground">Select your preferred language</span>
                             </Label>
-                            <div className="flex items-center gap-2 border rounded-md p-1">
+                            <div className="grid grid-cols-3 gap-2 border rounded-md p-2">
                                 <Button
                                     variant={i18n.language === 'en' ? 'secondary' : 'ghost'}
                                     size="sm"
-                                    className="h-7 text-xs"
+                                    className="text-xs"
                                     onClick={() => setLanguage('en')}
                                 >
-                                    English
+                                    🇺🇸 English
                                 </Button>
                                 <Button
                                     variant={i18n.language === 'he' ? 'secondary' : 'ghost'}
                                     size="sm"
-                                    className="h-7 text-xs"
+                                    className="text-xs"
                                     onClick={() => setLanguage('he')}
                                 >
-                                    עברית
+                                    🇮🇱 עברית
+                                </Button>
+                                <Button
+                                    variant={i18n.language === 'th' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => setLanguage('th')}
+                                >
+                                    🇹🇭 ไทย
+                                </Button>
+                                <Button
+                                    variant={i18n.language === 'ru' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => setLanguage('ru')}
+                                >
+                                    🇷🇺 Русский
+                                </Button>
+                                <Button
+                                    variant={i18n.language === 'fr' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => setLanguage('fr')}
+                                >
+                                    🇫🇷 Français
+                                </Button>
+                                <Button
+                                    variant={i18n.language === 'de' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => setLanguage('de')}
+                                >
+                                    🇩🇪 Deutsch
+                                </Button>
+                                <Button
+                                    variant={i18n.language === 'es' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => setLanguage('es')}
+                                >
+                                    🇪🇸 Español
+                                </Button>
+                                <Button
+                                    variant={i18n.language === 'zh' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => setLanguage('zh')}
+                                >
+                                    🇨🇳 中文
                                 </Button>
                             </div>
                         </div>
@@ -213,6 +257,7 @@ function UserSettingsDialog({ open, onOpenChange }) {
                                 <span>Dark Mode</span>
                                 <span className="font-normal text-xs text-muted-foreground">Switch between light and dark themes (Coming Soon)</span>
                             </Label>
+                            {/* @ts-ignore */}
                             <Switch id="theme" disabled />
                         </div>
                     </TabsContent>
@@ -231,10 +276,12 @@ function UserSettingsDialog({ open, onOpenChange }) {
                         <div className="space-y-4 opacity-50 pointer-events-none">
                             <div className="flex items-center justify-between space-x-2">
                                 <Label htmlFor="email-notifs">Email Notifications</Label>
+                                {/* @ts-ignore */}
                                 <Switch id="email-notifs" defaultChecked />
                             </div>
                             <div className="flex items-center justify-between space-x-2">
                                 <Label htmlFor="push-notifs">Push Notifications</Label>
+                                {/* @ts-ignore */}
                                 <Switch id="push-notifs" defaultChecked />
                             </div>
                         </div>

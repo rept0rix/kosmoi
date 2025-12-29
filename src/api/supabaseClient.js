@@ -19,6 +19,7 @@ export const supabaseHelpers = {
                 if (filters.created_by) query = query.eq('created_by', filters.created_by);
 
                 const { data, error } = await query;
+
                 if (error) throw error;
                 return data;
             },
@@ -550,3 +551,10 @@ export const realSupabase = supabase;
 
 // Default export
 export default supabase;
+
+if (import.meta.env.DEV) {
+    // @ts-ignore
+    window.supabase = supabase;
+    // @ts-ignore
+    window.db_admin = db; // Expose the db helper wrapper as db_admin to avoid conflict with RxDB's window.db
+}

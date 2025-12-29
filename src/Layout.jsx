@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DirectionProvider } from '@radix-ui/react-direction';
 import QuickActionsFab from "@/components/QuickActionsFab";
+import LandingNavbar from "@/components/LandingNavbar";
 
 // --- Configuration ---
 // Define which paths belong to which zone
@@ -51,11 +52,17 @@ const LayoutContent = ({ children }) => {
   ]);
   const unreadMsgCount = messages.filter(m => m.unread).length;
 
-  const isPublicZone = ZONES.PUBLIC.some(path => currentPath === path || (path !== '/' && currentPath.startsWith(path)));
-  const isBusinessZone = ZONES.BUSINESS.some(path => currentPath.startsWith(path));
-  const isAdminZone = ZONES.ADMIN.some(path => currentPath.startsWith(path));
+  // --- Normalization for Locale Prefixes ---
+  // Strip /he, /th, /ru from the beginning of path to check zones correctly
+  // e.g. /he/about -> /about, /he -> /
+  const normalizedPath = currentPath.replace(/^\/(he|th|ru)(\/|$)/, '/$2') || '/';
+
+  const isPublicZone = ZONES.PUBLIC.some(path => normalizedPath === path || (path !== '/' && normalizedPath.startsWith(path)));
+  const isBusinessZone = ZONES.BUSINESS.some(path => normalizedPath.startsWith(path));
+  const isAdminZone = ZONES.ADMIN.some(path => normalizedPath.startsWith(path));
 
   // Determine App Zone: Not Public, Business or Admin
+  // If request is exact root '/' or '/he', it counts as Public Zone due to normalizedPath === '/' check above
   const isAppZone = !isPublicZone && !isBusinessZone && !isAdminZone;
 
   // If we are in Admin Zone, let the specific AdminLayout handle everything (no double header/nav)
@@ -76,9 +83,13 @@ const LayoutContent = ({ children }) => {
 
   // Render Header
   const renderHeader = () => {
-    // Landing Page handles its own specialized header
-    if (currentPath === '/') return null;
+    // 1. Landing / Public Zone Header
+    if (isPublicZone) {
+      // Use the new dedicated LandingNavbar
+      return <LandingNavbar />;
+    }
 
+    // 2. Business / App Header
     return (
       <header className={`${isAdminZone ? 'bg-background/80 backdrop-blur-md border-border shadow-sm' : 'bg-background/80 backdrop-blur-md border-border shadow-sm'} border-b px-4 py-2 sticky top-0 z-50 transition-colors duration-500`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -108,122 +119,86 @@ const LayoutContent = ({ children }) => {
           </Link>
 
           <div className="flex items-center gap-3">
-            {/* Public Zone Context Links */}
-            {isPublicZone && (
-              <>
-                <div className="hidden md:flex items-center gap-4 text-sm font-medium text-gray-600 mr-4">
-                  <Link to="/about" className="hover:text-blue-600">{t('nav.about')}</Link>
-                  <Link to="/team" className="hover:text-blue-600">{t('nav.team')}</Link>
-                  <Link to="/business-info" className="hover:text-blue-600">{t('nav.business')}</Link>
-                </div>
+            <div className="flex items-center gap-1 mr-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-indigo-600 rounded-full relative">
+                    <MessageCircle className="w-5 h-5" />
+                    {unreadMsgCount > 0 && (
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel className="font-semibold">Messages</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {messages.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-gray-500">No new messages</div>
+                    ) : (
+                      messages.map(msg => (
+                        <div key={msg.id} className="relative">
+                          <DropdownMenuItem className="cursor-pointer flex flex-col items-start gap-1 p-3 focus:bg-slate-50">
+                            <div className="flex justify-between w-full items-center">
+                              <span className={`text-sm font-semibold ${msg.unread ? 'text-blue-600' : 'text-gray-700'}`}>{msg.user}</span>
+                              <span className="text-xs text-gray-400">{msg.time}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 line-clamp-1">{msg.message}</p>
+                          </DropdownMenuItem>
+                          {msg.unread && (
+                            <div className="absolute left-1 top-4 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="justify-center text-blue-600 cursor-pointer font-medium" asChild>
+                    <Link to="/chat-hub" className="w-full text-center block">Open Chat Hub</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-                {/* Mobile Menu */}
-                <div className="md:hidden mr-2">
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Menu className="w-5 h-5 text-gray-600" />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left">
-                      <SheetHeader className="">
-                        <SheetTitle className="text-left">Menu</SheetTitle>
-                      </SheetHeader>
-                      <div className="flex flex-col gap-4 mt-6">
-                        <Link to="/about" className="text-lg font-medium">{t('nav.about')}</Link>
-                        <Link to="/team" className="text-lg font-medium">{t('nav.team')}</Link>
-                        <Link to="/business-info" className="text-lg font-medium">{t('nav.business')}</Link>
-                        <hr />
-                        <Link to="/dashboard" className="text-lg font-medium text-blue-600">{t('nav.launch_app')}</Link>
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-                </div>
-              </>
-            )}
-
-            {!isAdminZone && !isBusinessZone && (
-              <div className="flex items-center gap-1 mr-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-gray-600 hover:text-indigo-600 rounded-full relative">
-                      <MessageCircle className="w-5 h-5" />
-                      {unreadMsgCount > 0 && (
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80">
-                    <DropdownMenuLabel className="font-semibold">Messages</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <div className="max-h-[300px] overflow-y-auto">
-                      {messages.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-gray-500">No new messages</div>
-                      ) : (
-                        messages.map(msg => (
-                          <div key={msg.id} className="relative">
-                            <DropdownMenuItem className="cursor-pointer flex flex-col items-start gap-1 p-3 focus:bg-slate-50">
-                              <div className="flex justify-between w-full items-center">
-                                <span className={`text-sm font-semibold ${msg.unread ? 'text-blue-600' : 'text-gray-700'}`}>{msg.user}</span>
-                                <span className="text-xs text-gray-400">{msg.time}</span>
-                              </div>
-                              <p className="text-xs text-gray-600 line-clamp-1">{msg.message}</p>
-                            </DropdownMenuItem>
-                            {msg.unread && (
-                              <div className="absolute left-1 top-4 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="justify-center text-blue-600 cursor-pointer font-medium" asChild>
-                      <Link to="/chat-hub" className="w-full text-center block">Open Chat Hub</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-gray-600 hover:text-indigo-600 rounded-full relative">
-                      <Bell className="w-5 h-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80">
-                    <DropdownMenuLabel className="font-semibold">Notifications</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <div className="max-h-[300px] overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-gray-500">No new notifications</div>
-                      ) : (
-                        notifications.map(notification => (
-                          <div key={notification.id} className="relative">
-                            <DropdownMenuItem className="cursor-pointer flex flex-col items-start gap-1 p-3 focus:bg-slate-50">
-                              <div className="flex justify-between w-full items-center">
-                                <span className={`text-sm font-semibold ${!notification.read ? 'text-blue-600' : 'text-gray-700'}`}>{notification.title}</span>
-                                <span className="text-xs text-gray-400">{notification.time}</span>
-                              </div>
-                              <p className="text-xs text-gray-600 line-clamp-2">{notification.message}</p>
-                            </DropdownMenuItem>
-                            {!notification.read && (
-                              <div className="absolute left-1 top-4 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="justify-center text-blue-600 cursor-pointer font-medium" asChild>
-                      <Link to="/notifications" className="w-full text-center block">View all notifications</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div className="mx-2"><MiniWeather /></div>
-              </div>
-            )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-indigo-600 rounded-full relative">
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel className="font-semibold">Notifications</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-gray-500">No new notifications</div>
+                    ) : (
+                      notifications.map(notification => (
+                        <div key={notification.id} className="relative">
+                          <DropdownMenuItem className="cursor-pointer flex flex-col items-start gap-1 p-3 focus:bg-slate-50">
+                            <div className="flex justify-between w-full items-center">
+                              <span className={`text-sm font-semibold ${!notification.read ? 'text-blue-600' : 'text-gray-700'}`}>{notification.title}</span>
+                              <span className="text-xs text-gray-400">{notification.time}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 line-clamp-2">{notification.message}</p>
+                          </DropdownMenuItem>
+                          {!notification.read && (
+                            <div className="absolute left-1 top-4 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="justify-center text-blue-600 cursor-pointer font-medium" asChild>
+                    <Link to="/notifications" className="w-full text-center block">View all notifications</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="mx-2"><MiniWeather /></div>
+            </div>
 
             <LanguageSwitcher />
 
@@ -292,7 +267,7 @@ const LayoutContent = ({ children }) => {
         )}
 
         {/* Footer - Only for Public Zone */}
-        {((isPublicZone && currentPath !== '/') || isBusinessZone) && (
+        {isPublicZone && (
           <Footer />
         )}
       </div>

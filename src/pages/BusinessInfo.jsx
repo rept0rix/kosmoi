@@ -59,53 +59,18 @@ const BusinessInfo = () => {
                     </div>
                 </div>
 
-                {/* Pricing Model */}
-                <div className="bg-slate-900 text-white rounded-2xl shadow-xl overflow-hidden">
-                    <div className="p-8 text-center border-b border-slate-800">
-                        <h2 className="text-3xl font-bold">{t('business.pricing_title')}</h2>
-                        <p className="text-slate-400 mt-2">{t('business.pricing_subtitle')}</p>
-                    </div>
-                    <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-800">
-                        {/* Trial */}
-                        <div className="p-8 text-center text-slate-300">
-                            <h3 className="text-xl font-bold text-white mb-2">{t('business.trial_title')}</h3>
-                            <div className="text-4xl font-extrabold text-yellow-400 mb-4">{t('business.free')}</div>
-                            <p className="text-sm mb-6">{t('business.trial_desc')}</p>
-                            <ul className="text-left space-y-3 text-sm mb-8">
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" /> {t('business.full_access')}</li>
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" /> {t('business.ai_setup')}</li>
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" /> {t('business.no_commitment')}</li>
-                            </ul>
-                        </div>
-
-                        {/* Starter */}
-                        <div className="p-8 text-center bg-slate-800/50">
-                            <div className="inline-block px-3 py-1 bg-yellow-500 text-slate-900 text-xs font-bold rounded-full mb-4">{t('business.most_popular')}</div>
-                            <h3 className="text-xl font-bold text-white mb-2">{t('business.starter_title')}</h3>
-                            <div className="text-4xl font-extrabold text-white mb-1">{t('business.starter_price')}</div>
-                            <p className="text-xs text-slate-400 mb-4">{t('business.starter_period')}</p>
-                            <ul className="text-left space-y-3 text-sm mb-8 text-slate-300">
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-yellow-500" /> {t('business.verified_badge')}</li>
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-yellow-500" /> {t('business.priority_listing')}</li>
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-yellow-500" /> {t('business.support')}</li>
-                            </ul>
-                            <Button className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold">
-                                {t('business.start_starter')}
-                            </Button>
-                        </div>
-
-                        {/* Scale */}
-                        <div className="p-8 text-center text-slate-300">
-                            <h3 className="text-xl font-bold text-white mb-2">{t('business.growth_title')}</h3>
-                            <div className="text-4xl font-extrabold text-white mb-1">{t('business.growth_price')}</div>
-                            <p className="text-xs text-slate-400 mb-4">{t('business.growth_period')}</p>
-                            <ul className="text-left space-y-3 text-sm mb-8">
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" /> {t('business.all_features')}</li>
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" /> {t('business.weekly_reports')}</li>
-                                <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-green-500" /> {t('business.marketing_boost')}</li>
-                            </ul>
-                        </div>
-                    </div>
+                {/* CTA to Pricing */}
+                <div className="bg-slate-900 text-white rounded-2xl shadow-xl overflow-hidden p-12 text-center">
+                    <h2 className="text-3xl font-bold mb-4">{t('business.ready_to_start', 'Ready to scale your business?')}</h2>
+                    <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
+                        {t('business.pricing_cta_desc', 'Choose the plan that fits your growth stage. From a $1 test drive to full-scale partnership.')}
+                    </p>
+                    <Button
+                        onClick={() => navigate('/pricing')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-8 rounded-xl text-lg shadow-lg shadow-blue-900/50 transition-all hover:scale-105"
+                    >
+                        {t('business.view_pricing', 'View Plans & Pricing')} <TrendingUp className="ml-2 w-5 h-5" />
+                    </Button>
                 </div>
 
                 {/* Q&A */}

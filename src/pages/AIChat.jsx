@@ -83,7 +83,6 @@ export default function AIChat() {
 
     // Agent Selection State
     const [currentAgent, setCurrentAgent] = useState(CONCIERGE_AGENT);
-    const [showAgentSelector, setShowAgentSelector] = useState(false);
 
     // Initialize/Load Session
     useEffect(() => {
@@ -141,7 +140,6 @@ export default function AIChat() {
     // --- Map State ---
     const [userLocation, setUserLocation] = useState(null);
     const [mapCenter, setMapCenter] = useState({ lat: 9.53, lng: 100.05 });
-    // Increased default zoom as requested
     const [mapZoom, setMapZoom] = useState(14);
     const [selectedProvider, setSelectedProvider] = useState(null);
     const [mapPolylines, setMapPolylines] = useState([]);
@@ -164,7 +162,14 @@ export default function AIChat() {
 
     // Handle Incoming Context
     useEffect(() => {
-        if (locationState?.category) {
+        if (locationState?.context) {
+            const prompt = locationState.context;
+            // Only process if we haven't already added this specific prompt or if it's a fresh chat
+            if (messages.length <= 1) {
+                setMessages(prev => [...prev, { role: 'user', content: prompt }]);
+                processMessage(prompt);
+            }
+        } else if (locationState?.category) {
             const prompt = `I'm interested in ${locationState.label || locationState.category}. What can you recommend?`;
             if (messages.length <= 1) {
                 setMessages(prev => [...prev, { role: 'user', content: prompt }]);
@@ -207,50 +212,36 @@ export default function AIChat() {
                 let distInfo = "";
                 if (userLocation) {
                     const dist = calculateDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
-                    if (dist) {
-                        distInfo = ` (Distance: ~${dist}km from user)`;
-                    }
+                    distInfo = `(${dist}km away)`;
                 }
-                return `- ${p.business_name} (${p.category})${distInfo}\n  Vibes: ${p.vibes?.join(', ') || 'N/A'}\n  Status: ${p.open_status || 'N/A'}\n  Price: ${p.price_level || 'N/A'}\n  Desc: ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating || 'N/A'}, Location: ${p.latitude},${p.longitude})`;
-            }).join('\n');
+                return `${p.business_name} (${p.category}): ${p.description || ""} ${distInfo}`;
+            }).join("\n");
 
-            let weatherContext = "Weather data unavailable.";
-            if (weatherData?.current) {
-                const desc = getWeatherDescription(weatherData.current.weather_code);
-                weatherContext = `Current Weather: ${Math.round(weatherData.current.temperature_2m)}°C, ${desc}.`;
-            }
+            const weatherContext = weatherData ? `${weatherData.temp_c}°C, ${weatherData.condition?.text}` : "Sunny, 30°C";
 
             const systemInstruction = `
 ${currentAgent.systemPrompt}
 
 **STRICT RESPONSE FORMAT:**
-You MUST return valid JSON. Do not return plain text.
-Structure the response to be highly interactive.
-Use the provided distance context to explicitly mention how far places are if relevant (e.g. "It's a 10 min drive" or "Just a 5 min walk").
-
-**A2UI CAPABILITY:**
-You can now render rich UI components using the 'a2ui_content' field.
-Use this for tables, forms, dashboards, or complex layouts.
-Supported types: 'container', 'row', 'col', 'text', 'heading', 'button', 'input', 'card', 'experience-card', 'badge', 'alert', 'bar-chart', 'line-chart', 'pie-chart', 'area-chart', 'stat-card', 'data-table'.
-For tours/activities, ALWAYS use 'experience-card' with props: { title, location, price, duration, rating, image, url }.
+You MUST return valid JSON.
+Structure the response to be highly interactive and visual.
+Use the provided distance context to explicitly mention how far places are.
 
 **OUTPUT SCHEMA:**
 {
   "message": "Conversational response...",
-  "a2ui_content": { 
-     "type": "card", 
-     "props": { "title": "Example" }, 
-     "children": { "type": "text", "content": "Hello World" } 
-  },
   "carousel": [ 
     {
       "title": "Business Name",
-      "description": "Short description covering key features.",
+      "description": "Short description.",
       "image": "https://url...",
-      "phone": "+66...", 
-      "whatsapp": "66...",
       "location": { "lat": 0.0, "lng": 0.0 },
-      "actionLabel": "View Details"
+      "distance": "5 min drive", // Explicit distance string
+      "actions": [
+        { "label": "Book Taxi", "type": "transport" },
+        { "label": "Rent Bike", "type": "rental" },
+        { "label": "Directions", "type": "navigate" }
+      ]
     }
   ],
   "choices": ["Option 1", "Option 2"]
@@ -259,17 +250,14 @@ For tours/activities, ALWAYS use 'experience-card' with props: { title, location
 **CONTEXT:**
 Weather: ${weatherContext}
 Knowledge: ${JSON.stringify(samuiKnowledge)}
-Providers (with approximated distances): ${providersContext}
+Providers: ${providersContext}
 User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Unknown'}
 `;
 
             // MEMORY INJECTION
             let memoryContext = "";
             if (user?.id) {
-                // Fire and forget learning (don't await)
                 memoryService.textToMemory(user.id, text).catch(err => console.error("Memory learning failed", err));
-
-                // Fetch context for this turn
                 memoryContext = await memoryService.getSystemContext(user.id);
             }
 
@@ -368,6 +356,17 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
         processMessage(prompt);
     };
 
+    const handleCardAction = (action, item) => {
+        if (action.type === 'navigate') {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${item.location.lat},${item.location.lng}`, '_blank');
+        } else {
+            setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: `Okay, checking availability for "${action.label}" at ${item.title}...`
+            }]);
+        }
+    };
+
     const allMarkers = [
         ...providers.map(p => ({
             lat: p.latitude,
@@ -376,7 +375,6 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
             icon: getCategoryIcon(p.category),
             onClick: () => {
                 setSelectedProvider(p);
-                // Shift center South so marker appears above chat
                 setMapCenter({ lat: p.latitude - 0.0025, lng: p.longitude });
             }
         }))
@@ -400,31 +398,84 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                 />
             </div>
 
+            {/* --- SELECTED PROVIDER FLOATING CARD --- */}
+            {selectedProvider && (
+                <div className="fixed top-24 left-4 right-4 z-30 md:left-1/2 md:-translate-x-1/2 md:max-w-md animate-in slide-in-from-top-4 fade-in duration-300">
+                    <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 p-1 flex gap-3 pr-3 relative overflow-hidden">
+                        <div className="w-20 h-20 rounded-xl bg-slate-100 shrink-0 overflow-hidden">
+                            {selectedProvider.image_url ? (
+                                <img src={selectedProvider.image_url} alt={selectedProvider.business_name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <MapIcon className="w-10 h-10" style={{ color: getCategoryIcon(selectedProvider.category).fillColor }} />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex-1 py-1 flex flex-col justify-center min-w-0">
+                            <h3 className="font-bold text-slate-900 truncate">{selectedProvider.business_name}</h3>
+                            <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                                <span className="capitalize">{selectedProvider.category}</span>
+                                <span>•</span>
+                                <span>{selectedProvider.price_level || '$$'}</span>
+                                {userLocation && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-blue-600 font-medium">
+                                            {calculateDistance(userLocation.lat, userLocation.lng, selectedProvider.latitude, selectedProvider.longitude)} km
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2 mt-1">
+                                <Button
+                                    size="sm"
+                                    className="h-7 text-xs bg-blue-600 hover:bg-blue-700 px-3 rounded-full"
+                                    onClick={() => {
+                                        const prompt = `How do I get to ${selectedProvider.business_name}?`;
+                                        setMessages(prev => [...prev, { role: 'user', content: prompt }]);
+                                        processMessage(prompt);
+                                        setSelectedProvider(null);
+                                    }}
+                                >
+                                    Get Directions
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 rounded-full border-slate-200"
+                                    onClick={() => setSelectedProvider(null)}
+                                >
+                                    <Trash2 className="w-3 h-3 text-slate-400" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* --- CHAT POPUP OVERLAY --- */}
             <div
                 className={`fixed z-40 bg-white/95 backdrop-blur-md shadow-2xl flex flex-col overflow-hidden border border-white/20 transition-all duration-300 ease-in-out ${isMinimized
                     ? 'h-[64px] rounded-2xl shadow-lg ring-1 ring-black/5'
-                    : 'rounded-3xl' // Changed from rounded-t-3xl to rounded-3xl to round bottom corners too
+                    : 'rounded-3xl'
                     }`}
                 style={{
                     left: '1rem',
                     right: '1rem',
                     maxWidth: isMinimized ? '600px' : 'none',
                     margin: isMinimized && window.innerWidth > 768 ? '0 auto' : '0',
-
-                    bottom: isMinimized ? '100px' : (window.innerWidth > 768 ? '10%' : '120px'), // Raised from 5%/90px to 10%/120px
+                    bottom: isMinimized ? '100px' : (window.innerWidth > 768 ? '10%' : '120px'),
                     top: isMinimized ? 'auto' : '45%',
                 }}
             >
                 {/* HEADERS */}
                 {isMinimized ? (
                     <div className="flex items-center w-full h-full px-2 gap-2">
-                        {/* Minimized: Find Location Button (Replaces Sparkles for now or added next to it) */}
                         <div
                             className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 cursor-pointer hover:bg-blue-100 transition-colors shrink-0"
-                            onClick={() => {
-                                setIsMinimized(false);
-                            }}
+                            onClick={() => setIsMinimized(false)}
                         >
                             <Sparkles className="w-5 h-5" />
                         </div>
@@ -454,64 +505,10 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                         onClick={() => setIsMinimized(true)}
                     >
                         <div className="flex items-center gap-2">
-                            {/* AGENT SELECTOR */}
-                            <div className="relative">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowAgentSelector(!showAgentSelector); }}
-                                    className="flex flex-col items-start hover:bg-slate-50 px-2 py-1 rounded-md transition-colors"
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        <h2 className="font-bold text-slate-800 text-sm">{currentAgent.name || currentAgent.role.replace(/_/g, ' ')}</h2>
-                                        <ChevronDown className="w-3 h-3 text-slate-400" />
-                                    </div>
-                                    {!showHistory && (
-                                        <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                            Online
-                                        </p>
-                                    )}
-                                </button>
-
-                                {/* AGENT DROPDOWN */}
-                                {showAgentSelector && (
-                                    <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="p-2 bg-slate-50 border-b border-slate-100">
-                                            <p className="text-xs font-semibold text-slate-500 px-2">Select Agent</p>
-                                        </div>
-                                        <ScrollArea className="h-64">
-                                            <div className="p-1">
-                                                {agents.map(agent => (
-                                                    <button
-                                                        key={agent.id}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setCurrentAgent(agent);
-                                                            setShowAgentSelector(false);
-                                                            setMessages([{ role: 'assistant', content: `Switched to ${agent.name || agent.role}. How can I help?` }]);
-                                                        }}
-                                                        className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors ${currentAgent.id === agent.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50 text-slate-700'}`}
-                                                    >
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${currentAgent.id === agent.id ? 'bg-blue-100' : 'bg-slate-100'}`}>
-                                                            {/* Simple icon fallback */}
-                                                            <Bot className="w-4 h-4" />
-                                                        </div>
-                                                        <div className="flex-1 overflow-hidden">
-                                                            <p className="text-xs font-semibold truncate">{agent.name || agent.role}</p>
-                                                            <p className="text-[10px] text-slate-500 truncate">{agent.role}</p>
-                                                        </div>
-                                                        {currentAgent.id === agent.id && <Check className="w-3 h-3" />}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </ScrollArea>
-                                    </div>
-                                )}
-                            </div>
+                            <h2 className="font-bold text-slate-800 text-sm">Concierge AI</h2>
                         </div>
 
-                        {/* RIGHT SIDE ACTIONS */}
                         <div className="flex items-center gap-1">
-                            {/* NEW LOCATION BUTTON */}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -522,7 +519,6 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                 <Crosshair className="w-5 h-5" />
                             </Button>
 
-                            {/* MOVED HISTORY BUTTON TO HERE, NEXT TO MINIMIZE */}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -619,17 +615,40 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                                     )}
 
                                                     {msg.carousel && (
-                                                        <div className="flex gap-2 overflow-x-auto pb-2 w-full snap-x scrollbar-hide mt-2 max-w-full">
+                                                        <div className="flex gap-3 overflow-x-auto pb-4 w-full snap-x scrollbar-hide mt-3 max-w-full px-1">
                                                             {msg.carousel.map((card, i) => (
-                                                                <div key={i} className="snap-center shrink-0 w-48 bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                                                                <div key={i} className="snap-center shrink-0 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col transition-transform hover:scale-[1.02]">
                                                                     {card.image && (
-                                                                        <div className="h-24 bg-slate-200 relative">
-                                                                            <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                                                                        <div className="h-32 bg-slate-200 relative group">
+                                                                            <img src={card.image} alt={card.title} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" />
+                                                                            {card.distance && (
+                                                                                <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
+                                                                                    <MapIcon className="w-3 h-3" /> {card.distance}
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     )}
-                                                                    <div className="p-2 flex flex-col gap-1">
-                                                                        <h4 className="font-bold text-xs text-slate-800 line-clamp-1">{card.title}</h4>
-                                                                        <p className="text-[10px] text-slate-500 line-clamp-2">{card.description}</p>
+                                                                    <div className="p-3 flex flex-col gap-2 flex-1">
+                                                                        <div>
+                                                                            <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-1">{card.title}</h4>
+                                                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">{card.description}</p>
+                                                                        </div>
+
+                                                                        {card.actions && (
+                                                                            <div className="mt-auto pt-2 grid grid-cols-2 gap-2">
+                                                                                {card.actions.map((action, idx) => (
+                                                                                    <Button
+                                                                                        key={idx}
+                                                                                        variant={idx === 0 ? "default" : "outline"}
+                                                                                        size="sm"
+                                                                                        className={`h-7 text-[10px] px-0 ${idx === 0 ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-200'}`}
+                                                                                        onClick={() => handleCardAction(action, card)}
+                                                                                    >
+                                                                                        {action.label}
+                                                                                    </Button>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -637,9 +656,16 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                                     )}
 
                                                     {msg.choices && (
-                                                        <div className="flex flex-wrap gap-1.5 mt-1">
+                                                        <div className="flex flex-wrap gap-2 mt-2">
                                                             {msg.choices.map((choice, i) => (
-                                                                <button key={i} onClick={() => { setInput(choice); handleSend(); }} className="px-2.5 py-1 bg-white border border-blue-100 text-blue-600 rounded-full text-[10px] font-medium hover:bg-blue-50">
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => {
+                                                                        setInput(choice);
+                                                                        handleSend();
+                                                                    }}
+                                                                    className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                                                                >
                                                                     {choice}
                                                                 </button>
                                                             ))}
@@ -649,26 +675,19 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                             </div>
                                         ))}
                                         {isTyping && (
-                                            <div className="flex justify-start">
-                                                <div className="bg-slate-100 px-4 py-2.5 rounded-2xl rounded-tl-none text-slate-500 text-xs flex items-center gap-1">
-                                                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                                            <div className="flex gap-3 justify-start">
+                                                <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                    <Bot className="w-3 h-3 text-slate-500" />
+                                                </div>
+                                                <div className="px-4 py-2 bg-slate-100 rounded-2xl rounded-tl-none text-slate-500 text-xs italic">
+                                                    Thinking...
                                                 </div>
                                             </div>
                                         )}
                                         <div ref={messagesEndRef} />
                                     </div>
-
-                                    {/* VIDEO UPLOAD AREA (Only for Video Agent) */}
-                                    {currentAgent.id === 'video-agent' && (
-                                        <div className="px-4 pb-4">
-                                            <VideoUpload />
-                                        </div>
-                                    )}
                                 </div>
 
-                                {/* INPUT AREA */}
                                 <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-50 relative z-20">
                                     {messages.length < 2 && (
                                         <ScrollArea className="w-full whitespace-nowrap mb-3 pb-1">

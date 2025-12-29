@@ -3,38 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Globe } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '@/components/LanguageContext';
 
 export default function LanguageSwitcher() {
     const { i18n } = useTranslation();
-    const navigate = useNavigate();
-    const location = useLocation();
+    const { setLanguage } = useLanguage();
 
     const changeLanguage = (lng) => {
-        // i18n.changeLanguage(lng); // Now handled by App.jsx -> LanguageContext sync
-
-        const currentPath = location.pathname;
-        const parts = currentPath.split('/').filter(Boolean); // Remove empty strings
-        const langs = ['he', 'th', 'ru'];
-
-        // Check if current path starts with a language prefix
-        const firstPart = parts[0];
-        const hasLangPrefix = langs.includes(firstPart);
-
-        let newPathSegments = hasLangPrefix ? parts.slice(1) : parts;
-
-        if (lng !== 'en') {
-            newPathSegments = [lng, ...newPathSegments];
-        }
-
-        const newPath = '/' + newPathSegments.join('/');
-        navigate(newPath + location.search + location.hash);
+        setLanguage(lng);
     };
 
     const getCurrentLabel = () => {
         switch (i18n.language) {
             case 'he': return '🇮🇱 HE';
             case 'th': return '🇹🇭 TH';
+            case 'ru': return '🇷🇺 RU';
+            case 'fr': return '🇫🇷 FR';
+            case 'es': return '🇪🇸 ES';
+            case 'de': return '🇩🇪 DE';
+            case 'zh': return '🇨🇳 CN';
             default: return '🇺🇸 EN';
         }
     };
@@ -53,6 +40,21 @@ export default function LanguageSwitcher() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => changeLanguage('he')}>
                     🇮🇱 Hebrew (עברית)
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => changeLanguage('zh')}>
+                    🇨🇳 Chinese (中文)
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => changeLanguage('ru')}>
+                    🇷🇺 Russian (Русский)
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => changeLanguage('fr')}>
+                    🇫🇷 French (Français)
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => changeLanguage('de')}>
+                    🇩🇪 German (Deutsch)
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => changeLanguage('es')}>
+                    🇪🇸 Spanish (Español)
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => changeLanguage('th')}>
                     🇹🇭 Thai (ไทย)

@@ -1,6 +1,6 @@
 export const vendorSchema = {
     title: 'vendor schema',
-    version: 1,
+    version: 0,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -44,6 +44,21 @@ export const vendorSchema = {
             type: 'string'
         },
         open_status: {
+            type: 'string'
+        },
+        address: {
+            type: 'string'
+        },
+        website: {
+            type: 'string'
+        },
+        email: {
+            type: 'string'
+        },
+        phone: {
+            type: 'string'
+        },
+        opening_hours: {
             type: 'string'
         }
     },

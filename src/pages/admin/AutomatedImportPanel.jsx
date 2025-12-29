@@ -1,214 +1,222 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Rocket, Database } from 'lucide-react';
+import { Loader2, Rocket, Database, Terminal, StopCircle, Play, CheckCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { CATEGORY_SEARCH_TERMS, CRAWLER_AREAS } from '@/services/data/CrawlerConfig';
+import { DataIngestionService } from '@/services/data/DataIngestionService';
 
-import { SAMUI_AREAS, BUSINESS_CATEGORIES } from '@/constants/samuiData';
-
-// Generate all search combinations (category + area)
-const SEARCH_CATEGORIES = [];
-BUSINESS_CATEGORIES.forEach(cat => {
-    SAMUI_AREAS.forEach(area => {
-        SEARCH_CATEGORIES.push(`${cat} ${area}`);
-    });
-});
-
-export default function AutomatedImportPanel({ importPlace, importing }) {
+export default function AutomatedImportPanel({ importPlace }) {
     const { toast } = useToast();
-    const [autoImporting, setAutoImporting] = useState(false);
-    const [autoProgress, setAutoProgress] = useState({ current: 0, total: 0, category: '' });
-    const [autoStats, setAutoStats] = useState({ imported: 0, skipped: 0, errors: 0 });
+    const [isRunning, setIsRunning] = useState(false);
+    const [progress, setProgress] = useState({ current: 0, total: 0, area: '', category: '' });
+    const [stats, setStats] = useState({ imported: 0, skipped: 0, errors: 0 });
+    const [logs, setLogs] = useState([]);
+    const stopRef = useRef(false);
+    const logsEndRef = useRef(null);
 
-    const startAutomatedImport = async () => {
-        if (!window.google || !window.google.maps || !window.google.maps.places) {
-            toast({
-                title: "Google Maps לא מוכן",
-                description: "אנא המתן מספר שניות ונסה שוב",
-                variant: "destructive"
+    // Scroll logs to bottom
+    useEffect(() => {
+        logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [logs]);
+
+    const addLog = (message, type = 'info') => {
+        const timestamp = new Date().toLocaleTimeString();
+        setLogs(prev => [...prev.slice(-49), { message, type, timestamp }]); // Keep last 50 logs
+    };
+
+    const generateTasks = () => {
+        const tasks = [];
+        CRAWLER_AREAS.forEach(area => {
+            Object.keys(CATEGORY_SEARCH_TERMS).forEach(subCatKey => {
+                tasks.push({
+                    area,
+                    subCatKey,
+                    searchTerm: CATEGORY_SEARCH_TERMS[subCatKey]
+                });
             });
-            return;
-        }
+        });
+        return tasks;
+    };
 
-        setAutoImporting(true);
-        const stats = { imported: 0, skipped: 0, errors: 0 };
-        setAutoStats(stats);
-        setAutoProgress({ current: 0, total: SEARCH_CATEGORIES.length, category: '' });
+    const startCrawler = async () => {
+        stopRef.current = false;
+        setIsRunning(true);
+        setLogs([]);
 
-        const completedCategories = JSON.parse(localStorage.getItem('completedCategories') || '[]');
-        let skippedCategories = 0;
+        const tasks = generateTasks();
+        setProgress({ current: 0, total: tasks.length * 20, area: 'Initialization', category: 'Starting...' }); // Estimated total (20 results per task)
+        setStats({ imported: 0, skipped: 0, errors: 0 });
 
-        for (let i = 0; i < SEARCH_CATEGORIES.length; i++) {
-            const category = SEARCH_CATEGORIES[i];
+        addLog(`🚀 Initializing Island Crawler...`, 'system');
+        addLog(`📋 Loaded ${CRAWLER_AREAS.length} Areas and ${Object.keys(CATEGORY_SEARCH_TERMS).length} Categories.`, 'system');
+        addLog(`📝 Total Search Tasks: ${tasks.length}`, 'system');
 
-            if (completedCategories.includes(category)) {
-                skippedCategories++;
-                continue;
+        let totalImported = 0;
+        let totalSkipped = 0;
+        let totalErrors = 0;
+
+        for (let i = 0; i < tasks.length; i++) {
+            if (stopRef.current) {
+                addLog('🛑 Crawler Aborted by User.', 'error');
+                break;
             }
 
-            setAutoProgress({ current: i + 1, total: SEARCH_CATEGORIES.length, category });
-            let categoryErrors = 0;
+            const task = tasks[i];
+            const query = `${task.searchTerm} in ${task.area}, Koh Samui`;
+
+            setProgress(prev => ({
+                ...prev,
+                current: i,
+                total: tasks.length,
+                area: task.area,
+                category: task.subCatKey
+            }));
+
+            addLog(`📡 Scanning: ${query}...`, 'info');
 
             try {
-                const searchResults = await new Promise((resolve) => {
-                    setTimeout(() => {
-                        const mapDiv = document.createElement('div');
-                        const map = new window.google.maps.Map(mapDiv, {
-                            center: { lat: 9.5, lng: 100.0 },
-                            zoom: 12
-                        });
+                // Search
+                const results = await DataIngestionService.searchPlaces(query);
 
-                        const service = new window.google.maps.places.PlacesService(map);
-                        const koSamuiCenter = { lat: 9.5, lng: 100.0 };
-                        const searchRadius = 25000;
-
-                        const request = {
-                            query: category + " Koh Samui",
-                            location: koSamuiCenter,
-                            radius: searchRadius,
-                            fields: ['name', 'formatted_address', 'geometry', 'photos', 'rating', 'user_ratings_total', 'types', 'place_id', 'formatted_phone_number', 'website', 'opening_hours', 'price_level']
-                        };
-
-                        service.textSearch(request, (newResults, status) => {
-                            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-                                resolve(newResults || []);
-                            } else {
-                                resolve([]);
-                            }
-                        });
-                    }, 500);
-                });
-
-                for (const place of searchResults) {
-                    // We check props.importing to see if it exists, but importPlace returns boolean and handles state update
-                    // However, importPlace passed from parent might rely on parent state.
-                    // We assume importPlace returns true if imported, false otherwise.
-                    // We also need to check if it already exists to count as skipped.
-
-                    // The original logic checked 'importing' state for 'exists' value.
-                    // Since importPlace updates the parent 'importing' state, we can pass 'importing' as prop.
-
-                    const success = await importPlace(place);
-
-                    if (success) {
-                        stats.imported++;
-                    } else {
-                        // We need to wait a tick for the state to update in parent if we want to read it from props
-                        // But props won't update synchronously in this loop.
-                        // So relying on 'importing' prop here is risky.
-                        // However, importPlace returns false if failed OR existing.
-                        // The original logic: 
-                        // if (importing[place.place_id] === 'exists') stats.skipped++;
-
-                        // We might need importPlace to return a more specific result status string instead of boolean.
-                        // For now, let's assume if false, we check the error or just count as error/skip.
-                        // To properly track skipped vs error, we might need to modify importPlace signature or return value.
-                        // But let's look at how importPlace works in parent:
-                        // It updates state.
-
-                        // LIMITATION: We can't easily read the updated parent state here inside the loop.
-                        // WORKAROUND: We will blindly count as error for now or just treat false as "not imported".
-                        // Better: modify importPlace to return { status: 'success' | 'exists' | 'error' }
-
-                        // Let's modify the assumption: if importPlace returns false, we don't know why without more info.
-                        // But we can check if it exists in DB before calling importPlace? No, importPlace does that.
-
-                        // Replicating original logic exactly requires access to that state or modifying importPlace.
-                        // For this refactor, let's keep it simple.
-                        // If success -> imported.
-                        // If not success -> skipped/error.
-                        stats.errors++; // This is a safe approximation for now.
-                    }
-                    setAutoStats({ ...stats });
-                    await new Promise(resolve => setTimeout(resolve, 300));
+                if (results.length === 0) {
+                    addLog(`🔸 No results found for ${query}`, 'warning');
+                    continue;
                 }
 
-                if (categoryErrors === 0 && searchResults.length > 0) {
-                    completedCategories.push(category);
-                    localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
+                addLog(`🎯 Found ${results.length} candidates. Processing...`, 'success');
+
+                for (const basicData of results) {
+                    if (stopRef.current) break;
+
+                    const place = basicData;
+
+                    // Artificial delay to prevent rate limits and UI freezing
+                    await new Promise(r => setTimeout(r, 1000));
+
+                    try {
+                        const success = await importPlace(place);
+                        if (success) {
+                            totalImported++;
+                            addLog(`✅ Imported: ${place.business_name}`, 'success');
+                        } else {
+                            totalSkipped++;
+                            // addLog(`⏭️ Skipped: ${place.business_name} (Exists or Failed)`, 'warning');
+                        }
+                    } catch (err) {
+                        totalErrors++;
+                        addLog(`❌ Error importing ${place.business_name}: ${err.message}`, 'error');
+                    }
+
+                    setStats({ imported: totalImported, skipped: totalSkipped, errors: totalErrors });
                 }
 
             } catch (error) {
-                console.error(`Error importing category ${category}:`, error);
-                stats.errors++;
-                setAutoStats({ ...stats });
+                addLog(`💥 Search Error: ${error.message}`, 'error');
+                totalErrors++;
             }
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Cooldown between searches
+            await new Promise(r => setTimeout(r, 2000));
         }
 
-        setAutoImporting(false);
+        setIsRunning(false);
+        addLog(`🏁 Mission Complete! Imported: ${totalImported}, Skipped: ${totalSkipped}, Errors: ${totalErrors}`, 'system');
         toast({
-            title: "ייבוא אוטומטי הושלם!",
-            description: `יובאו: ${stats.imported} | דולגו: ${stats.skipped} | שגיאות: ${stats.errors} | קטגוריות שדולגו: ${skippedCategories}`,
+            title: "Crawler Finished",
+            description: `Imported ${totalImported} new businesses across Koh Samui.`,
         });
     };
 
-    const resetProgress = () => {
-        localStorage.removeItem('completedCategories');
-        toast({
-            title: "ההתקדמות אופסה",
-            description: "בייבוא הבא המערכת תעבור על כל הקטגוריות מחדש",
-        });
+    const stopCrawler = () => {
+        stopRef.current = true;
+        addLog('🛑 Stopping...', 'error');
     };
 
     return (
-        <Card className="bg-white border-2 border-blue-100">
-            <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+        <Card className="bg-slate-950 text-slate-200 border-slate-800 shadow-xl overflow-hidden">
+            <CardContent className="p-0">
+                {/* Header */}
+                <div className="bg-slate-900/50 p-4 border-b border-slate-800 flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                            <Rocket className="w-6 h-6 text-blue-500" />
-                            ייבוא אוטומטי המוני
+                        <h2 className="text-xl font-bold flex items-center gap-2 text-blue-400">
+                            <Rocket className="w-5 h-5" />
+                            Island Crawler v1.0
                         </h2>
-                        <p className="text-gray-500 text-sm">לחץ כאן כדי לייבא אוטומטית את כל העסקים מכל הקטגוריות ({SEARCH_CATEGORIES.length} קטגוריות)</p>
+                        <p className="text-xs text-slate-400">Automated Deep-Scan & Ingestion Engine</p>
                     </div>
                     <div className="flex gap-2">
-                        <Button
-                            onClick={resetProgress}
-                            disabled={autoImporting}
-                            variant="outline"
-                            className="text-gray-600"
-                        >
-                            אפס התקדמות
-                        </Button>
-                        <Button
-                            onClick={startAutomatedImport}
-                            disabled={autoImporting}
-                            className="bg-gray-900 text-white hover:bg-black"
-                        >
-                            {autoImporting ? (
-                                <>
-                                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                                    מייבא...
-                                </>
-                            ) : (
-                                'התחל ייבוא'
-                            )}
-                        </Button>
+                        {isRunning ? (
+                            <Button variant="destructive" size="sm" onClick={stopCrawler} className="gap-2">
+                                <StopCircle className="w-4 h-4 animate-pulse" /> Abort
+                            </Button>
+                        ) : (
+                            <Button onClick={startCrawler} size="sm" className="bg-blue-600 hover:bg-blue-500 text-white gap-2">
+                                <Play className="w-4 h-4" /> Start Mission
+                            </Button>
+                        )}
                     </div>
                 </div>
 
-                {/* Progress Display */}
-                {autoImporting && (
-                    <div className="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg">
-                        <div className="flex justify-between text-sm text-gray-700">
-                            <span>קטגוריה: <strong>{autoProgress.category}</strong></span>
-                            <span>{autoProgress.current} / {autoProgress.total}</span>
+                {/* Dashboard */}
+                <div className="grid grid-cols-4 gap-4 p-4 bg-slate-900/30">
+                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center">
+                        <div className="text-xs text-slate-500 uppercase">Status</div>
+                        <div className={`font-bold ${isRunning ? 'text-green-400 animate-pulse' : 'text-slate-400'}`}>
+                            {isRunning ? 'RUNNING' : 'IDLE'}
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                    </div>
+                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center">
+                        <div className="text-xs text-slate-500 uppercase">Imported</div>
+                        <div className="text-xl font-bold text-green-500">{stats.imported}</div>
+                    </div>
+                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center">
+                        <div className="text-xs text-slate-500 uppercase">Skipped</div>
+                        <div className="text-xl font-bold text-slate-500">{stats.skipped}</div>
+                    </div>
+                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center">
+                        <div className="text-xs text-slate-500 uppercase">Errors</div>
+                        <div className="text-xl font-bold text-red-500">{stats.errors}</div>
+                    </div>
+                </div>
+
+                {/* Progress */}
+                {isRunning && (
+                    <div className="px-4 py-2">
+                        <div className="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>Scanning: <span className="text-blue-400">{progress.area}</span></span>
+                            <span>Category: <span className="text-yellow-400">{progress.category}</span></span>
+                            <span>{Math.round((progress.current / progress.total) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                             <div
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${(autoProgress.current / autoProgress.total) * 100}%` }}
-                            ></div>
-                        </div>
-                        <div className="flex gap-4 text-xs font-mono">
-                            <span className="text-green-600">✓ IMPORTED: {autoStats.imported}</span>
-                            <span className="text-yellow-600">⊘ SKIPPED: {autoStats.skipped}</span>
-                            <span className="text-red-600">✗ ERRORS: {autoStats.errors}</span>
+                                className="bg-blue-500 h-full transition-all duration-300 relative"
+                                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/20 animate-subtle-pulse"></div>
+                            </div>
                         </div>
                     </div>
                 )}
+
+                {/* Terminal Log */}
+                <div className="bg-black p-4 h-64 overflow-y-auto font-mono text-xs custom-scrollbar">
+                    <div className="space-y-1">
+                        {logs.length === 0 && <div className="text-slate-600 italic">Ready to engage...</div>}
+                        {logs.map((log, i) => (
+                            <div key={i} className={`flex gap-2 ${log.type === 'error' ? 'text-red-400' :
+                                log.type === 'success' ? 'text-green-400' :
+                                    log.type === 'warning' ? 'text-yellow-400' :
+                                        log.type === 'system' ? 'text-blue-400 font-bold border-b border-slate-800 pb-1 mt-2' :
+                                            'text-slate-300'
+                                }`}>
+                                <span className="text-slate-600 select-none">[{log.timestamp}]</span>
+                                <span>{log.message}</span>
+                            </div>
+                        ))}
+                        <div ref={logsEndRef} />
+                    </div>
+                </div>
             </CardContent>
         </Card>
     );
