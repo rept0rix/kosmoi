@@ -100,7 +100,12 @@ async function processPage(url) {
         });
 
         const $ = cheerio.load(data);
-        const isCategory = url.includes('/explore/') || url.includes('/koh-samui-cities/') || url.includes('/koh-samui-beaches/');
+        // Fix: Treat the start URL as a category page, and also known category paths
+        const isCategory = url === START_URL ||
+            url.includes('/explore/') ||
+            url.includes('/koh-samui-cities/') ||
+            url.includes('/koh-samui-beaches/') ||
+            url.includes('/info/accomodations/');
 
         // 1. Extract Links (if it's a category/list page)
         if (isCategory) {
