@@ -13,7 +13,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "worker:universal": "node scripts/agent_worker.js",
-    "cron:crawler": "node scripts/harvest_samuimap.js"
+    "cron:crawler": "node scripts/harvest_samuimap.js",
+    "ingest:harvest": "node scripts/ingest_harvested_data.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.4",
