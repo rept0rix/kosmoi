@@ -13,7 +13,7 @@ const HARVEST_FILE = path.join(__dirname, '../downloads/samui_map/harvested_data
 
 // Initialize Supabase
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('❌ Missing Supabase credentials in .env');
@@ -61,7 +61,7 @@ async function ingestData() {
 
         const { error } = await supabase
             .from('service_providers')
-            .insert([payload]) // Use insert instead of upsert to avoid constraint error
+            .upsert(payload, { onConflict: 'source_url' }) // Dedup by URL
             .select();
 
         if (error) {

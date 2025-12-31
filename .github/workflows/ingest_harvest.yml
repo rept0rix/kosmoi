@@ -1,0 +1,32 @@
+name: Harvest & Ingest
+
+on:
+  push:
+    paths:
+      - 'downloads/samui_map/harvested_data.json'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Run Ingestion Script
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        # We don't need the Anon Key if we have the Service Role Key, 
+        # but providing it just in case logic falls back (it shouldn't).
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }} 
+      run: node scripts/ingest_harvested_data.js
