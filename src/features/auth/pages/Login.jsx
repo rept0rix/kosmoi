@@ -156,7 +156,14 @@ export default function Login() {
 
         } catch (err) {
             console.error('Auth error:', err);
-            setError(err.message || (isLogin ? 'Login failed.' : 'Registration failed.'));
+
+            // Helpful message for rate limits
+            if (err.message && err.message.toLowerCase().includes('rate limit')) {
+                setError("Too many attempts. Please wait a moment or try a different email.");
+            } else {
+                setError(err.message || (isLogin ? 'Login failed.' : 'Registration failed.'));
+            }
+
             setLoading(false);
         }
     };

@@ -86,26 +86,40 @@ export default function AutomatedImportPanel({ importPlace }) {
 
                 addLog(`🎯 Found ${results.length} candidates. Processing...`, 'success');
 
-                for (const basicData of results) {
+                for (const [index, basicData] of results.entries()) {
                     if (stopRef.current) break;
 
                     const place = basicData;
+                    addLog(`⏳ Processing [${index + 1}/${results.length}]: ${place.business_name}...`, 'info');
 
-                    // Artificial delay to prevent rate limits and UI freezing
+                    // Artificial delay to prevent rate limits
                     await new Promise(r => setTimeout(r, 1000));
 
                     try {
-                        const success = await importPlace(place);
+                        // Create a timeout promise
+                        const timeoutPromise = new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error("Import timed out (15s)")), 15000)
+                        );
+
+                        // Race the import against the timeout
+                        const success = await Promise.race([
+                            importPlace(place, 0, addLog),
+                            timeoutPromise
+                        ]);
+
+                        console.log(`[Crawler Debug] Import result for ${place.business_name}: ${success}`);
+
                         if (success) {
                             totalImported++;
                             addLog(`✅ Imported: ${place.business_name}`, 'success');
                         } else {
                             totalSkipped++;
-                            // addLog(`⏭️ Skipped: ${place.business_name} (Exists or Failed)`, 'warning');
+                            // Logs for skips are now handled inside importPlace via onLog
                         }
                     } catch (err) {
                         totalErrors++;
-                        addLog(`❌ Error importing ${place.business_name}: ${err.message}`, 'error');
+                        addLog(`❌ Error processing ${place.business_name}: ${err.message}`, 'error');
+                        console.error(`Crawler Error for ${place.business_name}:`, err);
                     }
 
                     setStats({ imported: totalImported, skipped: totalSkipped, errors: totalErrors });

@@ -52,20 +52,19 @@ export const AuthProvider = ({ children }) => {
       console.warn("Auth check timed out, forcing load completion");
       setIsLoadingAuth(false);
       setIsLoadingPublicSettings(false);
-    }, 15000);
+    }, 5000); // Reduced to 5s as we are now optimistic
 
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
 
       // FAST PATH: If we are on a PUBLIC route, UNBLOCK immediately!
-      // This allows the Landing Page to render INSTANTLY while we check auth in background.
       const isPublicRoute =
         window.location.pathname === '/' ||
         window.location.pathname.startsWith('/he') ||
         window.location.pathname.startsWith('/th') ||
         window.location.pathname.startsWith('/ru') ||
-        ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy'].some(p => window.location.pathname.includes(p));
+        ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy', '/login'].some(p => window.location.pathname.includes(p));
 
       // 0. Screenshot Agent Bypass (DEV Only)
       if (import.meta.env.DEV && navigator.userAgent.includes('ScreenshotAgent')) {
@@ -86,28 +85,29 @@ export const AuthProvider = ({ children }) => {
       // 1. Optimistic Check: Get session from LocalStorage first
       const { data: { session } } = await db.auth.getSession();
 
-      // Fast Path Logic:
-      if (isPublicRoute && !session) {
-        console.log("⚡ Fast Path: Public Route & No Session -> Unblocking UI Immediately");
-        setIsLoadingAuth(false);
-        setIsLoadingPublicSettings(false); // We can fetch settings in background if needed, or assume defaults
-        // Continue to check in background just in case
-      }
-
       if (session?.user) {
-        console.log("Hyperspeed/Optimistic Auth: Found session User");
+        console.log("⚡ Optimistic Auth: Found session User -> Unblocking UI");
+        // IMMEDIATE UPDATE
         setUser(session.user);
         setIsAuthenticated(true);
-        // If we found a user, we might want to unblock UI too if we trust the session 
-        // (but usually we wait for role check for app pages)
+        setIsLoadingAuth(false); // <--- KEY CHANGE: Unblock immediately
+
+        // 2. Background Verification
+        // We verify the token and role in the background. 
+        // If it fails, we will handle it gracefully without blocking the user now.
+        checkUserAuth(true, true);
+      } else {
+        // No session found
+        if (isPublicRoute) {
+          setIsLoadingAuth(false); // Unblock for public pages
+        }
+        // If protected route and no session, we still wait for strict check just in case, 
+        // or we could redirect immediately. For now, let's run strict check.
+        await checkUserAuth(false, isPublicRoute);
       }
 
       setAppPublicSettings({ public_settings: {} });
-      if (!isPublicRoute) setIsLoadingPublicSettings(false); // If public, we already unblocked
-
-      // 2. Strict / Server Verification
-      // If we used Fast Path, we MUST run this in background
-      await checkUserAuth(!!session?.user, isPublicRoute || !!session?.user);
+      setIsLoadingPublicSettings(false);
 
     } catch (error) {
       console.error('Unexpected error:', error);

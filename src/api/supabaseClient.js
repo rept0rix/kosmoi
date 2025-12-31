@@ -202,6 +202,13 @@ export const supabaseHelpers = {
             async create(data) {
                 const { data: res, error } = await supabase.from('service_requests').insert(data).select().single();
                 if (error) throw error;
+
+                // Sector 4: Ops & Automation Trigger
+                // Fire and forget - don't block the UI
+                supabase.functions.invoke('automation-proxy', {
+                    body: { event: 'NEW_SERVICE_REQUEST', data: res }
+                }).catch(err => console.warn('Automation Trigger Failed:', err));
+
                 return res;
             },
 
@@ -380,8 +387,12 @@ export const supabaseHelpers = {
 
     auth: {
         async me() {
-            // Timeout after 5 seconds to prevent infinite loading
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 5000));
+            // Optimization: Check session first to avoid timeout if clearly not logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return null;
+
+            // Timeout after 2 seconds (reduced from 5s)
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 2000));
 
             try {
                 const { data: { user }, error } = await Promise.race([
@@ -514,7 +525,7 @@ export const supabaseHelpers = {
 
     appLogs: {
         async logUserInApp(pageName) {
-            console.log('User navigated to:', pageName)
+            // console.log('User navigated to:', pageName) // Removed for hygiene
         }
     },
 

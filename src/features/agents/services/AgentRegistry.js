@@ -37,6 +37,7 @@ import { UX_AGENT } from "./registry/UxAgent.js";
 import { QA_AGENT } from "./registry/QaAgent.js";
 import { SECURITY_AGENT } from "./registry/SecurityAgent.js";
 import { CONTENT_AGENT } from "./registry/ContentAgent.js";
+import { BLOG_WRITER_AGENT } from "./registry/BlogWriterAgent.js";
 import { CONCIERGE_AGENT } from "./registry/ConciergeAgent.js";
 import { SUPPORT_AGENT } from "./registry/SupportAgent.js";
 import { BOOKING_AGENT } from "./registry/BookingAgent.js";
@@ -104,7 +105,9 @@ export const agents = [
     UX_AGENT,
     QA_AGENT,
     SECURITY_AGENT,
+    SECURITY_AGENT,
     CONTENT_AGENT,
+    BLOG_WRITER_AGENT,
     CONCIERGE_AGENT,
     SUPPORT_AGENT,
     BOOKING_AGENT,

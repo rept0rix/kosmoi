@@ -17,6 +17,7 @@ import Favorites from './pages/Favorites';
 import MyReviews from './pages/MyReviews';
 import RecentSearches from './pages/RecentSearches';
 import Login from './features/auth/pages/Login';
+import UpdatePassword from './features/auth/pages/UpdatePassword';
 import CompleteSignup from './features/auth/pages/CompleteSignup';
 import AdminImporter from './pages/AdminImporter';
 import RequestService from './pages/RequestService';
@@ -75,6 +76,7 @@ export const PAGES = {
     "MyReviews": MyReviews,
     "RecentSearches": RecentSearches,
     "Login": Login,
+    "UpdatePassword": UpdatePassword, // Added
     "CompleteSignup": CompleteSignup,
     "AdminImporter": AdminImporter,
     "RequestService": RequestService,

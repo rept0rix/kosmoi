@@ -43,6 +43,7 @@ const Footer = () => {
                         <ul className="space-y-3 text-sm">
                             <li><Link to="/legal/terms" className="hover:text-blue-400 transition-colors">{t('footer.terms_of_service', 'Terms of Service')}</Link></li>
                             <li><Link to="/legal/privacy" className="hover:text-blue-400 transition-colors">{t('footer.privacy_policy', 'Privacy Policy')}</Link></li>
+                            <li><Link to="/legal/security" className="hover:text-blue-400 transition-colors">{t('footer.security', 'Security')}</Link></li>
                             <li><Link to="/legal/accessibility" className="hover:text-blue-400 transition-colors">{t('footer.accessibility', 'Accessibility Statement')}</Link></li>
                         </ul>
                     </div>
@@ -66,10 +67,10 @@ const Footer = () => {
                 <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
                     <p>{t('footer.copyright', `© ${new Date().getFullYear()} Kosmoi. All rights reserved.`)}</p>
                     <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
-                        <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/50 border border-slate-900 text-slate-400">
+                        <Link to="/legal/security" className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/50 border border-slate-900 text-slate-400 hover:text-white transition-colors">
                             <ShieldCheck className="w-3 h-3 text-green-500" />
                             {t('footer.secure_private', 'Secure & Private')}
-                        </span>
+                        </Link>
                         <span className="hidden md:inline text-slate-800">|</span>
                         <span className="flex items-center gap-2">
                             <Heart className="w-3 h-3 text-red-500 animate-pulse" />
