@@ -16,12 +16,22 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE_URL = 'https://samui-map.info';
-const START_URL = 'https://samui-map.info/explore/';
-
 // Storage Paths
 const DOWNLOAD_DIR = path.join(__dirname, '../downloads/samui_map');
 const IMAGES_DIR = path.join(DOWNLOAD_DIR, 'images');
 const DATA_FILE = path.join(DOWNLOAD_DIR, 'harvested_data.json');
+
+// Category Support
+const args = process.argv.slice(2);
+const categoryArg = args.find(arg => arg.startsWith('--category='))?.split('=')[1];
+const START_URL = categoryArg
+    ? `https://samui-map.info/info/${categoryArg}/`
+    : 'https://samui-map.info/explore/';
+
+if (categoryArg) {
+    console.log(`🎯 Category Override: ${categoryArg}`);
+    console.log(`🔗 Target URL: ${START_URL}`);
+}
 
 // Ensure directories exist
 if (!fs.existsSync(IMAGES_DIR)) {

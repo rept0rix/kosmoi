@@ -19,12 +19,8 @@ git pull origin main
 
 # 2. Run the Crawler
 echo "🕷️ Releasing the Crawler..."
-# Assuming the standard crawler command. Adjust if package.json script differs.
-# We use the existing 'npm run crawler' but passing the category if supported, 
-# or just relying on the hardcoded script if strictly defined.
-# For now, we assume the user modifies the crawler code or we pass an arg if supported.
-# If strict arg passing isn't set up in package.json, we run the default.
-npm run crawler
+# We use 'npm run cron:crawler' which maps to 'node scripts/harvest_samuimap.js'
+npm run cron:crawler -- --category="$CATEGORY"
 
 # 3. Check if data changed
 if git diff --quiet downloads/samui_map/harvested_data.json; then
