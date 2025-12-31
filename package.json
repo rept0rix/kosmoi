@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "worker": "node scripts/agent_worker.js",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "cron:crawler": "node scripts/harvest_samuimap.js",
+    "cron:scrape": "node scripts/dispatch_scrape_task.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.3",
