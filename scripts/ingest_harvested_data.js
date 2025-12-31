@@ -32,12 +32,13 @@ async function ingestData() {
     }
 
     const rawData = JSON.parse(fs.readFileSync(HARVEST_FILE, 'utf-8'));
-    console.log(`📦 Loaded ${rawData.length} items from JSON.`);
+    const items = rawData.data || rawData; // Support both old and new format
+    console.log(`📦 Loaded ${items.length} items from JSON.`);
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const item of rawData) {
+    for (const item of items) {
         // Map fields
         // Note: 'content_snippet' from crawler becomes 'description'
         // 'images' need to be uploaded or referenced. For now, we reference known downloads relative path if we host them, 

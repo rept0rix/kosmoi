@@ -166,8 +166,18 @@ async function run() {
         // if (VISITED.size >= 50) break; 
     }
 
+    // Create final object with metadata
+    const output = {
+        metadata: {
+            harvest_date: new Date().toISOString(),
+            item_count: RESULTS.length,
+            target: START_URL
+        },
+        data: RESULTS
+    };
+
     // Save final JSON
-    fs.writeFileSync(DATA_FILE, JSON.stringify(RESULTS, null, 2));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(output, null, 2));
     console.log(`\n🎉 Mission Complete! Saved ${RESULTS.length} items.`);
     console.log(`📁 Validated JSON at: ${DATA_FILE}`);
 }
