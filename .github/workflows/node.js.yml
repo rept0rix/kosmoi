@@ -26,6 +26,13 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm install
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      run: npm install
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
+    - name: Run build
+      run: npm run build --if-present
+    - name: Run tests
+      run: npm test
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
