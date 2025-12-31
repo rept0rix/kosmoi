@@ -5,13 +5,13 @@
 
 CATEGORY=$1
 
-if [ -z "$CATEGORY" ]; then
-  echo "Usage: ./ghost_driver.sh <category>"
-  echo "Example: ./ghost_driver.sh hotels"
-  exit 1
+if [ "$CATEGORY" == "hotels" ]; then
+  REAL_CATEGORY="accomodations"
+else
+  REAL_CATEGORY=$CATEGORY
 fi
 
-echo "👻 Ghost Protocol Initiated: Target [$CATEGORY]"
+echo "👻 Ghost Protocol Initiated: Target [$REAL_CATEGORY]"
 
 # 1. Ensure we have the latest orders
 echo "📡 Syncing with Hive Mind..."
@@ -20,7 +20,7 @@ git pull origin main
 # 2. Run the Crawler
 echo "🕷️ Releasing the Crawler..."
 # We use 'npm run cron:crawler' which maps to 'node scripts/harvest_samuimap.js'
-npm run cron:crawler -- --category="$CATEGORY"
+npm run cron:crawler -- --category="$REAL_CATEGORY"
 
 # 3. Check if data changed
 if git diff --quiet downloads/samui_map/harvested_data.json; then
