@@ -13,7 +13,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "cron:crawler": "node scripts/harvest_samuimap.js",
-    "cron:scrape": "node scripts/dispatch_scrape_task.js"
+    "cron:scrape": "node scripts/dispatch_scrape_task.js",
+    "cron:import": "node scripts/import_harvested_data.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.3",
