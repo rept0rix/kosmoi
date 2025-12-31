@@ -1,8 +1,26 @@
 {
   "metadata": {
-    "harvest_date": "2025-12-31T07:56:24.832Z",
-    "item_count": 0,
-    "target": "https://samui-map.info/info/hotels/"
+    "harvest_date": "2025-12-31T07:57:35.989Z",
+    "item_count": 1,
+    "target": "https://samui-map.info/info/accomodations/"
   },
-  "data": []
+  "data": [
+    {
+      "url": "https://samui-map.info/info/accomodations/",
+      "title": "ACCOMODATIONS IN KOH SAMUI",
+      "description": "Find where to stay in Koh Samui, from luxury resorts and private villas to budget-friendly bungalows and guesthouses. Explore your options!",
+      "content_snippet": "",
+      "images": [
+        "ACCOMODATI_Logo-Samui-Map-Info.png",
+        "ACCOMODATI_Logo-Samui-Map-Info.png",
+        "ACCOMODATI_a-beautiful-exotic-garden-somewhere-in-the-north-o-2025-01-16-10-59-38-utc-1024x683.jpg",
+        "ACCOMODATI_koh-lanta-thailand-luxury-beach-chairs-by-the-swi-2025-01-08-14-17-17-utc-300x200.jpg",
+        "ACCOMODATI_thai-villa-in-the-jungle-against-the-sky-2024-09-22-17-40-40-utc-300x200.jpg",
+        "ACCOMODATI_luxury-villa-on-tropical-resort-in-sunrise-2024-05-02-21-47-16-utc-300x194.jpg",
+        "ACCOMODATI_bamboo-hut-bungalows-on-the-beach-in-thailand-2025-01-08-02-50-44-utc-300x188.jpg",
+        "ACCOMODATI_koh-wai-island-trat-thailand-near-koh-chang-with-a-2025-01-08-17-33-34-utc-300x200.jpg",
+        "ACCOMODATI_Next-Edition-Post-RECTANGLE-8.jpg"
+      ]
+    }
+  ]
 }
