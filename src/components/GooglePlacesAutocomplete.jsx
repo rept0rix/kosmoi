@@ -31,7 +31,7 @@ export default function GooglePlacesAutocomplete({ onPlaceSelected, placeholder,
 
             const script = document.createElement('script');
             // Ensure 'places' library is included
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=he&libraries=places&loading=async`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=he&libraries=places&v=weekly&loading=async`;
             script.async = true;
             script.defer = true;
             script.onload = () => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/api/supabaseClient';
+import { createClient } from '@supabase/supabase-js'; // Added for isolated client
 
 import GoogleMap from '@/components/GoogleMap';
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,20 @@ import { subCategoriesBySuperCategory } from '@/components/subCategories';
 import AutomatedImportPanel from './admin/AutomatedImportPanel';
 import { getSuperCategory } from '@/shared/utils/categoryMapping';
 import { DataIngestionService } from '@/services/data/DataIngestionService';
+
+// Create a dedicated client for import checks to avoid global auth hangs
+// This uses the ANON key, so it relies on public read access to 'service_providers'
+const importClient = createClient(
+    (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_URL,
+    (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_ANON_KEY,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+        }
+    }
+);
 
 /** @type {any} */
 const google = (/** @type {any} */ (window)).google;
@@ -37,6 +52,8 @@ export default function AdminImporter() {
     const { data: user } = useQuery({
         queryKey: ["currentUser"],
         queryFn: () => db.auth.me(),
+        retry: false,
+        staleTime: 1000 * 60 * 5, // 5 minutes
     });
 
     // Create admin db helper that uses service role key
@@ -141,64 +158,20 @@ export default function AdminImporter() {
         }
 
         try {
-            // Note: DataIngestionService wraps the API, but for pagination we might need to adjust or keep strict control
-            // For now, let's use the Service only for new searches to keep implementation clean, and handle pagination carefully
-            // Actually, the Service as written returns a Promise with results.
+            // Use the centralized DataIngestionService (New Places API)
+            console.log(`[Manual Search] Searching for: ${query}`);
+            const places = await DataIngestionService.searchPlaces(query);
 
-            // To support next page properly, we might need access to the `pagination` object from the API callback.
-            // The service I wrote abstracts that away. Ideally, the service should return { results, pagination }.
-            // For this iteration, let's use the explicit API call here for search to keep pagination working, 
-            // OR update the service.
-
-            // Let's UPDATE the service logic inline here for now to be safe, then refactor fully once stable.
-            // Wait - the prompt requested using the service. I should update the service to return pagination.
-
-            // Reverting to direct usage here for SEARCH to ensure pagination works as existing code relies on state, 
-            // but I will use the service's transformation logic.
-
-            if (nextPage && pagination && pagination.hasNextPage) {
-                pagination.nextPage();
-                return;
+            if (places && places.length > 0) {
+                setResults(places);
+            } else {
+                toast({
+                    title: "לא נמצאו תוצאות",
+                    description: "נסה מילות חיפוש אחרות",
+                    variant: "default"
+                });
             }
-
-            const mapDiv = document.createElement('div');
-            const map = new (/** @type {any} */ (window)).google.maps.Map(mapDiv, {
-                center: { lat: 9.5, lng: 100.0 },
-                zoom: 12
-            });
-
-            const service = new (/** @type {any} */ (window)).google.maps.places.PlacesService(map);
-            const koSamuiCenter = { lat: 9.5, lng: 100.0 };
-            const searchRadius = 25000;
-
-            const request = {
-                query: query,
-                location: koSamuiCenter,
-                radius: searchRadius,
-                fields: ['name', 'formatted_address', 'geometry', 'photos', 'rating', 'user_ratings_total', 'types', 'place_id', 'formatted_phone_number', 'website', 'opening_hours', 'price_level']
-            };
-
-            service.textSearch(request, (newResults, status, paginationObj) => {
-                if (status === (/** @type {any} */ (window)).google.maps.places.PlacesServiceStatus.OK) {
-                    const transformedResults = newResults
-                        .filter(place => place.business_status === 'OPERATIONAL')
-                        .map(DataIngestionService.transformBasicData);
-
-                    if (nextPage) {
-                        setResults(prev => [...prev, ...transformedResults]);
-                    } else {
-                        setResults(transformedResults);
-                    }
-                    setPagination(paginationObj);
-                } else {
-                    toast({
-                        title: "שגיאה בחיפוש",
-                        description: `סטטוס: ${status}`,
-                        variant: "destructive"
-                    });
-                }
-                setLoading(false);
-            });
+            setLoading(false);
 
         } catch (error) {
             console.error("Search error:", error);
@@ -211,81 +184,102 @@ export default function AdminImporter() {
         }
     };
 
-    const importPlace = async (place, retryCount = 0) => {
+    const importPlace = React.useCallback(async (place, retryCount = 0, onLog = (msg, type) => { }) => {
         try {
             setImporting(prev => ({ ...prev, [place.google_place_id]: true }));
 
-            const existing = await db.entities.ServiceProvider.filter({
-                google_place_id: place.google_place_id
-            });
+            // DB Check Log
+            // console.log(`[Import Debug] Checking existence for ${place.business_name}...`);
 
-            // console.log(`[Import Debug] Checking ${place.business_name} (${place.google_place_id}): Found ${existing?.length} matches`);
+            // Race DB check against 5s timeout using RAW Supabase client
+            // Bypass db.entities wrapper completely
+            const dbCheckPromise = (async () => {
+                const { data, error } = await importClient.from('service_providers') // Access supabase directly via isolated client
+                    .select('id, google_place_id')
+                    .eq('google_place_id', place.google_place_id)
+                    .maybeSingle(); // Use maybeSingle for faster lookups
 
-            if (existing && existing.length > 0) {
+                if (error) throw error;
+                return data;
+            })();
+
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("DB Check Timeout (5s)")), 5000)
+            );
+
+            const existing = await Promise.race([dbCheckPromise, timeoutPromise]);
+
+            // console.log(`[Import Debug] Existence result:`, existing);
+
+            if (existing) {
                 setImporting(prev => ({ ...prev, [place.google_place_id]: 'exists' }));
+                onLog(`⏭️ Skipped: ${place.business_name} (Already Exists)`, 'warning');
                 return false;
             }
 
             // USE THE SERVICE to get Full Details
+            onLog(`🔍 Fetching details for: ${place.business_name}...`, 'info');
+
             const richData = await DataIngestionService.getPlaceDetails(place.google_place_id);
             if (!richData) {
                 setImporting(prev => ({ ...prev, [place.google_place_id]: false }));
+                onLog(`❌ Failed to fetch details for: ${place.business_name}`, 'error');
                 return false;
-            }
+            } // Removed debug log to reduce console noise
 
             // Add Super Category and Creator info
             richData.super_category = getSuperCategory(richData.category);
             richData.created_by = user?.email || "admin@kosamui.com";
 
-            // Update the local state to show the user the new RICH data immediately
+            // Update the local state
             setResults(prev => prev.map(r => r.google_place_id === place.google_place_id ? { ...r, ...richData, imported: true } : r));
 
-            // Create Service Provider
-            const newProvider = await adminDb.entities.ServiceProvider.create(richData);
+            // Create Service Provider - DIRECT INSERT via importClient (Bypassing Auth Context)
+            const { data: newProvider, error: createError } = await importClient.from('service_providers')
+                .insert(richData)
+                .select()
+                .single();
 
-            // Import Reviews if available
+            if (createError) throw createError;
+
+            // Import Reviews - DIRECT INSERT via importClient
             if (richData.reviews && richData.reviews.length > 0 && newProvider?.id) {
-                for (const review of richData.reviews) {
-                    try {
-                        await db.entities.Review.create({
-                            service_provider_id: newProvider.id,
-                            user_id: user?.id,
-                            rating: review.rating,
-                            comment: review.text,
-                            author_name: review.author_name,
-                            created_at: new Date(review.time * 1000).toISOString()
-                        });
-                    } catch (err) {
-                        console.warn("Failed to import review:", err);
-                    }
+                const reviewsToInsert = richData.reviews.map(review => ({
+                    service_provider_id: newProvider.id,
+                    user_id: user?.id, // Might be null, that's fine if table allows
+                    rating: review.rating,
+                    comment: review.text,
+                    author_name: review.author_name,
+                    created_at: new Date(review.time * 1000).toISOString()
+                })).filter(r => r.comment || r.rating); // Basic filter
+
+                if (reviewsToInsert.length > 0) {
+                    await importClient.from('reviews').insert(reviewsToInsert).select();
                 }
             }
 
             setImporting(prev => ({ ...prev, [place.google_place_id]: 'done' }));
+            console.log(`[Import Debug] Successfully imported ${place.business_name}`);
             return true;
 
         } catch (error) {
             if (retryCount < 2) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                return importPlace(place, retryCount + 1);
+                return importPlace(place, retryCount + 1, onLog);
             }
 
             if (error.message && error.message.includes('duplicate key')) {
                 setImporting(prev => ({ ...prev, [place.google_place_id]: 'exists' }));
+                onLog(`⏭️ Skipped: ${place.business_name} (Duplicate Key)`, 'warning');
             } else {
                 console.error("Import error:", error);
-                if (Object.keys(importing).length < 5) {
-                    toast({
-                        title: "שגיאה בייבוא",
-                        description: error.message || "Unknown error",
-                        variant: "destructive"
-                    });
-                }
+                const errorMsg = error.message || "Unknown error";
+                onLog(`❌ Import Error: ${place.business_name} - ${errorMsg}`, 'error');
                 setImporting(prev => ({ ...prev, [place.google_place_id]: false }));
             }
             return false;
         }
-    };
+    }, [user, toast, importing]);
 
     const handleSingleImport = async (place) => {
         const success = await importPlace(place);

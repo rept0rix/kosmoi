@@ -42,6 +42,7 @@ import UseCases from '@/pages/UseCases';
 import Pricing from '@/pages/Pricing';
 import Terms from '@/pages/legal/Terms';
 import Privacy from '@/pages/legal/Privacy';
+import Security from '@/pages/legal/Security';
 import Accessibility from '@/pages/legal/Accessibility';
 import BusinessInfo from '@/pages/BusinessInfo';
 import Contact from '@/pages/Contact';
@@ -192,6 +193,7 @@ const AuthenticatedApp = () => {
             <Route path="organizer" element={<Organizer />} />
             <Route path="vendor-signup" element={<VendorSignup />} />
             <Route path="login" element={<Pages.Login />} />
+            <Route path="update-password" element={<Pages.UpdatePassword />} />
             <Route path="complete-signup" element={<Pages.CompleteSignup />} />
             <Route path="experiences" element={<Pages.Experiences />} />
             <Route path="experiences/:id" element={<Pages.ExperienceDetails />} />
@@ -264,6 +266,7 @@ const AuthenticatedApp = () => {
             <Route path="pricing" element={<Pricing />} />
             <Route path="legal/terms" element={<Terms />} />
             <Route path="legal/privacy" element={<Privacy />} />
+            <Route path="legal/security" element={<Security />} />
             <Route path="legal/accessibility" element={<Accessibility />} />
             <Route path="business-info" element={<BusinessInfo />} />
             <Route path="contact" element={<Contact />} />

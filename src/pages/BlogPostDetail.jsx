@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '@/api/supabaseClient';
+import { blogPosts } from '@/data/blogPosts';
 import SEO from '@/components/SEO';
 import { motion } from 'framer-motion';
 import { Calendar, Tag, ArrowLeft, ArrowRight, Loader2, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown'; // Assuming we want basic markdown support, or we can render HTML directly if content is HTML
+import ReactMarkdown from 'react-markdown';
 
 export default function BlogPostDetail() {
     const { slug } = useParams();
@@ -22,21 +22,13 @@ export default function BlogPostDetail() {
     }, [slug]);
 
     async function fetchPost() {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('posts')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-
-            if (error) throw error;
-            setPost(data);
-        } catch (error) {
-            console.error("Error fetching post:", error);
-        } finally {
+        setLoading(true);
+        // Simulate fetch delay
+        setTimeout(() => {
+            const foundPost = blogPosts.find(p => p.slug === slug);
+            setPost(foundPost || null);
             setLoading(false);
-        }
+        }, 400);
     }
 
     if (loading) {
@@ -140,17 +132,9 @@ export default function BlogPostDetail() {
                     transition={{ delay: 0.4 }}
                     className="prose prose-lg md:prose-xl max-w-none prose-blue prose-headings:font-bold prose-img:rounded-xl text-gray-800"
                 >
-                    {/* Render content as Markdown if probable, otherwise dangerously set inner HTML 
-                        Note: Assuming logic to handle both or favoring one. 
-                        If content fields are mixed, we usually check or default to one.
-                        For now, dumping content as text/markdown to be safe, 
-                        or HTML if it looks like HTML (starts with <).
-                    */}
-                    {post.content && post.content.trim().startsWith('<') ? (
-                        <div dangerouslySetInnerHTML={{ __html: post.content }} />
-                    ) : (
-                        <div className="whitespace-pre-wrap">{post.content}</div>
-                    )}
+                    <ReactMarkdown>
+                        {post.content}
+                    </ReactMarkdown>
                 </motion.div>
 
                 {/* Footer Tags */}
