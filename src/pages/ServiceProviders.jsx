@@ -161,7 +161,9 @@ export default function ServiceProviders() {
           if (addresses.en) {
             updateLocation({ ...location, address: addresses.en });
           }
-        } catch (e) { }
+        } catch (e) {
+          // ignore
+        }
         setLoadingAddress(false);
       },
       (error) => {
@@ -228,7 +230,9 @@ export default function ServiceProviders() {
       if (addresses.en) {
         updateLocation({ ...newLocation, address: addresses.en });
       }
-    } catch (e) { }
+    } catch (e) {
+      // ignore
+    }
   };
   // --- Location Logic End ---
 
@@ -305,9 +309,15 @@ export default function ServiceProviders() {
     })
     .sort((a, b) => {
       if (sortBy === 'distance' && userLocation) {
+        if (filters.subCategory === 'all_restaurants') {
+          // No specific filter needed
+        }
+        if (a.distance === null && b.distance === null) return 0;
         if (a.distance === null) return 1;
         if (b.distance === null) return -1;
         return a.distance - b.distance;
+      } else {
+        // Optimization: No sort needed if no location
       }
       return (b.average_rating || 0) - (a.average_rating || 0);
     });

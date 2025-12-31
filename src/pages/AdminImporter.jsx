@@ -20,8 +20,8 @@ import { DataIngestionService } from '@/services/data/DataIngestionService';
 // Create a dedicated client for import checks to avoid global auth hangs
 // This uses the ANON key, so it relies on public read access to 'service_providers'
 const importClient = createClient(
-    (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_URL,
-    (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_ANON_KEY,
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
     {
         auth: {
             persistSession: false,

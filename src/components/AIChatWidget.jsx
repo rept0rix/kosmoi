@@ -14,7 +14,7 @@ import { memoryService } from '@/services/ai/MemoryService';
 import A2UIRenderer from "@/components/a2ui/A2UIRenderer";
 
 export default function AIChatWidget({ isOpen, onClose, context = {} }) {
-    if (!isOpen) return null;
+    // Moved early return to bottom to satisfy React Hook rules
 
     const { user } = useAuth();
 
@@ -132,6 +132,7 @@ export default function AIChatWidget({ isOpen, onClose, context = {} }) {
         queryKey: ["serviceProviders"],
         queryFn: () => db.entities.ServiceProvider.filter({ status: "active" }),
         initialData: [],
+        enabled: isOpen,
     });
 
     const { data: weatherData } = useWeather();
@@ -258,6 +259,8 @@ Knowledge: ${JSON.stringify(samuiKnowledge).substring(0, 1000)}...
         setMessages(prev => [...prev, { role: 'user', content: txt }]);
         processMessage(txt);
     };
+
+    if (!isOpen) return null;
 
     return (
         <div
