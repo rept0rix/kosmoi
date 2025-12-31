@@ -48,22 +48,19 @@ async function ingestData() {
 
         const payload = {
             business_name: item.title,
-            description: item.content_snippet,
-            location: 'Koh Samui', // Default, as crawler doesn't extract specific address yet
+            description: item.description || item.content_snippet, // Fallback to description
+            location: 'Koh Samui',
             category: guessCategory(item.url),
             source_url: item.url,
-            images: item.images, // JSON array of filenames
+            images: item.images,
             status: 'active',
             verified: false,
-            // Logic to prevent dupes handled by upsert on a unique key if exists, 
-            // but we don't have a unique key other than maybe business_name which is risky.
-            // Using google_place_id as NULL for now (this source isn't Google Maps)
             imported_at: new Date().toISOString()
         };
 
         const { error } = await supabase
             .from('service_providers')
-            .upsert(payload, { onConflict: 'business_name' }) // simplistic dedup
+            .insert([payload]) // Use insert instead of upsert to avoid constraint error
             .select();
 
         if (error) {
