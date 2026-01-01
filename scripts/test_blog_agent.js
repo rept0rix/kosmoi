@@ -50,7 +50,9 @@ async function testBlogAgent() {
                 .order('created_at', { ascending: false })
                 .limit(1);
 
-            if (drafts && drafts.length > 0) {
+            if (error) {
+                console.error("❌ DB Error:", error);
+            } else if (drafts && drafts.length > 0) {
                 console.log(`\n✅ Draft found in DB: ${drafts[0].title}`);
                 console.log(`ID: ${drafts[0].id}`);
             } else {

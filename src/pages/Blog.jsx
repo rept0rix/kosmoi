@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts } from '@/data/blogPosts';
+import { db } from '@/api/supabaseClient';
 import SEO from '@/components/SEO';
 import { motion } from 'framer-motion';
 import { Calendar, Tag, ChevronRight, Loader2 } from 'lucide-react';
@@ -14,12 +15,25 @@ export default function Blog() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulate fetch delay for smooth UX
-        const timer = setTimeout(() => {
-            setPosts(blogPosts);
-            setLoading(false);
-        }, 600);
-        return () => clearTimeout(timer);
+        async function fetchPosts() {
+            try {
+                // Fetch published posts (and drafts for dev visibility if needed)
+                const { data, error } = await db
+                    .from('blog_posts')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                setPosts(data || []);
+            } catch (err) {
+                console.error("Failed to fetch blog posts:", err);
+                // Fallback to static data if DB fails or is empty? 
+                // setPosts(blogPosts); 
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPosts();
     }, []);
 
     if (loading) {

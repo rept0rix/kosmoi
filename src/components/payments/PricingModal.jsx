@@ -14,6 +14,17 @@ import { toast } from 'sonner';
 
 export default function PricingModal({ trigger }) {
     const [loading, setLoading] = useState(false);
+    const [currentPlan, setCurrentPlan] = useState(null);
+
+    React.useEffect(() => {
+        async function checkSubscription() {
+            const sub = await StripeService.getSubscription();
+            if (sub) {
+                setCurrentPlan(sub.prices.products.name); // Assuming product name is available
+            }
+        }
+        checkSubscription();
+    }, []);
 
     const handleSubscribe = async (priceId) => {
         setLoading(true);
@@ -74,10 +85,10 @@ export default function PricingModal({ trigger }) {
                         <Button
                             className="bg-blue-600 hover:bg-blue-700 text-white w-full"
                             onClick={() => handleSubscribe('price_1Qbl0qGg9y6X2yq5U7b1XxJz')} // Replace with valid price ID
-                            disabled={loading}
+                            disabled={loading || currentPlan === 'Pro'}
                         >
                             {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
-                            {loading ? 'Processing...' : 'Upgrade Now'}
+                            {loading ? 'Processing...' : (currentPlan === 'Pro' ? 'Current Plan' : 'Upgrade Now')}
                         </Button>
                     </div>
                 </div>
