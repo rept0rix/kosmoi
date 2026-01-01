@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, ArrowRight, Hotel, Utensils, Car, Hammer, ShoppingBag, Sparkles, Briefcase } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Hotel, Utensils, Car, Hammer, ShoppingBag, Sparkles, Briefcase, Brain, Zap, Shield, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -159,10 +159,119 @@ export default function Home() {
                             }}
                             className="flex flex-col items-center justify-center w-[140px] h-[100px] p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group hover:-translate-y-1"
                         >
-                            <cat.icon className={`w - 6 h - 6 mb - 2 ${cat.color} opacity - 80 group - hover: opacity - 100 group - hover: scale - 110 transition - all`} />
+                            <cat.icon className={`w-6 h-6 mb-2 ${cat.color} opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all`} />
                             <span className="text-sm font-medium text-slate-300 group-hover:text-white text-center leading-tight px-1">{cat.label}</span>
                         </button>
                     ))}
+                </motion.div>
+
+                {/* --- Comparison / Features Section --- */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="w-full max-w-6xl mt-32 mb-20"
+                >
+                    <div className="text-center mb-16 space-y-4">
+                        <h2 className="text-3xl md:text-5xl font-bold">
+                            {t('home.why_pro_title', 'Unlock the Island\'s Full Potential')}
+                        </h2>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                            {t('home.why_pro_subtitle', 'Kosmoi isn\'t just a map. It\'s your unfair advantage on Koh Samui.')}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            {
+                                icon: <Brain className="w-10 h-10 text-purple-400" />,
+                                title: "AI Concierge",
+                                desc: "Ask \"Where's the best Pad Thai?\" and get a real answer, not a sponsored list."
+                            },
+                            {
+                                icon: <Zap className="w-10 h-10 text-yellow-400" />,
+                                title: "Instant Booking",
+                                desc: "Skip the WhatsApp tag. Book bikes, tables, and tours directly."
+                            },
+                            {
+                                icon: <Shield className="w-10 h-10 text-emerald-400" />,
+                                title: "Verified Listings",
+                                desc: "No more closed businesses or fake reviews. We verify every spot."
+                            }
+                        ].map((item, i) => (
+                            <div key={i} className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm hover:bg-white/10 transition-colors">
+                                <div className="mb-6 bg-white/10 w-16 h-16 rounded-2xl flex items-center justify-center">
+                                    {item.icon}
+                                </div>
+                                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                                <p className="text-slate-400 leading-relaxed">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+
+                {/* --- Pricing Section --- */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="w-full max-w-4xl mb-32"
+                >
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4">Transparent Pricing</h2>
+                        <p className="text-slate-400">Choose the plan that fits your island lifestyle.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Free Plan */}
+                        <div className="border border-white/10 bg-black/20 rounded-3xl p-8 flex flex-col backdrop-blur-md">
+                            <div className="mb-4">
+                                <h3 className="text-2xl font-bold">Explorer</h3>
+                                <p className="text-slate-400">Perfect for vacationers</p>
+                            </div>
+                            <div className="text-4xl font-bold mb-8">$0<span className="text-lg text-slate-500 font-normal">/mo</span></div>
+                            <ul className="space-y-4 mb-8 flex-1">
+                                {["Basic Map Access", "Browse Businesses", "Public Blog Access"].map((feat, i) => (
+                                    <li key={i} className="flex items-center gap-3 text-slate-300">
+                                        <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center">
+                                            <Check className="w-3 h-3 text-slate-400" />
+                                        </div>
+                                        {feat}
+                                    </li>
+                                ))}
+                            </ul>
+                            <Button variant="outline" className="w-full h-12 rounded-xl border-white/20 hover:bg-white/10 text-white" onClick={() => navigate('/login')}>
+                                Get Started
+                            </Button>
+                        </div>
+
+                        {/* Pro Plan */}
+                        <div className="relative border-2 border-blue-500 bg-slate-900/80 rounded-3xl p-8 flex flex-col shadow-2xl shadow-blue-500/20 backdrop-blur-md">
+                            <div className="absolute top-0 right-0 p-4">
+                                <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">POPULAR</span>
+                            </div>
+                            <div className="mb-4">
+                                <h3 className="text-2xl font-bold text-blue-400">Island Pro</h3>
+                                <p className="text-slate-400">For locals & power users</p>
+                            </div>
+                            <div className="text-4xl font-bold mb-8">$125<span className="text-lg text-slate-500 font-normal">/mo</span></div>
+                            <ul className="space-y-4 mb-8 flex-1">
+                                {["Everything in Explorer", "Create Business Listings", "Advanced Analytics", "AI Agent Priority", "Verified Badge"].map((feat, i) => (
+                                    <li key={i} className="flex items-center gap-3 text-white">
+                                        <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                            <Check className="w-3 h-3 text-blue-400" />
+                                        </div>
+                                        {feat}
+                                    </li>
+                                ))}
+                            </ul>
+                            <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate('/pricing')}>
+                                Upgrade to Pro
+                            </Button>
+                        </div>
+                    </div>
                 </motion.div>
 
                 {/* Business CTA - Bottom */}
@@ -187,6 +296,6 @@ export default function Home() {
 
             </div>
             <Footer />
-        </div>
+        </div >
     );
 }

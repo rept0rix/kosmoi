@@ -1,11 +1,123 @@
 {
   "metadata": {
-    "harvest_date": "2025-12-31T11:05:06.730Z",
-    "item_count": 110,
-    "target": "https://samui-map.info/category/hotel/",
-    "status": "in-progress"
+    "harvest_date": "2026-01-01T10:20:52.362Z",
+    "item_count": 200,
+    "target": "https://samui-map.info/explore/",
+    "status": "complete"
   },
   "data": [
+    {
+      "url": "https://samui-map.info/listing/ems-cafe/",
+      "title": "Em's Cafe",
+      "description": "",
+      "phone": "+66 98 830 7489",
+      "address": "Plai Laem, Koh Samui, Thailand",
+      "category": "ems-cafe",
+      "content_snippet": "",
+      "images": [
+        "Em_s_Cafe_Logo-Samui-Map-Info.png",
+        "Em_s_Cafe_Logo-Samui-Map-Info.png",
+        "Em_s_Cafe_AF1QipPhebloZBP8SbNpCdCyH9e7szUhA-TzAh5FwLBm"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/chantara-junk-boat/",
+      "title": "Chantara Junk Boat",
+      "description": "",
+      "phone": "+66870643126",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Chantara_J_Logo-Samui-Map-Info.png",
+        "Chantara_J_Logo-Samui-Map-Info.png",
+        "Chantara_J_AF1QipNZiVgyuR7cd6gxlcMy-EhfrGLlTb2tQcO94AkK"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/katya-bulgakova-makeup-and-photographer/",
+      "title": "Katya Bulgakova - Makeup and Photographer",
+      "description": "",
+      "phone": "+66 98 070 0793",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Beauty Salon",
+      "content_snippet": "",
+      "images": [
+        "Katya_Bulg_Logo-Samui-Map-Info.png",
+        "Katya_Bulg_Logo-Samui-Map-Info.png",
+        "Katya_Bulg_AF1QipMwQjx9Mrm0fWVHqqlOkheU98NGpk-G_MSUSEd5"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/x-quad-samui-atv-tour/",
+      "title": "X-Quad samui ATV tour",
+      "description": "",
+      "phone": "+66909805401",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "X-Quad_sam_Logo-Samui-Map-Info.png",
+        "X-Quad_sam_Logo-Samui-Map-Info.png",
+        "X-Quad_sam_AF1QipPCLuSHaz4C1hAs7ApIEBK5KBmkx9BesQEW0VDM"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-luxury-yacht/",
+      "title": "Samui Luxury Yacht",
+      "description": "",
+      "phone": "+66 80 535 9140",
+      "address": "Plai Laem, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_AF1QipNY7cF937p2aGl_NRwtLuX4kLFpcptKPFXsYm58"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-buddy/",
+      "title": "Samui Buddy",
+      "description": "",
+      "phone": "+66808251563",
+      "address": "Lipa Noi, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Samui_Budd_Logo-Samui-Map-Info.png",
+        "Samui_Budd_Logo-Samui-Map-Info.png",
+        "Samui_Budd_AF1QipPPJZyMbVToV-lfsxI_wb0uaotsOox-kLB-rk2x"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/snake-farm-ko-samui/",
+      "title": "Snake Farm Ko Samui",
+      "description": "",
+      "phone": "+66 93 620 5784",
+      "address": "Thong Krut, Koh Samui, Thailand",
+      "category": "Attraction",
+      "content_snippet": "",
+      "images": [
+        "Snake_Farm_Logo-Samui-Map-Info.png",
+        "Snake_Farm_Logo-Samui-Map-Info.png",
+        "Snake_Farm_AF1QipOtbaIfVZxUc7GvJ-zIMJAzurg0sD7BBLQg9hTI"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/aello-yachting/",
+      "title": "Aello Yachting",
+      "description": "",
+      "phone": "+66950365566",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Boat Cruise",
+      "content_snippet": "",
+      "images": [
+        "Aello_Yach_Logo-Samui-Map-Info.png",
+        "Aello_Yach_Logo-Samui-Map-Info.png",
+        "Aello_Yach_AF1QipPoOrhycyZCeCor7Tu5U2h5-rAd5MvqLiUdsjxG"
+      ]
+    },
     {
       "url": "https://samui-map.info/listing/alpha-gay-resort-spa/",
       "title": "Alpha Gay Resort & Spa",
@@ -18,6 +130,61 @@
         "Alpha_Gay__Logo-Samui-Map-Info.png",
         "Alpha_Gay__Logo-Samui-Map-Info.png",
         "Alpha_Gay__AF1QipNN-IRCR6bKPfHIfRWrKV3VEf2O-wDb8oZ3iSzo"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/am-samui-palace/",
+      "title": "Am Samui Palace",
+      "description": "",
+      "phone": "+6677960306",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Am_Samui_P_Logo-Samui-Map-Info.png",
+        "Am_Samui_P_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/baya-luxury-design-studio/",
+      "title": "Baya Luxury Design Studio",
+      "description": "",
+      "phone": "+66 87 269 9103",
+      "address": "Nathon, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Baya_Luxur_Logo-Samui-Map-Info.png",
+        "Baya_Luxur_Logo-Samui-Map-Info.png",
+        "Baya_Luxur_AF1QipO1SA3s4aK9wgAkDb3ApBoldkB5oK7x_MW0njMh"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/boheme/",
+      "title": "Bohème",
+      "description": "",
+      "phone": "+66624656340",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Boh_me_Logo-Samui-Map-Info.png",
+        "Boh_me_Logo-Samui-Map-Info.png",
+        "Boh_me_AF1QipMi-6FvgVVfQnz_1koDShYrht1Ytgsg0CNnk0xZ"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/burger-house-samui-24-hours-delivery-and-restaurant/",
+      "title": "Burger House Samui 24 Hours Delivery and Restaurant",
+      "description": "",
+      "phone": "+66 62 949 7657",
+      "address": "Plai Laem, Koh Samui, Thailand",
+      "category": "Fast Food",
+      "content_snippet": "",
+      "images": [
+        "Burger_Hou_Logo-Samui-Map-Info.png",
+        "Burger_Hou_Logo-Samui-Map-Info.png",
+        "Burger_Hou_AF1QipNg0SOVXokCMxbW6auHtvNjp0bFRtP_5nXdy32t"
       ]
     },
     {
@@ -35,6 +202,47 @@
       ]
     },
     {
+      "url": "https://samui-map.info/listing/chill-bar-samui/",
+      "title": "Chill Bar Samui",
+      "description": "",
+      "phone": "+66935838609",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Chill_Bar__Logo-Samui-Map-Info.png",
+        "Chill_Bar__Logo-Samui-Map-Info.png",
+        "Chill_Bar__AF1QipMBS6nlIBQvNlPkbqhztTzwrBJCO31jmj03hOOW"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/evan-real-estate/",
+      "title": "EVAN Real Estate",
+      "description": "",
+      "phone": "+66823381101",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bungalow",
+      "content_snippet": "",
+      "images": [
+        "EVAN_Real__Logo-Samui-Map-Info.png",
+        "EVAN_Real__Logo-Samui-Map-Info.png",
+        "EVAN_Real__AF1QipP7QxReIXsBOLZlB5dOVX4AqQNrfLyk_fWf6IqF"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/la-cote-de-boeuf/",
+      "title": "La Côte de Bœuf",
+      "description": "",
+      "phone": "+66989900217",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "La_C_te_de_Logo-Samui-Map-Info.png",
+        "La_C_te_de_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
       "url": "https://samui-map.info/listing/magic-suites/",
       "title": "Magic Suites",
       "description": "",
@@ -45,6 +253,541 @@
       "images": [
         "Magic_Suit_Logo-Samui-Map-Info.png",
         "Magic_Suit_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/marea-pizza-focaccioni/",
+      "title": "MAREA Pizza & Focaccioni",
+      "description": "",
+      "phone": "+66 80 005 5677",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "MAREA_Pizz_Logo-Samui-Map-Info.png",
+        "MAREA_Pizz_Logo-Samui-Map-Info.png",
+        "MAREA_Pizz_AF1QipMcYaOxf-4Yu6a8AImY3m96op_Q4ARP1UzocZQp"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/mee-fah-samui-language-school/",
+      "title": "Mee Fah Samui Language School",
+      "description": "",
+      "phone": "+66 61 393 5757",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "For Kids",
+      "content_snippet": "",
+      "images": [
+        "Mee_Fah_Sa_Logo-Samui-Map-Info.png",
+        "Mee_Fah_Sa_Logo-Samui-Map-Info.png",
+        "Mee_Fah_Sa_AF1QipMyKHsVe8hWH7RUx-AfZ06DJkMUUVSHzy2IDHVn"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/nana-kitchens/",
+      "title": "Nana Kitchens",
+      "description": "",
+      "phone": "+66 84 293 4157",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "Nana_Kitch_Logo-Samui-Map-Info.png",
+        "Nana_Kitch_Logo-Samui-Map-Info.png",
+        "Nana_Kitch_AF1QipM3IIlBgQvIrJHK2AaHoy1gAxTVi8h-shJQpsRf"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/nonna-garden-cafe-and-deli/",
+      "title": "Nonna Garden Café and Deli",
+      "description": "",
+      "phone": "+66800076782",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Coffee Shop",
+      "content_snippet": "",
+      "images": [
+        "Nonna_Gard_Logo-Samui-Map-Info.png",
+        "Nonna_Gard_Logo-Samui-Map-Info.png",
+        "Nonna_Gard_AF1QipMMcv-Mqt0ZXt9p5rvn-4RMIDd7ULE6-ZwqSZPe"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/ole-tours-tailandia/",
+      "title": "Ole Tours Tailandia",
+      "description": "",
+      "phone": "+66981807535",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Ole_Tours__Logo-Samui-Map-Info.png",
+        "Ole_Tours__Logo-Samui-Map-Info.png",
+        "Ole_Tours__AF1QipPuJOwJsFhLEmi6DNWZZXGR9SSirfTeMDNItMKv"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/rookster-enterprises-co-ltd/",
+      "title": "Rookster Enterprises Co. Ltd.",
+      "description": "",
+      "phone": "+66803479147",
+      "address": "Ban Tai, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Rookster_E_Logo-Samui-Map-Info.png",
+        "Rookster_E_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sacred-space-interiors-coffee/",
+      "title": "Sacred Space Interiors & Coffee",
+      "description": "",
+      "phone": "+66653501888",
+      "address": "Ban Tai, Koh Samui, Thailand",
+      "category": "Coffee Shop",
+      "content_snippet": "",
+      "images": [
+        "Sacred_Spa_Logo-Samui-Map-Info.png",
+        "Sacred_Spa_Logo-Samui-Map-Info.png",
+        "Sacred_Spa_AF1QipMY7qA21BF8v_jIX4lEjDVrB573F9V8IPx_5Czf"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/saman-muay-thai/",
+      "title": "Saman Muay Thai",
+      "description": "",
+      "phone": "+66643219459",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Saman_Muay_Logo-Samui-Map-Info.png",
+        "Saman_Muay_Logo-Samui-Map-Info.png",
+        "Saman_Muay_AF1QipO0A2OYFaYrxb3K_npG6aDb2PuymRdXCN6N-k_c"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samovar/",
+      "title": "Samovar",
+      "description": "",
+      "phone": "+66 63 834 3101",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Samovar_Logo-Samui-Map-Info.png",
+        "Samovar_Logo-Samui-Map-Info.png",
+        "Samovar_AF1QipOv6PfNktnz9IgksE-AXjAL4jUS1pZnTtqf2TMk"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-luxury-boats/",
+      "title": "Samui Luxury Boats",
+      "description": "",
+      "phone": "+66805359140",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Boat Cruise",
+      "content_snippet": "",
+      "images": [
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_AF1QipOnJhpkx1OkAO2z9adbn2wEzhk7sG-NGGvabq1G"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-luxury-villa/",
+      "title": "Samui Luxury Villa",
+      "description": "",
+      "phone": "+66 64 950 5544",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-sams/",
+      "title": "Samui Sams",
+      "description": "",
+      "phone": "+66 92 563 3544",
+      "address": "Nathon, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "Samui_Sams_Logo-Samui-Map-Info.png",
+        "Samui_Sams_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-snake-farm/",
+      "title": "Samui Snake Farm",
+      "description": "",
+      "phone": "+66818581852",
+      "address": "Na Muang, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Samui_Snak_Logo-Samui-Map-Info.png",
+        "Samui_Snak_Logo-Samui-Map-Info.png",
+        "Samui_Snak_AF1QipOt8sZH66ppy4fBBCmidEfYXA63nDp3tSkVvPz5"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-style-interiors/",
+      "title": "Samui Style Interiors",
+      "description": "",
+      "phone": "+66 83 591 8519",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Samui_Styl_Logo-Samui-Map-Info.png",
+        "Samui_Styl_Logo-Samui-Map-Info.png",
+        "Samui_Styl_AF1QipPHlZIntHNW5DxBwJLIPkmUVoGrlV8bq5iUAYrX"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sea-dance-resort/",
+      "title": "Sea Dance Resort",
+      "description": "",
+      "phone": "+6677426620",
+      "address": "Choeng Mon, Koh Samui, Thailand",
+      "category": "Resort",
+      "content_snippet": "",
+      "images": [
+        "Sea_Dance__Logo-Samui-Map-Info.png",
+        "Sea_Dance__Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/siam-gateway-co-ltd/",
+      "title": "Siam Gateway Co. && Ltd.",
+      "description": "",
+      "phone": "+66630784896",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Siam_Gatew_Logo-Samui-Map-Info.png",
+        "Siam_Gatew_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sim-racing-samui/",
+      "title": "Sim Racing Samui",
+      "description": "",
+      "phone": "+66 65 242 4804",
+      "address": "Bang Por, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Sim_Racing_Logo-Samui-Map-Info.png",
+        "Sim_Racing_Logo-Samui-Map-Info.png",
+        "Sim_Racing_AF1QipO23E2br0t150OkIPflMVH8loX59eN-7oF2ftvq"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sourdough-bread-bakery/",
+      "title": "Sourdough Bread Bakery",
+      "description": "",
+      "phone": "+66845097376",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "Sourdough__Logo-Samui-Map-Info.png",
+        "Sourdough__Logo-Samui-Map-Info.png",
+        "Sourdough__AF1QipOaWrxQHQgPNzeGNaZr0Kjrq6ny07TK9wKmFzgj"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sunrise-restaurant/",
+      "title": "Sunrise Restaurant",
+      "description": "",
+      "phone": "+66616697444",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Sunrise_Re_Logo-Samui-Map-Info.png",
+        "Sunrise_Re_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/tea-voltaire-samui-chaweng-2/",
+      "title": "Tea Voltaire Samui Chaweng 2",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Coffee Shop",
+      "content_snippet": "",
+      "images": [
+        "Tea_Voltai_Logo-Samui-Map-Info.png",
+        "Tea_Voltai_Logo-Samui-Map-Info.png",
+        "Tea_Voltai_AF1QipObfY1IkMn3XJBz32DMafdDEzpg8lmyJEpEvBIZ"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/emerald-green-mens-club/",
+      "title": "Emerald Green Mens Club",
+      "description": "",
+      "phone": "+66878142260",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Beauty Salon",
+      "content_snippet": "",
+      "images": [
+        "Emerald_Gr_Logo-Samui-Map-Info.png",
+        "Emerald_Gr_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/the-poetry/",
+      "title": "The Poetry",
+      "description": "",
+      "phone": "+66 82 818 9719",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "The_Poetry_Logo-Samui-Map-Info.png",
+        "The_Poetry_Logo-Samui-Map-Info.png",
+        "The_Poetry_AF1QipPgP9BVq41DwXUVseVAPTNkWH0U4LTpdNK2zfHw"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/topcats/",
+      "title": "TopCats",
+      "description": "",
+      "phone": "+66841841011",
+      "address": "Lipa Noi, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "TopCats_Logo-Samui-Map-Info.png",
+        "TopCats_Logo-Samui-Map-Info.png",
+        "TopCats_AF1QipMQ_5wVbvHsaNP6YHsrdWG_IcrcIW9ZNwvtJIPW"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/travel-chill/",
+      "title": "Travel Chill",
+      "description": "",
+      "phone": "+66825155569",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Travel_Chi_Logo-Samui-Map-Info.png",
+        "Travel_Chi_Logo-Samui-Map-Info.png",
+        "Travel_Chi_AF1QipPCHdWY_kmRD7z3H_CEsAplw27eXG0Aw9cILD0m"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/vegan-khunnay/",
+      "title": "Vegan Khunnay",
+      "description": "",
+      "phone": "+66 63 169 7978",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Vegan_Khun_Logo-Samui-Map-Info.png",
+        "Vegan_Khun_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/wing-samui-condo/",
+      "title": "Wing Samui Condo",
+      "description": "",
+      "phone": "+66992863765",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Wing_Samui_Logo-Samui-Map-Info.png",
+        "Wing_Samui_Logo-Samui-Map-Info.png",
+        "Wing_Samui_AF1QipPHndzs4geBQBkqJN48nRaI7HpTOTz6uR9BMFCd"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-sup/",
+      "title": "Samui Sup\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 96 238 0905",
+      "address": "Thong Krut, Koh Samui, Thailand",
+      "category": "Health",
+      "content_snippet": "",
+      "images": [
+        "Samui_Sup__Logo-Samui-Map-Info.png",
+        "Samui_Sup__Logo-Samui-Map-Info.png",
+        "Samui_Sup__AF1QipMRi6cTxIOBPiwUVfA7sKFGLqgSbm-Phk7CrNMV"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sky-coffee/",
+      "title": "Sky Coffee",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "Sky_Coffee_Logo-Samui-Map-Info.png",
+        "Sky_Coffee_Logo-Samui-Map-Info.png",
+        "Sky_Coffee_AF1QipOE7VAoDpXw7yg-rMYfKUPajp5Q2s1180STbvI6"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-tour-and-travel-1982/",
+      "title": "Samui tour and travel 1982\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 80 109 1659",
+      "address": "Ban Tai, Koh Samui, Thailand",
+      "category": "Nature",
+      "content_snippet": "",
+      "images": [
+        "Samui_tour_Logo-Samui-Map-Info.png",
+        "Samui_tour_Logo-Samui-Map-Info.png",
+        "Samui_tour_AF1QipP7-8g6n_bKEVOf-Gfnt_97dZk77Gw5ORC1ZSFK"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/lighthouse-cafe-wine-bar/",
+      "title": "Lighthouse Cafe & Wine Bar\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 61 429 2462",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Attraction",
+      "content_snippet": "",
+      "images": [
+        "Lighthouse_Logo-Samui-Map-Info.png",
+        "Lighthouse_Logo-Samui-Map-Info.png",
+        "Lighthouse_AF1QipMj8B9x1yrTA_VYMWCoDd5wf54E8aUgPht5-HP3"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/koh-samui-tours-excursions-gosamuitours-com/",
+      "title": "Koh Samui Tours & Excursions - GoSamuiTours.com",
+      "description": "",
+      "phone": "+66957269990",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Koh_Samui__Logo-Samui-Map-Info.png",
+        "Koh_Samui__Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/jordan-watson-muay-thai-camp/",
+      "title": "Jordan Watson Muay Thai Camp\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 97 020 0382",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Jordan_Wat_Logo-Samui-Map-Info.png",
+        "Jordan_Wat_Logo-Samui-Map-Info.png",
+        "Jordan_Wat_AF1QipOBatDG-q7buJCC-S0FAo-_fyeNzOdHPmcwfd1p"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sup-roy-club-samui-sup-skate/",
+      "title": "SUP ROY Club - Samui SUP Skate\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 83 789 6951",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "SUP_ROY_Cl_Logo-Samui-Map-Info.png",
+        "SUP_ROY_Cl_Logo-Samui-Map-Info.png",
+        "SUP_ROY_Cl_AF1QipMScUUL97dl4qugFA8iWQKMIsSsTgzXZoehiRXV"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/jade-and-josh-cafe/",
+      "title": "Jade and Josh Cafe\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Hua Thanon, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Jade_and_J_Logo-Samui-Map-Info.png",
+        "Jade_and_J_Logo-Samui-Map-Info.png",
+        "Jade_and_J_AF1QipMIzSaHdRAAWwYXHdCG_xy7wbS8z9d1YJHI5pB5"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/cactus-bungalow/",
+      "title": "Cactus Bungalow\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 245 565",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Cactus_Bun_Logo-Samui-Map-Info.png",
+        "Cactus_Bun_Logo-Samui-Map-Info.png",
+        "Cactus_Bun_AF1QipPA-Ut_BTnelFeqrSn-iQ17EXjQArPqqLPitWMY"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/kan-health-clinic/",
+      "title": "Kan Health Clinic\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 230 802",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Kan_Health_Logo-Samui-Map-Info.png",
+        "Kan_Health_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/earthsea-yoga-bangrak/",
+      "title": "EarthSea Yoga Bangrak\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 92 180 2114",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "EarthSea_Y_Logo-Samui-Map-Info.png",
+        "EarthSea_Y_Logo-Samui-Map-Info.png",
+        "EarthSea_Y_AF1QipNHSEc_T5y1SChpmwoYyo8A4HaffPPFsaGmcbHe"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/aa-lounge/",
+      "title": "AA Lounge\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 98 918 3611",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "AA_Lounge__Logo-Samui-Map-Info.png",
+        "AA_Lounge__Logo-Samui-Map-Info.png",
+        "AA_Lounge__AF1QipORVfIGSalZ1NXsmdvMu5Uq4OU8anqKJBONNCiz"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/woodhouse-land-house-samui/",
+      "title": "Woodhouse land & house samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 96 058 2079",
+      "address": "Lipa Noi, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Woodhouse__Logo-Samui-Map-Info.png",
+        "Woodhouse__Logo-Samui-Map-Info.png"
       ]
     },
     {
@@ -62,6 +805,227 @@
       ]
     },
     {
+      "url": "https://samui-map.info/listing/ms-luxury-concierge-samui/",
+      "title": "Ms luxury Concierge Samui",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Ms_luxury__Logo-Samui-Map-Info.png",
+        "Ms_luxury__Logo-Samui-Map-Info.png",
+        "Ms_luxury__AF1QipNlNxOFr6QMlBEA-IkJ6X9brtvfaBxA2DG4Qi2X"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/pizza-makmak/",
+      "title": "Pizza MakMak\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 64 059 5557",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Pizza_MakM_Logo-Samui-Map-Info.png",
+        "Pizza_MakM_Logo-Samui-Map-Info.png",
+        "Pizza_MakM_AF1QipM0GZhtR_CnCHGon1QfE3uEnOYjf5O313wCZV9f"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/island-property-management-samui/",
+      "title": "Island Property Management Samui",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Coffee Shop",
+      "content_snippet": "",
+      "images": [
+        "Island_Pro_Logo-Samui-Map-Info.png",
+        "Island_Pro_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/coconut-villas/",
+      "title": "Coconut Villas\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 334 069",
+      "address": "Thong Krut, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Coconut_Vi_Logo-Samui-Map-Info.png",
+        "Coconut_Vi_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/tropical-delice/",
+      "title": "Tropical Délice\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66936690050",
+      "address": "Nathon, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "Tropical_D_Logo-Samui-Map-Info.png",
+        "Tropical_D_Logo-Samui-Map-Info.png",
+        "Tropical_D_AF1QipOYCTVK8qG8HBnEry0QN514Ewq8kOuIAEn5m7rL"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-garden-sauna-spa-massage/",
+      "title": "Samui garden sauna spa massage",
+      "description": "",
+      "phone": "",
+      "address": "Choeng Mon, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "Samui_gard_Logo-Samui-Map-Info.png",
+        "Samui_gard_Logo-Samui-Map-Info.png",
+        "Samui_gard_AF1QipN__CaOZ05lSpCxIDVubcqQUp918TrQsYP9WqZ9"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/havana-samui/",
+      "title": "Havana samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 81 476 6342",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Havana_sam_Logo-Samui-Map-Info.png",
+        "Havana_sam_Logo-Samui-Map-Info.png",
+        "Havana_sam_AF1QipO0RB3JQs1xtcaJfS3lHa460yHSfl9ikyJe4AMW"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/cafe-k-o-b-haad-lamai/",
+      "title": "CAFÉ K.O.B HAAD LAMAI",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "CAF__K.O.B_Logo-Samui-Map-Info.png",
+        "CAF__K.O.B_Logo-Samui-Map-Info.png",
+        "CAF__K.O.B_AF1QipNXd-1a-EKBo1rZt4GthCe3sTRGVeLfKbBc3MjO"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/maenam-beach-marine-tour/",
+      "title": "Maenam Beach Marine Tour\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 80 159 4713",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "Maenam_Bea_Logo-Samui-Map-Info.png",
+        "Maenam_Bea_Logo-Samui-Map-Info.png",
+        "Maenam_Bea_AF1QipP2nUXuakHr7JXwMdqyKWWA2POGOP1cnbT9c82l"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/cape-hills-cafe/",
+      "title": "Cape hills cafe",
+      "description": "",
+      "phone": "",
+      "address": "Plai Laem, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "Cape_hills_Logo-Samui-Map-Info.png",
+        "Cape_hills_Logo-Samui-Map-Info.png",
+        "Cape_hills_AF1QipPLKjBSAkDKrvm8EFCYNBFlW2ZMoXEnSrG3OO5U"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/coral-health/",
+      "title": "Coral Health\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 62 224 1664",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Health",
+      "content_snippet": "",
+      "images": [
+        "Coral_Heal_Logo-Samui-Map-Info.png",
+        "Coral_Heal_Logo-Samui-Map-Info.png",
+        "Coral_Heal_AF1QipON0_xysvZRwb2qDXnls8kGTqA00p-NMAJK4k4Y"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sand-muay-thai-gym/",
+      "title": "Sand Muay Thaï Gym\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 61 136 1250",
+      "address": "Hua Thanon, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Sand_Muay__Logo-Samui-Map-Info.png",
+        "Sand_Muay__Logo-Samui-Map-Info.png",
+        "Sand_Muay__AF1QipOplpYaCdATwpzGiB3dVADVOZ3DR40QvXrQk08E"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/amazonas-beachwear-koh-samui-fisherman/",
+      "title": "Amazonas beachwear Koh Samui &&  Fisherman",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "For Kids",
+      "content_snippet": "",
+      "images": [
+        "Amazonas_b_Logo-Samui-Map-Info.png",
+        "Amazonas_b_Logo-Samui-Map-Info.png",
+        "Amazonas_b_AF1QipPPevKmEXJAq7U9ZgLhsbKbZZiaXb5w-naUcLKd"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/santi-healing-wellness/",
+      "title": "Santi Healing Wellness",
+      "description": "",
+      "phone": "",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Santi_Heal_Logo-Samui-Map-Info.png",
+        "Santi_Heal_Logo-Samui-Map-Info.png",
+        "Santi_Heal_AF1QipMJAI6eHgqEVj5lK47VhczvPOMMdaS-dJk9qjl_"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/dolphin-cocktail-bar/",
+      "title": "Dolphin Cocktail Bar\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 86 060 6608",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Dolphin_Co_Logo-Samui-Map-Info.png",
+        "Dolphin_Co_Logo-Samui-Map-Info.png",
+        "Dolphin_Co_AF1QipNYyOKLYuSBPp68B9qvm_CiN2aLH9yShm_CkN-J"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/face-fashion-design/",
+      "title": "Face Fashion Design",
+      "description": "",
+      "phone": "+66805212617",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Face_Fashi_Logo-Samui-Map-Info.png",
+        "Face_Fashi_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
       "url": "https://samui-map.info/listing/prima-central-samui/",
       "title": "PRIMA && Central Samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
       "description": "",
@@ -73,6 +1037,252 @@
         "PRIMA____C_Logo-Samui-Map-Info.png",
         "PRIMA____C_Logo-Samui-Map-Info.png",
         "PRIMA____C_AF1QipO4uki6QS7phkFSkO-3WRWsOeke-G-TFgpC1WME"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-happiness-real-estate/",
+      "title": "Samui Happiness Real Estate",
+      "description": "",
+      "phone": "+66823581706",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Samui_Happ_Logo-Samui-Map-Info.png",
+        "Samui_Happ_Logo-Samui-Map-Info.png",
+        "Samui_Happ_AF1QipMoK6Vp0ZqL5AHs73Ib6Wrbpi8hgO3lF87vCxgy"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/french-beauty-by-angy/",
+      "title": "French Beauty By Angy\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+33622734462",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "French_Bea_Logo-Samui-Map-Info.png",
+        "French_Bea_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/saychon-massages/",
+      "title": "Saychon massages\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Saychon_ma_Logo-Samui-Map-Info.png",
+        "Saychon_ma_Logo-Samui-Map-Info.png",
+        "Saychon_ma_AF1QipOFLxPiWB7gErlmv38akaPbYGrqyEG1ilivDcyk"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/k-siri-restaurant/",
+      "title": "K SIRI RESTAURANT\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 84 141 1182",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "K_SIRI_RES_Logo-Samui-Map-Info.png",
+        "K_SIRI_RES_Logo-Samui-Map-Info.png",
+        "K_SIRI_RES_AF1QipNBBCgPSQUl8lq0q5QjJApb4v7FBI-YcGqKRErG"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/grow-vegan/",
+      "title": "Grow Vegan\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66858031081",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Grow_Vegan_Logo-Samui-Map-Info.png",
+        "Grow_Vegan_Logo-Samui-Map-Info.png",
+        "Grow_Vegan_AF1QipNt_6GnQJpOrbpyAb3UUZhQ0fdAo25gGX8gRxfN"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/koh-samui-pour-francais/",
+      "title": "Koh Samui Pour Français",
+      "description": "",
+      "phone": "+66640204753",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Koh_Samui__Logo-Samui-Map-Info.png",
+        "Koh_Samui__Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/mister-donut-lotus-samui/",
+      "title": "Mister Donut (Lotus Samui)",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Mister_Don_Logo-Samui-Map-Info.png",
+        "Mister_Don_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/salto-restaurant/",
+      "title": "Salto Restaurant\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 99 171 7324",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Salto_Rest_Logo-Samui-Map-Info.png",
+        "Salto_Rest_Logo-Samui-Map-Info.png",
+        "Salto_Rest_AF1QipPqfpAQYuMYJMr2Y7Tg2qwLuURzXoNSgLjSGEUu"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/indis-eats-koh-samui/",
+      "title": "Indi's Eats Koh Samui",
+      "description": "",
+      "phone": "",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Indi_s_Eat_Logo-Samui-Map-Info.png",
+        "Indi_s_Eat_Logo-Samui-Map-Info.png",
+        "Indi_s_Eat_AF1QipNVm6_yj8w-GHYBWc4WkINqX-Zt2vVtRdtZ-8nf"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/beyond-the-sea-siamese-brasserie/",
+      "title": "BEYOND THE SEA & Siamese Brasserie\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 913 888",
+      "address": "Hua Thanon, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "BEYOND_THE_Logo-Samui-Map-Info.png",
+        "BEYOND_THE_Logo-Samui-Map-Info.png",
+        "BEYOND_THE_AF1QipM-EikyIHD2EVeQEHFIHt5aDtr1eTXhUUGDjm0"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/island-gem-tours/",
+      "title": "Island Gem Tours\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 84 647 6185",
+      "address": "Koh Samui, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Island_Gem_Logo-Samui-Map-Info.png",
+        "Island_Gem_Logo-Samui-Map-Info.png",
+        "Island_Gem_AF1QipMp06KC2uRDvKuaqIevhjr-0Hxb4nOsnfnB0RmN"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/jollyg/",
+      "title": "JollyG",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "JollyG_Logo-Samui-Map-Info.png",
+        "JollyG_Logo-Samui-Map-Info.png",
+        "JollyG_AF1QipN0tROYUIXsvB19o2BNc47Ezj6UvlE7kaxDvKK9"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/coconut-beach-and-resort-samui/",
+      "title": "Coconut Beach and Resort Samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 270 670",
+      "address": "Thong Krut, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "Coconut_Be_Logo-Samui-Map-Info.png",
+        "Coconut_Be_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/khan-space/",
+      "title": "Khan Space\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Tour Service",
+      "content_snippet": "",
+      "images": [
+        "Khan_Space_Logo-Samui-Map-Info.png",
+        "Khan_Space_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/class_tylish/",
+      "title": "Class_tylish",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Spa",
+      "content_snippet": "",
+      "images": [
+        "Class_tyli_Logo-Samui-Map-Info.png",
+        "Class_tyli_Logo-Samui-Map-Info.png",
+        "Class_tyli_AF1QipMIaL9Wjp1VDoNjEjftwNUrX-XBBvLWid7hYmtz"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/big-blue-specialty-coffee/",
+      "title": "Big Blue Specialty Coffee\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 282 4468",
+      "address": "Choeng Mon, Koh Samui, Thailand",
+      "category": "Coffee Shop",
+      "content_snippet": "",
+      "images": [
+        "Big_Blue_S_Logo-Samui-Map-Info.png",
+        "Big_Blue_S_Logo-Samui-Map-Info.png",
+        "Big_Blue_S_AF1QipMPxJyNArWTs5otW9LvA_4flHDDPf7mqYjo_2aR"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-charm-tour-service/",
+      "title": "Samui Charm Tour & Service\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 497 4906",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "Samui_Char_Logo-Samui-Map-Info.png",
+        "Samui_Char_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/tourgoat-samui-co-ltd/",
+      "title": "TourGoat Samui Co. &&  Ltd.",
+      "description": "",
+      "phone": "+66835021979",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "TourGoat_S_Logo-Samui-Map-Info.png",
+        "TourGoat_S_Logo-Samui-Map-Info.png",
+        "TourGoat_S_AF1QipOrCgebSvK9dJ7b9QByNijKQvDsszPXlgY4-uC_"
       ]
     },
     {
@@ -90,6 +1300,186 @@
       ]
     },
     {
+      "url": "https://samui-map.info/listing/tiki-beach-club-and-bungalows/",
+      "title": "TIKI Beach Club and Bungalows\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 860 2292",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "TIKI_Beach_Logo-Samui-Map-Info.png",
+        "TIKI_Beach_Logo-Samui-Map-Info.png",
+        "TIKI_Beach_AF1QipNx_clOGZI3ygLlgrMQ-fbSRDxWAVdGKh_-u9A"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-lotus-properties/",
+      "title": "Samui Lotus Properties",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Samui_Lotu_Logo-Samui-Map-Info.png",
+        "Samui_Lotu_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/skippy-land/",
+      "title": "Skippy Land\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Beauty Salon",
+      "content_snippet": "",
+      "images": [
+        "Skippy_Lan_Logo-Samui-Map-Info.png",
+        "Skippy_Lan_Logo-Samui-Map-Info.png",
+        "Skippy_Lan_AF1QipOeDNSEKKMh7_ZVbEWwSEVCMJLyFhOApkWSyp3J"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/marys-and-janes/",
+      "title": "Mary's and Jane's\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 64 826 3833",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Mary_s_and_Logo-Samui-Map-Info.png",
+        "Mary_s_and_Logo-Samui-Map-Info.png",
+        "Mary_s_and_AF1QipOLtAxQ5T4zpcgptNlwYdZYlc_aCkTkS7MHdZ8t"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/le-siri/",
+      "title": "Le Siri\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 85 562 2636",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "Le_Siri____Logo-Samui-Map-Info.png",
+        "Le_Siri____Logo-Samui-Map-Info.png",
+        "Le_Siri____AF1QipOxFjHY3z9dAFF8ELjt8V1_M84kUJcWtMTNfpGS"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/foxtrot-central-samui/",
+      "title": "Foxtrot Central Samui",
+      "description": "",
+      "phone": "+66993457696",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Foxtrot_Ce_Logo-Samui-Map-Info.png",
+        "Foxtrot_Ce_Logo-Samui-Map-Info.png",
+        "Foxtrot_Ce_AF1QipOnb-AznZID-Inu0UejV5O21bsUiwJGhvdpVkPU"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/d-massage/",
+      "title": "D massage\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 961 684",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "D_massage__Logo-Samui-Map-Info.png",
+        "D_massage__Logo-Samui-Map-Info.png",
+        "D_massage__AF1QipNFWu-WVvU7izsOGYRkXJPOPjiXOGIG-pQ_5V6h"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/lucky-tour-lipanoi/",
+      "title": "Lucky Tour Lipanoi",
+      "description": "",
+      "phone": "",
+      "address": "Lipa Noi, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Lucky_Tour_Logo-Samui-Map-Info.png",
+        "Lucky_Tour_Logo-Samui-Map-Info.png",
+        "Lucky_Tour_AF1QipORv0mo2JnFTGazPRtVPfTz80LBbYLrcfu44Nw7"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/lump-up-cafe/",
+      "title": "Lump Up! Café\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 931 0384",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Coffee Shop",
+      "content_snippet": "",
+      "images": [
+        "Lump_Up__C_Logo-Samui-Map-Info.png",
+        "Lump_Up__C_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/coco-beach-bar/",
+      "title": "Coco Beach Bar\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 62 878 7666",
+      "address": "Bang Por, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Coco_Beach_Logo-Samui-Map-Info.png",
+        "Coco_Beach_Logo-Samui-Map-Info.png",
+        "Coco_Beach_AF1QipNDu8qdGdpVaBbNHdfomA7_NdMoJ4tNyyKhLHqG"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/native-language-school/",
+      "title": "Native Language School\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 84 160 4433",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Native_Lan_Logo-Samui-Map-Info.png",
+        "Native_Lan_Logo-Samui-Map-Info.png",
+        "Native_Lan_AF1QipMaaN5FH6orX5SxYymEUZvV0CL4D1x4dFaHxv-r"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/malibu-beach-club-koh-samui/",
+      "title": "Malibu Beach Club Koh Samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 63 969 9966",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Malibu_Bea_Logo-Samui-Map-Info.png",
+        "Malibu_Bea_Logo-Samui-Map-Info.png",
+        "Malibu_Bea_AF1QipMw_8fieuV2LA_NglLGZbNGQC0nxFBPY2tTpCVP"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/passion-fashion-souvenirs/",
+      "title": "Passion Fashion & Souvenirs",
+      "description": "",
+      "phone": "",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Tourism",
+      "content_snippet": "",
+      "images": [
+        "Passion_Fa_Logo-Samui-Map-Info.png",
+        "Passion_Fa_Logo-Samui-Map-Info.png",
+        "Passion_Fa_AF1QipOHpWa1rUIq1L2U5BdEI_V-bypl36eOCbMZOdpF"
+      ]
+    },
+    {
       "url": "https://samui-map.info/listing/maria-residences-by-dream-islands/",
       "title": "Maria residences by Dream Islands\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
       "description": "",
@@ -104,6 +1494,905 @@
       ]
     },
     {
+      "url": "https://samui-map.info/listing/queen-aura-thai-spa-wellness/",
+      "title": "QUEEN Aura Thai Spa & Wellness\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 236 5082",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "QUEEN_Aura_Logo-Samui-Map-Info.png",
+        "QUEEN_Aura_Logo-Samui-Map-Info.png",
+        "QUEEN_Aura_AF1QipOzzjpjYhSttoouRe5bSPtxXkCxcj8iGbhOWJVL"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/white-beach-bar/",
+      "title": "White Beach Bar\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 87 065 6456",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "White_Beac_Logo-Samui-Map-Info.png",
+        "White_Beac_Logo-Samui-Map-Info.png",
+        "White_Beac_AF1QipOor-WIDoLIf1lWTMKM4oHr2SCcdeJwxkfF-nSv"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/destination-tefl-samui/",
+      "title": "Destination TEFL Samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Choeng Mon, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Destinatio_Logo-Samui-Map-Info.png",
+        "Destinatio_Logo-Samui-Map-Info.png",
+        "Destinatio_AF1QipP_CBrRwaT1cmYD3GZ9U-rOJH1O5gEh2Dcq5frE"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/miskawaan-health-group/",
+      "title": "Miskawaan Health Group\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "0944094223",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Clinic",
+      "content_snippet": "",
+      "images": [
+        "Miskawaan__Logo-Samui-Map-Info.png",
+        "Miskawaan__Logo-Samui-Map-Info.png",
+        "Miskawaan__AF1QipMZY5GjdxE_dEy7EN9J7a1GRgiEf1ICxpz1L9V-"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-scooters/",
+      "title": "Samui Scooters\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 89 054 6271",
+      "address": "Chaweng Noi, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "Samui_Scoo_Logo-Samui-Map-Info.png",
+        "Samui_Scoo_Logo-Samui-Map-Info.png",
+        "Samui_Scoo_AF1QipM3DRSr7JXQOPXE-I8SflY39yftkSPVdhDUCflR"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/jungle-4x4-safari-tour-koh-samui/",
+      "title": "Jungle 4x4 Safari Tour Koh Samui",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Jungle_4x4_Logo-Samui-Map-Info.png",
+        "Jungle_4x4_Logo-Samui-Map-Info.png",
+        "Jungle_4x4_AF1QipP8O5tYnavPcboStkMqdM5smmTPznoASN-YXVdI"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/nathis-coffee-thai-herb/",
+      "title": "Nathis Coffee & Thai herb\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 65 412 2877",
+      "address": "Hua Thanon, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Nathis_Cof_Logo-Samui-Map-Info.png",
+        "Nathis_Cof_Logo-Samui-Map-Info.png",
+        "Nathis_Cof_AF1QipOpN5_N4181dEHMA6HK8KCGjCZJ5ZhYUgX2eJqK"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/new-life-thai-food/",
+      "title": "New Life Thai Food",
+      "description": "",
+      "phone": "",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "New_Life_T_Logo-Samui-Map-Info.png",
+        "New_Life_T_Logo-Samui-Map-Info.png",
+        "New_Life_T_AF1QipMpprdVHh8Mxp-_lmhnJgr1_H2ecfISycY4531J"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/oriental-vinesories-koh-samui/",
+      "title": "Oriental Vinesories-Koh Samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 83 808 4637",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Oriental_V_Logo-Samui-Map-Info.png",
+        "Oriental_V_Logo-Samui-Map-Info.png",
+        "Oriental_V_AF1QipPM9MBsjzYs4wjSG_mJm_lPIBiX8-VQHNmp61sO"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/diamond-real-estate/",
+      "title": "Diamond Real Estate\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Diamond_Re_Logo-Samui-Map-Info.png",
+        "Diamond_Re_Logo-Samui-Map-Info.png",
+        "Diamond_Re_AF1QipPL912gXIKufCCe9ff-GunlhL8-vEVgJusRdVUK"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-adventure-sports/",
+      "title": "Samui Adventure Sports\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Ban Tai, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Samui_Adve_Logo-Samui-Map-Info.png",
+        "Samui_Adve_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/koh-samui-real-estate-agency/",
+      "title": "Koh Samui Real Estate Agency",
+      "description": "",
+      "phone": "+6621055724",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Pizzeria",
+      "content_snippet": "",
+      "images": [
+        "Koh_Samui__Logo-Samui-Map-Info.png",
+        "Koh_Samui__Logo-Samui-Map-Info.png",
+        "Koh_Samui__AF1QipOc2LbxqNg08jLN8Eo2upoGygdwevNtnyNZSPSZ"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/wayz-club/",
+      "title": "Wayz club",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Wayz_club_Logo-Samui-Map-Info.png",
+        "Wayz_club_Logo-Samui-Map-Info.png",
+        "Wayz_club_AF1QipONh-cn1eW7py82wvKMmtG_yBrXqX-vpBpZIyLt"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/thailand-scuba-diving/",
+      "title": "Thailand Scuba Diving\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 84 765 3017",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Thailand_S_Logo-Samui-Map-Info.png",
+        "Thailand_S_Logo-Samui-Map-Info.png",
+        "Thailand_S_AF1QipPRBqrKycb0cY5QGqpuG4IEw0RSLCBJ76RL4yN1"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-fight-house/",
+      "title": "Samui Fight House\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 84 767 6068",
+      "address": "Hua Thanon, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Samui_Figh_Logo-Samui-Map-Info.png",
+        "Samui_Figh_Logo-Samui-Map-Info.png",
+        "Samui_Figh_AF1QipNl6AeoCMjkbYpYG1ahP_kSAz5bRB5w4ofpOizt"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/blind-tiger-kitchen-and-cocktails/",
+      "title": "Blind Tiger - Kitchen and Cocktails\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 93 076 8567",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Blind_Tige_Logo-Samui-Map-Info.png",
+        "Blind_Tige_Logo-Samui-Map-Info.png",
+        "Blind_Tige_AF1QipMvTvoBLpAi7FkVUd4lbnCS9pLXHOq8hyKIthzd"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-grand-safari/",
+      "title": "Samui Grand Safari",
+      "description": "",
+      "phone": "+66935543765",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Samui_Gran_Logo-Samui-Map-Info.png",
+        "Samui_Gran_Logo-Samui-Map-Info.png",
+        "Samui_Gran_AF1QipNLMqxnzcQu5sZdFSPgrqe0NF9_SbGHnO7Hwou5"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sam-kah/",
+      "title": "Sam-kah​\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 80 123 7312",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Sam-kah____Logo-Samui-Map-Info.png",
+        "Sam-kah____Logo-Samui-Map-Info.png",
+        "Sam-kah____AF1QipPeZM1OIj5TzefWhIUUe-J2OrXdKjLH4Ap2CW8"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/basil-indian-restaurant/",
+      "title": "Basil Indian Restaurant\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 89 499 4823",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Basil_Indi_Logo-Samui-Map-Info.png",
+        "Basil_Indi_Logo-Samui-Map-Info.png",
+        "Basil_Indi_AF1QipPd9SPIRiLmcdef6C7Mp8Fj3XAxXEevBDY157wo"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/royal-eyelashes-nails/",
+      "title": "Royal Eyelashes & Nails\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 83 105 0690",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Beauty Salon",
+      "content_snippet": "",
+      "images": [
+        "Royal_Eyel_Logo-Samui-Map-Info.png",
+        "Royal_Eyel_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/wild-about-you-spa-wellness/",
+      "title": "Wild About You Spa & Wellness",
+      "description": "",
+      "phone": "",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Resort",
+      "content_snippet": "",
+      "images": [
+        "Wild_About_Logo-Samui-Map-Info.png",
+        "Wild_About_Logo-Samui-Map-Info.png",
+        "Wild_About_AF1QipPrO2J8Fktzjj9Q4HUobq-Q9tJ43PoDVyZFoySu"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/copper-lounge-restaurant/",
+      "title": "Copper Lounge & Restaurant\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 99 440 4388",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Copper_Lou_Logo-Samui-Map-Info.png",
+        "Copper_Lou_Logo-Samui-Map-Info.png",
+        "Copper_Lou_AF1QipMfLIuH6m9VLpyI3ZWhPetTx2YeEU9MZT5C8l-m"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/khao-phra-cafe-eatery/",
+      "title": "Khao Phra Cafe & Eatery\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 96 925 6564",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Khao_Phra__Logo-Samui-Map-Info.png",
+        "Khao_Phra__Logo-Samui-Map-Info.png",
+        "Khao_Phra__AF1QipNnaC4GzA8NP0qF3qDIzdQEVlRBBiGMw_HlJGe_"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sense-cafe-restaurant/",
+      "title": "SENSE Cafe & Restaurant\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 97 217 9733",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "SENSE_Cafe_Logo-Samui-Map-Info.png",
+        "SENSE_Cafe_Logo-Samui-Map-Info.png",
+        "SENSE_Cafe_AF1QipNDO6N5ZGAsE1EyIr1mw-QESpux3X-VuwthgtsP"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/natural-wing/",
+      "title": "Natural Wing\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 602 111",
+      "address": "Bang Por, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Natural_Wi_Logo-Samui-Map-Info.png",
+        "Natural_Wi_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-happy-land-lounge/",
+      "title": "Samui Happy Land Lounge\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 62 635 6166",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Samui_Happ_Logo-Samui-Map-Info.png",
+        "Samui_Happ_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/coco-pizzz/",
+      "title": "Coco pizzz\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Clinic",
+      "content_snippet": "",
+      "images": [
+        "Coco_pizzz_Logo-Samui-Map-Info.png",
+        "Coco_pizzz_Logo-Samui-Map-Info.png",
+        "Coco_pizzz_AF1QipNoC9cyFthwxhqJeZ2cgqvKCDWxz6o80Y9VvIyM"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-luxury-villa-rentals/",
+      "title": "Samui Luxury Villa Rentals\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66936958567",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_Logo-Samui-Map-Info.png",
+        "Samui_Luxu_AF1QipNNuqbHzykGNf_CgfluqM-FU-0QYushOHiRdDEn"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-self-defence-fitness/",
+      "title": "Samui Self Defence Fitness\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 82 224 4097",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Samui_Self_Logo-Samui-Map-Info.png",
+        "Samui_Self_Logo-Samui-Map-Info.png",
+        "Samui_Self_AF1QipNlDxa6NvLamADFB6sgo37D8-UJCeWTOueDkpvC"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/pp-samui-tennis-padel-shop/",
+      "title": "PP Samui Tennis Padel Shop\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 85 956 6598",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Fitness",
+      "content_snippet": "",
+      "images": [
+        "PP_Samui_T_Logo-Samui-Map-Info.png",
+        "PP_Samui_T_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/bake-and-brew/",
+      "title": "Bake and Brew\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 429 6069",
+      "address": "Lipa Noi, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Bake_and_B_Logo-Samui-Map-Info.png",
+        "Bake_and_B_Logo-Samui-Map-Info.png",
+        "Bake_and_B_AF1QipNYdz9JCpA8u5FiIfMY1U2igWa3tqFByj3rALbC"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sangha-yoga-studio/",
+      "title": "Sangha Yoga Studio\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66803600323",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Wellness & Beauty",
+      "content_snippet": "",
+      "images": [
+        "Sangha_Yog_Logo-Samui-Map-Info.png",
+        "Sangha_Yog_Logo-Samui-Map-Info.png",
+        "Sangha_Yog_AF1QipOB4sRXnmlIRfbhlrOMRrVKPDus7k0XGoV42RXy"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/island-spirit-charters/",
+      "title": "Island Spirit Charters\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 38 237 752",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Island_Spi_Logo-Samui-Map-Info.png",
+        "Island_Spi_Logo-Samui-Map-Info.png",
+        "Island_Spi_AF1QipPpUzUF9deR0ZtcwEdX1TtO6RTIOYthvfXzo-5v"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/kerton-hostel-bistro/",
+      "title": "Kerton Hostel & Bistro\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 94 193 9193",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Kerton_Hos_Logo-Samui-Map-Info.png",
+        "Kerton_Hos_Logo-Samui-Map-Info.png",
+        "Kerton_Hos_AF1QipOavv2_sIUdtJBvJFeuZU4kNYQ4FgtOQp42Dls"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/tennis-pro-samui/",
+      "title": "Tennis Pro Samui",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Tennis_Pro_Logo-Samui-Map-Info.png",
+        "Tennis_Pro_Logo-Samui-Map-Info.png",
+        "Tennis_Pro_AF1QipOH34jhog32qSdWHhQK-Be-qVgRtalOzbuhSN8W"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/the-waterfall-farm-cafe/",
+      "title": "The Waterfall Farm Cafe'",
+      "description": "",
+      "phone": "",
+      "address": "Nathon, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "The_Waterf_Logo-Samui-Map-Info.png",
+        "The_Waterf_Logo-Samui-Map-Info.png",
+        "The_Waterf_AF1QipMpT7Ir-DXxLlt9av2EXoWOOPTxqWBRnfIiqciQ"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/craft-fe/",
+      "title": "Craft fe'",
+      "description": "",
+      "phone": "+66936265395",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Craft_fe__Logo-Samui-Map-Info.png",
+        "Craft_fe__Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sound-of-island/",
+      "title": "Sound of Island\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 66 064 1214",
+      "address": "Chaweng Noi, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "Sound_of_I_Logo-Samui-Map-Info.png",
+        "Sound_of_I_Logo-Samui-Map-Info.png",
+        "Sound_of_I_AF1QipODJ2e6pXS1pU1XXU3SXZhwazMoHCx8f3ISrh_v"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/svk-vibe/",
+      "title": "SVK Vibe\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "SVK_Vibe___Logo-Samui-Map-Info.png",
+        "SVK_Vibe___Logo-Samui-Map-Info.png",
+        "SVK_Vibe___AF1QipMwleIvr0qfxb_oJGbPBhOh1SEfeX2nNjWKQQnK"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/baan-jannie/",
+      "title": "Baan jannie",
+      "description": "",
+      "phone": "",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Baan_janni_Logo-Samui-Map-Info.png",
+        "Baan_janni_Logo-Samui-Map-Info.png",
+        "Baan_janni_AF1QipNMY5XMeo-AMvUWzszDt42zj0i1l-wrTVGU5Qo8"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/island-organics-samui/",
+      "title": "Island organics Samui\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Jungle, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Island_org_Logo-Samui-Map-Info.png",
+        "Island_org_Logo-Samui-Map-Info.png",
+        "Island_org_AF1QipOSdLbVQgHR0ox_ncKOifICPfBZw_mRvYOVjtG9"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-pharmacy-8/",
+      "title": "Samui Pharmacy 8\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "Samui_Phar_Logo-Samui-Map-Info.png",
+        "Samui_Phar_Logo-Samui-Map-Info.png",
+        "Samui_Phar_AF1QipPXfBN_4prSH6FVOBv_hhnoMF7C3hbKvJg4Busl"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/the-roo-cafe/",
+      "title": "THE ROO CAFE\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Lipa Noi, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "THE_ROO_CA_Logo-Samui-Map-Info.png",
+        "THE_ROO_CA_Logo-Samui-Map-Info.png",
+        "THE_ROO_CA_AF1QipNj2q6SCyBHuq4wMmlP4TQoYU64PLOWbSRt7HtJ"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/a-serene-beach-spa/",
+      "title": "A Serene Beach Spa\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 92 989 9069",
+      "address": "Thong Krut, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "A_Serene_B_Logo-Samui-Map-Info.png",
+        "A_Serene_B_Logo-Samui-Map-Info.png",
+        "A_Serene_B_AF1QipPtd4gXk4zzNMSenD5uSWKlgeSfZ8KcGCnqEZVI"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/learning-and-beyond-language-school/",
+      "title": "Learning And Beyond Language School\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 87 668 9564",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Learning_A_Logo-Samui-Map-Info.png",
+        "Learning_A_Logo-Samui-Map-Info.png",
+        "Learning_A_AF1QipP5d_Idgf6qkTxb6rN-6EO2N0mex2-oJ0KSmCvt"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/super-8-muay-thai-gym/",
+      "title": "Super 8 Muay Thai Gym\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Super_8_Mu_Logo-Samui-Map-Info.png",
+        "Super_8_Mu_Logo-Samui-Map-Info.png",
+        "Super_8_Mu_AF1QipM7lSU40DIOn_UOCJq9zrYP1E44BBjnuIql-cAo"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/the-passage-resort-spa/",
+      "title": "The Passage Resort Spa\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+62 3328797",
+      "address": "Nathon, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "The_Passag_Logo-Samui-Map-Info.png",
+        "The_Passag_Logo-Samui-Map-Info.png",
+        "The_Passag_AF1QipO6W2h2nZwiWLU1_9jZp1SMl51TNpdL6MZ5tMZb"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/tyr-real-estate-agency/",
+      "title": "TYR real estate agency\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 82 386 5545",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "TYR_real_e_Logo-Samui-Map-Info.png",
+        "TYR_real_e_Logo-Samui-Map-Info.png",
+        "TYR_real_e_AF1QipOP68_bM-BnagMmZFtW5gplYk9t4hiiK3dV6-MS"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/vanda-house/",
+      "title": "Vanda House\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 86 060 6068",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Vanda_Hous_Logo-Samui-Map-Info.png",
+        "Vanda_Hous_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/vi-va-tour-samui/",
+      "title": "Vi Va Tour ( Samui )\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66894699968",
+      "address": "Plai Laem, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Vi_Va_Tour_Logo-Samui-Map-Info.png",
+        "Vi_Va_Tour_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/il-segreto-koh-samui/",
+      "title": "IL Segreto Koh Samui",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "IL_Segreto_Logo-Samui-Map-Info.png",
+        "IL_Segreto_Logo-Samui-Map-Info.png",
+        "IL_Segreto_AF1QipOaZ2oTFmaFknXgozctsrNm19wjaQCI4FTxw14Y"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/welcome-wathinee/",
+      "title": "Welcome Wathinee",
+      "description": "",
+      "phone": "",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "Welcome_Wa_Logo-Samui-Map-Info.png",
+        "Welcome_Wa_Logo-Samui-Map-Info.png",
+        "Welcome_Wa_AF1QipMPA6oovjwgdlB8o7ehPNjuLjlJhRR0RpXx5wKX"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/white-house/",
+      "title": "White House\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 247 921",
+      "address": "Choeng Mon, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "White_Hous_Logo-Samui-Map-Info.png",
+        "White_Hous_Logo-Samui-Map-Info.png",
+        "White_Hous_AF1QipNUtCnLNdcl-bgII6ZVkDMnRUjaFddftet1OidX"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/white-pearl-restaurant-bar/",
+      "title": "White Pearl Restaurant & Bar\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66917192415",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Bar",
+      "content_snippet": "",
+      "images": [
+        "White_Pear_Logo-Samui-Map-Info.png",
+        "White_Pear_Logo-Samui-Map-Info.png",
+        "White_Pear_AF1QipM3oNE1geE2OA7k0S3nDdn99B2jg-NTp2Xi1b3x"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/yin-yang-restaurant/",
+      "title": "Yin Yang Restaurant\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 93 575 2782",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "Yin_Yang_R_Logo-Samui-Map-Info.png",
+        "Yin_Yang_R_Logo-Samui-Map-Info.png",
+        "Yin_Yang_R_AF1QipO4g-BbR_FiCpTxAx2zz9by0GLlIksD5nxSrPFf"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-custom-gift-laser-engraving/",
+      "title": "Samui Custom Gift ( Laser Engraving)",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "Samui_Cust_Logo-Samui-Map-Info.png",
+        "Samui_Cust_Logo-Samui-Map-Info.png",
+        "Samui_Cust_AF1QipM3vWnqAgfFmBS-HqWZbrSd9S9JzAZfzpWoW6S9"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/annie-sweeteryeatery/",
+      "title": "Annie sweetery&eatery\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 95 091 4760",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Annie_swee_Logo-Samui-Map-Info.png",
+        "Annie_swee_Logo-Samui-Map-Info.png",
+        "Annie_swee_AF1QipNaj9RjDWF15efyHB0UeGka7vC-AX8dxeklUisk"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/koh-samui-international-diving-school-co/",
+      "title": "Koh Samui International Diving School Co\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\n                            Permanently Closed",
+      "description": "",
+      "phone": "+66 77 420 155",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Koh_Samui__Logo-Samui-Map-Info.png",
+        "Koh_Samui__Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/cafe-k-o-b-bophut/",
+      "title": "Café K.O.B Bophut",
+      "description": "",
+      "phone": "+66818299045",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "Caf__K.O.B_Logo-Samui-Map-Info.png",
+        "Caf__K.O.B_Logo-Samui-Map-Info.png",
+        "Caf__K.O.B_AF1QipNL6GyPiL45eOo61pFCQhcBOkiRCrNNSF2_fnYC"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/greenlight-cafe/",
+      "title": "Greenlight Cafe",
+      "description": "",
+      "phone": "+66811216955",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Greenlight_Logo-Samui-Map-Info.png",
+        "Greenlight_Logo-Samui-Map-Info.png",
+        "Greenlight_AF1QipM6S8CByXUmZW6BH4rCxCsGS963sts0ydCmgJYe"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/karma-sutra/",
+      "title": "Karma Sutra",
+      "description": "",
+      "phone": "+66887518674",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "Karma_Sutr_Logo-Samui-Map-Info.png",
+        "Karma_Sutr_Logo-Samui-Map-Info.png",
+        "Karma_Sutr_AF1QipMhdJbeIt78gpp7xmMUmMT6rudmgkWJ0PmDP8nR"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/tembo-resort/",
+      "title": "Tembo Beach Club & Resort",
+      "description": "",
+      "phone": "+66811618828",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Tembo_Beac_Logo-Samui-Map-Info.png",
+        "Tembo_Beac_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/le-petit-malouin/",
+      "title": "Le Petit Malouin",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Le_Petit_M_Logo-Samui-Map-Info.png",
+        "Le_Petit_M_Logo-Samui-Map-Info.png",
+        "Le_Petit_M_AF1QipM-T3E0ZYtR0__Jgfx4THu_fIUWXg-RTtlF4UfS"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/link-cuisine/",
+      "title": "LINK Cuisine",
+      "description": "",
+      "phone": "+66804602670",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "LINK_Cuisi_Logo-Samui-Map-Info.png",
+        "LINK_Cuisi_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/javanese-furnitures/",
+      "title": "Javanese Furniture and Decoration Design",
+      "description": "",
+      "phone": "+66935654661",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Javanese_F_Logo-Samui-Map-Info.png",
+        "Javanese_F_Logo-Samui-Map-Info.png",
+        "Javanese_F_AF1QipMkGvBAES2Thfxu0B6D1cOb-SiU9eeysQZg5mYg"
+      ]
+    },
+    {
       "url": "https://samui-map.info/listing/amaya-resort-lamai/",
       "title": "Amaya Resort",
       "description": "",
@@ -115,6 +2404,20 @@
         "Amaya_Reso_Logo-Samui-Map-Info.png",
         "Amaya_Reso_Logo-Samui-Map-Info.png",
         "Amaya_Reso_AF1QipN--k4QoHdKWlqPNQrTlFeblEKexRxf3IiRPV2k"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/ampha-place/",
+      "title": "Ampha Place",
+      "description": "",
+      "phone": "+6677332129",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Ampha_Plac_Logo-Samui-Map-Info.png",
+        "Ampha_Plac_Logo-Samui-Map-Info.png",
+        "Ampha_Plac_AF1QipMDQJ4T2Tr6w-iBYBZDy1T98pylKSM9rGSrXnvl"
       ]
     },
     {
@@ -146,1343 +2449,319 @@
       ]
     },
     {
-      "url": "https://samui-map.info/listing/grand-rock-garden/",
-      "title": "Grand Rock Garden",
+      "url": "https://samui-map.info/listing/chi-beach-club/",
+      "title": "Chi Samui",
       "description": "",
-      "phone": "+66 89 866 5657",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Grand_Rock_Logo-Samui-Map-Info.png",
-        "Grand_Rock_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/aforetime-house/",
-      "title": "Aforetime House",
-      "description": "",
-      "phone": "+66843874778",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Aforetime__Logo-Samui-Map-Info.png",
-        "Aforetime__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/baan-karnjana-hotel/",
-      "title": "Baan Karnjana Hotel",
-      "description": "",
-      "phone": "+6677424155",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Baan_Karnj_Logo-Samui-Map-Info.png",
-        "Baan_Karnj_Logo-Samui-Map-Info.png",
-        "Baan_Karnj_AF1QipMCMSUhea0RO7Wm3omNUzcSBWGUvEYpi3ZU3HU3"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/bang-po-botanica/",
-      "title": "Bang Po Botanica",
-      "description": "",
-      "phone": "+66993642244",
-      "address": "Bang Por, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Bang_Po_Bo_Logo-Samui-Map-Info.png",
-        "Bang_Po_Bo_Logo-Samui-Map-Info.png",
-        "Bang_Po_Bo_AF1QipN0CP5lRsHfV-E7zzxR5JXTEBIT3bWB0e_NNctV"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/blockhouse-samui/",
-      "title": "Blockhouse Samui",
-      "description": "",
-      "phone": "+66831045260",
-      "address": "Maenam, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Blockhouse_Logo-Samui-Map-Info.png",
-        "Blockhouse_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/chaweng-beachcomber-hotel/",
-      "title": "Chaweng Beachcomber Hotel",
-      "description": "",
-      "phone": "",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Chaweng_Be_Logo-Samui-Map-Info.png",
-        "Chaweng_Be_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/chaweng-best-hotel-and-hostel-samui/",
-      "title": "Chaweng Best Hotel and Hostel Samui",
-      "description": "",
-      "phone": "+66942694478",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Chaweng_Be_Logo-Samui-Map-Info.png",
-        "Chaweng_Be_Logo-Samui-Map-Info.png",
-        "Chaweng_Be_AF1QipNVeb30dmEmb92cCczuO2CiPMSfNR2Pepgxl8_I"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/coco-house/",
-      "title": "CoCo House",
-      "description": "",
-      "phone": "+66 83 461 8028",
-      "address": "Maenam, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "CoCo_House_Logo-Samui-Map-Info.png",
-        "CoCo_House_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/go-samui-hotel/",
-      "title": "Go Samui Hotel",
-      "description": "",
-      "phone": "",
-      "address": "Choeng Mon, Koh Samui, Thailand",
-      "category": "Food",
-      "content_snippet": "",
-      "images": [
-        "Go_Samui_H_Logo-Samui-Map-Info.png",
-        "Go_Samui_H_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/hanalei-gardens/",
-      "title": "Hanalei Gardens",
-      "description": "",
-      "phone": "+66801462795",
-      "address": "Ban Tai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Hanalei_Ga_Logo-Samui-Map-Info.png",
-        "Hanalei_Ga_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/holidays-residence/",
-      "title": "Holidays Residence",
-      "description": "",
-      "phone": "",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Holidays_R_Logo-Samui-Map-Info.png",
-        "Holidays_R_Logo-Samui-Map-Info.png",
-        "Holidays_R_AF1QipNgJFnijBl8_SWBbdIkjQOdFJimqFLRhE0P5Thk"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/hotel-station-balneaire-de-ban-suan-rana/",
-      "title": "Hotel Station balnéaire de Ban Suan Rana",
-      "description": "",
-      "phone": "+66812641713",
-      "address": "Thong Krut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Hotel_Stat_Logo-Samui-Map-Info.png",
-        "Hotel_Stat_Logo-Samui-Map-Info.png",
-        "Hotel_Stat_AF1QipMd4ib4S_bagMav8v2hbphekq-GPbVmNFC439e0"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/ibay-samui-boutique-hotel/",
-      "title": "IBay Samui Boutique Hotel",
-      "description": "",
-      "phone": "+66996231651",
-      "address": "Plai Laem, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "IBay_Samui_Logo-Samui-Map-Info.png",
-        "IBay_Samui_Logo-Samui-Map-Info.png",
-        "IBay_Samui_AF1QipN0vVdzpLJhrCfVzgM3xCiGJofAJ9GDV4U1ivn5"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/lokah-sukhah-hotel/",
-      "title": "Lokah Sukhah Hotel",
-      "description": "",
-      "phone": "+66982492800",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Food",
-      "content_snippet": "",
-      "images": [
-        "Lokah_Sukh_Logo-Samui-Map-Info.png",
-        "Lokah_Sukh_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/marina-cottage-hotel/",
-      "title": "Marina Cottage Hotel",
-      "description": "",
-      "phone": "",
-      "address": "Hua Thanon, Koh Samui, Thailand",
-      "category": "Food",
-      "content_snippet": "",
-      "images": [
-        "Marina_Cot_Logo-Samui-Map-Info.png",
-        "Marina_Cot_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/natural-hotel/",
-      "title": "Natural Hotel",
-      "description": "",
-      "phone": "+66 96 923 8359",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Food",
-      "content_snippet": "",
-      "images": [
-        "Natural_Ho_Logo-Samui-Map-Info.png",
-        "Natural_Ho_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/natural-samui-hotel/",
-      "title": "Natural Samui Hotel",
-      "description": "",
-      "phone": "",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Natural_Sa_Logo-Samui-Map-Info.png",
-        "Natural_Sa_Logo-Samui-Map-Info.png",
-        "Natural_Sa_AF1QipNVVAB-ufHw60mAbQ5oSG_RUkNT8K4dfOExKKN9"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/night-jasmin-villa/",
-      "title": "Night Jasmin Villa",
-      "description": "",
-      "phone": "",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Night_Jasm_Logo-Samui-Map-Info.png",
-        "Night_Jasm_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/nirvana-villa-boutique-hotel/",
-      "title": "Nirvana Villa & Boutique Hotel",
-      "description": "",
-      "phone": "",
-      "address": "Jungle, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Nirvana_Vi_Logo-Samui-Map-Info.png",
-        "Nirvana_Vi_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/orchid-suites-resort/",
-      "title": "Orchid Suites Resort",
-      "description": "",
-      "phone": "+66 77 233 088",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Orchid_Sui_Logo-Samui-Map-Info.png",
-        "Orchid_Sui_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/polina-park-hotel/",
-      "title": "Polina Park Hotel",
-      "description": "",
-      "phone": "+66 94 351 1105",
-      "address": "Ban Tai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Polina_Par_Logo-Samui-Map-Info.png",
-        "Polina_Par_Logo-Samui-Map-Info.png",
-        "Polina_Par_AF1QipOyCL1NnPFrCYWLjz-MX2o72AoiRa2kbUAq80mE"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/pony-hill-villa/",
-      "title": "Pony Hill Villa",
-      "description": "",
-      "phone": "+66811474405",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Pony_Hill__Logo-Samui-Map-Info.png",
-        "Pony_Hill__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/rasta-hotel/",
-      "title": "Rasta Hotel",
-      "description": "",
-      "phone": "+6677484528",
-      "address": "Chaweng, Koh Samui, Thailand",
+      "phone": "+66922717439",
+      "address": "Bangrak, Koh Samui, Thailand",
       "category": "Bar",
       "content_snippet": "",
       "images": [
-        "Rasta_Hote_Logo-Samui-Map-Info.png",
-        "Rasta_Hote_Logo-Samui-Map-Info.png"
+        "Chi_Samui_Logo-Samui-Map-Info.png",
+        "Chi_Samui_Logo-Samui-Map-Info.png",
+        "Chi_Samui_AF1QipN_UE0tWiQetX9dBbmJF4BKq1-8QVRca2VZFCZ1"
       ]
     },
     {
-      "url": "https://samui-map.info/listing/samui-backpacker-hotel/",
-      "title": "Samui Backpacker Hotel",
+      "url": "https://samui-map.info/listing/chuz-villas/",
+      "title": "Chuz Villas",
       "description": "",
-      "phone": "+66813963547",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Samui_Back_Logo-Samui-Map-Info.png",
-        "Samui_Back_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-grand-park-villa/",
-      "title": "Samui Grand Park Villa",
-      "description": "",
-      "phone": "+66808250910",
-      "address": "Maenam, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Samui_Gran_Logo-Samui-Map-Info.png",
-        "Samui_Gran_Logo-Samui-Map-Info.png",
-        "Samui_Gran_AF1QipNv9QoM52_vhiMeAc8fLR52TGUPyH5qw6qgjPRg"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-hills/",
-      "title": "Samui Hills",
-      "description": "",
-      "phone": "+66936919378",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Samui_Hill_Logo-Samui-Map-Info.png",
-        "Samui_Hill_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/silent-palm-samui/",
-      "title": "Silent Palm Samui",
-      "description": "",
-      "phone": "+66818207611",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Silent_Pal_Logo-Samui-Map-Info.png",
-        "Silent_Pal_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/siyada-villa/",
-      "title": "Siyada Villa",
-      "description": "",
-      "phone": "+66967914346",
+      "phone": "+66817105352",
       "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
+      "category": "Resort",
       "content_snippet": "",
       "images": [
-        "Siyada_Vil_Logo-Samui-Map-Info.png",
-        "Siyada_Vil_Logo-Samui-Map-Info.png",
-        "Siyada_Vil_AF1QipM6TJRWlLpkDimhLku2NcBK1jj8vuq63zR2QESI"
+        "Chuz_Villa_Logo-Samui-Map-Info.png",
+        "Chuz_Villa_Logo-Samui-Map-Info.png"
       ]
     },
     {
-      "url": "https://samui-map.info/listing/sumoei-hotel-management-group-co-ltd-%e0%b8%9a%e0%b8%a3%e0%b8%b4%e0%b8%a9%e0%b8%b1%e0%b8%97-%e0%b8%8b%e0%b8%b9%e0%b9%80%e0%b8%ab%e0%b8%a1%e0%b8%a2-%e0%b9%82%e0%b8%ae%e0%b9%80%e0%b8%97/",
-      "title": "SUMOEI HOTEL MANAGEMENT GROUP CO. && LTD. (บริษัท ซูเหมย โฮเทล แมเนจเม้นท์ กรุ๊ป จำกัด)",
+      "url": "https://samui-map.info/listing/coco-padel-club/",
+      "title": "Coco Padel Club",
       "description": "",
-      "phone": "",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "SUMOEI_HOT_Logo-Samui-Map-Info.png",
-        "SUMOEI_HOT_Logo-Samui-Map-Info.png",
-        "SUMOEI_HOT_AF1QipP6_aNLFmlpTh6wDualihQsm4D_F85n9xfxPs1C"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/take-your-time-hotel-koh-samui-dream-come-true-cafe-koh-samui/",
-      "title": "Take your time Hotel Koh Samui &&  Dream come true Cafe Koh Samui",
-      "description": "",
-      "phone": "+66881681447",
+      "phone": "+66985419640",
       "address": "Lamai, Koh Samui, Thailand",
-      "category": "Food",
-      "content_snippet": "",
-      "images": [
-        "Take_your__Logo-Samui-Map-Info.png",
-        "Take_your__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-icon/",
-      "title": "The Icon",
-      "description": "",
-      "phone": "+66 81 822 6090",
-      "address": "Hua Thanon, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "The_Icon_Logo-Samui-Map-Info.png",
-        "The_Icon_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-spa-resorts/",
-      "title": "The Spa Resorts",
-      "description": "",
-      "phone": "+66 77 900 888",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "The_Spa_Re_Logo-Samui-Map-Info.png",
-        "The_Spa_Re_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/villa-amylia/",
-      "title": "Villa Amylia",
-      "description": "",
-      "phone": "+66 83 784 1666",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Villa_Amyl_Logo-Samui-Map-Info.png",
-        "Villa_Amyl_Logo-Samui-Map-Info.png",
-        "Villa_Amyl_AF1QipPKtwV5ou871OUCKRCf_1pBIjn6oWTe5TSAUIc"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/wilai-villa/",
-      "title": "Wilai Villa",
-      "description": "",
-      "phone": "",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Wilai_Vill_Logo-Samui-Map-Info.png",
-        "Wilai_Vill_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/sareeraya-villas-suites-koh-samui/",
-      "title": "Sareeraya Villas & Suites - Koh Samui",
-      "description": "",
-      "phone": "+6677914333",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Sareeraya__Logo-Samui-Map-Info.png",
-        "Sareeraya__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-hotels-p10-samui/",
-      "title": "Samui hotels - P10 Samui",
-      "description": "",
-      "phone": "+6677417333",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Samui_hote_Logo-Samui-Map-Info.png",
-        "Samui_hote_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/rewadee-garden-spa/",
-      "title": "Rewadee Garden & Spa",
-      "description": "",
-      "phone": "+66862757279",
-      "address": "Ban Tai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Rewadee_Ga_Logo-Samui-Map-Info.png",
-        "Rewadee_Ga_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/nathon-residence-hotel/",
-      "title": "Nathon Residence Hotel",
-      "description": "",
-      "phone": "+66990409825",
-      "address": "Nathon, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "Nathon_Res_Logo-Samui-Map-Info.png",
-        "Nathon_Res_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/corner-coffee-by-queen-botique-hotel/",
-      "title": "Corner Coffee by queen Botique Hotel",
-      "description": "",
-      "phone": "+66638789493",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Coffee Shop",
-      "content_snippet": "",
-      "images": [
-        "Corner_Cof_Logo-Samui-Map-Info.png",
-        "Corner_Cof_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/asian-phoenix-hotel-management-co-ltd/",
-      "title": "Asian Phoenix Hotel Management Co. Ltd",
-      "description": "",
-      "phone": "+33786558489",
-      "address": "Maenam, Koh Samui, Thailand",
-      "category": "Real Estate",
-      "content_snippet": "",
-      "images": [
-        "Asian_Phoe_Logo-Samui-Map-Info.png",
-        "Asian_Phoe_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-chess-samui-hotel/",
-      "title": "The Chess Samui Hotel",
-      "description": "",
-      "phone": "+66945794488",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "The_Chess__Logo-Samui-Map-Info.png",
-        "The_Chess__Logo-Samui-Map-Info.png",
-        "The_Chess__AF1QipPG2r7gjPoTeQrrTuZ3qr9TU56fg5JvZNg_pMYW"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/thai-fight-hotel/",
-      "title": "Thai Fight Hotel",
-      "description": "",
-      "phone": "+66812476841",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Thai_Fight_Logo-Samui-Map-Info.png",
-        "Thai_Fight_Logo-Samui-Map-Info.png",
-        "Thai_Fight_AF1QipNuI1wkzPjGXCAbG2DZY2Xx5Rlmho_ywwDSl5LC"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/win-hotel-kohsamui/",
-      "title": "Win hotel Kohsamui",
-      "description": "",
-      "phone": "+6677421500",
-      "address": "Nathon, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Win_hotel__Logo-Samui-Map-Info.png",
-        "Win_hotel__Logo-Samui-Map-Info.png",
-        "Win_hotel__AF1QipNo_Ozd5PE0aG-537-am_uv7Hdlo_ADg3_FtUmn"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/code-samui-hotel/",
-      "title": "Code Samui Hotel",
-      "description": "",
-      "phone": "+66622450494",
-      "address": "Bang Por, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Code_Samui_Logo-Samui-Map-Info.png",
-        "Code_Samui_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-platinum-hotel/",
-      "title": "Samui Platinum Hotel",
-      "description": "",
-      "phone": "+6620261271",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Samui_Plat_Logo-Samui-Map-Info.png",
-        "Samui_Plat_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/smile-samui-resort-hotel/",
-      "title": "Smile Samui Resort Hotel",
-      "description": "",
-      "phone": "+66818297554",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Smile_Samu_Logo-Samui-Map-Info.png",
-        "Smile_Samu_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/balcony-hotel/",
-      "title": "Balcony Hotel",
-      "description": "",
-      "phone": "+66 77 423 718",
-      "address": "Choeng Mon, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Balcony_Ho_Logo-Samui-Map-Info.png",
-        "Balcony_Ho_Logo-Samui-Map-Info.png",
-        "Balcony_Ho_AF1QipNzXiNpCLmnNVWofI3XeavXB0xWf25laHpfW-Ql"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/oyo-468-dumrong-town-hotel/",
-      "title": "OYO 468 Dumrong Town Hotel",
-      "description": "",
-      "phone": "+6624304464",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "OYO_468_Du_Logo-Samui-Map-Info.png",
-        "OYO_468_Du_Logo-Samui-Map-Info.png",
-        "OYO_468_Du_AF1QipPY1h09-7UPtGtozW_yOpEsLamt8GKPF0bv6wVc"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/cape-fahn-hotel/",
-      "title": "Cape Fahn Hotel",
-      "description": "",
-      "phone": "+6677602301",
-      "address": "Choeng Mon, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Cape_Fahn__Logo-Samui-Map-Info.png",
-        "Cape_Fahn__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-scent-hotel/",
-      "title": "The Scent Hotel",
-      "description": "",
-      "phone": "+6677960123",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "The_Scent__Logo-Samui-Map-Info.png",
-        "The_Scent__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/la-costa-bianca-samui/",
-      "title": "La Costa Bianca Samui",
-      "description": "",
-      "phone": "+66959617973",
-      "address": "Thong Krut, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "La_Costa_B_Logo-Samui-Map-Info.png",
-        "La_Costa_B_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/holiday-inn-resort-samui-bophut-beach-an-ihg-hotel/",
-      "title": "Holiday Inn Resort Samui Bophut Beach &&  an IHG Hotel",
-      "description": "",
-      "phone": "+6677951777",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Holiday_In_Logo-Samui-Map-Info.png",
-        "Holiday_In_Logo-Samui-Map-Info.png",
-        "Holiday_In_AF1QipNeGM80ggE5IfWOgJRh8QsqERPiMyIc173kBw-x"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/meewaya-hotel/",
-      "title": "Meewaya Hotel",
-      "description": "",
-      "phone": "+66954239236",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Meewaya_Ho_Logo-Samui-Map-Info.png",
-        "Meewaya_Ho_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-green-hotel/",
-      "title": "Samui green hotel",
-      "description": "",
-      "phone": "+6677422590",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Samui_gree_Logo-Samui-Map-Info.png",
-        "Samui_gree_Logo-Samui-Map-Info.png",
-        "Samui_gree_AF1QipOe9U_Hd_F7NJdJjmWxlkDBgtJdIdbXNO2Um8p9"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/napasai-a-belmond-hotel-koh-samui/",
-      "title": "Napasai && A Belmond Hotel",
-      "description": "",
-      "phone": "+66 77 429 200",
-      "address": "Ban Tai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Napasai____Logo-Samui-Map-Info.png",
-        "Napasai____Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/riviera-beach-hotel/",
-      "title": "Riviera Beach Hotel",
-      "description": "",
-      "phone": "+6677430192",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Riviera_Be_Logo-Samui-Map-Info.png",
-        "Riviera_Be_Logo-Samui-Map-Info.png",
-        "Riviera_Be_AF1QipOOl9j2B9xWI6lZ8Bc17FqS7_VQz-n3F5-gcd-k"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/green-residence-hotel/",
-      "title": "Green Residence Hotel",
-      "description": "",
-      "phone": "+66958438502",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Green_Resi_Logo-Samui-Map-Info.png",
-        "Green_Resi_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-hive-hotel/",
-      "title": "The Hive Hotel",
-      "description": "",
-      "phone": "+6677424550",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "The_Hive_H_Logo-Samui-Map-Info.png",
-        "The_Hive_H_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-fair-house-beach-resort-hotel/",
-      "title": "The Fair House Beach Resort & Hotel",
-      "description": "",
-      "phone": "+6677422255",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "The_Fair_H_Logo-Samui-Map-Info.png",
-        "The_Fair_H_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/j4-samui-hotel/",
-      "title": "J4 Samui Hotel",
-      "description": "",
-      "phone": "+6677332666",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "J4_Samui_H_Logo-Samui-Map-Info.png",
-        "J4_Samui_H_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/i-samui-hotel/",
-      "title": "I-Samui Hotel",
-      "description": "",
-      "phone": "+66 77 963 461",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "I-Samui_Ho_Logo-Samui-Map-Info.png",
-        "I-Samui_Ho_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/cosy-hotel/",
-      "title": "Cosy hotel",
-      "description": "",
-      "phone": "+66 2 186 3186",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Cosy_hotel_Logo-Samui-Map-Info.png",
-        "Cosy_hotel_Logo-Samui-Map-Info.png",
-        "Cosy_hotel_AF1QipNru4dRjjzzhUpxHE-a6yJg8KDmImqelFfIuAcG"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/bedtime-hotel-samui/",
-      "title": "BedTime Hotel",
-      "description": "",
-      "phone": "+66925946649",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "BedTime_Ho_Logo-Samui-Map-Info.png",
-        "BedTime_Ho_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/kanok-buri-hotel/",
-      "title": "Kanok Buri Hotel",
-      "description": "",
-      "phone": "+6677914444",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Kanok_Buri_Logo-Samui-Map-Info.png",
-        "Kanok_Buri_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/queen-boutique-hotel/",
-      "title": "Queen Boutique Hotel",
-      "description": "",
-      "phone": "+66638789493",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Queen_Bout_Logo-Samui-Map-Info.png",
-        "Queen_Bout_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/baan-bophut-beach-hotel/",
-      "title": "Baan Bophut Beach Hotel",
-      "description": "",
-      "phone": "+6677332708",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Baan_Bophu_Logo-Samui-Map-Info.png",
-        "Baan_Bophu_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-city-hotel/",
-      "title": "Samui City Hotel",
-      "description": "",
-      "phone": "+6677374657",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Samui_City_Logo-Samui-Map-Info.png",
-        "Samui_City_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/skye-beach-hotel/",
-      "title": "Skye Beach Hotel",
-      "description": "",
-      "phone": "+66649234590",
-      "address": "Plai Laem, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Skye_Beach_Logo-Samui-Map-Info.png",
-        "Skye_Beach_Logo-Samui-Map-Info.png",
-        "Skye_Beach_AF1QipNguZVNLPoqf_4XDEEtQdGGuLFCn1mMf8tTv-2L"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/jalmin-samui-hotel/",
-      "title": "JALMIN Samui Hotel",
-      "description": "",
-      "phone": "+6677423789",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "JALMIN_Sam_Logo-Samui-Map-Info.png",
-        "JALMIN_Sam_Logo-Samui-Map-Info.png",
-        "JALMIN_Sam_AF1QipPZumFXGmnswm9KZJpIcV-Uy5LvXArKQQyX-R-_"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/samui-beach-residence-hotel/",
-      "title": "Samui Beach Residence Hotel",
-      "description": "",
-      "phone": "+66808922253",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Samui_Beac_Logo-Samui-Map-Info.png",
-        "Samui_Beac_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/hotel-restaurant-baan-din-samui/",
-      "title": "Hôtel Restaurant Baan Din Samui",
-      "description": "",
-      "phone": "+66819595155",
-      "address": "Nathon, Koh Samui, Thailand",
-      "category": "Food",
-      "content_snippet": "",
-      "images": [
-        "H_tel_Rest_Logo-Samui-Map-Info.png",
-        "H_tel_Rest_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/the-hive-hotel-restaurant/",
-      "title": "The Hive Hotel Restaurant",
-      "description": "",
-      "phone": "+66988562508",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "The_Hive_H_Logo-Samui-Map-Info.png",
-        "The_Hive_H_Logo-Samui-Map-Info.png",
-        "The_Hive_H_AF1QipPS48PTZy5oy7c2jNvzFYDjV9bmHwCGKS85IT17"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/colorize-boutique-hotel/",
-      "title": "Colorize Boutique Hotel",
-      "description": "",
-      "phone": "+66803201910",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Colorize_B_Logo-Samui-Map-Info.png",
-        "Colorize_B_Logo-Samui-Map-Info.png",
-        "Colorize_B_AF1QipNokbk_5VYYiw0d_IJnCddP59dLIGQmV2gwx7qy"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/blue-turtle-hotel-samui/",
-      "title": "Blue Turtle Hotel Samui",
-      "description": "",
-      "phone": "+66992799073",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Blue_Turtl_Logo-Samui-Map-Info.png",
-        "Blue_Turtl_Logo-Samui-Map-Info.png",
-        "Blue_Turtl_AF1QipORor3usbLVvz2WNnDPFrmbfNvr12tNiLTYaKDc"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/laem-din-hotel/",
-      "title": "Laem din hotel",
-      "description": "",
-      "phone": "+6677413337",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Laem_din_h_Logo-Samui-Map-Info.png",
-        "Laem_din_h_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/sasitara-thai-villas-hotel/",
-      "title": "Sasitara Thai villas Hotel",
-      "description": "",
-      "phone": "+6677430111",
-      "address": "Plai Laem, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Sasitara_T_Logo-Samui-Map-Info.png",
-        "Sasitara_T_Logo-Samui-Map-Info.png",
-        "Sasitara_T_AF1QipP4rAeejLBpvxZ_L8i0j14PAG4CcYGbccJ_agxp"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/jinta-hotel-samui/",
-      "title": "Jinta Hotel Samui",
-      "description": "",
-      "phone": "+6677420630",
-      "address": "Nathon, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Jinta_Hote_Logo-Samui-Map-Info.png",
-        "Jinta_Hote_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/david-luxe-jewelry/",
-      "title": "David Luxe Jewelry",
-      "description": "",
-      "phone": "+66857892598",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Hotel",
-      "content_snippet": "",
-      "images": [
-        "David_Luxe_Logo-Samui-Map-Info.png",
-        "David_Luxe_Logo-Samui-Map-Info.png",
-        "David_Luxe_AF1QipMtCmr84pdnHGlvTs6QpoNakFoRDQOEjSPNfEHM"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/jariya-hotel/",
-      "title": "J & Ariya hotel",
-      "description": "",
-      "phone": "+66 92 812 5759",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "J___Ariya__Logo-Samui-Map-Info.png",
-        "J___Ariya__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/zayn-samui-hotel/",
-      "title": "ZAYN Samui Hotel",
-      "description": "",
-      "phone": "+66944917951",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "ZAYN_Samui_Logo-Samui-Map-Info.png",
-        "ZAYN_Samui_Logo-Samui-Map-Info.png",
-        "ZAYN_Samui_AF1QipP_GJBYIHW_F_7OF8eK0bTq7s3vw0s51vRZEMXp"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/amarin-samui-hotel/",
-      "title": "Amarin Samui Hotel",
-      "description": "",
-      "phone": "+6677425611",
-      "address": "Maenam, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Amarin_Sam_Logo-Samui-Map-Info.png",
-        "Amarin_Sam_Logo-Samui-Map-Info.png",
-        "Amarin_Sam_AF1QipMtYu6inSiFS1YdgOGmTBL_Yo75F7aD4cluCaFJ"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/lotus-friendly-hotel/",
-      "title": "Lotus Friendly Hotel",
-      "description": "",
-      "phone": "+66867976077",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Lotus_Frie_Logo-Samui-Map-Info.png",
-        "Lotus_Frie_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/nora-lakeview-hotel/",
-      "title": "Nora Lakeview Hotel",
-      "description": "",
-      "phone": "+6677231720",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Nora_Lakev_Logo-Samui-Map-Info.png",
-        "Nora_Lakev_Logo-Samui-Map-Info.png",
-        "Nora_Lakev_AF1QipOzzlsdskrYQ97SN9v0VZg__KODldpaZKNgj1ZV"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/erawan-villa-hotel/",
-      "title": "Erawan Villa Hotel",
-      "description": "",
-      "phone": "+66840636025",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Erawan_Vil_Logo-Samui-Map-Info.png",
-        "Erawan_Vil_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/cielo-hotel/",
-      "title": "Cielo Hotel",
-      "description": "",
-      "phone": "+6677425300",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Cielo_Hote_Logo-Samui-Map-Info.png",
-        "Cielo_Hote_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/clayhouse-samui-boutique-hotel/",
-      "title": "ClayHouse SAMUI Boutique Hotel",
-      "description": "",
-      "phone": "+66994929904",
-      "address": "Hua Thanon, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "ClayHouse__Logo-Samui-Map-Info.png",
-        "ClayHouse__Logo-Samui-Map-Info.png",
-        "ClayHouse__AF1QipOKux2MvUbpTlakIGPHWAop_2Ya1X0oWu7BqJA4"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/muang-kulaypan-hotel/",
-      "title": "Muang Kulaypan Hotel",
-      "description": "",
-      "phone": "",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Muang_Kula_Logo-Samui-Map-Info.png",
-        "Muang_Kula_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/chaweng-town-hotel/",
-      "title": "Chaweng town Hotel",
-      "description": "",
-      "phone": "+66639243915",
-      "address": "Chaweng, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Chaweng_to_Logo-Samui-Map-Info.png",
-        "Chaweng_to_Logo-Samui-Map-Info.png",
-        "Chaweng_to_AF1QipNbSClSiPSvF0xynvQ4QDdUGkHiOFTOQNSumOPC"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/hotel-dara-artrium-petit/",
-      "title": "Hotel Dara Artrium Petit",
-      "description": "",
-      "phone": "+66 81 956 1636 ext. 667",
-      "address": "Bang Por, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Hotel_Dara_Logo-Samui-Map-Info.png",
-        "Hotel_Dara_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/intercontinental-koh-samui-resort-an-ihg-hotel/",
-      "title": "InterContinental Koh Samui Resort && an IHG Hotel",
-      "description": "",
-      "phone": "+6677429100",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "InterConti_Logo-Samui-Map-Info.png",
-        "InterConti_Logo-Samui-Map-Info.png",
-        "InterConti_AF1QipO7M9m6T7ZGOHZBFUjUfLc4rkjXmbGY_DcQF948"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/relax-hotel/",
-      "title": "Relax Hotel",
-      "description": "",
-      "phone": "+66994101165",
-      "address": "Plai Laem, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Relax_Hote_Logo-Samui-Map-Info.png",
-        "Relax_Hote_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/unique-boutique-hotel/",
-      "title": "UniQue Boutique Hotel",
-      "description": "",
-      "phone": "+66 63 187 9461",
-      "address": "Bangrak, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "UniQue_Bou_Logo-Samui-Map-Info.png",
-        "UniQue_Bou_Logo-Samui-Map-Info.png",
-        "UniQue_Bou_AF1QipM0_PBCNudBOjd8FFEzXFXR6qBeDspQ4jWfUnkV"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/bonny-hotel-koh-samui-lamai-beach/",
-      "title": "Bonny Hotel",
-      "description": "",
-      "phone": "+66954851742",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Bonny_Hote_Logo-Samui-Map-Info.png",
-        "Bonny_Hote_Logo-Samui-Map-Info.png",
-        "Bonny_Hote_AF1QipMcpTenY4cIQMd4ZHmeZ3IAnP2jVy0rUWABMwG5"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/fortune-inn-hotel/",
-      "title": "Fortune inn Hotel",
-      "description": "",
-      "phone": "+66952695457",
-      "address": "Ban Tai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Fortune_in_Logo-Samui-Map-Info.png",
-        "Fortune_in_Logo-Samui-Map-Info.png",
-        "Fortune_in_AF1QipOTcXgZtkFDJoIkMLnZuhiZvje34o-RxNtrCRNS"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/lananas-restaurant-sunset-beach-hotel/",
-      "title": "L'Ananas Restaurant - Sunset Beach Hotel",
-      "description": "",
-      "phone": "+6677428200",
-      "address": "Lipa Noi, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "L_Ananas_R_Logo-Samui-Map-Info.png",
-        "L_Ananas_R_Logo-Samui-Map-Info.png",
-        "L_Ananas_R_AF1QipNKV6J6IlB1fT6oIrPYZKuPGcIJnWJs-xt6bemH"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/rak-samui-hotel/",
-      "title": "Rak Samui Hotel",
-      "description": "",
-      "phone": "+66896498062",
-      "address": "Bophut, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Rak_Samui__Logo-Samui-Map-Info.png",
-        "Rak_Samui__Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/three-tree-hotel/",
-      "title": "Three tree hotel",
-      "description": "",
-      "phone": "+66837896298",
-      "address": "Lamai, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Three_tree_Logo-Samui-Map-Info.png",
-        "Three_tree_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/kanlaya-park-hotel/",
-      "title": "Kanlaya Park Hotel",
-      "description": "",
-      "phone": "+66898518917",
-      "address": "Maenam, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Kanlaya_Pa_Logo-Samui-Map-Info.png",
-        "Kanlaya_Pa_Logo-Samui-Map-Info.png"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/eight-spaces-boutique-hotel/",
-      "title": "Eight spaces boutique hotel",
-      "description": "",
-      "phone": "+66950427200",
-      "address": "Hua Thanon, Koh Samui, Thailand",
-      "category": "Accommodation",
-      "content_snippet": "",
-      "images": [
-        "Eight_spac_Logo-Samui-Map-Info.png",
-        "Eight_spac_Logo-Samui-Map-Info.png",
-        "Eight_spac_AF1QipMMZWdPDjuDqDJFWNaq85eEZopzmSS1xt9UGAOq"
-      ]
-    },
-    {
-      "url": "https://samui-map.info/listing/avani-chaweng-samui-hotel-beach-club/",
-      "title": "Avani Chaweng Samui Hotel & Beach Club",
-      "description": "",
-      "phone": "+6677956808",
-      "address": "Chaweng, Koh Samui, Thailand",
       "category": "Activity",
       "content_snippet": "",
       "images": [
-        "Avani_Chaw_Logo-Samui-Map-Info.png",
-        "Avani_Chaw_Logo-Samui-Map-Info.png",
-        "Avani_Chaw_AF1QipMDIROEgo5a0DN4HVzUcYYkIEYYm1GLtL1HKxGg"
+        "Coco_Padel_Logo-Samui-Map-Info.png",
+        "Coco_Padel_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/crystal-bay-beach-resort/",
+      "title": "Crystal Bay Beach Resort",
+      "description": "",
+      "phone": "+66938327226",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Crystal_Ba_Logo-Samui-Map-Info.png",
+        "Crystal_Ba_Logo-Samui-Map-Info.png",
+        "Crystal_Ba_AF1QipMNwJ-0ljkL33ZoJor8t7zwJ3X7yqdtIgoeU4Pc"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/bakery-chez-seb/",
+      "title": "French Bakery by Seb",
+      "description": "",
+      "phone": "+66866415007",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "French_Bak_Logo-Samui-Map-Info.png",
+        "French_Bak_Logo-Samui-Map-Info.png",
+        "French_Bak_AF1QipM3A3yyQVIBX1YJsrLdOnjCwoNyA_qfy4qrVeiz"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/karma-deli/",
+      "title": "Karma Deli",
+      "description": "",
+      "phone": "+66918213150",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Karma_Deli_Logo-Samui-Map-Info.png",
+        "Karma_Deli_Logo-Samui-Map-Info.png",
+        "Karma_Deli_AF1QipNLP6Ufdcf3hHWTh8mlCr3jXAa1lycprXC74zl9"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/850/",
+      "title": "Karma Resort Samui",
+      "description": "",
+      "phone": "+66 77 427 111",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Karma_Reso_Logo-Samui-Map-Info.png",
+        "Karma_Reso_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/la-cantina/",
+      "title": "La Cantina",
+      "description": "",
+      "phone": "+6677310742",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Thai Food",
+      "content_snippet": "",
+      "images": [
+        "La_Cantina_Logo-Samui-Map-Info.png",
+        "La_Cantina_Logo-Samui-Map-Info.png",
+        "La_Cantina_AF1QipMzaKQxrREdO4TeOjPm8pK6-ff92x4SzKFWq08t"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/lamai-buri/",
+      "title": "Lamai Buri",
+      "description": "",
+      "phone": "+66824496696",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Lamai_Buri_Logo-Samui-Map-Info.png",
+        "Lamai_Buri_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/lazudi-samui/",
+      "title": "Lazudi Samui",
+      "description": "",
+      "phone": "+66959242968",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "Lazudi_Sam_Logo-Samui-Map-Info.png",
+        "Lazudi_Sam_Logo-Samui-Map-Info.png",
+        "Lazudi_Sam_AF1QipObIdxjGSatIykps6pUvC-BAtkrv63PCzgZAlLY"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/leonardos-gelato-lab/",
+      "title": "Leonardo‘s Gelato Lab",
+      "description": "",
+      "phone": "+66805226565",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Leonardo_s_Logo-Samui-Map-Info.png",
+        "Leonardo_s_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/mo-real-estate/",
+      "title": "MO Real Estate",
+      "description": "",
+      "phone": "+66800090077",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Real Estate",
+      "content_snippet": "",
+      "images": [
+        "MO_Real_Es_Logo-Samui-Map-Info.png",
+        "MO_Real_Es_Logo-Samui-Map-Info.png",
+        "MO_Real_Es_AF1QipMcEOQLv0doWrnoeYbHk4wb_TPkscpO1ZbuqCfq"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/my-cafe-restaurant/",
+      "title": "My Cafe & Restaurant",
+      "description": "",
+      "phone": "+66649155541",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Drink",
+      "content_snippet": "",
+      "images": [
+        "My_Cafe____Logo-Samui-Map-Info.png",
+        "My_Cafe____Logo-Samui-Map-Info.png",
+        "My_Cafe____AF1QipMUkngEKVc-DGl0sisp_BI4nyBozzBop0oFSrM1"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/padel-samui/",
+      "title": "Padel Samui",
+      "description": "",
+      "phone": "+66804870878",
+      "address": "Bangrak, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Padel_Samu_Logo-Samui-Map-Info.png",
+        "Padel_Samu_Logo-Samui-Map-Info.png",
+        "Padel_Samu_AF1QipOEINS8m6P8OXka05AUCSzpgqN4Id9TjxckGDwS"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/pape-bakery/",
+      "title": "Papé Bakery",
+      "description": "",
+      "phone": "+66841892513",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Bakery",
+      "content_snippet": "",
+      "images": [
+        "Pap__Baker_Logo-Samui-Map-Info.png",
+        "Pap__Baker_Logo-Samui-Map-Info.png",
+        "Pap__Baker_AF1QipMmUD_pP_essfFHyTw-XhKaL8mOtEV2468KHtGL"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/paradise-beach-resort/",
+      "title": "Paradise Beach Resort Samui",
+      "description": "",
+      "phone": "+6677954901",
+      "address": "Maenam, Koh Samui, Thailand",
+      "category": "Resort",
+      "content_snippet": "",
+      "images": [
+        "Paradise_B_Logo-Samui-Map-Info.png",
+        "Paradise_B_Logo-Samui-Map-Info.png",
+        "Paradise_B_AF1QipMrTQ9ur9eXdPWTfIoiuv9uKMZSr5mJCHlkWYcS"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/pearl-of-samui-resort/",
+      "title": "Pearl of Samui",
+      "description": "",
+      "phone": "+66 96 654 0096",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Activity",
+      "content_snippet": "",
+      "images": [
+        "Pearl_of_S_Logo-Samui-Map-Info.png",
+        "Pearl_of_S_Logo-Samui-Map-Info.png",
+        "Pearl_of_S_AF1QipMNrPT6WscgP8TLQ0925LaGMbSt12eAbU8zJbIn"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/rosa-mar-koh-samui/",
+      "title": "Rosa Mar Koh Samui",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Accommodation",
+      "content_snippet": "",
+      "images": [
+        "Rosa_Mar_K_Logo-Samui-Map-Info.png",
+        "Rosa_Mar_K_Logo-Samui-Map-Info.png",
+        "Rosa_Mar_K_AF1QipNsLPOGH5DJDWPY1PSBeKPZXJLsgO73ioc4uhTW"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/723/",
+      "title": "Rossini Ice Cream",
+      "description": "",
+      "phone": "+6677332630",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Food",
+      "content_snippet": "",
+      "images": [
+        "Rossini_Ic_Logo-Samui-Map-Info.png",
+        "Rossini_Ic_Logo-Samui-Map-Info.png",
+        "Rossini_Ic_AF1QipNCNx9gDaaIvfvMmDxEtxH1YE4TWSybjokRe5TP"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/sakura-massage/",
+      "title": "Sakura Massage",
+      "description": "",
+      "phone": "+66954278526",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Massage",
+      "content_snippet": "",
+      "images": [
+        "Sakura_Mas_Logo-Samui-Map-Info.png",
+        "Sakura_Mas_Logo-Samui-Map-Info.png"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/samui-home-clinic-chaweng/",
+      "title": "Samui Home Clinic Chaweng",
+      "description": "",
+      "phone": "+66806696915",
+      "address": "Chaweng, Koh Samui, Thailand",
+      "category": "Clinic",
+      "content_snippet": "",
+      "images": [
+        "Samui_Home_Logo-Samui-Map-Info.png",
+        "Samui_Home_Logo-Samui-Map-Info.png",
+        "Samui_Home_AF1QipNjpLI1ubYHYC_FSDzKETm88jEHzZCG-zppomP9"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/saona-collection/",
+      "title": "Saona Collection / Fisherman's village",
+      "description": "",
+      "phone": "",
+      "address": "Bophut, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Saona_Coll_Logo-Samui-Map-Info.png",
+        "Saona_Coll_Logo-Samui-Map-Info.png",
+        "Saona_Coll_AF1QipOnywV1BVoXZWsqUqL5X6H-D5MvvZnekpRcz_OP"
+      ]
+    },
+    {
+      "url": "https://samui-map.info/listing/saona-collection-lamai/",
+      "title": "Saona Collection Lamai",
+      "description": "",
+      "phone": "",
+      "address": "Lamai, Koh Samui, Thailand",
+      "category": "Boutique",
+      "content_snippet": "",
+      "images": [
+        "Saona_Coll_Logo-Samui-Map-Info.png",
+        "Saona_Coll_Logo-Samui-Map-Info.png",
+        "Saona_Coll_AF1QipMRcU8J1nQAHlr3nQQT_IbF0J4Kwt2TZb9bbIZ1"
       ]
     }
   ]
