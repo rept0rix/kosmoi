@@ -9,7 +9,7 @@ const BusinessDashboard = lazy(() => import('@/features/vendors/pages/BusinessDa
 // --- Core Pages ---
 const Home = lazy(() => import('@/pages/Home'));
 const AboutUs = lazy(() => import('@/pages/AboutUs'));
-const LandingPage = lazy(() => import('@/pages/LandingPage'));
+
 const Pricing = lazy(() => import('@/pages/Pricing'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const Blog = lazy(() => import('@/pages/Blog'));
@@ -89,7 +89,7 @@ export const screenRegistry = {
 
     // --- Core ---
     'home': { component: Home, name: 'Home' },
-    'landing': { component: LandingPage, name: 'Landing Page' },
+
     'about': { component: AboutUs, name: 'About Us' },
     'pricing': { component: Pricing, name: 'Pricing' },
     'contact': { component: Contact, name: 'Contact' },
