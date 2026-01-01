@@ -5,8 +5,6 @@
 # It connects to Computer B via SSH and tells it to pull.
 
 # --- CONFIGURATION ---
-# Replace with your Computer B's details
-# Find this on Computer B by running: whoami && ifconfig
 REMOTE_USER="${REMOTE_USER:-naoryanko}" 
 REMOTE_HOST="${REMOTE_HOST:-naors-MacBook-Pro.local}"
 PROJECT_DIR="${PROJECT_DIR:-Documents/GitHub/kosmoi}"
@@ -26,16 +24,26 @@ if [[ "$REMOTE_HOST" == *"X"* ]]; then
     exit 1
 fi
 
+# Check if SSH is installed
+if ! command -v ssh &> /dev/null; then
+    echo "❌ Error: 'ssh' command not found. Please install SSH."
+    exit 1
+fi
+
 echo "🚀 Connecting to $REMOTE_HOST..."
 echo "💡 Note: You may be prompted for $REMOTE_USER's password if SSH keys are not set up."
 
-ssh -o ConnectTimeout=10 "$REMOTE_USER@$REMOTE_HOST" "cd $PROJECT_DIR && echo '⬇️ Pulling on remote...' && git pull"
+# Construct the command
+REMOTE_CMD="cd '$PROJECT_DIR' && echo '⬇️ Pulling on remote...' && git pull"
+
+# Execute
+ssh -o ConnectTimeout=10 "$REMOTE_USER@$REMOTE_HOST" "$REMOTE_CMD"
 
 if [ $? -eq 0 ]; then
     echo "✅ Remote sync completed successfully!"
 else
     echo "❌ Failed to trigger sync. Please check:"
     echo "  1. Is $REMOTE_HOST reachable? (try 'ping $REMOTE_HOST')"
-    echo "  2. is 'Remote Login' enabled on the other Mac? (System Settings > General > Sharing)"
+    echo "  2. Is 'Remote Login' enabled on the other Mac? (System Settings > General > Sharing)"
     echo "  3. Is the PROJECT_DIR correct? ($PROJECT_DIR)"
 fi
