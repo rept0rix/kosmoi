@@ -5,9 +5,11 @@
 # It connects to Computer B via SSH and tells it to pull.
 
 # --- CONFIGURATION ---
-REMOTE_USER="${REMOTE_USER:-naoryanko}" 
-REMOTE_HOST="${REMOTE_HOST:-naors-MacBook-Pro.local}"
-PROJECT_DIR="${PROJECT_DIR:-Documents/GitHub/kosmoi}"
+# Replace with your Computer B's details
+# Find this on Computer B by running: whoami && ifconfig
+REMOTE_USER="naoryanko" 
+REMOTE_HOST="Kar1s-MacBook-Pro.local"
+PROJECT_DIR="Downloads/samui-service-hub-main"
 # ---------------------
 
 if [ "$1" == "setup" ]; then

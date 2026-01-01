@@ -1,7 +1,7 @@
-import { db } from '@/api/supabaseClient';
-import { ToolRegistry } from '../ToolRegistry';
+import { db } from "../../../api/supabaseClient.js";
+import { ToolRegistry } from "../ToolRegistry.js";
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || process.env.VITE_GEMINI_API_KEY;
 
 async function generateEmbedding(text) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`;

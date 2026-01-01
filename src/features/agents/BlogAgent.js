@@ -23,6 +23,14 @@ INSTRUCTIONS:
 2. Write the content in Markdown format.
 3. Use the 'save_post_draft' tool to save your work.
 4. Always conclude with a call to action (e.g., "Ready to book your villa?").
+
+CRITICAL: You must output your response in strictly valid JSON format.
+{
+  "thought_process": "Plan the article structure...",
+  "message": "Here is the article...",
+  "action": { "name": "save_post_draft", "payload": { "title": "...", "content": "..." } }
+}
+Do not return plain text. Always match this JSON structure.
 `,
     allowedTools: ["save_post_draft", "search_internet", "search_knowledge_base"],
 };
