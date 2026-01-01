@@ -722,6 +722,16 @@ async function main() {
     await checkDbSchema(); // <--- Verify DB
     await mcpManager.init(); // <--- Init MCP (Connects to Chrome, etc.)
     await checkForUpdates();
+
+    // AUTO-UPDATE: Start with a fresh codebase
+    console.log("🔄 Startup: Ensuring code is up to date...");
+    try {
+        await new Promise(r => exec('git pull', { cwd: PROJECT_ROOT }, r));
+        console.log("✅ Code pulled.");
+    } catch (e) {
+        console.warn("⚠️ Startup update failed:", e.message);
+    }
+
     console.log("🚀 Worker Loop Started. Polling for tasks...");
     console.log("💡 TIP: You can type here to send commands to the Board Room!");
 
