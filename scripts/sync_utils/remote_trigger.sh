@@ -7,9 +7,9 @@
 # --- CONFIGURATION ---
 # Replace with your Computer B's details
 # Find this on Computer B by running: whoami && ifconfig
-REMOTE_USER="naoryanko" 
-REMOTE_HOST="192.168.1.X" # REPLACE THIS with Computer B's IP Address
-PROJECT_DIR="Downloads/samui-service-hub-main"
+REMOTE_USER="${REMOTE_USER:-naoryanko}" 
+REMOTE_HOST="${REMOTE_HOST:-naors-MacBook-Pro.local}"
+PROJECT_DIR="${PROJECT_DIR:-Documents/GitHub/kosmoi}"
 # ---------------------
 
 if [ "$1" == "setup" ]; then
