@@ -6,16 +6,27 @@ class APIClient {
         this.supabaseKey = (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_ANON_KEY;
 
         if (!this.supabaseUrl || !this.supabaseKey) {
-            console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+            console.error('CRITICAL: Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Supabase client will not initialize.');
+            // Return a mock or null to prevent app crash during module load
+            this.supabase = {
+                from: () => ({ select: () => ({ data: [], error: { message: 'Supabase not initialized (Missing Env Vars)' } }) }),
+                auth: {
+                    getSession: async () => ({ data: { session: null } }),
+                    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
+                },
+                storage: { from: () => ({ upload: async () => ({ error: 'No storage' }) }) },
+                functions: { invoke: async () => ({ error: 'No functions' }) },
+                channel: () => ({ on: () => ({ subscribe: () => { } }) })
+            };
+        } else {
+            this.supabase = createClient(this.supabaseUrl, this.supabaseKey, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            });
         }
-
-        this.supabase = createClient(this.supabaseUrl, this.supabaseKey, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true
-            }
-        });
         this.cache = new Map();
         this.listeners = new Map();
     }
