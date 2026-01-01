@@ -26,12 +26,16 @@ if [[ "$REMOTE_HOST" == *"X"* ]]; then
     exit 1
 fi
 
-echo "🚀 Triggering remote sync on $REMOTE_HOST..."
+echo "🚀 Connecting to $REMOTE_HOST..."
+echo "💡 Note: You may be prompted for $REMOTE_USER's password if SSH keys are not set up."
 
-ssh "$REMOTE_USER@$REMOTE_HOST" "cd $PROJECT_DIR && echo '⬇️ Pulling on remote...' && git pull"
+ssh -o ConnectTimeout=10 "$REMOTE_USER@$REMOTE_HOST" "cd $PROJECT_DIR && echo '⬇️ Pulling on remote...' && git pull"
 
 if [ $? -eq 0 ]; then
-    echo "✅ Remote sync triggered successfully!"
+    echo "✅ Remote sync completed successfully!"
 else
-    echo "❌ Failed to trigger sync. Check SSH connection."
+    echo "❌ Failed to trigger sync. Please check:"
+    echo "  1. Is $REMOTE_HOST reachable? (try 'ping $REMOTE_HOST')"
+    echo "  2. is 'Remote Login' enabled on the other Mac? (System Settings > General > Sharing)"
+    echo "  3. Is the PROJECT_DIR correct? ($PROJECT_DIR)"
 fi
