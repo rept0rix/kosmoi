@@ -611,7 +611,7 @@ export default function ServiceProviders() {
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{t('recentSearches') || "Recent Locations"}</p>
                   <div className="space-y-1">
                     {locationHistory.map((loc, idx) => (
-                      <Button key={idx} variant="ghost" className="w-full justify-start h-auto py-2 px-2 text-left font-normal hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300" onClick={() => handleManualLocationSelect(loc)}>
+                      <Button key={idx} variant="ghost" className="w-full justify-start h-auto py-2 px-2 text-start font-normal hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300" onClick={() => handleManualLocationSelect(loc)}>
                         <History className="w-3 h-3 mr-2 text-slate-400" />
                         <span className="truncate text-sm">{loc.name}</span>
                       </Button>

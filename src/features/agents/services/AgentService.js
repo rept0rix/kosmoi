@@ -16,6 +16,7 @@ import "../../../services/tools/registry/GrowthTools.js";
 import "../../../services/tools/registry/ServiceTools.js";
 import "../../../services/tools/registry/MetaTools.js";
 import "../../../services/tools/registry/A2UITools.js";
+import "../../../services/tools/registry/ContentTools.js";
 import { SkillService } from "./SkillService.js";
 
 console.log("AgentService Module Loaded. Tools Registered:", ToolRegistry.getToolNames());
@@ -154,6 +155,17 @@ Approval ID: ${approvalData.id}`;
     }
 
     // --- GENERIC TOOLS ---
+    if (toolName === 'search_knowledge_base') {
+        try {
+            const { query, limit } = payload;
+            const result = await ToolRegistry.execute('search_knowledge_base', { query, limit }, options);
+            return result;
+        } catch (e) {
+            console.error("Failed to search knowledge base:", e);
+            return "Error searching knowledge base: " + e.message;
+        }
+    }
+
 
 
     // --- LOGGING & EXECUTION ---

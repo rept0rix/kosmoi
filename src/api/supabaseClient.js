@@ -563,7 +563,7 @@ export const realSupabase = supabase;
 // Default export
 export default supabase;
 
-if (import.meta.env.DEV) {
+if (import.meta && import.meta.env && import.meta.env.DEV) {
     // @ts-ignore
     window.supabase = supabase;
     // @ts-ignore

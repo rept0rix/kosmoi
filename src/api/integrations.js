@@ -123,7 +123,12 @@ export const Core = {
     SendSMS: async () => { console.warn('SendSMS not implemented'); return {}; },
     SendTelegram: async ({ message, chatId = "7224939578" }) => {
         console.log(`[Integrations] Sending Telegram to ${chatId}...`);
-        const token = "7144778392:AAH4Mjp8BiwOLZZzZI3ZJfxkgunAh-KbqLw";
+        const token = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_TELEGRAM_BOT_TOKEN : process.env.VITE_TELEGRAM_BOT_TOKEN) || process.env.TELEGRAM_BOT_TOKEN;
+
+        if (!token) {
+            console.warn("Missing Telegram Bot Token.");
+            return { error: "Missing Telegram Bot Token configuration" };
+        }
 
         try {
             // We use fetch (native in Node 18+ and Browser)

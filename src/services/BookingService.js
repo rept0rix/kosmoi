@@ -96,6 +96,9 @@ export const BookingService = {
             throw error;
         }
 
+        // NOTIFICATION STUB: Send email to provider
+        console.log(`[STUB] Email sent to provider ${bookingDetails.providerId}: New Booking for ${bookingDetails.date} at ${bookingDetails.time}`);
+
         return data;
     },
 
@@ -120,7 +123,7 @@ export const BookingService = {
             .select(`
                 *,
                 service_providers (
-                    name,
+                    business_name,
                     category
                 )
             `)

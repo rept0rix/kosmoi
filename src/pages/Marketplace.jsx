@@ -403,7 +403,7 @@ export default function Marketplace() {
                         <PopoverTrigger asChild>
                             <Button variant="ghost" className="h-11 px-4 text-slate-700 hover:bg-slate-50 rounded-xl mr-1 border-r border-transparent hover:border-slate-100 focus:bg-slate-50">
                                 <LayoutGrid className="w-5 h-5 mr-2 text-slate-400" />
-                                <span className="font-medium truncate max-w-[100px] md:max-w-[140px] text-left">
+                                <span className="font-medium truncate max-w-[100px] md:max-w-[140px] text-start">
                                     {activeCategory ? activeCategory.label : 'Categories'}
                                 </span>
                                 <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
@@ -417,10 +417,10 @@ export default function Marketplace() {
                     <div className="w-px h-8 bg-slate-100 mx-2 hidden md:block"></div>
 
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <Input
                             placeholder="Search cars, condos, furniture..."
-                            className="h-11 pl-10 border-0 bg-transparent focus-visible:ring-0 placeholder:text-slate-400 text-base w-full shadow-none"
+                            className="h-11 ps-10 border-0 bg-transparent focus-visible:ring-0 placeholder:text-slate-400 text-base w-full shadow-none"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />

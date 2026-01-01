@@ -126,7 +126,7 @@ export default function Home() {
                         className="w-full group relative flex items-center gap-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 backdrop-blur-xl rounded-2xl p-4 cursor-pointer transition-all shadow-2xl hover:shadow-blue-500/20"
                     >
                         <Search className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
-                        <div className="flex-1 text-left">
+                        <div className="flex-1 text-start">
                             <span className="text-xl text-slate-400 font-light group-hover:text-slate-200">
                                 {t('home.search_placeholder')}
                             </span>

@@ -6,6 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Building2, DollarSign, TrendingUp, Activity } from 'lucide-react';
 
+import LiveMap from '../../components/admin/LiveMap';
+import AdminTodoList from '../../components/admin/AdminTodoList';
+
 export default function AdminDashboard() {
     const {
         stats,
@@ -61,12 +64,18 @@ export default function AdminDashboard() {
             </div>
 
             {/* Main Content Tabs */}
-            <Tabs defaultValue="users" className="w-full">
+            <Tabs defaultValue="tasks" className="w-full">
                 <TabsList className="bg-slate-900/50 border border-white/5 p-1">
+                    <TabsTrigger value="tasks" className="data-[state=active]:bg-purple-600 font-bold border-r-2 border-white/10">My Tasks</TabsTrigger>
                     <TabsTrigger value="users" className="data-[state=active]:bg-blue-600">Users</TabsTrigger>
                     <TabsTrigger value="businesses" className="data-[state=active]:bg-purple-600">Businesses</TabsTrigger>
+                    <TabsTrigger value="live" className="data-[state=active]:bg-emerald-600">Live Ops</TabsTrigger>
                     <TabsTrigger value="finance" className="data-[state=active]:bg-green-600">Finance</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="tasks" className="mt-6">
+                    <AdminTodoList />
+                </TabsContent>
 
                 <TabsContent value="users" className="mt-6">
                     <UserTable users={users} onAction={handleUserAction} />
@@ -74,6 +83,10 @@ export default function AdminDashboard() {
 
                 <TabsContent value="businesses" className="mt-6">
                     <BusinessTable businesses={businesses} onAction={handleBusinessAction} />
+                </TabsContent>
+
+                <TabsContent value="live" className="mt-6">
+                    <LiveMap />
                 </TabsContent>
 
                 <TabsContent value="finance" className="mt-6">
