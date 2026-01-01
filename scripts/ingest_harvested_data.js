@@ -49,10 +49,11 @@ async function ingestData() {
 
         const payload = {
             business_name: item.title,
-            description: item.description || item.content_snippet, // Fallback to description
-            location: 'Koh Samui',
-            category: guessCategory(item.url),
+            description: item.description || item.content_snippet,
+            location: item.address || 'Koh Samui',
+            category: (item.category && item.category !== 'other') ? item.category : guessCategory(item.url),
             source_url: item.url,
+            phone: item.phone,
             images: item.images,
             status: 'active',
             verified: false,
