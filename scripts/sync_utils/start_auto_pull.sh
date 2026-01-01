@@ -4,7 +4,7 @@
 # Run this on the Receiving Computer (Computer B)
 # It will check for updates every 5 minutes.
 
-INTERVAL=300 # 5 Minutes
+INTERVAL=60 # 1 Minute (Faster Updates)
 
 echo "🔄 Starting Auto-Sync Receiver..."
 echo "📂 Watching: $(pwd)"
