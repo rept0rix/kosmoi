@@ -40,8 +40,8 @@ import { LanguageProvider, useLanguage } from '@/components/LanguageContext';
 import AboutUs from '@/pages/AboutUs';
 import UseCases from '@/pages/UseCases';
 import Pricing from '@/pages/Pricing';
-import Terms from '@/pages/legal/Terms';
-import Privacy from '@/pages/legal/Privacy';
+import TermsOfService from '@/pages/legal/TermsOfService';
+import PrivacyPolicy from '@/pages/legal/PrivacyPolicy';
 import Security from '@/pages/legal/Security';
 import Accessibility from '@/pages/legal/Accessibility';
 import BusinessInfo from '@/pages/BusinessInfo';
@@ -264,8 +264,8 @@ const AuthenticatedApp = () => {
             <Route path="about" element={<AboutUs />} />
             <Route path="use-cases" element={<UseCases />} />
             <Route path="pricing" element={<Pricing />} />
-            <Route path="legal/terms" element={<Terms />} />
-            <Route path="legal/privacy" element={<Privacy />} />
+            <Route path="legal/terms" element={<TermsOfService />} />
+            <Route path="legal/privacy" element={<PrivacyPolicy />} />
             <Route path="legal/security" element={<Security />} />
             <Route path="legal/accessibility" element={<Accessibility />} />
             <Route path="business-info" element={<BusinessInfo />} />

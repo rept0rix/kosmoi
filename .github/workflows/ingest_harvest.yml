@@ -26,7 +26,6 @@ jobs:
       env:
         VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        # We don't need the Anon Key if we have the Service Role Key, 
-        # but providing it just in case logic falls back (it shouldn't).
-        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }} 
+        # We don't need the Anon Key if we have the Service Role Key
+        # VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }} 
       run: node scripts/ingest_harvested_data.js

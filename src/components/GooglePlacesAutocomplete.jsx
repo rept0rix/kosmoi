@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyB-Xk8yGUg9ejl0fb_XiZqeJP1pkWJPJa4';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 export default function GooglePlacesAutocomplete({ onPlaceSelected, placeholder, className }) {
     const inputRef = useRef(null);

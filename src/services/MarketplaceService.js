@@ -28,14 +28,21 @@ export const MarketplaceService = {
     },
 
     // Items
-    getItems: async ({ categoryId = null, searchTerm = '', limit = 20 } = {}) => {
+    getItems: async ({ categoryId = null, searchTerm = '', sellerId = null, limit = 20 } = {}) => {
         try {
             let query = supabase
                 .from('marketplace_items')
                 .select('*, images:marketplace_images(url), seller:seller_id(raw_user_meta_data)')
-                .eq('status', 'active')
                 .order('created_at', { ascending: false })
                 .limit(limit);
+
+            // If filtering by specific seller, show all their items (active/sold/etc)
+            if (sellerId) {
+                query = query.eq('seller_id', sellerId);
+            } else {
+                // Otherwise only show active items to public
+                query = query.eq('status', 'active');
+            }
 
             if (categoryId) {
                 query = query.eq('category_id', categoryId);

@@ -101,7 +101,7 @@ export default function MyBookings() {
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
                                                 <MapPin className="w-4 h-4" />
-                                                <span>{booking.service_providers?.name || t('my_bookings.service_provider')}</span>
+                                                <span>{booking.service_providers?.business_name || t('my_bookings.service_provider')}</span>
                                             </div>
                                         </div>
                                         <Badge variant={booking.status === 'confirmed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'} className="capitalize">

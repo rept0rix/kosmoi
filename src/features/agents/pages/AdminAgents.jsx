@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +19,9 @@ import { Plus, Search, MoreHorizontal, Edit, Trash2, Bot, Sparkles } from 'lucid
 import { agents as initialAgents } from '@/features/agents/services/AgentRegistry';
 
 import { useNavigate } from 'react-router-dom';
+import { BlogAgent } from '@/features/agents/BlogAgent';
+import { supabase } from '@/api/supabaseClient';
+import { useToast } from "@/components/ui/use-toast";
 
 const colorMap = {
     blue: { border: 'border-blue-100', bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -39,6 +42,11 @@ export default function AdminAgents() {
     const [newAgent, setNewAgent] = useState({
         name: '', role: '', description: '', color: 'blue', type: 'assistant'
     });
+
+    // Blog Agent State
+    const [blogDialogState, setBlogDialogState] = useState({ isOpen: false, topic: '', tone: 'Inspirational' });
+    const [isGenerating, setIsGenerating] = useState(false);
+    const { toast } = useToast();
 
     const syncWithRegistry = () => {
         // Master Sync: Merges Registry (Single Source of Truth for Code) with LocalStorage (User Overrides)
@@ -96,6 +104,36 @@ export default function AdminAgents() {
     const handleDelete = (id) => {
         if (confirm('Are you sure you want to decommission this agent?')) {
             saveAgents(agents.filter(a => a.id !== id));
+        }
+    };
+
+    const handleGenerateArticle = async () => {
+        setIsGenerating(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Authentication required");
+
+            const agent = new BlogAgent(user);
+            toast({ title: "Agent Activated", description: "Samui Storyteller is drafting your article..." });
+
+            // Trigger generation
+            const response = await agent.generateArticle(blogDialogState.topic, blogDialogState.tone);
+
+            toast({
+                title: "Draft Complete",
+                description: "Article saved to drafts. Check the Blog module."
+            });
+            console.log("Agent Response:", response);
+            setBlogDialogState({ isOpen: false, topic: '', tone: 'Inspirational' });
+        } catch (error) {
+            console.error("Generation failed:", error);
+            toast({
+                variant: "destructive",
+                title: "Agent Error",
+                description: error.message
+            });
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -169,6 +207,57 @@ export default function AdminAgents() {
                 </div>
             </div>
 
+            {/* Blog Generation Dialog */}
+            <Dialog open={!!blogDialogState.isOpen} onOpenChange={(open) => !open && setBlogDialogState({ isOpen: false, topic: '', tone: 'Inspirational' })}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Draft New Article</DialogTitle>
+                        <DialogDescription>
+                            Commission the Samui Storyteller to write a new piece.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Topic / Title</Label>
+                            <Input
+                                placeholder="e.g., Top 10 Hidden Beaches"
+                                value={blogDialogState.topic}
+                                onChange={(e) => setBlogDialogState(prev => ({ ...prev, topic: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Tone</Label>
+                            <Select
+                                value={blogDialogState.tone}
+                                onValueChange={(val) => setBlogDialogState(prev => ({ ...prev, tone: val }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Inspirational">Inspirational</SelectItem>
+                                    <SelectItem value="Informative">Informative</SelectItem>
+                                    <SelectItem value="Adventurous">Adventurous</SelectItem>
+                                    <SelectItem value="Luxury">Luxury</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            onClick={handleGenerateArticle}
+                            disabled={!blogDialogState.topic || isGenerating}
+                        >
+                            {isGenerating ? (
+                                <><Sparkles className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+                            ) : (
+                                <><Bot className="w-4 h-4 mr-2" /> Start Writing</>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredAgents.map((agent) => (
                     <Card key={agent.id} className={`overflow-hidden transition-all hover:shadow-md border-t-4 ${colorMap[agent.color]?.border || 'border-slate-200'}`}>
@@ -199,6 +288,15 @@ export default function AdminAgents() {
                                             <Edit className="mr-2 h-4 w-4" />
                                             Configure Agent
                                         </DropdownMenuItem>
+
+                                        {/* Specific Action for Blog Agent */}
+                                        {agent.id === 'agent_blog_writer' && (
+                                            <DropdownMenuItem onSelect={() => setBlogDialogState({ isOpen: true, topic: '', tone: 'Inspirational' })}>
+                                                <Sparkles className="mr-2 h-4 w-4 text-purple-500" />
+                                                Draft Article
+                                            </DropdownMenuItem>
+                                        )}
+
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onSelect={() => handleDelete(agent.id)} className="text-red-600">
                                             <Trash2 className="mr-2 h-4 w-4" />

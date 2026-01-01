@@ -8,14 +8,24 @@ export const ToolRegistry = {
 
     /**
      * Register a tool handler.
-     * @param {string} name - The tool name (e.g., 'browser', 'execute_command')
-     * @param {Function} handler - The function to execute (payload, options) => result
+     * @param {string} name - The tool name
+     * @param {string} description - Brief description
+     * @param {Object} schema - Input schema definition
+     * @param {Function} handler - The function to execute
      */
-    register(name, handler, description = "") {
+    register(name, description, schema, handler) {
+        if (typeof description === 'function') {
+            // Backward compatibility: register(name, handler, description)
+            const oldHandler = description;
+            const oldDesc = schema || "";
+            this.tools.set(name, { handler: oldHandler, description: oldDesc, schema: {} });
+            return;
+        }
+
         if (this.tools.has(name)) {
             console.warn(`[ToolRegistry] Overwriting existing tool: ${name}`);
         }
-        this.tools.set(name, { handler, description });
+        this.tools.set(name, { handler, description, schema });
     },
 
     /**

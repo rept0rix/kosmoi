@@ -53,6 +53,7 @@ import GoogleMap from "../components/GoogleMap";
 import { getCategoryIcon } from "@/shared/utils/mapIcons";
 import { getSubCategoryLabel } from "../components/subCategories";
 import { useLanguage } from "@/components/LanguageContext";
+import BookingDialog from "@/components/BookingDialog";
 
 export default function ServiceProviderDetails() {
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ export default function ServiceProviderDetails() {
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false); // New State
   const [newReview, setNewReview] = useState({ rating: 5, comment: "", reviewer_name: "" });
   const [userLocation, setUserLocation] = useState(null);
 
@@ -139,7 +141,27 @@ export default function ServiceProviderDetails() {
     },
   });
 
+  /* Analytics Helpers */
+  const incrementStats = async (type) => {
+    try {
+      if (!providerId) return;
+      await db.rpc('increment_provider_stats', { p_id: providerId, stat_type: type });
+    } catch (err) {
+      console.warn('Failed to track stat:', err);
+    }
+  };
+
+  // Track View on Mount
+  React.useEffect(() => {
+    if (providerId) {
+      // Debounce or just fire? For MVP just fire.
+      // Ideally we check if it's the owner viewing their own profile, but typically views count everyone.
+      incrementStats('view');
+    }
+  }, [providerId]);
+
   const handleCall = async (phone) => {
+    incrementStats('click');
     try {
       const isAuth = await db.auth.isAuthenticated();
       if (!isAuth) {
@@ -153,6 +175,7 @@ export default function ServiceProviderDetails() {
   };
 
   const handleWhatsApp = async (phone) => {
+    incrementStats('click');
     try {
       const isAuth = await db.auth.isAuthenticated();
       if (!isAuth) {
@@ -166,6 +189,7 @@ export default function ServiceProviderDetails() {
   };
 
   const handleNavigate = () => {
+    incrementStats('click'); // Navigation is also a click/intent
     if (provider?.latitude && provider?.longitude) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${provider.latitude},${provider.longitude}`, "_blank");
     }
@@ -531,13 +555,18 @@ export default function ServiceProviderDetails() {
                   </Button>
                 </div>
 
-                <Button onClick={() => handleCall(provider.phone)} className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md">
+                <Button onClick={() => setBookingOpen(true)} className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md">
+                  <CalendarIcon className="w-5 h-5 ml-2" />
+                  הזמן תור
+                </Button>
+
+                <Button onClick={() => handleCall(provider.phone)} className="w-full h-12 text-lg bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm">
                   <Phone className="w-5 h-5 ml-2" />
                   התקשר עכשיו
                 </Button>
 
                 {provider.whatsapp && (
-                  <Button onClick={() => handleWhatsApp(provider.whatsapp)} className="w-full h-12 text-lg bg-green-600 hover:bg-green-700 shadow-md">
+                  <Button onClick={() => handleWhatsApp(provider.whatsapp)} className="w-full h-12 text-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-sm">
                     <MessageCircle className="w-5 h-5 ml-2" />
                     WhatsApp
                   </Button>
@@ -586,6 +615,15 @@ export default function ServiceProviderDetails() {
           </div>
         </div>
       </div>
+      <BookingDialog
+        open={bookingOpen}
+        onOpenChange={setBookingOpen}
+        provider={provider}
+        onBookingConfirmed={() => {
+          // Optional: Refresh bookings if we showed them here, or just toast
+          queryClient.invalidateQueries({ queryKey: ["bookings", providerId] }); // If we had this query
+        }}
+      />
     </div>
   );
 }

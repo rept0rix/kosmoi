@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, Sparkles, Map as MapIcon, Info, ArrowRight, Trash2, PlusCircle, History, ChevronUp, ChevronDown, Crosshair, X } from 'lucide-react';
+import { Bot, Send, Sparkles, Map as MapIcon, Info, ArrowRight, Trash2, PlusCircle, History, ChevronUp, ChevronDown, Crosshair, X, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { db } from '@/api/supabaseClient';
 import { useQuery } from "@tanstack/react-query";
@@ -311,7 +311,7 @@ Knowledge: ${JSON.stringify(samuiKnowledge).substring(0, 1000)}...
                     <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 scrollbar-hide">
                         <div className="space-y-4">
                             {messages.map((msg, idx) => (
-                                <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group relative`}>
                                     {msg.role === 'assistant' && (
                                         <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
                                             <Bot className="w-3 h-3 text-blue-600" />
@@ -320,11 +320,16 @@ Knowledge: ${JSON.stringify(samuiKnowledge).substring(0, 1000)}...
 
                                     <div className={`flex flex-col gap-1 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                         {msg.content && (
-                                            <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm leading-relaxed ${msg.role === 'user'
+                                            <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm leading-relaxed relative ${msg.role === 'user'
                                                 ? 'bg-blue-600 text-white rounded-tr-none'
                                                 : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'
                                                 }`}>
                                                 {msg.content}
+                                                {msg.role === 'assistant' && (
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <CopyButton text={msg.content} />
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -342,10 +347,13 @@ Knowledge: ${JSON.stringify(samuiKnowledge).substring(0, 1000)}...
                             ))}
                             {isTyping && (
                                 <div className="flex justify-start">
-                                    <div className="bg-slate-100 px-4 py-2 rounded-2xl rounded-tl-none text-slate-500 text-xs flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                                    <div className="bg-slate-100 px-4 py-2 rounded-2xl rounded-tl-none text-slate-500 text-xs flex items-center gap-2">
+                                        <div className="flex gap-1">
+                                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                                        </div>
+                                        <span className="font-medium">Thinking...</span>
                                     </div>
                                 </div>
                             )}
@@ -374,5 +382,26 @@ Knowledge: ${JSON.stringify(samuiKnowledge).substring(0, 1000)}...
                 </>
             )}
         </div>
+    );
+}
+
+function CopyButton({ text }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = (e) => {
+        e.stopPropagation(); // Prevent message click focus or other events
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className="p-1 hover:bg-slate-100 rounded-md transition-all text-slate-400 hover:text-slate-600 bg-white/50 backdrop-blur-sm border border-slate-200/50 shadow-sm"
+            title="Copy response"
+        >
+            {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+        </button>
     );
 }

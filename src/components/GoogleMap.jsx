@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 // @ts-ignore
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyB-Xk8yGUg9ejl0fb_XiZqeJP1pkWJPJa4';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 export default function GoogleMap({
   center = { lat: 9.5, lng: 100.0 },

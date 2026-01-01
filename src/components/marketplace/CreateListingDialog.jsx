@@ -76,12 +76,15 @@ ${extrasText}
 ${formData.description}
             `.trim();
 
+            // Create clean payload with lat/lng mapping
+            const { latitude, longitude, ...cleanData } = formData;
+
             await MarketplaceService.createItem({
-                ...formData,
+                ...cleanData,
                 description: enhancedDescription,
                 price: parseFloat(formData.price),
-                lat: formData.latitude,
-                lng: formData.longitude
+                lat: latitude,
+                lng: longitude
             }, selectedImages);
 
             toast.success("Listing created successfully!");
@@ -138,7 +141,7 @@ ${formData.description}
                                     latitude: place.latitude,
                                     longitude: place.longitude
                                 }))}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ps-10"
                             />
                         </div>
                     </div>
