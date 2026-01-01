@@ -6,7 +6,9 @@
 CATEGORY=$1
 
 if [ "$CATEGORY" == "hotels" ]; then
-  REAL_CATEGORY="accomodations"
+  REAL_CATEGORY="category/hotel"
+elif [ "$CATEGORY" == "restaurants" ]; then
+  REAL_CATEGORY="category/restaurant"
 else
   REAL_CATEGORY=$CATEGORY
 fi
