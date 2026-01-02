@@ -92,6 +92,11 @@ const LandingNavbar = () => {
                             </Button>
                         ) : (
                             <>
+                                <Button asChild variant="ghost" size="sm" className="hidden lg:flex">
+                                    <Link to="/one-dollar" className="text-blue-500 font-semibold">
+                                        Test Drive (35฿)
+                                    </Link>
+                                </Button>
                                 <Button asChild variant="ghost" size="sm">
                                     <Link to="/login">{t('nav.login', 'Login')}</Link>
                                 </Button>

@@ -13,9 +13,9 @@ export default function OneDollar() {
     const handleCheckout = async () => {
         setLoading(true);
         try {
-            // TODO: Replace with actual Stripe Price ID for $1 Plan
-            const PRICE_ID = "price_1DollarTestDrive";
-            await StripeService.checkoutSubscription(PRICE_ID);
+            // Real Stripe Price ID for 35 THB / 2 Weeks
+            const PRICE_ID = "price_1Sl1A12UYqGHD7z59HicPDDe";
+            await StripeService.checkoutSubscription(PRICE_ID, 'payment');
         } catch (error) {
             console.error("Checkout failed:", error);
             toast.error("Could not start checkout. Please try again.");
@@ -53,19 +53,19 @@ export default function OneDollar() {
                     >
                         <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-4 py-1.5 text-teal-400 text-sm font-medium mb-8">
                             <Clock className="w-4 h-4" />
-                            <span>Limited Time Offer: 24h Access Pass</span>
+                            <span>Limited Time Offer: 2 Weeks Access Pass</span>
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-8">
                             Verify Your Business.<br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-                                Get 5 Leads Today.
+                                Get Leads for 2 Weeks.
                             </span>
                         </h1>
 
                         <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
                             Stop guessing. See exactly who is looking for your services on Koh Samui right now.
-                            Unlock full "Island Pro" status for 24 hours.
+                            Unlock full "Island Pro" status for 14 days.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -75,7 +75,7 @@ export default function OneDollar() {
                                 className="h-14 px-8 rounded-full bg-teal-500 hover:bg-teal-600 text-white text-lg font-bold shadow-lg shadow-teal-500/25 transition-all w-full sm:w-auto"
                             >
                                 {loading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Zap className="w-5 h-5 mr-2 fill-current" />}
-                                Start $1 Test Drive
+                                Start 35฿ Test Drive
                             </Button>
                             <span className="text-sm text-slate-500">No auto-renew. No hidden fees.</span>
                         </div>
@@ -111,8 +111,8 @@ export default function OneDollar() {
                             },
                             {
                                 icon: <TrendingUp className="w-10 h-10 text-blue-400" />,
-                                title: "Unlock 5 Live Leads",
-                                desc: "We'll reveal contact details for 5 customers actively asking about your service category."
+                                title: "Unlock Live Leads",
+                                desc: "We'll reveal contact details for customers actively asking about your service category."
                             },
                             {
                                 icon: <Star className="w-10 h-10 text-yellow-400" />,
@@ -142,7 +142,7 @@ export default function OneDollar() {
             {/* Guaranteed Result */}
             <section className="py-20 bg-gradient-to-b from-[#0A0F1C] to-teal-900/10">
                 <div className="container mx-auto px-4 text-center max-w-3xl">
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Why $1?</h2>
+                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Why 35฿?</h2>
                     <p className="text-lg text-slate-300 mb-8">
                         We know you've been burned by marketing agencies before. We want to prove Kosmoi works before asking for a real subscription. <br /><br />
                         For the price of a 7-Eleven coffee, you can see the live demand for your business.
@@ -152,7 +152,7 @@ export default function OneDollar() {
                         size="lg"
                         className="rounded-xl text-lg h-14 px-10 bg-white text-[#0A0F1C] hover:bg-slate-200"
                     >
-                        Display My Business for $1 <ArrowRight className="ml-2 w-5 h-5" />
+                        Display My Business for 35฿ <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
                 </div>
             </section>

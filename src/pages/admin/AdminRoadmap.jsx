@@ -64,35 +64,36 @@ export default function AdminRoadmap() {
                     </h2>
 
                     <div className="relative">
-                        {/* Phase 1 */}
+                        {/* Week 1 */}
                         <RoadmapItem
-                            title="Phase 1: Foundation (The Night Tasks)"
-                            status="completed"
-                            date="Dec 10 - Dec 11, 2024"
-                            description="Established core integrations: GitHub, Sentry, Supabase, and basic Board Room UI."
-                        />
-
-                        {/* Phase 2 (Current) */}
-                        <RoadmapItem
-                            title="Phase 2: Cloud & Intelligence"
+                            title="Week 1: Foundation & Revenue"
                             status="in-progress"
-                            date="Dec 12 - Dec 13, 2024"
-                            description="Connecting OpenRouter for smarter agents and deploying Worker to Zo.computer for 24/7 uptime."
+                            date="Jan 1 - Jan 7"
+                            description="Fixing Admin Dashboard, Refining Pricing Pages (35฿/1500฿), and Verifying Stripe End-to-End."
                         />
 
-                        {/* Phase 3 */}
+                        {/* Week 2 */}
                         <RoadmapItem
-                            title="Phase 3: Autonomous Loops"
+                            title="Week 2: The Growth Engine"
                             status="planned"
-                            date="Dec 14 - Dec 18, 2024"
-                            description="Closing the loop: Sentry Alerts -> Linear Issues -> Auto-Fix PRs."
+                            date="Jan 8 - Jan 14"
+                            description="Activating 'Sales Coordinator' Agent, Polish Invitation System, and Mobile View Optimization."
                         />
-                        {/* Phase 4 */}
+
+                        {/* Week 3 */}
                         <RoadmapItem
-                            title="Phase 4: Expansion & IPO Prep"
+                            title="Week 3: Product Value & Retention"
                             status="planned"
-                            date="Late Dec 2024"
-                            description="Stripe payments, Public Launch, SEO, and Investor Dashboard."
+                            date="Jan 15 - Jan 21"
+                            description="AI Receptionist Alpha (Auto-reply), Analytics Dashboard Upgrade (ROI Reports)."
+                        />
+
+                        {/* Week 4 */}
+                        <RoadmapItem
+                            title="Week 4: Scale & Automation"
+                            status="planned"
+                            date="Jan 22 - Jan 31"
+                            description="Autonomous Billing, Commission Engine (8-15%), and full Security Immune System."
                         />
                     </div>
                 </div>

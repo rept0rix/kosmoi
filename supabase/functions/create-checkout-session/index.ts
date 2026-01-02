@@ -9,7 +9,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
     httpClient: Stripe.createFetchHttpClient(),
 });
 
-serve(async (req) => {
+serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
@@ -29,7 +29,7 @@ serve(async (req) => {
             throw new Error('User not found');
         }
 
-        const { priceId } = await req.json();
+        const { priceId, mode = 'subscription' } = await req.json();
 
         // 1. Get or Create Customer
         const { data: customerData } = await supabaseClient
@@ -65,7 +65,7 @@ serve(async (req) => {
                     quantity: 1,
                 },
             ],
-            mode: 'subscription',
+            mode: mode,
             success_url: `${req.headers.get('origin')}/admin?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${req.headers.get('origin')}/admin`,
         });

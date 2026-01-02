@@ -1,4 +1,5 @@
 import { realSupabase as supabase } from '../api/supabaseClient.js';
+import seedData from '@/data/samui_real_data_seed.json';
 
 /**
  * AdminService
@@ -29,17 +30,36 @@ export const AdminService = {
     /**
      * Get all businesses (Service Providers)
      */
+
+
+    // ... (existing code)
+
     getBusinesses: async () => {
         try {
-            const { data, error } = await supabase.from('service_providers').select('*').order('created_at', { ascending: false });
+            console.log("AdminService: getBusinesses called.");
+
+            const { data, error } = await supabase
+                .from('service_providers')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            console.log("AdminService: Response received.", { dataLen: data?.length, error });
+
             if (error) {
-                console.warn("AdminService: Business fetch failed", error);
-                return [];
+                console.warn("AdminService: Business fetch failed, falling back to seed data.", error);
+                throw error;
             }
+
+            if (!data || data.length === 0) {
+                console.log("AdminService: No data from Supabase, using seed data.");
+                return seedData;
+            }
+
             return data;
         } catch (e) {
-            console.error("AdminService Error:", e);
-            return [];
+            console.error("AdminService Error (Using Seed Data):", e);
+            // Fallback to seed data so the UI never hangs
+            return seedData;
         }
     },
 

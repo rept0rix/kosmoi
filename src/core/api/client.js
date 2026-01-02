@@ -7,18 +7,32 @@ class APIClient {
 
         if (!this.supabaseUrl || !this.supabaseKey) {
             console.error('CRITICAL: Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Supabase client will not initialize.');
+            console.log('APIClient: Initializing MOCK Supabase client.');
             // Return a mock or null to prevent app crash during module load
+            // Recursive mock to handle any chain depth
+            const mockResult = { data: null, error: { message: 'Supabase not initialized (Missing Env Vars)' } };
+            const createMock = () => new Proxy(() => { }, {
+                get: (target, prop) => {
+                    if (prop === 'then') return (resolve) => resolve(mockResult);
+                    return createMock();
+                },
+                apply: (target, thisArg, args) => createMock()
+            });
+
             this.supabase = {
-                from: () => ({ select: () => ({ data: [], error: { message: 'Supabase not initialized (Missing Env Vars)' } }) }),
+                from: () => createMock(),
                 auth: {
                     getSession: async () => ({ data: { session: null } }),
+                    getUser: async () => ({ data: { user: null } }),
                     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
                 },
-                storage: { from: () => ({ upload: async () => ({ error: 'No storage' }) }) },
+                storage: { from: () => createMock() },
                 functions: { invoke: async () => ({ error: 'No functions' }) },
-                channel: () => ({ on: () => ({ subscribe: () => { } }) })
+                channel: () => ({ on: () => ({ subscribe: () => { } }) }),
+                rpc: async () => ({ data: null, error: { message: 'RPC not available (Missing Env Vars)' } })
             };
         } else {
+            console.log('APIClient: Initializing REAL Supabase client with URL:', this.supabaseUrl);
             this.supabase = createClient(this.supabaseUrl, this.supabaseKey, {
                 auth: {
                     persistSession: true,
