@@ -58,6 +58,7 @@ import Organizer from '@/pages/Organizer.jsx';
 
 import RealEstateHub from '@/pages/RealEstateHub';
 import OneDollar from '@/pages/OneDollar';
+import ClaimProfile from '@/pages/ClaimProfile';
 import CommandCenter from '@/features/agents/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
@@ -190,6 +191,8 @@ const AuthenticatedApp = () => {
             {/* Public Super App Routes */}
             <Route path="real-estate" element={<RealEstateHub />} />
             <Route path="test-drive" element={<OneDollar />} />
+            <Route path="one-dollar" element={<OneDollar />} />
+            <Route path="claim" element={<ClaimProfile />} /> // Query param: ?token=...
             <Route path="marketplace" element={<Marketplace />} />
             <Route path="marketplace/:id" element={<ProductDetails />} />
             <Route path="organizer" element={<Organizer />} />

@@ -15,14 +15,19 @@ export const StripeService = {
     /**
      * Redirects to Stripe Checkout for the given price.
      */
-    checkoutSubscription: async (priceId) => {
+    checkoutSubscription: async (priceId, mode = 'subscription') => {
         try {
-            const { data: { sessionId }, error } = await supabase.functions.invoke('create-checkout-session', {
-                body: { priceId: priceId }
+            const response = await supabase.functions.invoke('create-checkout-session', {
+                body: { priceId, mode }
             });
 
-            if (error) throw error;
+            if (response.error) throw response.error;
+            // @ts-ignore
+            const data = response.data;
 
+            if (!data?.sessionId) throw new Error("No session ID returned from backend");
+
+            const { sessionId } = data;
             const stripe = await getStripe();
             const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
 
@@ -38,8 +43,10 @@ export const StripeService = {
      */
     openCustomerPortal: async () => {
         try {
-            const { data: { url }, error } = await supabase.functions.invoke('create-portal-link');
-            if (error) throw error;
+            const response = await supabase.functions.invoke('create-portal-link');
+            if (response.error) throw response.error;
+            // @ts-ignore
+            const url = response.data?.url;
 
             window.location.assign(url);
         } catch (error) {
@@ -78,7 +85,7 @@ export const StripeService = {
         if (typeof process !== 'undefined' && process.env && process.env.STRIPE_SECRET_KEY) {
             try {
                 console.log(`[StripeService] Creating real payment link for '${product}' ($${amount})`);
-                
+
                 // Dynamic import to prevent client-side build errors
                 const { default: Stripe } = await import('stripe');
                 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { AdminService } from '../../services/AdminService';
+import { InvitationService } from '@/services/business/InvitationService';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, MapPin, Star, MoreHorizontal, Search, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+import { Store, MapPin, Star, MoreHorizontal, Search, ExternalLink, Send } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,13 +18,20 @@ export default function AdminBusinesses() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const loadBusinesses = async () => {
+        console.log("AdminBusinesses: Starting loadBusinesses...");
         setLoading(true);
         try {
+            console.log("AdminBusinesses: Calling AdminService.getBusinesses()");
+
             const data = await AdminService.getBusinesses();
+
+            console.log("AdminBusinesses: Data received:", data);
             setBusinesses(data);
         } catch (e) {
             console.error("Businesses Load Failed", e);
+            toast.error("Failed to load businesses: " + e.message);
         } finally {
+            console.log("AdminBusinesses: Finally block reached");
             setLoading(false);
         }
     };
@@ -34,6 +43,24 @@ export default function AdminBusinesses() {
     const handleVerify = async (id) => {
         await AdminService.toggleBusinessVerification(id);
         await loadBusinesses();
+    };
+
+    const handleInvite = async (business) => {
+        try {
+            toast.info(`Generating invitation for ${business.business_name}...`);
+            const invite = await InvitationService.createInvitation(business.id);
+
+            // Construct Link
+            const link = `${window.location.origin}/claim?token=${invite.token}`;
+
+            await navigator.clipboard.writeText(link);
+            toast.success("Invitation Link Copied!", {
+                description: "Share this link with the business owner."
+            });
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to create invitation.");
+        }
     };
 
     const filteredBusinesses = businesses.filter(b =>
@@ -76,7 +103,7 @@ export default function AdminBusinesses() {
                         {loading ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                                    Loading businesses...
+                                    Loading businesses... (DEBUG)
                                 </td>
                             </tr>
                         ) : filteredBusinesses.length === 0 ? (
@@ -144,6 +171,13 @@ export default function AdminBusinesses() {
                                                 <DropdownMenuItem className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800">
                                                     <ExternalLink className="mr-2 h-4 w-4" />
                                                     View Public Page
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onSelect={() => handleInvite(biz)}
+                                                    className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-teal-400"
+                                                >
+                                                    <Send className="mr-2 h-4 w-4" />
+                                                    Invite Business
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>

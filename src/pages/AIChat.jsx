@@ -212,7 +212,7 @@ export default function AIChat() {
                 let distInfo = "";
                 if (userLocation) {
                     const dist = calculateDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
-                    distInfo = `(${dist}km away)`;
+                    if (dist) distInfo = `(${dist}km away)`;
                 }
                 return `${p.business_name} (${p.category}): ${p.description || ""} ${distInfo}`;
             }).join("\n");
