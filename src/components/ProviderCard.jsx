@@ -81,17 +81,74 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
     >
       {/* Image / Hero Section */}
       <div className="h-48 relative overflow-hidden bg-slate-100">
-        {provider.images && provider.images.length > 0 ? (
-          <img
-            src={provider.images[0]}
-            alt={provider.business_name}
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-            <CategoryIcon className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-2" />
-          </div>
-        )}
+        {(() => {
+          // Strict Image Filtering Logic
+          const isValidImage = (img, category) => {
+            if (!img) return false;
+
+            // 1. Hard Blacklist (Metadata / Generic Site Images)
+            const blacklist = [
+              'Logo-Samui-Map',
+              'Next-Edition-Post',
+              'GETTING_',
+              'KOH_SAMUI_',
+              'ACCOMODATI_',
+              'MAENAM_BEA'
+            ];
+
+            if (blacklist.some(term => img.includes(term))) return false;
+
+            // 2. Contextual Filtering (e.g. Temples showing up for Restaurants)
+            // If image is a Temple image (WAT_), but category is NOT culture/temple
+            if (img.includes('WAT_')) {
+              const allowedCategories = ['culture', 'temple', 'attraction', 'sightseeing', 'other'];
+              // We include 'other' cautiously, but usually 'restaurants' or 'handyman' shouldn't show temples.
+              // Actually, let's be strict: if it's explicitly 'handyman', 'restaurant', 'service', don't show temples.
+              const isCulture = allowedCategories.some(cat => category?.toLowerCase().includes(cat));
+
+              // If category is clearly NOT culture (e.g. restaurant), ban it.
+              if (!isCulture) return false;
+            }
+
+            return true;
+          };
+
+          const validImages = provider.images ? provider.images.filter(img => isValidImage(img, provider.category)) : [];
+
+          // Use filtered list. If empty, it means we show NO image (placeholder), which is better than wrong image.
+          const displayImages = validImages;
+          const mainImage = displayImages[0];
+
+          if (mainImage) {
+            const imageUrl = mainImage.startsWith('http')
+              ? mainImage
+              : `https://gzjzeywhqbwppfxqkptf.supabase.co/storage/v1/object/public/service-provider-images/${encodeURIComponent(mainImage)}`;
+
+            return (
+              <img
+                src={imageUrl}
+                alt={provider.business_name}
+                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  if (displayImages.length > 1) {
+                    // Try next image if available (but simplistic retry here might loop, so just fallback for now)
+                    e.currentTarget.src = 'https://placehold.co/400x300?text=No+Image';
+                  } else {
+                    e.currentTarget.src = 'https://placehold.co/400x300?text=No+Image';
+                  }
+                }}
+              />
+            );
+          } else {
+            return (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                <CategoryIcon className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-2" />
+              </div>
+            );
+          }
+        })()}
+
 
         {/* Badges Overlay */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">

@@ -68,6 +68,7 @@ import AdminAgents from '@/features/agents/pages/AdminAgents';
 import AgentDetail from '@/pages/admin/AgentDetail';
 import AdminCompany from '@/pages/admin/AdminCompany';
 import AdminBusinesses from '@/pages/admin/AdminBusinesses';
+import AdminBookings from '@/pages/admin/AdminBookings';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
 import AdminEvolution from './pages/admin/AdminEvolution';
@@ -227,6 +228,7 @@ const AuthenticatedApp = () => {
                 <Route path="agents" element={<AdminAgents />} />
                 <Route path="agents/:agentId" element={<AgentDetail />} />
                 <Route path="company" element={<AdminCompany />} />
+                <Route path="bookings" element={<AdminBookings />} />
                 <Route path="businesses" element={<AdminBusinesses />} />
                 <Route path="data" element={<AdminData />} />
                 <Route path="optimizer" element={<AdminOptimizer />} />

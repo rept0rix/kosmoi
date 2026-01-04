@@ -71,6 +71,7 @@ export default function AdminDashboard() {
                     <TabsTrigger value="businesses" className="data-[state=active]:bg-purple-600">Businesses</TabsTrigger>
                     <TabsTrigger value="live" className="data-[state=active]:bg-emerald-600">Live Ops</TabsTrigger>
                     <TabsTrigger value="finance" className="data-[state=active]:bg-green-600">Finance</TabsTrigger>
+                    <TabsTrigger value="system" className="data-[state=active]:bg-orange-600">System</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tasks" className="mt-6">
@@ -94,7 +95,88 @@ export default function AdminDashboard() {
                         Finance Module (Stripe Integration) Coming Soon
                     </Card>
                 </TabsContent>
+
+                <TabsContent value="system" className="mt-6">
+                    <SystemVerification />
+                </TabsContent>
             </Tabs>
+        </div>
+    );
+}
+
+function SystemVerification() {
+    const handleTestPayment = async () => {
+        try {
+            const { CreatePaymentLink } = await import('../../api/integrations');
+            const result = await CreatePaymentLink({
+                name: "System Verification Test",
+                amount: 1,
+                currency: 'thb'
+            });
+
+            if (result.url) {
+                window.open(result.url, '_blank');
+            } else {
+                alert('Payment Link Creation Failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    };
+
+    const handleTestEmail = async () => {
+        try {
+            const { SendEmail } = await import('../../api/integrations');
+            const result = await SendEmail({
+                to: "naoryanko@gmail.com", // Send to admin
+                subject: "System Verification: Edge Email Test",
+                html: "<h1>It Works!</h1><p>This email was sent via Supabase Edge Function.</p>"
+            });
+
+            if (result.status === 'success') {
+                alert('Email Sent Successfully! Check your inbox.');
+            } else {
+                alert('Email Sending Failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error: ' + error.message);
+        }
+    };
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6 bg-slate-900/40 border-white/5">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-green-400" />
+                    Payment Verification
+                </h3>
+                <p className="text-slate-400 mb-6">
+                    Generates a real 1 THB Stripe payment link using the <code>create-payment-link</code> Edge Function.
+                </p>
+                <button
+                    onClick={handleTestPayment}
+                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                    Test Payment Link (1 THB)
+                </button>
+            </Card>
+
+            <Card className="p-6 bg-slate-900/40 border-white/5">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-blue-400" />
+                    Email Verification
+                </h3>
+                <p className="text-slate-400 mb-6">
+                    Sends a test email to the admin via Resend using the <code>send-email</code> Edge Function.
+                </p>
+                <button
+                    onClick={handleTestEmail}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                    Send Test Email
+                </button>
+            </Card>
         </div>
     );
 }

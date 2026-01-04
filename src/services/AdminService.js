@@ -1,5 +1,7 @@
 import { realSupabase as supabase } from '../api/supabaseClient.js';
 import seedData from '@/data/samui_real_data_seed.json';
+import { SendEmail } from '@/api/integrations';
+import { EmailTemplates } from './EmailTemplates';
 
 /**
  * AdminService
@@ -64,6 +66,37 @@ export const AdminService = {
     },
 
     /**
+     * Get all bookings (Admin)
+     */
+    getBookings: async () => {
+        try {
+            const { data, error } = await supabase
+                .from('bookings')
+                .select(`
+                    *,
+                    profiles:user_id (
+                        full_name,
+                        email
+                    ),
+                    service_providers (
+                        business_name,
+                        category
+                    )
+                `)
+                .order('service_date', { ascending: false });
+
+            if (error) {
+                console.warn("AdminService: Bookings fetch failed", error);
+                return { data: [], error };
+            }
+            return { data, error: null };
+        } catch (e) {
+            console.error("AdminService Error:", e);
+            return { data: [], error: e };
+        }
+    },
+
+    /**
      * Get Platform Stats (Revenue, MRR, Counts)
      */
     getStats: async () => {
@@ -123,5 +156,17 @@ export const AdminService = {
             console.error("Verification Failed:", e);
             return false;
         }
+    },
+
+    /**
+     * Send Invitation Email
+     */
+    sendInvitationEmail: async (email, businessName, link) => {
+        const html = EmailTemplates.getInvitationEmail(businessName, link);
+        return await SendEmail({
+            to: email,
+            subject: 'Claim your Samui Service Hub Profile',
+            html: html
+        });
     }
 };

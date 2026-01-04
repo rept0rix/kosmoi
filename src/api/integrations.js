@@ -84,39 +84,24 @@ export const Core = {
         }
     },
     SendEmail: async ({ to, subject, html, from = "onboarding@resend.dev" }) => {
-        console.log(`[Integrations] Sending email to ${to}...`);
-        const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('resend_api_key') : null) ||
-            (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_RESEND_API_KEY : process.env.VITE_RESEND_API_KEY);
-
-        if (!apiKey) {
-            console.warn("Missing Resend API Key. Email simulated.");
-            return { simulated: true, status: "success", message: "Email simulated (No API Key)" };
-        }
+        console.log(`[Integrations] Sending email to ${to} via Edge Function...`);
 
         try {
-            const res = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    from: from,
-                    to: [to],
-                    subject: subject,
-                    html: html
-                })
+            // @ts-ignore
+            const { data, error } = await supabase.functions.invoke('send-email', {
+                body: {
+                    to,
+                    subject,
+                    html,
+                    from
+                }
             });
 
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.message || 'Failed to send email');
-            }
-
-            const data = await res.json();
-            return { id: data.id, status: "success" };
+            if (error) throw error;
+            return { id: data?.id || "sent-via-edge", status: "success" };
         } catch (error) {
-            console.error("Email Error:", error);
+            console.error("Email Error (Edge):", error);
+            // Fallback for dev if needed, or just return error
             return { error: error.message };
         }
     },
@@ -174,6 +159,7 @@ export const Core = {
     GenerateImage: async ({ prompt, aspectRatio = "16:9" }) => {
         console.log(`[Integrations] Generating image for: "${prompt}"...`);
         try {
+            // @ts-ignore
             const { data, error } = await supabase.functions.invoke('generate-image', {
                 body: {
                     prompt,
@@ -183,7 +169,7 @@ export const Core = {
             });
 
             if (error) throw error;
-            if (data.error) throw new Error(data.error);
+            if (data?.error) throw new Error(data.error);
 
             // The function returns base64. We should probably upload it to storage to get a URL, 
             // or return it as data URI. For now, let's return data URI.
@@ -204,46 +190,21 @@ export const Core = {
         }
     },
     ExtractDataFromUploadedFile: async () => { console.warn('ExtractDataFromUploadedFile not implemented'); return {}; },
-    CreatePaymentLink: async ({ name, amount, currency = 'usd' }) => {
-        console.log(`[Integrations] Creating payment link for ${name} ($${amount})...`);
-        const apiKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_KEY || process.env.VITE_STRIPE_KEY || process.env.stripe_key || process.env.stirpe_s_key;
-
-        if (!apiKey) {
-            console.warn("Missing Stripe API Key. Payment link simulated.");
-            return { simulated: true, url: "https://checkout.stripe.com/pay/simulated_link" };
-        }
+    CreatePaymentLink: async ({ name, amount, currency = 'thb', metadata = {}, success_url, cancel_url }) => {
+        console.log(`[Integrations] Creating payment link for ${name} ($${amount}) via Edge Function...`);
 
         try {
-            // Create a Price first (simplified flow) or use ad-hoc line items if allowed
-            // For simplicity, we'll use the direct Checkout Session creation with line_items
-            const params = new URLSearchParams();
-            params.append('payment_method_types[]', 'card');
-            params.append('line_items[0][price_data][currency]', currency);
-            params.append('line_items[0][price_data][product_data][name]', name);
-            params.append('line_items[0][price_data][unit_amount]', Math.round(amount * 100).toString()); // Cents
-            params.append('line_items[0][quantity]', '1');
-            params.append('mode', 'payment');
-            params.append('success_url', 'https://samui-service-hub.vercel.app/success');
-            params.append('cancel_url', 'https://samui-service-hub.vercel.app/cancel');
-
-            const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: params
+            // @ts-ignore
+            const { data, error } = await supabase.functions.invoke('create-payment-link', {
+                body: { name, amount, currency, metadata, success_url, cancel_url }
             });
 
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error?.message || 'Failed to create payment link');
-            }
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
 
-            const data = await res.json();
-            return { url: data.url, id: data.id };
+            return { url: data?.url, id: data?.id };
         } catch (error) {
-            console.error("Stripe Error:", error);
+            console.error("Stripe Error (Edge):", error);
             return { error: error.message };
         }
     },
@@ -263,6 +224,14 @@ export const Core = {
             console.error("Embedding Error:", error);
             return null;
         }
+    },
+    SendN8NEmail: async ({ to, subject, body, campaignId }) => {
+        const { n8nService } = await import('../services/integrations/N8NService.js');
+        return await n8nService.triggerEmail({ to, subject, body, campaignId });
+    },
+    SendN8NWhatsApp: async ({ phone, message, templateId }) => {
+        const { n8nService } = await import('../services/integrations/N8NService.js');
+        return await n8nService.triggerWhatsApp({ phone, message, templateId });
     }
 };
 
@@ -283,4 +252,8 @@ export const ExtractDataFromUploadedFile = Core.ExtractDataFromUploadedFile;
 export const CreatePaymentLink = Core.CreatePaymentLink;
 
 export const GetEmbedding = Core.GetEmbedding;
+
+export const SendN8NEmail = Core.SendN8NEmail;
+
+export const SendN8NWhatsApp = Core.SendN8NWhatsApp;
 

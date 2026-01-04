@@ -60,7 +60,7 @@ export default function ServiceProviders() {
   const [filters, setFilters] = useState({
     minRating: parseFloat(urlParams.get('minRating')) || 0,
     minReviews: parseInt(urlParams.get('minReviews')) || 0,
-    maxDistance: parseInt(urlParams.get('maxDistance')) || 20000,
+    maxDistance: parseInt(urlParams.get('maxDistance')) || 2000000,
     priceRanges: urlParams.get('priceRanges')?.split(',').filter(Boolean) || [],
     languages: urlParams.get('languages')?.split(',').filter(Boolean) || [],
     emergencyService: urlParams.get('emergencyService') === 'true',
@@ -273,11 +273,22 @@ export default function ServiceProviders() {
     updateUrlFilters(newFilters);
   };
 
-  const { data: providers, isLoading } = useQuery({
+  const { data: providers, isLoading, error: queryError } = useQuery({
     queryKey: ['serviceProviders'],
-    queryFn: () => db.entities.ServiceProvider.filter({ status: 'active' }),
+    queryFn: async () => {
+      try {
+        const data = await db.entities.ServiceProvider.filter({ status: 'active' });
+        return data;
+      } catch (err) {
+        console.error('Error fetching service providers:', err);
+        throw err;
+      }
+    },
     initialData: [],
+    refetchOnWindowFocus: true
   });
+
+  const rawCount = providers?.length || 0;
 
   const filteredProviders = providers
     .map(provider => {
@@ -475,12 +486,20 @@ export default function ServiceProviders() {
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-500" />
                 {t('search.results_found', { count: filteredProviders.length })}
+                <span className="text-xs text-gray-400 ml-2">(Raw: {rawCount})</span>
               </h2>
               <div className="text-xs text-slate-500 flex gap-2">
                 <span className={`cursor-pointer px-2 py-1 rounded-md ${sortBy === 'rating' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`} onClick={() => setSortBy('rating')}>Rating</span>
                 <span className={`cursor-pointer px-2 py-1 rounded-md ${sortBy === 'distance' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`} onClick={() => setSortBy('distance')}>Distance</span>
               </div>
             </div>
+
+            {queryError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong className="font-bold">Error loading providers: </strong>
+                <span className="block sm:inline">{queryError.message || JSON.stringify(queryError)}</span>
+              </div>
+            )}
 
             {filteredProviders.length === 0 ? (
               <GlassCard className="text-center py-16 flex flex-col items-center justify-center gap-4">

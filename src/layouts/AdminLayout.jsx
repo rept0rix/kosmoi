@@ -24,7 +24,8 @@ import {
     FileText,
     Table,
     HardDrive,
-    Upload
+    Upload,
+    CalendarDays
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ export default function AdminLayout() {
 
                     <NavGroup title="Operations">
                         <NavItem to="/admin/tasks" icon={<ClipboardList />} label="Task Board" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/bookings" icon={<CalendarDays />} label="Bookings" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/businesses" icon={<Store />} label="Businesses" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />

@@ -42,3 +42,27 @@ The system is powered by a multi-agent architecture.
   - `pages/`: Application pages
   - `services/`: Business logic and AI services
 - `scripts/`: Utility scripts for maintenance and diagnosis
+
+## 🔐 Environment & Deployment
+
+### Required Environment Variables
+Ensure these are set in your `.env` (local) and Supabase Project Settings (Production):
+
+- `VITE_SUPABASE_URL`: Your Supabase Project URL.
+- `VITE_SUPABASE_ANON_KEY`: Your Supabase Anon Key.
+- `RESEND_API_KEY`: (Backend/Edge Only) For sending emails.
+- `STRIPE_SECRET_KEY`: (Backend/Edge Only) For generating payment links.
+
+### ⚡ Edge Functions
+We use Supabase Edge Functions for secure operations. Deploy them using the CLI:
+
+```bash
+supabase functions deploy send-email --no-verify-jwt
+supabase functions deploy create-payment-link --no-verify-jwt
+```
+
+### 🌍 Production Deployment
+The frontend is deployed to `kosmoi.site`.
+1. Ensure all Edge Functions are deployed.
+2. Run `npm run build` to verify the build.
+3. Push to `main` branch (triggers CI/CD if configured).

@@ -102,6 +102,8 @@ TableHead.displayName = "TableHead"
  * @typedef {Object} TableCellProps
  * @property {string} [className]
  * @property {React.ReactNode} [children]
+ * @property {number} [colSpan]
+ * @property {number} [rowSpan]
  */
 
 /** @type {React.ForwardRefExoticComponent<TableCellProps & React.RefAttributes<HTMLTableCellElement>>} */

@@ -207,18 +207,20 @@ export const AuthProvider = ({ children }) => {
     window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.href)}`;
   };
 
+  const contextValue = React.useMemo(() => ({
+    user,
+    isAuthenticated,
+    isLoadingAuth,
+    isLoadingPublicSettings,
+    authError,
+    appPublicSettings,
+    logout,
+    navigateToLogin,
+    checkAppState
+  }), [user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, appPublicSettings]);
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-      logout,
-      navigateToLogin,
-      checkAppState
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

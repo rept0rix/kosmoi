@@ -181,13 +181,21 @@ export const RxDBProvider = ({ children }) => {
         );
     }
 
-    // Calculate strict public route check for rendering logic
+    // Calculate strict public/core route check for rendering logic
+    // We expanded this to include "Core App Routes" that do NOT strictly require RxDB (Agents)
+    // to function. This ensures "My Bookings" or "Wallet" load instantly via Supabase/offlineQuery
+    // even if RxDB is slow to initialize.
     const isPublicRoute =
         window.location.pathname === '/' ||
         window.location.pathname.startsWith('/he') ||
         window.location.pathname.startsWith('/th') ||
         window.location.pathname.startsWith('/ru') ||
-        ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy', '/real-estate', '/marketplace', '/experiences', '/wellness'].some(p => window.location.pathname.includes(p));
+        [
+            '/about', '/contact', '/pricing', '/blog', '/terms', '/privacy',
+            '/real-estate', '/marketplace', '/experiences', '/wellness',
+            '/my-bookings', '/wallet', '/provider-dashboard', '/login', '/signup',
+            '/notifications', '/claim'
+        ].some(p => window.location.pathname.includes(p));
 
     // SAFEGUARD: If Offline Mode is triggered (Timeout or Critical Error), 
     // DO NOT render children. Rendering children with a broken/null DB can cause infinite loops 

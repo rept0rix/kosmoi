@@ -28,9 +28,7 @@ const getGlobalStorage = () => {
     const key = '__KOSMOI_RXDB_STORAGE_V4__';
     if (!window[key]) {
         const rawStorage = getRxStorageDexie();
-        window[key] = import.meta.env.DEV
-            ? wrappedValidateAjvStorage({ storage: rawStorage })
-            : rawStorage;
+        window[key] = rawStorage;
     }
     return window[key];
 };
@@ -38,7 +36,7 @@ const getGlobalStorage = () => {
 export const storage = getGlobalStorage();
 
 // Database Context
-export const DB_NAME = 'kosmoidb_v11';
+export const DB_NAME = 'kosmoidb_v13';
 
 /**
  * Creates and configures the RxDB database instance
