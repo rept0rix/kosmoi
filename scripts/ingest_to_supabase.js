@@ -54,6 +54,12 @@ async function uploadImage(placeId, filename) {
         const fileBuffer = fs.readFileSync(localPath);
         const storagePath = `collab/${placeId}_${Date.now()}.jpg`;
 
+        // Ensure bucket exists
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if (!buckets.find(b => b.name === 'provider-images')) {
+            await supabase.storage.createBucket('provider-images', { public: true });
+        }
+
         const { data, error } = await supabase.storage
             .from('provider-images')
             .upload(storagePath, fileBuffer, {
@@ -127,21 +133,17 @@ async function run() {
         const row = {
             business_name: item.name,
             category: item.discovery_category,
-            super_category: superCat, // Important for filtering
-            description: `${item.types ? item.types.slice(0, 3).join(', ') : ''} (Imported)`,
+            sub_category: item.discovery_category, // Map discovery to sub_category
+            super_category: superCat,
+            description: `${item.types ? item.types.slice(0, 3).join(', ') : ''} (Imported from Google)`,
             location: item.address,
-            phone: null, // Google Search usually doesn't return phone in the list view, details would
+            phone: null,
             website: null,
             average_rating: item.rating || 0,
-            status: 'active', // Show immediately
-            verified: true,   // Show as verified/safe
+            status: 'active',
+            verified: true,
             google_place_id: item.place_id,
-            metadata: {
-                image_url: imageUrl,
-                google_types: item.types,
-                original_images: item.images,
-                discovery_area: item.discovery_area
-            },
+            images: imageUrl ? [imageUrl] : [], // Use Array column
             created_at: new Date().toISOString()
         };
 
