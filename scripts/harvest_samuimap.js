@@ -81,39 +81,7 @@ async function fetchSitemaps() {
     }
 }
 
-/**
- * Downloads an image and saves it locally
- */
-async function downloadImage(url, prefix) {
-    if (!url) return null;
 
-    // Handle relative URLs
-    if (url.startsWith('/')) url = BASE_URL + url;
-
-    try {
-        const filename = `${prefix}_${path.basename(url).split('?')[0]}`.replace(/[^a-z0-9._-]/gi, '_');
-        const filepath = path.join(IMAGES_DIR, filename);
-
-        if (fs.existsSync(filepath)) return filename; // Skip if exists
-
-        const response = await axios({
-            url,
-            method: 'GET',
-            responseType: 'stream'
-        });
-
-        const writer = fs.createWriteStream(filepath);
-        response.data.pipe(writer);
-
-        return new Promise((resolve, reject) => {
-            writer.on('finish', () => resolve(filename));
-            writer.on('error', reject);
-        });
-    } catch (err) {
-        console.error(`⚠️ Failed to download image: ${url}`, err.message);
-        return null;
-    }
-}
 
 /**
  * Parses a single page
@@ -192,16 +160,9 @@ async function processPage(url) {
                 if (!matches) return;
             }
 
-            // Image Extraction
+            // Image Extraction - SKIPPED (Source provides unusable watermarked/logo images)
+            // We will fetch images from Google Maps/Places API in a separate pass.
             const images = [];
-            const imgElements = $('img');
-            for (let i = 0; i < imgElements.length; i++) {
-                const src = $(imgElements[i]).attr('src');
-                if (src && !src.includes('logo') && !src.includes('icon') && !src.includes('avatar')) {
-                    const localFile = await downloadImage(src, title.substring(0, 10));
-                    if (localFile) images.push(localFile);
-                }
-            }
 
             const pageData = {
                 url,
