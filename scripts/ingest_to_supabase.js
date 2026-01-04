@@ -54,12 +54,6 @@ async function uploadImage(placeId, filename) {
         const fileBuffer = fs.readFileSync(localPath);
         const storagePath = `collab/${placeId}_${Date.now()}.jpg`;
 
-        // Ensure bucket exists
-        const { data: buckets } = await supabase.storage.listBuckets();
-        if (!buckets.find(b => b.name === 'provider-images')) {
-            await supabase.storage.createBucket('provider-images', { public: true });
-        }
-
         const { data, error } = await supabase.storage
             .from('provider-images')
             .upload(storagePath, fileBuffer, {
@@ -82,6 +76,18 @@ async function uploadImage(placeId, filename) {
 
 async function run() {
     console.log("🚀 Starting Ingestion to Supabase...");
+
+    // Ensure bucket exists ONCE at startup
+    console.log("🪣 Checking storage bucket...");
+    try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if (!buckets.find(b => b.name === 'provider-images')) {
+            console.log("   Creating 'provider-images' bucket...");
+            await supabase.storage.createBucket('provider-images', { public: true });
+        }
+    } catch (e) {
+        console.warn("   ⚠️ Bucket check failed (might already exist):", e.message);
+    }
 
     if (!fs.existsSync(DATA_FILE)) {
         console.error("❌ Data file not found.");
