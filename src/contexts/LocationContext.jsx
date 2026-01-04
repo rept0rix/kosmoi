@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const LocationContext = createContext();
+const LocationContext = createContext(null);
 
 const DEFAULT_LOCATION = {
     latitude: 9.5120,
@@ -82,16 +82,18 @@ export const LocationProvider = ({ children }) => {
         });
     };
 
+    const contextValue = React.useMemo(() => ({
+        userLocation,
+        locationName,
+        locationAddress,
+        locationHistory,
+        updateLocation,
+        calculateDistance,
+        DEFAULT_LOCATION
+    }), [userLocation, locationName, locationAddress, locationHistory]);
+
     return (
-        <LocationContext.Provider value={{
-            userLocation, // The lat/lng object
-            locationName,
-            locationAddress,
-            locationHistory,
-            updateLocation,
-            calculateDistance,
-            DEFAULT_LOCATION // Expose default for maps to use if userLocation is null
-        }}>
+        <LocationContext.Provider value={contextValue}>
             {children}
         </LocationContext.Provider>
     );

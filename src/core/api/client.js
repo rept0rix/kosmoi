@@ -37,7 +37,24 @@ class APIClient {
                 auth: {
                     persistSession: true,
                     autoRefreshToken: true,
-                    detectSessionInUrl: true
+                    detectSessionInUrl: false, // Disabled to prevent redirect loops/locks
+                    storageKey: 'supabase.auth.token.v2', // Explicit key to avoid conflicts
+                    storage: typeof window !== 'undefined' ? window.localStorage : undefined
+                },
+                realtime: {
+                    params: {
+                        eventsPerSecond: 10,
+                    },
+                    heartbeatIntervalMs: 30000,
+                },
+                db: {
+                    schema: 'public',
+                },
+                // Global fetch retry policy
+                global: {
+                    fetch: (url, options) => {
+                        return fetch(url, { ...options, cache: 'no-store' }); // Prevent stale cache
+                    }
                 }
             });
         }

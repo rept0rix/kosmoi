@@ -16,6 +16,11 @@
     - Test "Claim Profile" flow for new businesses.
     - Confirm 35฿ payment grants "Verified" status automatically.
 - [ ] **Security Audit**: Revoke/Rotate exposed keys (Google Maps, Telegram).
+- [x] **AI Chatbot Integration** - *Completed Jan 3*
+    - ✅ Implemented intelligent chatbot for customer inquiries.
+    - ✅ Connected to BoardRoom agent system for context-aware responses.
+    - ✅ Deployed on service provider pages (desktop sidebar + mobile FAB).
+    - Components: ServiceProviderChat, CustomerMessageList, ChatFloatingButton, useServiceProviderChat hook.
 
 ## 🗓️ Week 2: The Growth Engine (Jan 8 - Jan 14)
 *Objective: Automate the outreach to businesses.*

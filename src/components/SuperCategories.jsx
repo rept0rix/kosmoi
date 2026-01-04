@@ -46,7 +46,7 @@ export default function SuperCategories({ onSelect, selectedCategory }) {
   });
 
   return (
-    <div className="grid grid-cols-4 gap-4 py-4 justify-items-center">
+    <div className="grid grid-cols-4 md:grid-cols-8 gap-4 py-4 justify-items-center">
       {sortedCategories.map((category) => {
         const isSelected = selectedCategory === category.id;
         return (

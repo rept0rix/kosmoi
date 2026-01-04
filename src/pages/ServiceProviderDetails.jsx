@@ -8,7 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-// Tabs imports removed
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import ServiceProviderChat from '@/components/ServiceProviderChat';
+import ChatFloatingButton from '@/components/ChatFloatingButton';
 import {
   Phone,
   MessageCircle,
@@ -65,6 +68,7 @@ export default function ServiceProviderDetails() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false); // New State
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false); // Mobile chat state
   const [newReview, setNewReview] = useState({ rating: 5, comment: "", reviewer_name: "" });
   const [userLocation, setUserLocation] = useState(null);
 
@@ -162,29 +166,17 @@ export default function ServiceProviderDetails() {
 
   const handleCall = async (phone) => {
     incrementStats('click');
-    try {
-      const isAuth = await db.auth.isAuthenticated();
-      if (!isAuth) {
-        db.auth.redirectToLogin(window.location.pathname + window.location.search);
-        return;
-      }
+    if (phone) {
       window.location.href = `tel:${phone}`;
-    } catch (error) {
-      db.auth.redirectToLogin(window.location.pathname + window.location.search);
+    } else {
+      console.warn("No phone number available");
     }
   };
 
   const handleWhatsApp = async (phone) => {
     incrementStats('click');
-    try {
-      const isAuth = await db.auth.isAuthenticated();
-      if (!isAuth) {
-        db.auth.redirectToLogin(window.location.pathname + window.location.search);
-        return;
-      }
+    if (phone) {
       window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
-    } catch (error) {
-      db.auth.redirectToLogin(window.location.pathname + window.location.search);
     }
   };
 
@@ -375,7 +367,14 @@ export default function ServiceProviderDetails() {
                         <Clock className="w-5 h-5 text-blue-600" />
                         <h4 className="font-semibold text-gray-900">שעות פעילות</h4>
                       </div>
-                      <p className="text-gray-600 text-sm">{provider.available_hours || "לא צויין"}</p>
+                      <p className="text-gray-600 text-sm">
+                        {(() => {
+                          const hours = provider.opening_hours || provider.available_hours;
+                          if (!hours) return "שעות פתיחה לא זמינות";
+                          if (typeof hours === 'string') return hours;
+                          return "לפרטים נוספים צור קשר";
+                        })()}
+                      </p>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                       <div className="flex items-center gap-3 mb-2">
@@ -545,76 +544,130 @@ export default function ServiceProviderDetails() {
 
           {/* Right Column: Actions & Map */}
           <div className="space-y-6">
-            {/* Action Card */}
+            {/* Action Card with Tabs */}
             <Card className="shadow-lg border-none sticky top-24">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-lg">יצירת קשר</h3>
-                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
-                    <Share2 className="w-5 h-5 text-gray-500" />
-                  </Button>
-                </div>
+              <Tabs defaultValue="contact" className="w-full">
+                <TabsList className="w-full grid grid-cols-2 p-1 m-2 bg-muted/50">
+                  <TabsTrigger value="contact" className="rounded-md">Contact</TabsTrigger>
+                  <TabsTrigger value="chat" className="rounded-md">Live Chat</TabsTrigger>
+                </TabsList>
 
-                <Button onClick={() => setBookingOpen(true)} className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md">
-                  <CalendarIcon className="w-5 h-5 ml-2" />
-                  הזמן תור
-                </Button>
+                <TabsContent value="contact" className="mt-0">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-lg">יצירת קשר</h3>
+                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+                        <Share2 className="w-5 h-5 text-gray-500" />
+                      </Button>
+                    </div>
 
-                <Button onClick={() => handleCall(provider.phone)} className="w-full h-12 text-lg bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm">
-                  <Phone className="w-5 h-5 ml-2" />
-                  התקשר עכשיו
-                </Button>
+                    <Button onClick={() => setBookingOpen(true)} className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md">
+                      <Calendar className="w-5 h-5 ml-2" />
+                      הזמן תור
+                    </Button>
 
-                {provider.whatsapp && (
-                  <Button onClick={() => handleWhatsApp(provider.whatsapp)} className="w-full h-12 text-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-sm">
-                    <MessageCircle className="w-5 h-5 ml-2" />
-                    WhatsApp
-                  </Button>
-                )}
+                    <Button onClick={() => handleCall(provider.phone)} className="w-full h-12 text-lg bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm">
+                      <Phone className="w-5 h-5 ml-2" />
+                      התקשר עכשיו
+                    </Button>
 
-                <Button
-                  onClick={async () => {
-                    const isAuth = await db.auth.isAuthenticated();
-                    if (!isAuth) return db.auth.redirectToLogin(window.location.href);
-                    toggleFavoriteMutation.mutate();
-                  }}
-                  variant="outline"
-                  className={`w-full ${isFavorite ? 'text-red-500 border-red-200 bg-red-50' : ''}`}
-                >
-                  <Heart className={`w-5 h-5 ml-2 ${isFavorite ? 'fill-current' : ''}`} />
-                  {isFavorite ? 'הסר ממועדפים' : 'שמור במועדפים'}
-                </Button>
+                    {provider.whatsapp && (
+                      <Button onClick={() => handleWhatsApp(provider.whatsapp)} className="w-full h-12 text-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-sm">
+                        <MessageCircle className="w-5 h-5 ml-2" />
+                        WhatsApp
+                      </Button>
+                    )}
 
-                <div className="pt-4 border-t">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-500" />
-                    מיקום
-                  </h4>
-                  <div className="rounded-xl overflow-hidden h-48 mb-3 border border-gray-200">
-                    <GoogleMap
-                      center={{ lat: defaultLat, lng: defaultLng }}
-                      zoom={15}
-                      height="100%"
-                      markers={[{
-                        lat: defaultLat,
-                        lng: defaultLng,
-                        title: provider.business_name,
-                        icon: getCategoryIcon(provider.category)
-                      }]}
-                      options={{ disableDefaultUI: true }}
-                      userLocation={userLocation}
+                    <Button
+                      onClick={async () => {
+                        const isAuth = await db.auth.isAuthenticated();
+                        if (!isAuth) return db.auth.redirectToLogin(window.location.href);
+                        toggleFavoriteMutation.mutate();
+                      }}
+                      variant="outline"
+                      className={`w-full ${isFavorite ? 'text-red-500 border-red-200 bg-red-50' : ''}`}
+                    >
+                      <Heart className={`w-5 h-5 ml-2 ${isFavorite ? 'fill-current' : ''}`} />
+                      {isFavorite ? 'הסר ממועדפים' : 'שמור במועדפים'}
+                    </Button>
+
+                    <div className="pt-4 border-t">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        מיקום
+                      </h4>
+                      <div className="rounded-xl overflow-hidden h-48 mb-3 border border-gray-200">
+                        <GoogleMap
+                          center={{ lat: defaultLat, lng: defaultLng }}
+                          zoom={15}
+                          height="100%"
+                          markers={[{
+                            lat: defaultLat,
+                            lng: defaultLng,
+                            title: provider.business_name,
+                            icon: getCategoryIcon(provider.category)
+                          }]}
+                          options={{ disableDefaultUI: true }}
+                          userLocation={userLocation}
+                        />
+                      </div>
+                      <Button onClick={handleNavigate} variant="secondary" className="w-full">
+                        <Navigation className="w-4 h-4 ml-2" />
+                        נווט לעסק
+                      </Button>
+                    </div>
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="chat" className="mt-0 p-2">
+                  {provider ? (
+                    <ServiceProviderChat
+                      provider={provider}
+                      variant="embedded"
+                      onBookingRequest={() => setBookingOpen(true)}
                     />
-                  </div>
-                  <Button onClick={handleNavigate} variant="secondary" className="w-full">
-                    <Navigation className="w-4 h-4 ml-2" />
-                    נווט לעסק
-                  </Button>
-                </div>
-              </CardContent>
+                  ) : (
+                    <div className="flex items-center justify-center h-[500px]">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                        <p className="text-sm text-muted-foreground">Loading chat...</p>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Mobile Chat FAB and Sheet */}
+      <div className="block md:hidden">
+        <ChatFloatingButton onClick={() => setIsMobileChatOpen(true)} />
+      </div>
+
+      <Sheet open={isMobileChatOpen} onOpenChange={setIsMobileChatOpen}>
+        <SheetContent side="bottom" className="h-[85vh] p-0">
+          {provider ? (
+            <ServiceProviderChat
+              provider={provider}
+              variant="modal"
+              onBookingRequest={() => {
+                setIsMobileChatOpen(false);
+                setBookingOpen(true);
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-sm text-muted-foreground">Loading chat...</p>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <BookingDialog
         open={bookingOpen}
         onOpenChange={setBookingOpen}

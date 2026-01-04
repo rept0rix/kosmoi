@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const UserProfileContext = createContext();
+const UserProfileContext = createContext(null);
 
 export const PROFILES = {
     TOURIST: 'tourist',
@@ -23,8 +23,15 @@ export const UserProfileProvider = ({ children }) => {
         localStorage.setItem('userProfile', profile);
     };
 
+    const contextValue = React.useMemo(() => ({
+        userProfile,
+        setProfile,
+        hasSelectedProfile,
+        PROFILES
+    }), [userProfile, hasSelectedProfile]);
+
     return (
-        <UserProfileContext.Provider value={{ userProfile, setProfile, hasSelectedProfile, PROFILES }}>
+        <UserProfileContext.Provider value={contextValue}>
             {children}
         </UserProfileContext.Provider>
     );

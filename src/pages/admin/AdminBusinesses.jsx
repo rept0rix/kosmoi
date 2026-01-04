@@ -11,11 +11,25 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function AdminBusinesses() {
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [sendingInvite, setSendingInvite] = useState(false);
 
     const loadBusinesses = async () => {
         console.log("AdminBusinesses: Starting loadBusinesses...");
@@ -45,21 +59,45 @@ export default function AdminBusinesses() {
         await loadBusinesses();
     };
 
-    const handleInvite = async (business) => {
-        try {
-            toast.info(`Generating invitation for ${business.business_name}...`);
-            const invite = await InvitationService.createInvitation(business.id);
+    const handleInviteClick = (business) => {
+        setSelectedBusiness(business);
+        setInviteEmail(business.email || business.contact_email || '');
+        setInviteDialogOpen(true);
+    };
 
-            // Construct Link
+    const handleSendInvite = async () => {
+        if (!inviteEmail) return;
+        setSendingInvite(true);
+        try {
+            // 1. Generate Token
+            const invite = await InvitationService.createInvitation(selectedBusiness.id, { email: inviteEmail });
             const link = `${window.location.origin}/claim?token=${invite.token}`;
 
+            // 2. Send Email
+            const result = await AdminService.sendInvitationEmail(inviteEmail, selectedBusiness?.business_name, link);
+
+            if (result.error) throw new Error(result.error);
+
+            toast.success("Invitation Sent!", { description: `Email sent to ${inviteEmail}` });
+            setInviteDialogOpen(false);
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to send invitation", { description: error.message });
+        } finally {
+            setSendingInvite(false);
+        }
+    };
+
+    const handleCopyLink = async () => {
+        if (!selectedBusiness) return;
+        try {
+            const invite = await InvitationService.createInvitation(selectedBusiness.id, { email: inviteEmail });
+            const link = `${window.location.origin}/claim?token=${invite.token}`;
             await navigator.clipboard.writeText(link);
-            toast.success("Invitation Link Copied!", {
-                description: "Share this link with the business owner."
-            });
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to create invitation.");
+            toast.success("Link Copied!");
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to copy link");
         }
     };
 
@@ -173,7 +211,7 @@ export default function AdminBusinesses() {
                                                     View Public Page
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onSelect={() => handleInvite(biz)}
+                                                    onSelect={() => handleInviteClick(biz)}
                                                     className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-teal-400"
                                                 >
                                                     <Send className="mr-2 h-4 w-4" />
@@ -188,6 +226,37 @@ export default function AdminBusinesses() {
                     </tbody>
                 </table>
             </div>
+            {/* Invite Dialog */}
+            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+                <DialogContent className="bg-slate-900 border-slate-700 text-slate-100">
+                    <DialogHeader>
+                        <DialogTitle>Invite {selectedBusiness?.business_name}</DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            Send an invitation email or copy the claim link.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="email" className="text-slate-200">Email Address</Label>
+                            <Input
+                                id="email"
+                                value={inviteEmail}
+                                onChange={(e) => setInviteEmail(e.target.value)}
+                                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                placeholder="business@example.com"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={handleCopyLink} className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                            Copy Link
+                        </Button>
+                        <Button onClick={handleSendInvite} disabled={sendingInvite || !inviteEmail} className="bg-blue-600 hover:bg-blue-700 text-white">
+                            {sendingInvite ? "Sending..." : "Send Invitation"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

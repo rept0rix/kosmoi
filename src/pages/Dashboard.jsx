@@ -84,7 +84,9 @@ export default function Dashboard() {
         verified: true
       });
 
-      let filteredProviders = allProviders.filter(p => p.total_reviews >= 3 && p.average_rating >= 4);
+      // Relaxed filters for visibility: Show all active and verified, sort by rating/distance
+      // let filteredProviders = allProviders.filter(p => p.total_reviews >= 3 && p.average_rating >= 4);
+      let filteredProviders = allProviders;
 
       if (userLocation) {
         filteredProviders = filteredProviders.map(provider => {

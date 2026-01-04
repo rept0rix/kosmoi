@@ -98,6 +98,7 @@ DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
  * @property {boolean} [inset]
  * @property {React.ReactNode} [children]
  * @property {(event: Event) => void} [onSelect]
+ * @property {() => void} [onClick]
  * @property {boolean} [asChild]
  */
 

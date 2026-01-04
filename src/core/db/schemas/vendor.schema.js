@@ -60,6 +60,12 @@ export const vendorSchema = {
         },
         opening_hours: {
             type: 'string'
+        },
+        languages: {
+            type: 'array',
+            items: {
+                type: 'string'
+            }
         }
     },
     required: ['id', 'business_name', 'status']
