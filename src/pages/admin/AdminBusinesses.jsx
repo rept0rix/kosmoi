@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminService } from '../../services/AdminService';
+import { getSuperCategory, formatCategory } from '../../shared/utils/categoryMapping';
 import { InvitationService } from '@/services/business/InvitationService';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,26 +128,23 @@ export default function AdminBusinesses() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                     {/* Category Filter */}
-                    <div className="min-w-[150px]">
-                        <select
-                            className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                            onChange={(e) => setSearchTerm(e.target.value)} // Using same filter logic for now or separate?
-                        // Actually, let's separate the states.
-                        >
-                            <option value="">All Categories</option>
-                            <option value="restaurants">Restaurants</option>
-                            <option value="hotels">Hotels</option>
-                            <option value="activity">Activities</option>
-                            <option value="handyman">Handyman</option>
-                            {/* We should dynamically load these but hardcoding for speed */}
-                        </select>
-                    </div>
+                    <select
+                        className="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500 max-w-[160px]"
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                    >
+                        <option value="all">All Categories</option>
+                        {uniqueCategories.map(cat => (
+                            <option key={cat} value={cat}>{formatCategory(cat)}</option>
+                        ))}
+                    </select>
 
+                    {/* Search */}
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <input
                             type="text"
-                            placeholder="Search businesses..."
+                            placeholder="Search..."
                             className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -171,94 +169,111 @@ export default function AdminBusinesses() {
                         {loading ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                                    Loading businesses... (DEBUG)
+                                    Loading businesses...
                                 </td>
                             </tr>
                         ) : filteredBusinesses.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                                    No businesses found.
+                                    No businesses match your filters.
                                 </td>
                             </tr>
                         ) : (
-                            filteredBusinesses.map((biz) => (
-                                <tr key={biz.id} className="hover:bg-white/5 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-blue-900/20 flex items-center justify-center text-blue-400">
-                                                <Store className="w-5 h-5" />
+                            filteredBusinesses.map((biz) => {
+                                // Determine Super Category for display color logic if needed
+                                // const superCat = getSuperCategory(biz.category);
+                                return (
+                                    <tr key={biz.id} className="hover:bg-white/5 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-blue-900/20 flex items-center justify-center text-blue-400 overflow-hidden">
+                                                    {biz.images && biz.images.length > 0 ? (
+                                                        <img src={biz.images[0].startsWith('http') ? biz.images[0] : `https://gzjzeywhqbwppfxqkptf.supabase.co/storage/v1/object/public/provider-images/${biz.images[0]}`} className="w-full h-full object-cover" />
+                                                    ) : <Store className="w-5 h-5" />}
+                                                </div>
+                                                <div>
+                                                    <div className="font-semibold text-slate-200">{biz.business_name}</div>
+                                                    <div className="text-xs text-slate-500 line-clamp-1">{biz.description?.substring(0, 40)}</div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="font-semibold text-slate-200">{biz.business_name}</div>
-                                                <div className="text-xs text-slate-500">{biz.owner_name || 'Unknown Owner'}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <Badge variant="secondary" className="bg-slate-800 text-slate-300 w-fit pointer-events-none capitalize">
+                                                    {formatCategory(biz.category)}
+                                                </Badge>
+                                                {biz.sub_category && biz.sub_category !== biz.category && (
+                                                    <span className="text-[10px] text-slate-500 uppercase tracking-wide px-1">
+                                                        {formatCategory(biz.sub_category)}
+                                                    </span>
+                                                )}
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <Badge variant="secondary" className="bg-slate-800 text-slate-300 pointer-events-none">
-                                            {biz.category}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-400">
-                                        <div className="flex items-center gap-1.5">
-                                            <MapPin className="w-3.5 h-3.5" />
-                                            <span className="truncate max-w-[200px]" title={biz.location}>{biz.location}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <Badge variant="outline" className={
-                                            biz.status === 'verified' || biz.status === 'active'
-                                                ? "border-green-500/30 text-green-400 bg-green-500/10"
-                                                : "border-yellow-500/30 text-yellow-400 bg-yellow-500/10"
-                                        }>
-                                            {biz.status || 'Pending'}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1 text-slate-300">
-                                            <Star className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" />
-                                            <span>{biz.average_rating || '0.0'}</span>
-                                            <span className="text-xs text-slate-500">({biz.review_count || 0})</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-white">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700 text-slate-200">
-                                                <DropdownMenuItem
-                                                    onSelect={() => handleEditClick(biz)}
-                                                    className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-yellow-400"
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit Details
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onSelect={() => handleVerify(biz.id)}
-                                                    className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800"
-                                                >
-                                                    {biz.status === 'verified' ? 'Revoke Verification' : 'Verify Business'}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800">
-                                                    <ExternalLink className="mr-2 h-4 w-4" />
-                                                    View Public Page
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onSelect={() => handleInviteClick(biz)}
-                                                    className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-teal-400"
-                                                >
-                                                    <Send className="mr-2 h-4 w-4" />
-                                                    Invite Business
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </td>
-                                </tr>
-                            ))
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-400">
+                                            <div className="flex items-center gap-1.5">
+                                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                                <span className="truncate max-w-[200px]" title={biz.location}>{biz.location}</span>
+                                            </div>
+                                            {biz.phone && (
+                                                <div className="text-xs text-slate-500 mt-1 ml-5">
+                                                    {biz.phone}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <Badge variant="outline" className={
+                                                biz.verified
+                                                    ? "border-green-500/30 text-green-400 bg-green-500/10"
+                                                    : "border-slate-700 text-slate-500"
+                                            }>
+                                                {biz.verified ? 'Verified' : 'Unverified'}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-1 text-slate-300">
+                                                <Star className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" />
+                                                <span>{biz.average_rating || '0.0'}</span>
+                                                <span className="text-xs text-slate-500">({biz.user_ratings_total || 0})</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-white">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700 text-slate-200">
+                                                    <DropdownMenuItem
+                                                        onSelect={() => handleEditClick(biz)}
+                                                        className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-yellow-400"
+                                                    >
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onSelect={() => handleVerify(biz.id)}
+                                                        className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800"
+                                                    >
+                                                        {biz.status === 'verified' ? 'Revoke Verification' : 'Verify Business'}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800">
+                                                        <ExternalLink className="mr-2 h-4 w-4" />
+                                                        View Public Page
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onSelect={() => handleInviteClick(biz)}
+                                                        className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-teal-400"
+                                                    >
+                                                        <Send className="mr-2 h-4 w-4" />
+                                                        Invite Business
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
+                                    </tr>
+                                ))
                         )}
                     </tbody>
                 </table>
