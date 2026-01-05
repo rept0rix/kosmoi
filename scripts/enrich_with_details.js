@@ -89,11 +89,11 @@ async function run() {
                 // For description, we can append info.
 
                 if (details.opening_hours && details.opening_hours.weekday_text) {
-                    // We can maybe store this string somewhere? Or just keep it simpler.
-                    // The user asked for "All info".
-                    // Ideally we need an 'opening_hours' column. 
-                    // For now, let's not spam description unless user asked.
-                    // Updates phone/website is critical.
+                    updates.opening_hours = details.opening_hours; // Save entire object or just weekday_text? saving object is better for UI.
+                }
+
+                if (details.reviews && details.reviews.length > 0) {
+                    updates.google_reviews = details.reviews; // Save raw Google Reviews array
                 }
 
                 // If we found updates, save them

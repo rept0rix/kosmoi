@@ -11,6 +11,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import AdminEditBusinessDialog from './AdminEditBusinessDialog';
+import { Pencil } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -26,7 +28,11 @@ export default function AdminBusinesses() {
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Dialog States
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+
     const [selectedBusiness, setSelectedBusiness] = useState(null);
     const [inviteEmail, setInviteEmail] = useState('');
     const [sendingInvite, setSendingInvite] = useState(false);
@@ -63,6 +69,12 @@ export default function AdminBusinesses() {
         setSelectedBusiness(business);
         setInviteEmail(business.email || business.contact_email || '');
         setInviteDialogOpen(true);
+    };
+
+    // New Edit Handler
+    const handleEditClick = (business) => {
+        setSelectedBusiness(business);
+        setEditDialogOpen(true);
     };
 
     const handleSendInvite = async () => {
@@ -113,15 +125,33 @@ export default function AdminBusinesses() {
                     <h1 className="text-2xl font-bold text-white">Businesses</h1>
                     <p className="text-slate-400">Manage service providers and vendor accounts.</p>
                 </div>
-                <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                        type="text"
-                        placeholder="Search businesses..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    {/* Category Filter */}
+                    <div className="min-w-[150px]">
+                        <select
+                            className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            onChange={(e) => setSearchTerm(e.target.value)} // Using same filter logic for now or separate?
+                        // Actually, let's separate the states.
+                        >
+                            <option value="">All Categories</option>
+                            <option value="restaurants">Restaurants</option>
+                            <option value="hotels">Hotels</option>
+                            <option value="activity">Activities</option>
+                            <option value="handyman">Handyman</option>
+                            {/* We should dynamically load these but hardcoding for speed */}
+                        </select>
+                    </div>
+
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Search businesses..."
+                            className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -172,7 +202,7 @@ export default function AdminBusinesses() {
                                     <td className="px-6 py-4 text-slate-400">
                                         <div className="flex items-center gap-1.5">
                                             <MapPin className="w-3.5 h-3.5" />
-                                            {biz.location}
+                                            <span className="truncate max-w-[200px]" title={biz.location}>{biz.location}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -201,6 +231,13 @@ export default function AdminBusinesses() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700 text-slate-200">
                                                 <DropdownMenuItem
+                                                    onSelect={() => handleEditClick(biz)}
+                                                    className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 text-yellow-400"
+                                                >
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit Details
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
                                                     onSelect={() => handleVerify(biz.id)}
                                                     className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800"
                                                 >
@@ -226,6 +263,7 @@ export default function AdminBusinesses() {
                     </tbody>
                 </table>
             </div>
+
             {/* Invite Dialog */}
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
                 <DialogContent className="bg-slate-900 border-slate-700 text-slate-100">
@@ -257,6 +295,14 @@ export default function AdminBusinesses() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Dialog */}
+            <AdminEditBusinessDialog
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                business={selectedBusiness}
+                onSaved={loadBusinesses}
+            />
         </div>
     );
 }
