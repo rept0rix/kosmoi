@@ -5,7 +5,7 @@ import { InvitationService } from '@/services/business/InvitationService';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Store, MapPin, Star, MoreHorizontal, Search, ExternalLink, Send } from "lucide-react";
+import { Store, MapPin, Star, MoreHorizontal, Search, ExternalLink, Send, Pencil } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,7 +13,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import AdminEditBusinessDialog from './AdminEditBusinessDialog';
-import { Pencil } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -68,14 +67,12 @@ export default function AdminBusinesses() {
         setInviteDialogOpen(true);
     };
 
-    // New Edit Handler
     const handleEditClick = (business) => {
         setSelectedBusiness(business);
         setEditDialogOpen(true);
     };
 
     const handleViewPublic = (business) => {
-        // Prefer website, fallback to Google Maps
         if (business.website) {
             window.open(business.website, '_blank');
         } else if (business.google_place_id) {
@@ -89,11 +86,8 @@ export default function AdminBusinesses() {
         if (!inviteEmail) return;
         setSendingInvite(true);
         try {
-            // 1. Generate Token
             const invite = await InvitationService.createInvitation(selectedBusiness.id, { email: inviteEmail });
             const link = `${window.location.origin}/claim?token=${invite.token}`;
-
-            // 2. Send Email
             const result = await AdminService.sendInvitationEmail(inviteEmail, selectedBusiness?.business_name, link);
 
             if (result.error) throw new Error(result.error);
@@ -129,7 +123,7 @@ export default function AdminBusinesses() {
         const matchesStatus = statusFilter === 'all' ||
             (statusFilter === 'verified' && b.verified) ||
             (statusFilter === 'unverified' && !b.verified) ||
-            (statusFilter === 'active' && b.status === 'active'); // simplified check
+            (statusFilter === 'active' && b.status === 'active');
 
         return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -145,6 +139,18 @@ export default function AdminBusinesses() {
                     <p className="text-slate-400">Manage service providers and vendor accounts.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    {/* Status Filter */}
+                    <select
+                        className="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="verified">Verified</option>
+                        <option value="unverified">Unverified</option>
+                    </select>
+
                     {/* Category Filter */}
                     <select
                         className="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500 max-w-[160px]"
@@ -198,8 +204,6 @@ export default function AdminBusinesses() {
                             </tr>
                         ) : (
                             filteredBusinesses.map((biz) => {
-                                // Determine Super Category for display color logic if needed
-                                // const superCat = getSuperCategory(biz.category);
                                 return (
                                     <tr key={biz.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4">
@@ -274,9 +278,15 @@ export default function AdminBusinesses() {
                                                         onSelect={() => handleVerify(biz.id)}
                                                         className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800"
                                                     >
-                                                        {biz.status === 'verified' ? 'Revoke Verification' : 'Verify Business'}
+                                                        {biz.verified ? 'Revoke Verification' : 'Verify Business'}
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800">
+                                                    <DropdownMenuItem
+                                                        onSelect={(e) => {
+                                                            e.preventDefault();
+                                                            handleViewPublic(biz);
+                                                        }}
+                                                        className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800"
+                                                    >
                                                         <ExternalLink className="mr-2 h-4 w-4" />
                                                         View Public Page
                                                     </DropdownMenuItem>
@@ -291,7 +301,8 @@ export default function AdminBusinesses() {
                                             </DropdownMenu>
                                         </td>
                                     </tr>
-                                ))
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
