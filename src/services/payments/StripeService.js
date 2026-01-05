@@ -110,5 +110,30 @@ export const StripeService = {
         // Fallback for Client-Side (or missing key)
         console.warn("[StripeService] Client-side payment generation requires Edge Function (not implemented).");
         throw new Error("Cannot create payment link: Missing 'STRIPE_SECRET_KEY' or running on client without Edge Function.");
+    },
+
+    /**
+     * Initiates the Stripe Connect onboarding flow for a service provider.
+     */
+    createConnectAccount: async (providerId) => {
+        try {
+            console.log(`[StripeService] Initiating Connect for ${providerId}`);
+            // @ts-ignore
+            const { data, error } = await supabase.functions.invoke('create-connect-account', {
+                body: {
+                    providerId,
+                    redirectUrl: window.location.origin + '/admin/businesses'
+                }
+            });
+
+            if (error) throw error;
+            if (!data?.url) throw new Error("No onboarding URL returned.");
+
+            // Redirect user to Stripe
+            window.location.href = data.url;
+        } catch (error) {
+            console.error('[StripeService] Connect Error:', error);
+            throw error;
+        }
     }
 };

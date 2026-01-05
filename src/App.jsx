@@ -83,6 +83,7 @@ import AdminMemory from './pages/admin/AdminMemory';
 import AdminSitemap from '@/pages/admin/AdminSitemap';
 import AdminOptimizer from './pages/admin/AdminOptimizer';
 import AdminSkills from './pages/admin/AdminSkills';
+import AdminWallet from './pages/admin/AdminWallet';
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
@@ -244,6 +245,7 @@ const AuthenticatedApp = () => {
                 <Route path="canvas" element={<AdminCanvas />} />
                 <Route path="studio" element={<Studio />} />
                 <Route path="skills" element={<AdminSkills />} />
+                <Route path="wallet" element={<AdminWallet />} />
                 <Route path="settings" element={<div className="p-8 text-slate-400">Admin Settings Coming Soon...</div>} />
                 <Route path="importer" element={<AdminImporter />} />
                 <Route path="sitemap" element={<AdminSitemap />} />
