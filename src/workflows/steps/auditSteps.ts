@@ -48,3 +48,18 @@ export async function triggerEnrichment(googlePlaceId: string) {
     // For now, we'll log it as a placeholder for the agent to connect to the existing script logic later.
     return { triggered: true };
 }
+
+export async function saveAuditResult(businessId: string, analysis: any) {
+    "use step";
+    const { error } = await supabase
+        .from('service_providers')
+        .update({
+            metadata: { ...analysis, last_audit: new Date().toISOString() }
+        })
+        .eq('id', businessId);
+
+    if (error) {
+        console.warn("Could not save audit result to DB:", error);
+    }
+    return { saved: true };
+}
