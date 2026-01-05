@@ -28,6 +28,7 @@ import OnboardingEarningDisplay from '@/components/OnboardingEarningDisplay';
 const PersistenceTest = lazy(() => import('./pages/PersistenceTest'));
 const MemoryLab = lazy(() => import('./pages/MemoryLab'));
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { Analytics } from "@vercel/analytics/react"
 import KosmoiLoader from '@/components/ui/KosmoiLoader';
 // import Footer from '@/components/Footer'; // Unused in main layout?
 
@@ -334,6 +335,7 @@ function App() {
                 </QueryClientProvider>
               </RxDBProvider>
               <SpeedInsights />
+              <Analytics />
             </AppConfigProvider>
           </LanguageProvider>
         </LocationProvider>
