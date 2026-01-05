@@ -29,6 +29,8 @@ export default function AdminBusinesses() {
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     // Dialog States
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -39,20 +41,14 @@ export default function AdminBusinesses() {
     const [sendingInvite, setSendingInvite] = useState(false);
 
     const loadBusinesses = async () => {
-        console.log("AdminBusinesses: Starting loadBusinesses...");
         setLoading(true);
         try {
-            console.log("AdminBusinesses: Calling AdminService.getBusinesses()");
-
             const data = await AdminService.getBusinesses();
-
-            console.log("AdminBusinesses: Data received:", data);
             setBusinesses(data);
         } catch (e) {
             console.error("Businesses Load Failed", e);
             toast.error("Failed to load businesses: " + e.message);
         } finally {
-            console.log("AdminBusinesses: Finally block reached");
             setLoading(false);
         }
     };
@@ -76,6 +72,17 @@ export default function AdminBusinesses() {
     const handleEditClick = (business) => {
         setSelectedBusiness(business);
         setEditDialogOpen(true);
+    };
+
+    const handleViewPublic = (business) => {
+        // Prefer website, fallback to Google Maps
+        if (business.website) {
+            window.open(business.website, '_blank');
+        } else if (business.google_place_id) {
+            window.open(`https://www.google.com/maps/place/?q=place_id:${business.google_place_id}`, '_blank');
+        } else {
+            toast.info("No website or Google Map found for this business.");
+        }
     };
 
     const handleSendInvite = async () => {
@@ -114,10 +121,21 @@ export default function AdminBusinesses() {
         }
     };
 
-    const filteredBusinesses = businesses.filter(b =>
-        b.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.category?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // --- FILTER LOGIC ---
+    const filteredBusinesses = businesses.filter(b => {
+        const matchesSearch = b.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            b.category?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || b.category === categoryFilter;
+        const matchesStatus = statusFilter === 'all' ||
+            (statusFilter === 'verified' && b.verified) ||
+            (statusFilter === 'unverified' && !b.verified) ||
+            (statusFilter === 'active' && b.status === 'active'); // simplified check
+
+        return matchesSearch && matchesCategory && matchesStatus;
+    });
+
+    // Extract unique categories for filter
+    const uniqueCategories = [...new Set(businesses.map(b => b.category).filter(Boolean))].sort();
 
     return (
         <div className="space-y-6">
