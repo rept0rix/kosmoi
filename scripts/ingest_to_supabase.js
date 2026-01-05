@@ -111,59 +111,79 @@ async function run() {
     for (const [index, item] of items.entries()) {
         const progress = `[${index + 1}/${items.length}]`;
 
-        // Check existence
-        const { data: existing } = await supabase
+        // Check existence by Google Place ID
+        let { data: existing } = await supabase
             .from('service_providers')
-            .select('id')
+            .select('id, images, google_place_id')
             .eq('google_place_id', item.place_id)
             .maybeSingle();
 
-        if (existing) {
-            process.stdout.write('.');
-            skipCount++;
-            continue;
+        // If not found by ID, check by Name (legacy merge)
+        if (!existing) {
+            const { data: existingByName } = await supabase
+                .from('service_providers')
+                .select('id, images, google_place_id')
+                .ilike('business_name', item.name) // Use ilike for safety
+                .maybeSingle();
+
+            if (existingByName) existing = existingByName;
         }
 
-        console.log(`\n${progress} Importing: ${item.name}`);
+        console.log(`\n${progress} Processing: ${item.name} ${existing ? '(Update)' : '(New)'}`);
 
-        // Upload First Image
+        // Upload First Image (If needed)
+        // We upload if: New Record OR Existing has no images
         let imageUrl = null;
-        if (item.images && item.images.length > 0) {
+        const needsImage = !existing || !existing.images || existing.images.length === 0;
+
+        if (needsImage && item.images && item.images.length > 0) {
             process.stdout.write('  📸 Uploading image... ');
             imageUrl = await uploadImage(item.place_id, item.images[0]);
             console.log(imageUrl ? '✅' : '❌');
+        } else if (existing && existing.images && existing.images.length > 0) {
+            // Keep existing image if we didn't upload a new one
+            // actually, we might want to overwrite if the new one is better?
+            // For now, assume if it has an image, we leave it (speed).
+            imageUrl = existing.images[0];
         }
 
-        // Prepare Row
         const superCat = getSuperCategory(item.discovery_category);
         const row = {
             business_name: item.name,
-            category: item.discovery_category,
-            sub_category: item.discovery_category, // Map discovery to sub_category
+            category: item.discovery_category, // Consider mapping this dynamically?
+            sub_category: item.discovery_category,
             super_category: superCat,
             description: `${item.types ? item.types.slice(0, 3).join(', ') : ''} (Imported from Google)`,
             location: item.address,
-            phone: null,
-            website: null,
+            // phone: null, // Don't overwrite contact info if it exists?
+            // website: null,
             average_rating: item.rating || 0,
-            status: 'active',
+            status: 'active', // Ensure active
             verified: true,
             google_place_id: item.place_id,
-            images: imageUrl ? [imageUrl] : [], // Use Array column
-            created_at: new Date().toISOString()
+            images: imageUrl ? [imageUrl] : (existing?.images || []),
+            updated_at: new Date().toISOString()
         };
 
-        const { error } = await supabase.from('service_providers').insert(row);
-
-        if (error) {
-            console.error(`  ❌ Insert Failed: ${error.message}`);
+        let error;
+        if (existing) {
+            const { error: updateError } = await supabase
+                .from('service_providers')
+                .update(row)
+                .eq('id', existing.id);
+            error = updateError;
         } else {
-            console.log("  ✅ Ingested");
-            successCount++;
+            row.created_at = new Date().toISOString();
+            const { error: insertError } = await supabase.from('service_providers').insert(row);
+            error = insertError;
         }
 
-        // Throttle slightly
-        // await delay(50);
+        if (error) {
+            console.error(`  ❌ Failed: ${error.message}`);
+        } else {
+            console.log("  ✅ Saved");
+            successCount++;
+        }
     }
 
     console.log(`\n🎉 Ingestion Complete.`);
