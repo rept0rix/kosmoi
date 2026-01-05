@@ -1,6 +1,6 @@
 
 import { sleep } from "workflow";
-import { fetchBusinessData, analyzeQuality, triggerEnrichment, saveAuditResult } from "./steps/auditSteps";
+import { fetchBusinessData, analyzeQuality, triggerEnrichment, saveAuditResult, performDeepAudit, performSocialCheck } from "./steps/auditSteps";
 
 export async function auditBusiness(businessId: string) {
     "use workflow";
@@ -12,8 +12,41 @@ export async function auditBusiness(businessId: string) {
         return { status: "error", message: "Business not found" };
     }
 
-    // 2. Analyze Quality Score
-    const qualityReport = await analyzeQuality(business);
+    // 2. Analyze Quality Score (Basic)
+    let qualityReport = await analyzeQuality(business);
+
+    // 2.5 MCP Deep Audit (HexStrike Integration)
+    if (business.website) {
+        const deepAudit = await performDeepAudit(business.website);
+        if (deepAudit && deepAudit.audit) {
+            // Improve score with real data
+            qualityReport.score = Math.floor((qualityReport.score + deepAudit.audit.qualityScore) / 2);
+            qualityReport.deepAnalysis = deepAudit;
+
+            // Add technical issues to report
+            if (deepAudit.audit.issues.length > 0) {
+                qualityReport.missing.push(...deepAudit.audit.issues);
+            }
+        }
+    }
+
+    // 2.6 Social Pulse Check
+    const socialPlatforms = [
+        { key: 'instagram', url: business.metadata?.instagram },
+        { key: 'facebook', url: business.metadata?.facebook }
+    ];
+
+    for (const p of socialPlatforms) {
+        if (p.url) {
+            const socialCheck = await performSocialCheck(p.key, p.url);
+            if (socialCheck && socialCheck.status === 'active') {
+                qualityReport.score += 5; // Bonus for active social
+            } else if (socialCheck && socialCheck.status === 'dead_link') {
+                qualityReport.missing.push(`Broken ${p.key} link`);
+                qualityReport.score -= 5;
+            }
+        }
+    }
 
     // 3. Decision Logic
     if (qualityReport.score < 50) {
@@ -24,16 +57,18 @@ export async function auditBusiness(businessId: string) {
             await sleep("10s");
             // Re-fetch to see if it improved
             const updatedBusiness = await fetchBusinessData(businessId);
-            const updatedReport = await analyzeQuality(updatedBusiness);
+            qualityReport = await analyzeQuality(updatedBusiness); // Recalculate basic
+
+            // Re-run deep audit? (Optional, maybe website changed? unlikely)
 
             // Save result
-            await saveAuditResult(businessId, updatedReport);
+            await saveAuditResult(businessId, qualityReport);
 
             return {
                 status: "enriched",
                 originalScore: qualityReport.score,
-                newScore: updatedReport.score,
-                report: updatedReport
+                newScore: qualityReport.score,
+                report: qualityReport
             };
         }
     }

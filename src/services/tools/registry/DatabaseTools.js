@@ -11,7 +11,8 @@ ToolRegistry.register("search_services", async (payload) => {
         let queryBuilder = supabase.from('service_providers').select('*');
 
         if (query) {
-            queryBuilder = queryBuilder.or(`business_name.ilike.%${query}%,description.ilike.%${query}%`);
+            // Smart Search: Name OR Description OR Sub-Category
+            queryBuilder = queryBuilder.or(`business_name.ilike.%${query}%,description.ilike.%${query}%,sub_category.ilike.%${query}%`);
         }
 
         if (category) {
@@ -22,7 +23,8 @@ ToolRegistry.register("search_services", async (payload) => {
             queryBuilder = queryBuilder.ilike('location', `%${location}%`);
         }
 
-        const { data, error } = await queryBuilder.limit(5);
+        // Prioritize verified and high rating
+        const { data, error } = await queryBuilder.order('verified', { ascending: false }).order('average_rating', { ascending: false }).limit(6);
 
         if (error) throw error;
 
@@ -30,8 +32,23 @@ ToolRegistry.register("search_services", async (payload) => {
             return `[Database] No results found for "${query || category}".`;
         }
 
-        // Format results for the agent
-        const results = data.map(p => `- **${p.business_name}** (${p.category}): ${p.description?.substring(0, 100)}... (Rating: ${p.average_rating})`).join('\n');
+        // Format results for the agent (JSON for better parsing if possible, but text is standard for LLM tools)
+        // We include IMAGE URL so the agent can use it in UI.
+        const results = data.map(p => {
+            const img = (p.images && p.images.length > 0)
+                ? (p.images[0].startsWith('http') ? p.images[0] : `https://gzjzeywhqbwppfxqkptf.supabase.co/storage/v1/object/public/provider-images/${p.images[0]}`)
+                : null;
+
+            return JSON.stringify({
+                id: p.id,
+                name: p.business_name,
+                category: p.sub_category || p.category,
+                rating: p.average_rating,
+                location: p.location,
+                image: img,
+                description: p.description ? p.description.substring(0, 150) : ''
+            });
+        }).join('\n');
 
         return `[Database Results]:\n${results}`;
 

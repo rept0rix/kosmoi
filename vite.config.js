@@ -4,10 +4,15 @@ import path from 'path'
 import { visualEditPlugin } from './vite-plugins/visual-edit-plugin.js'
 import { errorOverlayPlugin } from './vite-plugins/error-overlay-plugin.js'
 
+import { nitro } from "nitro/vite";
+import { workflow } from "workflow/vite";
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
+      nitro(),
+      workflow(),
       mode === 'development' && visualEditPlugin(),
       react(),
       errorOverlayPlugin(),
@@ -65,6 +70,9 @@ export default defineConfig(({ mode }) => {
           '.js': 'jsx',
         },
       },
-    }
+    },
+    nitro: {
+      serverDir: "./",
+    },
   }
 });

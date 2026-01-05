@@ -3,8 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 import { FatalError } from "workflow";
 
 // Initialize Supabase Client for Steps
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+// Universal Env Access
+const getEnv = (key: string) => {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env) return import.meta.env[key];
+    if (typeof process !== 'undefined' && process.env) return process.env[key];
+    return '';
+};
+
+const supabaseUrl = getEnv('VITE_SUPABASE_URL');
+const supabaseKey = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY');
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function fetchBusinessData(businessId: string) {
@@ -49,6 +57,8 @@ export async function triggerEnrichment(googlePlaceId: string) {
     return { triggered: true };
 }
 
+import { mcpServer } from "../../services/mcp/index";
+
 export async function saveAuditResult(businessId: string, analysis: any) {
     "use step";
     const { error } = await supabase
@@ -62,4 +72,31 @@ export async function saveAuditResult(businessId: string, analysis: any) {
         console.warn("Could not save audit result to DB:", error);
     }
     return { saved: true };
+}
+
+export async function performDeepAudit(url: string) {
+    "use step";
+    if (!url) return null;
+
+    // Call the MCP Tool
+    console.log(`🕵️‍♂️ MCP Agent is auditing: ${url}`);
+    const result = await mcpServer.executeTool({
+        toolName: "website_audit",
+        arguments: { url }
+    });
+
+    return result.success ? result.result : { error: result.error };
+}
+
+export async function performSocialCheck(platform: string, url: string) {
+    "use step";
+    if (!url) return null;
+
+    console.log(`🕵️‍♂️ MCP Agent checking social: ${platform}`);
+    const result = await mcpServer.executeTool({
+        toolName: "social_pulse",
+        arguments: { platform, url }
+    });
+
+    return result.success ? result.result : { error: result.error };
 }
