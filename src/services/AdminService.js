@@ -168,5 +168,26 @@ export const AdminService = {
             subject: 'Claim your Samui Service Hub Profile',
             html: html
         });
+    },
+
+    /**
+     * Update Business Details (Admin)
+     */
+    updateBusiness: async (id, updates) => {
+        try {
+            console.log("AdminService: updateBusiness", id, updates);
+            const { data, error } = await supabase
+                .from('service_providers')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return { data, error: null };
+        } catch (e) {
+            console.error("AdminService Update Failed:", e);
+            return { data: null, error: e };
+        }
     }
 };

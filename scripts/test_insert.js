@@ -9,6 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
+// Explicitly use the Service Role Key
 const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
@@ -18,29 +19,29 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function checkDB() {
+async function testInsert() {
     console.log(`Connecting to ${supabaseUrl}...`);
 
-    // Check service_providers
-    const { count, error } = await supabase
+    const payload = {
+        business_name: 'Test Insert Script',
+        source_url: `test_${Date.now()}`,
+        status: 'active'
+    };
+
+    console.log("Attempting INSERT...");
+    const { data, error } = await supabase
         .from('service_providers')
-        .select('*', { count: 'exact', head: true });
+        .insert([payload])
+        .select();
 
     if (error) {
-        console.error("Error connecting or table missing:", error.message);
-        if (error.code === '42P01') { // undefined_table
-            console.log("STATUS: MISSING_SCHEMA");
-        } else {
-            console.log("STATUS: CONNECTION_ERROR");
-        }
+        console.error("❌ INSERT FAILED:", error);
     } else {
-        console.log(`Connection successful. Found ${count} service providers.`);
-        if (count === 0) {
-            console.log("STATUS: EMPTY_DB");
-        } else {
-            console.log("STATUS: ACTIVE_DB");
-        }
+        console.log("✅ INSERT SUCCESS:", data);
+        console.log("Cleaning up...");
+        await supabase.from('service_providers').delete().eq('id', data[0].id);
+        console.log("Cleanup done.");
     }
 }
 
-checkDB();
+testInsert();

@@ -3,6 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // --- CONFIGURATION COPY (Category Mappings) ---
 const subCategoriesBySuperCategory = {
@@ -24,9 +28,6 @@ const getSuperCategory = (category) => {
 };
 // ------------------------------------------------
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Env vars provided at runtime
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
