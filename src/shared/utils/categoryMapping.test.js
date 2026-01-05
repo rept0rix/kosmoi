@@ -29,9 +29,9 @@ describe('categoryMapping Util', () => {
         expect(getSuperCategory('unknown_category_xyz')).toBe('other')
     })
 
-    it('is case sensitive (as per implementation)', () => {
-        // "Plumber" vs "plumber"
-        // The implementation uses .includes(category), so it is case sensitive.
-        expect(getSuperCategory('Plumber')).toBe('other')
+    it('handles case insensitivity', () => {
+        // "Plumber" should be normalized to "plumber" and found
+        expect(getSuperCategory('Plumber')).toBe('fix')
+        expect(getSuperCategory('THAI_FOOD')).toBe('eat')
     })
 })
