@@ -57,7 +57,7 @@ async function run() {
             .from('service_providers')
             .select('id, business_name, google_place_id, phone, website')
             .neq('google_place_id', null)
-            .is('phone', null) // Prioritize missing contact
+            // .is('phone', null) // REMOVED: We want to update EVERYONE with reviews/hours now
             .range(offset, offset + LIMIT - 1);
 
         if (error) {
