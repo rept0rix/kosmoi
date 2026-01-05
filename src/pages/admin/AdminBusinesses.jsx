@@ -114,6 +114,7 @@ export default function AdminBusinesses() {
             toast.error("Failed to copy link");
         }
     };
+
     const handleAuditClick = async (business) => {
         try {
             toast.info(`Starting AI Audit for ${business.business_name}...`);
@@ -199,6 +200,7 @@ export default function AdminBusinesses() {
                             <th className="px-6 py-3">Category</th>
                             <th className="px-6 py-3">Location</th>
                             <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3">Score</th>
                             <th className="px-6 py-3">Rating</th>
                             <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
@@ -206,13 +208,13 @@ export default function AdminBusinesses() {
                     <tbody className="divide-y divide-white/5">
                         {loading ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                                <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                                     Loading businesses...
                                 </td>
                             </tr>
                         ) : filteredBusinesses.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                                <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                                     No businesses match your filters.
                                 </td>
                             </tr>
@@ -264,6 +266,19 @@ export default function AdminBusinesses() {
                                             }>
                                                 {biz.verified ? 'Verified' : 'Unverified'}
                                             </Badge>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {biz.metadata?.score !== undefined ? (
+                                                <Badge variant="outline" className={
+                                                    biz.metadata.score > 80 ? "bg-green-500/10 text-green-400 border-green-500/30" :
+                                                        biz.metadata.score > 50 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30" :
+                                                            "bg-red-500/10 text-red-400 border-red-500/30"
+                                                }>
+                                                    {biz.metadata.score}/100
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-xs text-slate-600">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1 text-slate-300">

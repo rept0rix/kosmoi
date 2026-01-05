@@ -1,6 +1,6 @@
 
 import { sleep } from "workflow";
-import { fetchBusinessData, analyzeQuality, triggerEnrichment } from "./steps/auditSteps";
+import { fetchBusinessData, analyzeQuality, triggerEnrichment, saveAuditResult } from "./steps/auditSteps";
 
 export async function auditBusiness(businessId: string) {
     "use workflow";
@@ -25,6 +25,10 @@ export async function auditBusiness(businessId: string) {
             // Re-fetch to see if it improved
             const updatedBusiness = await fetchBusinessData(businessId);
             const updatedReport = await analyzeQuality(updatedBusiness);
+
+            // Save result
+            await saveAuditResult(businessId, updatedReport);
+
             return {
                 status: "enriched",
                 originalScore: qualityReport.score,
@@ -33,6 +37,9 @@ export async function auditBusiness(businessId: string) {
             };
         }
     }
+
+    // Save result
+    await saveAuditResult(businessId, qualityReport);
 
     return { status: "completed", score: qualityReport.score, report: qualityReport };
 }
