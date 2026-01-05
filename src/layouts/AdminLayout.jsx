@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import AdminCopilotWidget from '../features/admin/components/AdminCopilotWidget';
 
 export default function AdminLayout() {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -77,6 +78,7 @@ export default function AdminLayout() {
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM / Leads" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/claims" icon={<FileText />} label="Claims" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/wallet" icon={<Store />} label="System Wallet" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/data" icon={<Database />} label="Platform Analytics" onClick={() => setIsMobileOpen(false)} />
                     </NavGroup>
 
@@ -144,6 +146,7 @@ export default function AdminLayout() {
                     <Outlet />
                 </div>
             </main>
+            <AdminCopilotWidget />
         </div>
     );
 }

@@ -21,8 +21,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { subCategoriesBySuperCategory } from '@/components/subCategories';
 import { AdminService } from '@/services/AdminService';
+import { StripeService } from '@/services/payments/StripeService';
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+
+import PromptPayQR from '@/components/payments/PromptPayQR';
 
 export default function AdminEditBusinessDialog({ open, onOpenChange, business, onSaved }) {
     const [formData, setFormData] = useState({
@@ -33,7 +36,8 @@ export default function AdminEditBusinessDialog({ open, onOpenChange, business, 
         phone: '',
         website: '',
         description: '',
-        super_category: ''
+        super_category: '',
+        promptpay_id: ''
     });
     const [saving, setSaving] = useState(false);
 
@@ -52,7 +56,8 @@ export default function AdminEditBusinessDialog({ open, onOpenChange, business, 
                 phone: business.phone || '',
                 website: business.website || '',
                 description: business.description || '',
-                super_category: business.super_category || ''
+                super_category: business.super_category || '',
+                promptpay_id: business.metadata?.promptpay_id || ''
             });
         }
     }, [business]);
@@ -66,7 +71,16 @@ export default function AdminEditBusinessDialog({ open, onOpenChange, business, 
         setSaving(true);
         try {
             // If category changed, update super_category automatically
-            let updates = { ...formData };
+            // If category changed, update super_category automatically
+            let updates = {
+                ...formData,
+                metadata: {
+                    ...(business.metadata || {}),
+                    promptpay_id: formData.promptpay_id
+                }
+            };
+            delete updates.promptpay_id; // Don't save as top-level column
+
             if (updates.category !== business.category) {
                 const found = allCategories.find(c => c.sub === updates.category);
                 if (found) updates.super_category = found.superCat;
@@ -194,6 +208,66 @@ export default function AdminEditBusinessDialog({ open, onOpenChange, business, 
 
                 </div>
 
+                {/* Financial */}
+                <div className="grid gap-2 border-t border-slate-700 pt-4 mt-2">
+                    <Label className="text-lg font-semibold text-slate-200">Financial</Label>
+                    <div className="flex items-center justify-between bg-slate-800 p-3 rounded-md border border-slate-700">
+                        <div>
+                            <div className="text-sm font-medium text-slate-300">Stripe Integration</div>
+                            <div className="text-xs text-slate-500">
+                                {business?.stripe_account_id
+                                    ? `Connected (${business.stripe_status || 'Pending'})`
+                                    : "Not connected to Stripe"}
+                            </div>
+                        </div>
+                        {(!business?.stripe_account_id || business.stripe_status === 'restricted') && (
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => StripeService.createConnectAccount(business.id)}
+                                className="bg-[#635BFF] hover:bg-[#5851df] text-white border-none"
+                            >
+                                Connect Bank
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* PromptPay */}
+                <div className="grid gap-2 border-t border-slate-700 pt-4 mt-2">
+                    <Label className="text-lg font-semibold text-slate-200">PromptPay (Thai QR)</Label>
+                    <div className="flex flex-col md:flex-row gap-4 items-start">
+                        <div className="flex-1 space-y-2 w-full">
+                            <Label htmlFor="promptpay_id" className="text-xs text-slate-400">
+                                Phone (08x...) or Tax ID (13 digits)
+                            </Label>
+                            <Input
+                                id="promptpay_id"
+                                value={formData.promptpay_id || ''}
+                                onChange={e => handleChange('promptpay_id', e.target.value)}
+                                placeholder="0812345678"
+                                className="bg-slate-800 border-slate-700 font-mono"
+                            />
+                            <p className="text-[10px] text-slate-500">
+                                This ID will be used to generate QR codes for customers.
+                            </p>
+                        </div>
+                        <div className="flex-shrink-0">
+                            {formData.promptpay_id ? (
+                                <PromptPayQR
+                                    promptPayId={formData.promptpay_id}
+                                    amount={100} // Preview with 100 THB
+                                    className="scale-75 origin-top-left"
+                                />
+                            ) : (
+                                <div className="w-32 h-32 bg-slate-800 border border-slate-700 border-dashed rounded-lg flex items-center justify-center text-xs text-slate-500">
+                                    QR Preview
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="border-slate-700 hover:bg-slate-800 mr-2">
                         Cancel
@@ -203,6 +277,6 @@ export default function AdminEditBusinessDialog({ open, onOpenChange, business, 
                     </Button>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

@@ -1,4 +1,6 @@
 
+
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Stripe } from "https://esm.sh/stripe@12.0.0?target=deno"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.0.0"
@@ -116,6 +118,17 @@ serve(async (req: Request) => {
         } else if (event.type === 'customer.subscription.deleted') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string)
+        } else if (event.type === 'account.updated') {
+            const account = event.data.object as any
+            const status = account.charges_enabled && account.payouts_enabled ? 'verified' : 'restricted'
+
+            const { error } = await supabase
+                .from('service_providers')
+                .update({ stripe_status: status })
+                .eq('stripe_account_id', account.id)
+
+            if (error) console.error('Error updating provider status:', error)
+            else console.log(`Updated provider status to ${status} for account ${account.id}`)
         }
 
         return new Response(JSON.stringify({ received: true }), {
