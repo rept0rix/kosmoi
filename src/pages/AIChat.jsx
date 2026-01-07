@@ -223,36 +223,16 @@ export default function AIChat() {
             const systemInstruction = `
 ${currentAgent.systemPrompt}
 
-**STRICT RESPONSE FORMAT:**
-You MUST return valid JSON.
-Structure the response to be highly interactive and visual.
-Use the provided distance context to explicitly mention how far places are.
-
-**OUTPUT SCHEMA:**
-{
-  "message": "Conversational response...",
-  "carousel": [ 
-    {
-      "title": "Business Name",
-      "description": "Short description.",
-      "image": "https://url...",
-      "location": { "lat": 0.0, "lng": 0.0 },
-      "distance": "5 min drive", // Explicit distance string
-      "actions": [
-        { "label": "Book Taxi", "type": "transport" },
-        { "label": "Rent Bike", "type": "rental" },
-        { "label": "Directions", "type": "navigate" }
-      ]
-    }
-  ],
-  "choices": ["Option 1", "Option 2"]
-}
-
-**CONTEXT:**
+**RUNTIME CONTEXT:**
 Weather: ${weatherContext}
-Knowledge: ${JSON.stringify(samuiKnowledge)}
-Providers: ${providersContext}
 User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Unknown'}
+Nearby Options:
+${providersContext}
+
+**INSTRUCTION:**
+- If the user asks for a recommendation, use the 'Available Options' above.
+- Always prefer to return a "carousel-vibe" in 'a2ui_content' for lists of places.
+- Keep the 'message' text engaging and conversational.
 `;
 
             // MEMORY INJECTION
