@@ -120,7 +120,9 @@ function SystemVerification() {
             const result = await CreatePaymentLink({
                 name: "System Verification Test",
                 amount: 1,
-                currency: 'thb'
+                currency: 'thb',
+                success_url: window.location.href, // Return to dashboard
+                cancel_url: window.location.href
             });
 
             if (result.url) {

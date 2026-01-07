@@ -33,6 +33,7 @@ export const InvitationService = {
      */
     async validateToken(token) {
         // Use Edge Function to bypass RLS permissions safely
+        // @ts-ignore
         const { data, error } = await supabase.functions.invoke('validate-invitation', {
             body: { token }
         });
