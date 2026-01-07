@@ -701,23 +701,21 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                                 </div>
 
                                 <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-50 relative z-20">
-                                    {messages.length < 2 && (
-                                        <ScrollArea className="w-full whitespace-nowrap mb-3 pb-1">
-                                            <div className="flex gap-2">
-                                                {quickActions.map(action => (
-                                                    <button
-                                                        key={action.id}
-                                                        type="button"
-                                                        onClick={() => handleQuickAction(action)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-full text-xs font-medium transition-colors border border-slate-100"
-                                                    >
-                                                        <action.icon className="w-3.5 h-3.5" />
-                                                        {action.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </ScrollArea>
-                                    )}
+                                    <ScrollArea className="w-full whitespace-nowrap mb-3 pb-1">
+                                        <div className="flex gap-2">
+                                            {quickActions.map(action => (
+                                                <button
+                                                    key={action.id}
+                                                    type="button"
+                                                    onClick={() => handleQuickAction(action)}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-full text-xs font-medium transition-colors border border-slate-100"
+                                                >
+                                                    <action.icon className="w-3.5 h-3.5" />
+                                                    {action.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
 
                                     <div className="relative flex items-center gap-2">
                                         <div className="relative flex-1">
