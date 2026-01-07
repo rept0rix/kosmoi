@@ -25,18 +25,51 @@ async function run() {
     // We will pick 2 existing users from service_providers owner_ids or just create wallets for known IDs if possible.
     // Let's list 2 users from service_providers.
 
-    const { data: users, error: userError } = await supabase
+    // 1. Get Users
+    let userA, userB;
+
+    // Try service_providers first
+    const { data: spUsers, error: spError } = await supabase
         .from('service_providers')
         .select('owner_id')
         .limit(2);
 
-    if (userError || !users || users.length < 2) {
-        console.error("Not enough users to test P2P.");
-        return;
+    if (spError) console.error("SP Fetch Error:", spError);
+
+    const candidates = spUsers?.map(s => s.owner_id).filter(id => id) || [];
+
+    if (candidates.length >= 2) {
+        userA = candidates[0];
+        userB = candidates[1];
+    } else {
+        console.log("Not enough service_providers, trying auth.admin.listUsers...");
+        // Fallback to auth users (requires service role)
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+
+        if (authError) {
+            console.error("Auth Admin Error:", authError);
+        } else if (authUsers?.users?.length >= 2) {
+            userA = authUsers.users[0].id;
+            userB = authUsers.users[1].id;
+        } else {
+            console.log("Not enough auth users. Creating test users...");
+            // Create test users
+            const { data: u1, error: e1 } = await supabase.auth.admin.createUser({ email: `test_p2p_${Date.now()}_a@example.com`, password: 'password123', email_confirm: true });
+            const { data: u2, error: e2 } = await supabase.auth.admin.createUser({ email: `test_p2p_${Date.now()}_b@example.com`, password: 'password123', email_confirm: true });
+
+            if (e1 || e2) {
+                console.error("Failed to create test users:", e1, e2);
+                process.exit(1);
+            }
+            userA = u1.user.id;
+            userB = u2.user.id;
+        }
     }
 
-    const userA = users[0].owner_id;
-    const userB = users[1].owner_id;
+    if (!userA || !userB) {
+        console.error("Could not obtain 2 users for testing.");
+        process.exit(1);
+    }
 
     console.log(`User A: ${userA}`);
     console.log(`User B: ${userB}`);
@@ -45,8 +78,8 @@ async function run() {
     // We'll upsert via SQL or just insert and ignore conflict
     // Since we are using service role, we can do direct insert
     console.log("Creating Wallets...");
-    await supabase.from('wallets').upsert({ user_id: userA, balance: 1000 }).select();
-    await supabase.from('wallets').upsert({ user_id: userB, balance: 0 }).select();
+    await supabase.from('wallets').upsert({ user_id: userA, balance: 1000 }, { onConflict: 'user_id' }).select();
+    await supabase.from('wallets').upsert({ user_id: userB, balance: 0 }, { onConflict: 'user_id' }).select();
 
     // 3. Check Initial Balance
     const { data: wA } = await supabase.from('wallets').select('balance').eq('user_id', userA).single();
