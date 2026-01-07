@@ -80,6 +80,7 @@ export default function AIChat() {
     const [messages, setMessages] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
 
     // Agent Selection State
     const [currentAgent, setCurrentAgent] = useState(CONCIERGE_AGENT);
@@ -158,7 +159,7 @@ export default function AIChat() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, showHistory, isMinimized]);
+    }, [messages, showHistory, isMinimized, isMaximized]);
 
     // Handle Incoming Context
     useEffect(() => {
@@ -462,12 +463,12 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                     : 'rounded-3xl'
                     }`}
                 style={{
-                    left: '1rem',
-                    right: '1rem',
-                    maxWidth: isMinimized ? '600px' : 'none',
-                    margin: isMinimized && window.innerWidth > 768 ? '0 auto' : '0',
+                    left: 0,
+                    right: 0,
+                    maxWidth: isMinimized ? '600px' : (isMaximized ? '1200px' : '900px'),
+                    margin: '0 auto',
                     bottom: isMinimized ? '100px' : (window.innerWidth > 768 ? '10%' : '120px'),
-                    top: isMinimized ? 'auto' : '45%',
+                    top: isMinimized ? 'auto' : (isMaximized ? '10%' : '45%'),
                 }}
             >
                 {/* HEADERS */}
@@ -538,8 +539,19 @@ User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Un
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                className={`h-8 w-8 rounded-full hover:bg-slate-100 ${isMaximized ? 'text-blue-600' : 'text-slate-500'}`}
+                                onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); setIsMinimized(false); }}
+                                title={isMaximized ? "Restore" : "Maximize"}
+                            >
+                                {isMaximized ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 rounded-full hover:bg-slate-100 text-slate-500"
-                                onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
+                                onClick={(e) => { e.stopPropagation(); setIsMinimized(true); setIsMaximized(false); }}
+                                title="Minimize"
                             >
                                 <ChevronDown className="w-5 h-5" />
                             </Button>

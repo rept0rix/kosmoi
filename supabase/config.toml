@@ -1,0 +1,5 @@
+[functions.create-payment-link]
+verify_jwt = false
+
+[functions.validate-invitation]
+verify_jwt = false
