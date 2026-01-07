@@ -45,7 +45,8 @@ export async function analyzeQuality(business: any) {
     return {
         score,
         grade: score > 80 ? 'A' : score > 50 ? 'B' : 'C',
-        missing
+        missing,
+        deepAnalysis: null as any // Allow adding deep analysis later
     };
 }
 
