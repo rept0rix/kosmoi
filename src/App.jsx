@@ -283,6 +283,11 @@ const AuthenticatedApp = () => {
             <Route path="blog" element={<Blog />} />
             <Route path="blog/:slug" element={<BlogPostDetail />} />
 
+            {/* Support & Aliases */}
+            <Route path="support" element={<Pages.Support />} />
+            <Route path="bookmarks" element={<Navigate to="/favorites" replace />} />
+            <Route path="settings" element={<Navigate to="/profile" replace />} />
+
             <Route path="local-brain" element={<LocalBrain />} />
             <Route path="health" element={<div className="p-4 text-green-500 font-bold">OK</div>} />
             <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Menu, X, ChevronDown, User, LogIn, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,16 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from '@/features/auth/context/AuthContext';
 
 const LandingNavbar = () => {
+    const location = useLocation(); // Ensure useLocation is imported or available if inside Router context
+    // ... existing hooks
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const [isScrolled, setIsScrolled] = React.useState(false);
+
+    // Define pages with Dark Hero sections where header text should be white initially
+    const darkHeroPages = ['/', '/about', '/he', '/he/about', '/th', '/th/about', '/ru', '/ru/about']; // Add other langs if needed
+    const isDarkHeroPage = darkHeroPages.includes(location.pathname) || location.pathname === '/' || location.pathname.endsWith('/about'); /* Simple check */
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -42,14 +48,23 @@ const LandingNavbar = () => {
         { name: t('category.wellness', 'Wellness'), href: '/wellness' },
     ];
 
+    // Dynamic Text Color Logic
+    // If Scrolled: Text is Dark (Gray-700) because BG is White.
+    // If Not Scrolled:
+    //    If Dark Hero Page: Text is White.
+    //    If Light Page: Text is Dark (Gray-700).
+    const isTextWhite = !isScrolled && isDarkHeroPage;
+    const textColorClass = isTextWhite ? 'text-white hover:text-white/80' : 'text-gray-700 dark:text-gray-200 hover:text-blue-600';
+    const logoSrc = isTextWhite ? "/kosmoi_logo_white.svg" : "/kosmoi_logo.svg";
+
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-slate-950/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-800' : 'bg-transparent'}`}>
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'py-2 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-800' : 'py-4 bg-transparent'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex justify-between items-center h-20">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
                         <Link to="/" className="flex items-center gap-2">
-                            <img src="/kosmoi_logo.svg" alt="Kosmoi" className="h-8 w-auto" />
+                            <img src={logoSrc} alt="Kosmoi" className="h-10 w-auto" />
                         </Link>
                     </div>
 
@@ -57,7 +72,7 @@ const LandingNavbar = () => {
                     <div className="hidden md:flex items-center space-x-8 rtl:space-x-reverse">
                         {/* Categories Dropdown */}
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 transition-colors focus:outline-none">
+                            <DropdownMenuTrigger className={`flex items-center gap-1 text-sm font-medium transition-colors focus:outline-none ${textColorClass}`}>
                                 {t('nav.explore', 'Explore')} <ChevronDown className="w-4 h-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
@@ -73,7 +88,7 @@ const LandingNavbar = () => {
                             <Link
                                 key={link.href}
                                 to={link.href}
-                                className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 transition-colors"
+                                className={`text-sm font-medium transition-colors ${textColorClass}`}
                             >
                                 {link.name}
                             </Link>
@@ -93,14 +108,14 @@ const LandingNavbar = () => {
                         ) : (
                             <>
                                 <Button asChild variant="ghost" size="sm" className="hidden lg:flex">
-                                    <Link to="/one-dollar" className="text-blue-500 font-semibold">
+                                    <Link to="/one-dollar" className={`font-semibold ${isTextWhite ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-blue-600 hover:text-blue-700'}`}>
                                         Test Drive (35฿)
                                     </Link>
                                 </Button>
-                                <Button asChild variant="ghost" size="sm">
+                                <Button asChild variant="ghost" size="sm" className={isTextWhite ? 'text-white hover:bg-white/10' : ''}>
                                     <Link to="/login">{t('nav.login', 'Login')}</Link>
                                 </Button>
-                                <Button asChild variant="default" size="sm" className="rounded-full">
+                                <Button asChild variant="default" size="sm" className="rounded-full px-6">
                                     <Link to="/login?signup=true">{t('nav.get_started', 'Get Started')}</Link>
                                 </Button>
                             </>
@@ -112,8 +127,8 @@ const LandingNavbar = () => {
                         <LanguageSwitcher />
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Menu className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+                                <Button variant="ghost" size="icon" className={isTextWhite ? 'text-white hover:bg-white/10' : ''}>
+                                    <Menu className={`w-6 h-6 ${isTextWhite ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`} />
                                 </Button>
                             </SheetTrigger>
                             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
