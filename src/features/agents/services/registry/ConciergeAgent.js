@@ -34,14 +34,15 @@ export const CONCIERGE_AGENT = {
               {
                 "type": "vibe-card",
                 "props": {
-                    "id": "uuid",
+                    "id": "uuid-of-provider", 
                     "title": "Name",
+                    "description": "Short, punchy reason why it matches the vibe (e.g. 'Best sunset view in Chaweng')",
                     "image": "url",
-                    "vibes": ["vibe1", "vibe2"],
+                    "vibes": ["sunset-view", "hidden-gem", "romantic"],
                     "rating": 4.5,
                     "priceLevel": "$$",
                     "location": "Chaweng",
-                    "reason": "Best for sunset"
+                    "matchScore": 95
                 }
               }
            ]

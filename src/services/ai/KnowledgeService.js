@@ -26,7 +26,8 @@ export const KnowledgeService = {
             }
 
             // 2. Search in Supabase
-            const { data, error } = await supabase.rpc('match_code_knowledge', {
+            // 2. Search in Supabase
+            const { data, error } = await supabase.rpc('match_knowledge', {
                 query_embedding: embedding,
                 match_threshold: threshold,
                 match_count: limit

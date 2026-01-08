@@ -37,6 +37,7 @@ import CRMDashboard from './pages/admin/CRMDashboard';
 import AdminInfra from './pages/admin/AdminInfra';
 import Blog from './pages/Blog';
 import BlogPostDetail from './pages/BlogPostDetail';
+import Support from './pages/Support'; // New Support Page
 import __Layout from './Layout.jsx';
 import { lazy } from 'react';
 
@@ -91,7 +92,8 @@ export const PAGES = {
     "CommandCenter": CommandCenter,
     "Blog": Blog,
     "BlogPostDetail": BlogPostDetail,
-    "AdminWiki": lazy(() => import('./pages/admin/AdminWiki'))
+    "AdminWiki": lazy(() => import('./pages/admin/AdminWiki')),
+    "Support": Support, // Added Support Page
 }
 
 export const pagesConfig = {
