@@ -72,6 +72,7 @@ import AdminBusinesses from '@/pages/admin/AdminBusinesses';
 import AdminBookings from '@/pages/admin/AdminBookings';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
+import AdminLeads from '@/pages/admin/AdminLeads';
 import AdminEvolution from './pages/admin/AdminEvolution';
 import AdminKanban from './pages/admin/AdminKanban';
 import AdminRoadmap from '@/pages/admin/AdminRoadmap';
@@ -235,6 +236,7 @@ const AuthenticatedApp = () => {
                 <Route path="data" element={<AdminData />} />
                 <Route path="optimizer" element={<AdminOptimizer />} />
                 <Route path="crm" element={<AdminCRM />} />
+                <Route path="leads" element={<AdminLeads />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="evolution" element={<AdminEvolution />} />
                 <Route path="schema" element={<AdminSchema />} />

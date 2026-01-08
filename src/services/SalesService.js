@@ -1,5 +1,7 @@
 import { supabase } from '../api/supabaseClient.js';
 import { DatabaseService } from '../core/db/database.js';
+import { AgentRunner } from '../features/agents/services/AgentRunner.js';
+import { CRM_SALES_AGENT } from '../features/agents/services/registry/CRMSalesAgent.js';
 
 /**
  * SalesService
@@ -290,6 +292,20 @@ export const SalesService = {
         } catch (error) {
             console.error("Outreach Error:", error);
             return { message: "Error queuing outreach task." };
+        }
+    },
+
+    /**
+     * Run Sales Agent for a specific lead (Real-time).
+     */
+    async runAgentForLead(lead, input = "Draft an outreach email") {
+        try {
+            console.log(`[SalesService] Running agent for lead: ${lead.name}`);
+            const result = await AgentRunner.run(CRM_SALES_AGENT, input, { lead });
+            return result;
+        } catch (error) {
+            console.error("Agent Run Failed:", error);
+            throw error;
         }
     }
 };
