@@ -48,13 +48,13 @@ async function checkFilters() {
     // 3. Show some stats of what we DO have
     const { data: sampleProps, error: spError } = await supabase
         .from('service_providers')
-        .select('total_reviews, average_rating')
+        .select('business_name, category, super_category, sub_category')
         .eq('status', 'active')
-        .limit(10);
+        .limit(5);
 
     if (sampleProps) {
-        console.log('\nSample Stats (Active Providers):');
-        sampleProps.forEach(p => console.log(`Reviews: ${p.total_reviews}, Rating: ${p.average_rating}`));
+        console.log('\nSample Categories (Active Providers):');
+        sampleProps.forEach(p => console.log(p));
     }
 }
 

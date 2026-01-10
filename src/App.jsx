@@ -47,6 +47,7 @@ import Security from '@/pages/legal/Security';
 import Accessibility from '@/pages/legal/Accessibility';
 import BusinessInfo from '@/pages/BusinessInfo';
 import Contact from '@/pages/Contact';
+import SupportChat from '@/pages/SupportChat';
 import Blog from '@/pages/Blog';
 import BlogPostDetail from '@/pages/BlogPostDetail';
 import CalendarView from '@/pages/vendor/CalendarView';
@@ -72,7 +73,11 @@ import AdminBusinesses from '@/pages/admin/AdminBusinesses';
 import AdminBookings from '@/pages/admin/AdminBookings';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
-import AdminLeads from '@/pages/admin/AdminLeads';
+import AdminLeads from './pages/admin/AdminLeads';
+import AdminMarketing from './pages/admin/AdminMarketing';
+import AdminAutomations from './pages/admin/AdminAutomations';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminScheduler from './pages/admin/AdminScheduler';
 import AdminEvolution from './pages/admin/AdminEvolution';
 import AdminKanban from './pages/admin/AdminKanban';
 import AdminRoadmap from '@/pages/admin/AdminRoadmap';
@@ -104,10 +109,10 @@ setupIframeMessaging();
 
 const LayoutWrapper = ({ children, currentPageName }) => {
   const location = useLocation();
-  // Check if we are on the contact page (supports localized routes like /he/contact)
-  const isContactPage = location.pathname.includes('/contact');
+  // Check if we are on the contact page or support page (supports localized routes)
+  const isStandalonePage = location.pathname.includes('/contact') || location.pathname.includes('/support');
 
-  if (isContactPage) {
+  if (isStandalonePage) {
     return <>{children}</>;
   }
 
@@ -237,6 +242,10 @@ const AuthenticatedApp = () => {
                 <Route path="optimizer" element={<AdminOptimizer />} />
                 <Route path="crm" element={<AdminCRM />} />
                 <Route path="leads" element={<AdminLeads />} />
+                <Route path="marketing" element={<AdminMarketing />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="automations" element={<AdminAutomations />} />
+                <Route path="scheduler" element={<AdminScheduler />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="evolution" element={<AdminEvolution />} />
                 <Route path="schema" element={<AdminSchema />} />
@@ -286,7 +295,7 @@ const AuthenticatedApp = () => {
             <Route path="blog/:slug" element={<BlogPostDetail />} />
 
             {/* Support & Aliases */}
-            <Route path="support" element={<Pages.Support />} />
+            <Route path="support" element={<SupportChat />} />
             <Route path="bookmarks" element={<Navigate to="/favorites" replace />} />
             <Route path="settings" element={<Navigate to="/profile" replace />} />
 

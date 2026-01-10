@@ -48,7 +48,7 @@ export default function VibeCard({
         }
 
         if (id) {
-            navigate(`/marketplace/vendor/${id}`);
+            navigate(`/provider/${id}`);
         } else if (link) {
             window.open(link, '_blank');
         } else if (instagram) {

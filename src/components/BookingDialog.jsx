@@ -9,7 +9,7 @@ import { DayPicker } from 'react-day-picker';
 import { format, addDays } from 'date-fns';
 import 'react-day-picker/dist/style.css';
 
-export default function BookingDialog({ open, onOpenChange, provider, onBookingConfirmed }) {
+export default function BookingDialog({ open, onOpenChange, provider, onBookingConfirmed, selectedPackage }) {
     const [step, setStep] = useState('date'); // date | time | confirm | success
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -81,7 +81,8 @@ export default function BookingDialog({ open, onOpenChange, provider, onBookingC
                 time: selectedTime,
                 providerId: provider.id,
                 userId: user.id,
-                serviceName: provider.category || "Consultation" // Default or passed prop
+                serviceName: selectedPackage?.title || provider.category || "Consultation",
+                price: selectedPackage?.price || 0
             });
 
             setStep('success');
@@ -185,13 +186,23 @@ export default function BookingDialog({ open, onOpenChange, provider, onBookingC
                                 </div>
                                 <div className="flex items-center gap-3 text-blue-900">
                                     <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">$</div>
-                                    <span className="font-medium">{provider?.category || 'Service'}</span>
+                                    <span className="font-medium">
+                                        {selectedPackage ? (
+                                            <>
+                                                {selectedPackage.title} - {new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(selectedPackage.price)}
+                                            </>
+                                        ) : (
+                                            provider?.category || 'Service'
+                                        )}
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="flex flex-col gap-2">
                                 <Button onClick={handleConfirm} disabled={loadingBooking} className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg">
-                                    {loadingBooking ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Booking"}
+                                    {loadingBooking ? <Loader2 className="w-5 h-5 animate-spin" /> :
+                                        (selectedPackage?.price ? `Confirm & Pay ${new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(selectedPackage.price)}` : "Confirm Booking")
+                                    }
                                 </Button>
                                 <Button variant="ghost" onClick={() => setStep('time')} disabled={loadingBooking}>
                                     Back

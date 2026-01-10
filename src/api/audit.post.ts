@@ -1,6 +1,6 @@
 
 import { start } from "workflow/api";
-import { defineEventHandler, readBody } from "nitro/h3";
+import { defineEventHandler, readBody } from "h3";
 import { auditBusiness } from "../workflows/audit-business";
 
 interface AuditRequestBody {

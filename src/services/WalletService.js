@@ -60,6 +60,7 @@ export const WalletService = {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error("No session");
 
+            // @ts-ignore
             const { data, error } = await supabase.functions.invoke('create-topup-session', {
                 body: { amount, currency: 'thb', returnUrl: window.location.origin + '/wallet' }
             });
@@ -79,18 +80,18 @@ export const WalletService = {
     },
 
     /**
-     * Simulate a Top-Up (Demo Only - Deprecated but kept for fallback).
+     * Simulate a Top-Up (Admin Only).
      */
     simulateTopUp: async (amount) => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
             const { data, error } = await supabase.rpc('process_transaction', {
-                p_user_id: user.id,
-                p_amount: amount,
-                p_type: 'topup',
-                p_reference_id: `DEMO-${Date.now()}`,
-                p_metadata: { method: 'demo_credit_card' }
+                target_user_id: user.id,
+                amount: amount,
+                type: 'topup',
+                reference_id: `DEMO-${Date.now()}`,
+                metadata: { method: 'demo_credit_card' }
             });
 
             if (error) throw error;
@@ -130,6 +131,7 @@ export const WalletService = {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error("No session");
 
+            // @ts-ignore
             const { data, error } = await supabase.functions.invoke('create-setup-session', {
                 body: { returnUrl: window.location.origin + '/wallet' }
             });
@@ -152,6 +154,7 @@ export const WalletService = {
      */
     getPaymentMethods: async () => {
         try {
+            // @ts-ignore
             const { data, error } = await supabase.functions.invoke('list-payment-methods');
             if (error) throw error;
             return data?.data || [];
@@ -163,17 +166,14 @@ export const WalletService = {
 
     /**
      * Transfer funds to another wallet (P2P).
+     * SECURE: Uses auth.uid() on server side.
      */
-    transferFunds: async (recipientWalletId, amount, note = '') => {
+    transferFunds: async (recipientWalletId, amount, note = "P2P Transfer") => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("No user logged in");
-
             const { data, error } = await supabase.rpc('transfer_funds', {
-                p_sender_id: user.id,
-                p_recipient_wallet_id: recipientWalletId,
-                p_amount: amount,
-                p_note: note
+                recipient_wallet_id: recipientWalletId,
+                amount: amount,
+                note: note
             });
 
             if (error) throw error;
@@ -182,5 +182,5 @@ export const WalletService = {
             console.error("Transfer Error:", error);
             throw error;
         }
-    }
+    },
 };

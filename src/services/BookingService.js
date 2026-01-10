@@ -1,4 +1,5 @@
 import { db } from "../api/supabaseClient.js";
+import { WalletService } from "./WalletService";
 
 /**
  * Service to handle booking logic backed by Supabase.
@@ -43,12 +44,37 @@ export const BookingService = {
     },
 
     /**
+     * Helper to get provider's wallet ID from provider ID
+     */
+    getProviderWalletId: async (providerId) => {
+        // 1. Get Owner ID from Service Provider
+        const { data: provider, error: pError } = await db
+            .from('service_providers')
+            .select('owner_id')
+            .eq('id', providerId)
+            .single();
+
+        if (pError || !provider?.owner_id) throw new Error("Provider owner not found");
+
+        // 2. Get Wallet ID from Owner ID
+        const { data: wallet, error: wError } = await db
+            .from('wallets')
+            .select('id')
+            .eq('user_id', provider.owner_id)
+            .single();
+
+        if (wError || !wallet) throw new Error("Provider wallet not found");
+
+        return wallet.id;
+    },
+
+    /**
      * Create a new booking
      * @param {Object} bookingDetails 
      * @returns {Promise<Object>} The created booking object
      */
     createBooking: async (bookingDetails) => {
-        // details: { date, time, providerId, userId, serviceName }
+        // details: { date, time, providerId, userId, serviceName, price }
         console.log("Creating real booking:", bookingDetails);
 
         // Required: user_id. If missing (guest), we can't book in this strict schema.
@@ -59,12 +85,7 @@ export const BookingService = {
         // 0. RACE CONDITION CHECK: Check if slot is still free
         //Ideally this should be a DB constraint or stored proc, but for MVP client-side check is better than nothing.
         const activeBookings = await BookingService.getAvailableSlots(new Date(bookingDetails.date), bookingDetails.providerId);
-        // getAvailableSlots returns *available* slots. If our time is NOT in there, it's taken.
-        // Wait, getAvailableSlots logic: returns allSlots - bookedSlots.
-        // So checking if 'time' is in the returned array is the correct check.
-
-        // However, getAvailableSlots takes a Date object or string.
-        // Let's reuse the existing logic but we need to be careful about date format.
+        // getAvailableSlots logic: returns available slots.
 
         // Re-implementing specific check for speed and clarity
         const { data: existing } = await db.from('bookings')
@@ -77,6 +98,21 @@ export const BookingService = {
 
         if (existing) {
             throw new Error("This slot is already booked. Please choose another time.");
+        }
+
+        // --- PAYMENT LOGIC ---
+        if (bookingDetails.price && bookingDetails.price > 0) {
+            console.log(`Processing payment of ${bookingDetails.price} THB...`);
+            try {
+                const providerWalletId = await BookingService.getProviderWalletId(bookingDetails.providerId);
+                const note = `Booking for ${bookingDetails.serviceName} on ${bookingDetails.date}`;
+
+                await WalletService.transferFunds(providerWalletId, bookingDetails.price, note);
+                console.log("Payment successful");
+            } catch (paymentError) {
+                console.error("Payment failed:", paymentError);
+                throw new Error(`Payment failed: ${paymentError.message}`);
+            }
         }
 
         const payload = {
@@ -93,6 +129,7 @@ export const BookingService = {
 
         if (error) {
             console.error("Booking failed:", error);
+            // TODO: Refund if payment was made? (Critical for prod)
             throw error;
         }
 
