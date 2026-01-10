@@ -1,7 +1,8 @@
-import { supabase } from '../api/supabaseClient.js';
+import { supabase } from "@/api/supabaseClient";
 import { DatabaseService } from '../core/db/database.js';
-import { AgentRunner } from '../features/agents/services/AgentRunner.js';
-import { CRM_SALES_AGENT } from '../features/agents/services/registry/CRMSalesAgent.js';
+import { AgentRunner } from "@/features/agents/services/AgentRunner.js";
+import { CRM_SALES_AGENT } from "@/features/agents/services/registry/CRMSalesAgent.js";
+import { EmailService } from "@/services/integrations/EmailService.js";
 
 /**
  * SalesService
@@ -298,14 +299,34 @@ export const SalesService = {
     /**
      * Run Sales Agent for a specific lead (Real-time).
      */
-    async runAgentForLead(lead, input = "Draft an outreach email") {
-        try {
-            console.log(`[SalesService] Running agent for lead: ${lead.name}`);
-            const result = await AgentRunner.run(CRM_SALES_AGENT, input, { lead });
-            return result;
-        } catch (error) {
-            console.error("Agent Run Failed:", error);
-            throw error;
+    async runAgentForLead(lead, inputOverride) {
+        console.log("[SalesService] Running Agent for lead:", lead.name);
+        // Default input: "Draft an introductory email..."
+        const input = inputOverride || "Draft a warm introductory email for this lead.";
+
+        const result = await AgentRunner.run(CRM_SALES_AGENT, input, { lead });
+        return result;
+    },
+
+    /**
+     * Sends an outreach email and updates CRM.
+     * @param {string} leadId 
+     * @param {Object} emailData { to, subject, body }
+     */
+    async sendOutreachEmail(leadId, emailData) {
+        // 1. Send via Email Service
+        const sendResult = await EmailService.send(emailData);
+
+        if (sendResult.success) {
+            // 2. Log Interaction
+            await this.createInteraction(leadId, 'email_sent', `Sent email: ${emailData.subject}`);
+
+            // 3. Update Status
+            await this.updateLead(leadId, { status: 'contacted' });
+
+            return sendResult;
+        } else {
+            throw new Error("Failed to send email");
         }
     }
 };

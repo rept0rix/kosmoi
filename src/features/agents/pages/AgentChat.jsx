@@ -26,6 +26,11 @@ export default function AgentChat() {
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
+        if (workflowId === 'concierge') {
+            // Redirect legacy concierge links to the new AI Chat map interface
+            navigate('/AIChat');
+            return;
+        }
         loadWorkflow();
     }, [workflowId]);
 

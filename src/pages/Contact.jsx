@@ -1,5 +1,6 @@
 import React from 'react';
-import { Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, Phone, MapPin, MessageCircle, Bot } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AuthGate from '@/components/AuthGate';
 
@@ -10,86 +11,91 @@ import AuthGate from '@/components/AuthGate';
  * Includes information for business partnerships.
  */
 const Contact = () => {
+    const navigate = useNavigate();
     return (
-        <div className="min-h-screen bg-white py-20 px-4">
-            <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-16">
-                    <h1 className="text-4xl font-extrabold text-slate-900 mb-4">Get in Touch</h1>
+        <div className="min-h-screen bg-slate-50 py-20 px-4">
+            <div className="max-w-3xl mx-auto space-y-12">
+                <div className="text-center">
+                    <h1 className="text-4xl font-extrabold text-slate-900 mb-4">Support Center</h1>
                     <p className="text-xl text-slate-600">
-                        We're here to help you navigate the Kosmoi ecosystem.
+                        We're here to help you around the clock.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-12">
-                    {/* Contact Info */}
-                    <div className="space-y-8">
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-4">Contact Information</h3>
-                            <div className="space-y-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-blue-50 rounded-lg">
-                                        <Mail className="w-6 h-6 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-slate-900">Email</p>
-                                        <p className="text-slate-600">support@kosmoi.com</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-green-50 rounded-lg">
-                                        <MessageCircle className="w-6 h-6 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-slate-900">WhatsApp</p>
-                                        <p className="text-slate-600">+66 00 000 0000</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-slate-50 rounded-lg">
-                                        <MapPin className="w-6 h-6 text-slate-600" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-slate-900">Office</p>
-                                        <p className="text-slate-600">Koh Samui, Surat Thani, Thailand</p>
-                                    </div>
-                                </div>
+                {/* PRIMARY ACTION: LIVE CHAT */}
+                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 transform hover:scale-[1.02] transition-transform duration-300 cursor-pointer group"
+                    onClick={() => navigate('/support')}
+                >
+                    <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                        <div className="relative z-10 flex items-center gap-6">
+                            <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/20">
+                                <Bot className="w-10 h-10 text-white" />
                             </div>
+                            <div>
+                                <h2 className="text-2xl font-bold mb-1">Start a Live Chat</h2>
+                                <p className="text-blue-100">Talk to our AI Agent or get escalated to a human instantly.</p>
+                            </div>
+                            <Button className="ml-auto bg-white text-blue-600 hover:bg-blue-50 font-bold px-6 h-12 rounded-xl shadow-lg hidden md:flex">
+                                Start Now &rarr;
+                            </Button>
                         </div>
+                    </div>
+                    <div className="p-6 bg-blue-50/50 flex flex-wrap gap-4 text-sm text-slate-600">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            Online 24/7
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                            Avg. response: &lt; 1 min
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                            Account & Billing
+                        </div>
+                    </div>
+                </div>
 
-                        <div className="bg-slate-50 p-6 rounded-2xl">
-                            <h4 className="font-bold text-slate-900 mb-2">For Business Inquiries</h4>
-                            <p className="text-slate-600 mb-4 text-sm">
-                                Interested in partnering with Kosmoi or getting your business listed?
+                {/* SECONDARY OPTIONS */}
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Business Inquiries */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 hover:shadow-md transition-shadow">
+                        <div className="p-3 bg-slate-100 rounded-xl">
+                            <MapPin className="w-6 h-6 text-slate-700" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg text-slate-900">For Partners</h3>
+                            <p className="text-slate-500 text-sm mb-4">
+                                Want to list your business? Join our growing network.
                             </p>
-                            <Button className="w-full bg-slate-900 text-white hover:bg-slate-800">
-                                Partner Support
+                            <Button variant="outline" className="w-full border-slate-200" onClick={() => navigate('/vendor-signup')}>
+                                Partner with Us
                             </Button>
                         </div>
                     </div>
 
-                    {/* Quick Form */}
-                    <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Send us a message</h3>
-                        <form className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-                                <input type="text" className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="Your name" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                                <input type="email" className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="your@email.com" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-                                <textarea rows={4} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="How can we help?"></textarea>
-                            </div>
-                            <AuthGate>
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6">
-                                    Send Message
-                                </Button>
-                            </AuthGate>
-                        </form>
+                    {/* Direct Contact (Hidden Form, just info) */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-start gap-4 hover:shadow-md transition-shadow">
+                        <div className="p-3 bg-green-100 rounded-xl">
+                            <MessageCircle className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg text-slate-900">Direct Message</h3>
+                            <p className="text-slate-500 text-sm mb-4">
+                                Need to leave a message? Contact us via WhatsApp.
+                            </p>
+                            <Button variant="outline" className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800" onClick={() => window.open('https://wa.me/66000000000', '_blank')}>
+                                Open WhatsApp
+                            </Button>
+                        </div>
                     </div>
+                </div>
+
+                <div className="text-center pt-8 border-t border-slate-200">
+                    <p className="text-slate-400 text-sm">
+                        Prefer email? <a href="mailto:support@kosmoi.com" className="text-slate-500 hover:text-blue-600 underline decoration-slate-300 underline-offset-4">support@kosmoi.com</a>
+                    </p>
                 </div>
             </div>
         </div>

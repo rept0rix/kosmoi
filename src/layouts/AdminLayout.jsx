@@ -25,7 +25,11 @@ import {
     Table,
     HardDrive,
     Upload,
-    CalendarDays
+    CalendarDays,
+    Megaphone,
+    BarChart3,
+    CalendarCheck,
+    CircuitBoard
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -78,6 +82,10 @@ export default function AdminLayout() {
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM Dashboard" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/leads" icon={<Users />} label="Leads List" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/marketing" icon={<Megaphone />} label="Marketing Center" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/analytics" icon={<BarChart3 />} label="Analytics & Lara" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/automations" icon={<CircuitBoard />} label="Engine Room" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/scheduler" icon={<CalendarCheck />} label="Scheduler & Claude" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/claims" icon={<FileText />} label="Claims" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/wallet" icon={<Store />} label="System Wallet" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/data" icon={<Database />} label="Platform Analytics" onClick={() => setIsMobileOpen(false)} />

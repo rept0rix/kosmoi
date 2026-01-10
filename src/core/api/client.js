@@ -37,7 +37,7 @@ class APIClient {
                 auth: {
                     persistSession: true,
                     autoRefreshToken: true,
-                    detectSessionInUrl: false, // Disabled to prevent redirect loops/locks
+                    detectSessionInUrl: true, // Enabled to allow OAuth hash parsing
                     storageKey: 'supabase.auth.token.v2', // Explicit key to avoid conflicts
                     storage: typeof window !== 'undefined' ? window.localStorage : undefined
                 },

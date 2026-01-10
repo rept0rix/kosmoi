@@ -8,6 +8,7 @@ import SEO from '@/components/SEO';
 import Footer from '@/components/Footer';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import SubtleLocationIndicator from '@/components/SubtleLocationIndicator';
+import LeadCaptureForm from '@/components/forms/LeadCaptureForm';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -51,35 +52,10 @@ export default function Home() {
             </div>
 
             {/* Header / Logo */}
-            <nav className="absolute top-0 left-0 right-0 z-50 p-6 flex justify-between items-center">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <img
-                        src="/kosmoi_logo_white.svg"
-                        alt="Kosmoi Logo"
-                        className="h-10 w-auto object-contain"
-                        onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = "/kosmoi-logo.png"; // Fallback
-                        }}
-                    />
-                    {/* <span className="text-2xl font-bold tracking-tight text-white">Kosmoi</span> */}
-                </div>
 
-                <div className="flex items-center gap-4">
-                    <LanguageSwitcher />
-                    {/* Optional: Login button for direct access if needed */}
-                    <Button
-                        variant="ghost"
-                        className="text-white hover:bg-white/10"
-                        onClick={() => navigate('/login')}
-                    >
-                        {t('profile.login_register')}
-                    </Button>
-                </div>
-            </nav>
 
             {/* Main Content */}
-            <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
+            <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-32 pb-12">
 
                 {/* Hero Headings */}
                 <motion.div
@@ -90,10 +66,7 @@ export default function Home() {
                 >
                     <div className="flex flex-col items-center gap-4">
                         {/* Digital Nomad Button */}
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-slate-200 cursor-pointer hover:bg-white/20 transition-colors">
-                            <Briefcase className="w-4 h-4 text-emerald-400" />
-                            <span>{t('home.digital_nomad')}</span>
-                        </div>
+
 
                         {/* Intelligent Guide Pill (Optional: keep or remove? User mentioned Digital Nomad button... let's keep both stacked or replace? I'll Keep Nomad as requested "above") */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-xs font-medium text-slate-300">
@@ -119,25 +92,24 @@ export default function Home() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
-                    className="w-full max-w-2xl mt-12 flex flex-col items-center gap-3"
+                    className="w-full max-w-2xl mt-12 relative group"
                 >
-                    <div
-                        onClick={handleInteraction}
-                        className="w-full group relative flex items-center gap-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 backdrop-blur-xl rounded-2xl p-4 cursor-pointer transition-all shadow-2xl hover:shadow-blue-500/20"
-                    >
-                        <Search className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
-                        <div className="flex-1 text-start">
-                            <span className="text-xl text-slate-400 font-light group-hover:text-slate-200">
-                                {t('home.search_placeholder')}
-                            </span>
-                        </div>
-                        <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
-                            <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
-                        </div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-xl group-hover:blur-2xl transition-all opacity-50"></div>
+                    <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-2 flex items-center shadow-2xl">
+                        <Search className="w-6 h-6 text-slate-300 ml-4" />
+                        <input
+                            type="text"
+                            placeholder={t('home.search_placeholder', "Search for villas, food, drivers...")}
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-slate-400 h-12 px-4 text-lg outline-none"
+                            onKeyDown={(e) => e.key === 'Enter' && navigate('/marketplace')}
+                        />
+                        <Button
+                            onClick={() => navigate('/marketplace')}
+                            className="rounded-full px-8 bg-white text-slate-900 hover:bg-slate-200 font-bold"
+                        >
+                            {t('common.search', "Find")}
+                        </Button>
                     </div>
-
-                    {/* Subtle Location Indicator */}
-                    <SubtleLocationIndicator className="mt-2" />
                 </motion.div>
 
                 {/* Categories Grid */}
