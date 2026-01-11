@@ -15,9 +15,14 @@ fi
 
 echo "👻 Ghost Protocol Initiated: Target [$REAL_CATEGORY]"
 
+# 0. Fix Environment (Ensure npm/node is found)
+export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin
+
 # 1. Ensure we have the latest orders
 echo "📡 Syncing with Hive Mind..."
-git pull origin main
+# Pull the current branch, not hardcoded main
+CURRENT_BRANCH=$(git branch --show-current)
+git pull origin "$CURRENT_BRANCH"
 
 # 2. Run the Crawler
 echo "🕷️ Releasing the Crawler..."
