@@ -69,31 +69,52 @@ async function seedCategory(area, category) {
 
         console.log(`✨ Found ${places.length} places. Inserting...`);
 
-        // Insert
+        // Insert (Try/Catch wrapper to handle duplicates gracefully)
         for (const place of places) {
-            const { data, error } = await supabase
-                .from('service_providers')
-                .upsert({
-                    business_name: place.business_name,
-                    description: place.description,
-                    category: place.category,
-                    sub_category: place.sub_category,
-                    location: place.location,
-                    phone: place.contact_phone,
-                    images: place.images,
-                    verified: false,
-                    status: 'active',
-                    metadata: {
-                        address: place.address,
-                        price_range: place.price_range,
-                        lat: place.lat,
-                        lng: place.lng
-                    }
-                }, { onConflict: 'business_name' })
-                .select();
+            try {
+                // First, check if it exists to avoid error spam (optional efficiency)
+                const { data: existing } = await supabase
+                    .from('service_providers')
+                    .select('id')
+                    .eq('business_name', place.business_name)
+                    .maybeSingle();
 
-            if (error) console.error(`❌ Failed to insert ${place.business_name}:`, error.message);
-            else console.log(`   + Added: ${place.business_name}`);
+                if (existing) {
+                    console.log(`   ⚠️ Skiping ${place.business_name} (Already exists)`);
+                    continue;
+                }
+
+                const { data, error } = await supabase
+                    .from('service_providers')
+                    .insert({
+                        business_name: place.business_name,
+                        description: place.description,
+                        category: place.category,
+                        sub_category: place.sub_category,
+                        location: place.location,
+                        phone: place.contact_phone,
+                        images: place.images,
+                        verified: false,
+                        status: 'active',
+                        metadata: {
+                            address: place.address,
+                            price_range: place.price_range,
+                            lat: place.lat,
+                            lng: place.lng
+                        }
+                    })
+                    .select();
+
+                if (error) {
+                    // unexpected error
+                    console.error(`❌ Failed (DB): ${place.business_name}:`, error.message);
+                } else {
+                    console.log(`   + Added: ${place.business_name}`);
+                }
+
+            } catch (err) {
+                console.error(`❌ Failed (Script): ${place.business_name}:`, err.message);
+            }
         }
 
     } catch (e) {
