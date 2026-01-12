@@ -43,6 +43,7 @@ class SalesCoordinator {
             .eq('status', 'active')
             .neq('category', 'culture') // Don't sell to temples
             .neq('category', 'temple')
+            .neq('category', 'other')   // Crawler dumps unknown/temples here
             .limit(limit);
 
         if (error) {
