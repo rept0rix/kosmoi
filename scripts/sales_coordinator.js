@@ -15,7 +15,7 @@ if (!supabaseUrl || !supabaseServiceKey || !apiKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" }); // Using Flash for speed
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
 /**
  * Sales Coordinator Agent ("Sarah")
@@ -27,67 +27,96 @@ class SalesCoordinator {
         this.role = "Sales Coordinator";
     }
 
-    /**
-     * Skill: Scout Leads
-     * Find unverified businesses in a specific area/category that haven't been contacted yet.
-     */
-    async scout_leads(limit = 5) {
-        console.log(`🕵️‍♀️ ${this.name}: Scouting for new leads...`);
-
-        // 1. Fetch unverified providers
-        // Filter out non-commercial categories (Temples, generic 'Visit')
-        const { data: leads, error } = await supabase
+    async __scout_leads(limit = 5) {
+        // Internal helper to get raw leads
+        const { data: leads } = await supabase
             .from('service_providers')
             .select('id, business_name, category, location, phone, description, metadata')
             .eq('verified', false)
             .eq('status', 'active')
-            .neq('category', 'culture') // Don't sell to temples
+            .neq('category', 'culture')
             .neq('category', 'temple')
-            .neq('category', 'other')   // Crawler dumps unknown/temples here
-            .limit(limit);
+            .neq('category', 'other')
+            .limit(limit * 3); // Fetch more to account for filter
+        return leads || [];
+    }
 
-        if (error) {
-            console.error("❌ Error fetching leads:", error);
-            return [];
+    /**
+     * Skill: Scout Leads
+     * Find unverified businesses that HAVE NOT been invited yet.
+     */
+    async scout_leads(limit = 5) {
+        console.log(`🕵️‍♀️ ${this.name}: Scouting for new leads...`);
+
+        const rawLeads = await this.__scout_leads(limit);
+        const freshLeads = [];
+
+        for (const lead of rawLeads) {
+            if (freshLeads.length >= limit) break;
+
+            // Check if already invited
+            const { data: existing } = await supabase
+                .from('invitations')
+                .select('id')
+                .eq('service_provider_id', lead.id)
+                .maybeSingle();
+
+            if (!existing) {
+                freshLeads.push(lead);
+            }
         }
 
-        console.log(`Found ${leads.length} potential leads.`);
-        return leads;
+        console.log(`Found ${freshLeads.length} fresh leads (not yet invited).`);
+        return freshLeads;
     }
 
     /**
      * Skill: Generate Invitation
-     * Drafts a personalized message using GenAI.
+     * Drafts message and SAVES invitation to DB.
      */
     async generate_invitation(lead) {
         console.log(`💌 Drafting invite for: ${lead.business_name}...`);
 
-        const prompt = `
-        You are Sarah, a friendly partnership manager for "Samui Service Hub" (Kosmoi).
-        Draft a SHORT, casual, high-converting invitation message for this business:
-        
-        Name: ${lead.business_name}
-        Type: ${lead.category}
-        Location: ${lead.location}
-        
-        Value Prop: "Get verified for $1/month to accept bookings and payments instantly."
-        Call to Action: "Click here to claim: [LINK]"
+        // 1. Generate Token
+        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const claimLink = `https://kosmoi.com/claim-profile?token=${token}`;
 
-        Format: Plain text, friendly tone, no jargon. max 2 sentences + CTA.
+        // 2. Draft Message with Gemini
+        const prompt = `
+        You are Sarah, a partnership manager for "Samui Service Hub".
+        Draft a 1-sentence invite for "${lead.business_name}" (${lead.category}) in ${lead.location}.
+        Value: "Get verified for $1/month". 
+        Link placeholder: [LINK]
+        Tone: Casual, local.
         `;
 
         try {
             const result = await model.generateContent(prompt);
-            const message = result.response.text().trim();
+            const messageRaw = result.response.text().trim();
+            const message = messageRaw.replace('[LINK]', claimLink);
 
-            // In a real app, we'd generate a real link here:
-            // const link = await createPaymentLink(...)
-            const dummyLink = `https://kosmoi.com/claim/${lead.id}`;
+            // 3. Persist to DB
+            const { error } = await supabase
+                .from('invitations')
+                .insert({
+                    service_provider_id: lead.id,
+                    token: token,
+                    status: 'pending',
+                    metadata: {
+                        channel: 'simulated_agent',
+                        target_message: message
+                    }
+                });
+
+            if (error) {
+                console.error(`❌ DB Save Failed for ${lead.business_name}:`, error.message);
+                return null;
+            }
 
             return {
                 business_id: lead.id,
-                message: message.replace('[LINK]', dummyLink),
-                status: 'drafted'
+                message: message,
+                status: 'saved_to_db'
             };
 
         } catch (e) {
@@ -110,6 +139,7 @@ class SalesCoordinator {
                 console.log(`\n--------------------------------`);
                 console.log(`🎯 Target: ${lead.business_name}`);
                 console.log(`📝 Message:\n${invite.message}`);
+                console.log(`✅ Saved to 'invitations' table`);
                 console.log(`--------------------------------\n`);
 
                 // Future: Send Email/SMS logic here
