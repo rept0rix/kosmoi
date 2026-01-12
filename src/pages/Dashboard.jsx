@@ -183,31 +183,34 @@ export default function Dashboard() {
   // Background images logic removed in favor of LandingHero
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-midnight-950 text-white font-sans selection:bg-banana-500/30">
       <OfflineIndicator />
       {/* Hero Section with Search & Categories */}
-      <div className="relative isolate overflow-hidden bg-slate-900 pb-12 pt-24 sm:pb-32 lg:pb-32 lg:pt-32 mb-8">
-        <img
-          src="https://images.unsplash.com/photo-1540206395-688085723adb?w=1600&auto=format&fit=crop&q=80"
-          alt="Dashboard Background"
-          className="absolute inset-0 -z-10 h-full w-full object-cover opacity-20 blur-sm"
-        />
+      <div className="relative isolate overflow-hidden bg-midnight-950 pb-12 pt-24 sm:pb-32 lg:pb-32 lg:pt-32 mb-8 border-b border-white/5 shadow-2xl shadow-midnight-900/50">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-midnight-950"></div>
+        {/* Ambient Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-banana-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
+
         <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center relative z-10">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl font-display mb-6 drop-shadow-lg">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl font-heading mb-6 drop-shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-500">
             {t('dashboard.hero_title')}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-banana-400 to-banana-600 block sm:inline sm:ml-3">
+              Island Life
+            </span>
           </h1>
-          <p className="mt-4 text-xl leading-8 text-gray-200 max-w-2xl mx-auto mb-10 drop-shadow-md">
+          <p className="mt-4 text-xl leading-8 text-slate-400 max-w-2xl mx-auto mb-10 drop-shadow-sm font-light">
             {t('dashboard.hero_subtitle')}
           </p>
 
           {/* Profile Switcher */}
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-6">
             <button
               onClick={() => setShowProfileDialog(true)}
-              className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md transition-all text-white text-sm font-medium"
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-md transition-all text-white text-sm font-medium hover:scale-105 active:scale-95"
             >
-              <Users className="w-4 h-4 text-purple-300 group-hover:text-purple-200" />
-              <span>
+              <Users className="w-4 h-4 text-banana-400 group-hover:text-banana-200" />
+              <span className="tracking-wide">
                 {userProfile === PROFILES.TOURIST && t('profiles.tourist.title', 'Tourist')}
                 {userProfile === PROFILES.NOMAD && t('profiles.nomad.title', 'Digital Nomad')}
                 {userProfile === PROFILES.RESIDENT && t('profiles.resident.title', 'Resident')}
@@ -217,12 +220,12 @@ export default function Dashboard() {
           </div>
 
           {/* Location Bar & Status */}
-          <div className="max-w-7xl mx-auto px-4 mb-6 flex justify-center">
-            <SubtleLocationIndicator className="py-2 px-4 shadow-lg backdrop-blur-md bg-white/10" />
+          <div className="max-w-7xl mx-auto px-4 mb-8 flex justify-center">
+            <SubtleLocationIndicator className="py-2.5 px-6 shadow-gold-glow backdrop-blur-md bg-midnight-900/40 border border-white/10 rounded-full text-sm" />
           </div>
 
           {/* Super Categories */}
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 mb-6">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 mb-8">
             <SuperCategories
               onSelect={handleSuperCategoryClick}
               selectedCategory={selectedSuperCategory}
@@ -230,7 +233,7 @@ export default function Dashboard() {
           </div>
 
           {/* Sub Categories */}
-          <div className="mb-8">
+          <div className="mb-10">
             {selectedSuperCategory && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 flex justify-center">
                 <SubCategorySelector
@@ -247,9 +250,9 @@ export default function Dashboard() {
 
           {/* Integrated Search Bar */}
           <div className="max-w-3xl mx-auto mb-16 relative">
-            <div className="relative flex items-center">
+            <div className="relative flex items-center group">
               <Input
-                className="h-14 pl-6 pr-16 rounded-full bg-white/95 backdrop-blur-sm border-0 text-lg shadow-xl focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 text-slate-800 placeholder:text-slate-500"
+                className="h-16 pl-8 pr-20 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-lg shadow-2xl text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-banana-500/50 focus-visible:border-banana-500/50 transition-all group-hover:bg-white/10"
                 placeholder={t('dashboard.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -257,17 +260,17 @@ export default function Dashboard() {
                 onFocus={() => searchQuery && setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               />
-              <div className="absolute right-2 flex items-center gap-1">
+              <div className="absolute right-3 flex items-center gap-2">
                 <Button
                   size="icon"
-                  className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition-all hover:scale-105"
+                  className="h-11 w-11 rounded-xl bg-banana-500 hover:bg-banana-400 text-midnight-950 shadow-gold-glow transition-all hover:scale-105"
                   onClick={handleSearch}
                 >
                   <Search className="h-5 w-5" />
                 </Button>
                 <Button
                   size="icon"
-                  className="h-10 w-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg transition-all hover:scale-105 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x"
+                  className="h-11 w-11 rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-lg transition-all hover:scale-105 bg-gradient-to-br from-purple-500 to-indigo-600"
                   onClick={() => navigate('/ai-chat')}
                   title={t('search.ask_ai_tooltip')}
                 >
@@ -280,40 +283,30 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Location Permission UI Blocks (Moved here or kept below?) Keeping below Hero/inside main content usually fine, but let's check structure. 
-          The previous structure had Permission blocks after Hero. I will keep them there.
-      */}
-
-      {/* Location Permission UI Blocks Removed */}
-
-      {/* Integrated Location Dialog via SubtleLocationIndicator (Self-contained) */}
-
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-
-
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
         <div className="mb-6">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-white font-heading tracking-tight">
                 {userLocation ? t('nearbyProviders') : t('recommendedProviders')}
               </h3>
               <Button
                 variant="ghost"
                 onClick={() => navigate(createPageUrl("ServiceProviders"))}
-                className="text-blue-600"
+                className="text-banana-400 hover:text-banana-300 hover:bg-white/5"
               >
                 {t('seeAll')}
               </Button>
             </div>
 
             {isLoading ? (
-              <div className="text-center py-8 text-gray-500">{t('loading')}</div>
+              <div className="text-center py-12 text-slate-500 animate-pulse">{t('loading')}...</div>
             ) : providers.length === 0 ? (
-              <Card className="p-6 text-center">
-                <p className="text-gray-500">{t('noProviders')}</p>
-              </Card>
+              <div className="p-8 text-center rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm">
+                <p className="text-slate-400">{t('noProviders')}</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {providers.map((provider) => (
                   <ProviderCard
                     key={provider.id}

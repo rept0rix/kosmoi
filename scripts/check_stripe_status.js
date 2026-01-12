@@ -8,14 +8,14 @@ const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABAS
 async function checkStripeStatus() {
     const { data, error } = await supabase
         .from('service_providers')
-        .select('id, name, stripe_account_id, stripe_status')
+        .select('id, business_name, stripe_account_id, stripe_status')
         .not('stripe_status', 'is', null);
 
     if (error) {
         console.error("Error:", error);
     } else {
         console.log(`Found ${data.length} providers with Stripe status:`);
-        data.forEach(p => console.log(`- ${p.name}: ${p.stripe_status} (${p.stripe_account_id})`));
+        data.forEach(p => console.log(`- ${p.business_name}: ${p.stripe_status} (${p.stripe_account_id})`));
     }
 }
 
