@@ -25,18 +25,28 @@ async function check() {
         .from('service_providers')
         .select('*', { count: 'exact', head: true });
 
-    if (anonError) console.error("Anon Error:", anonError);
-    else console.log(`👻 Anon (Public) sees:       ${anonCount} rows`);
+    if (anonError) console.error("Anon Error (Providers):", anonError);
+    else console.log(`👻 Anon (Public) sees Providers: ${anonCount} rows`);
 
-    // 3. Check for specific Mock Lead
-    const { data: mockLeads } = await serviceClient
+    // Check Invitations
+    const { count: inviteCount, error: inviteError } = await anonClient
+        .from('invitations')
+        .select('*', { count: 'exact', head: true });
+
+    if (inviteError) console.error("Anon Error (Invitations):", inviteError);
+    else console.log(`👻 Anon (Public) sees Invitations: ${inviteCount} rows`);
+
+    // 3. Inspect Columns
+    const { data: sampleProps } = await serviceClient
         .from('service_providers')
-        .select('id, business_name, verified')
-        .ilike('business_name', '%Test Bar%')
-        .limit(5);
+        .select('*')
+        .limit(1)
+        .single();
 
-    console.log("\nRecent Mock Leads (Admin View):");
-    console.table(mockLeads);
+    if (sampleProps) {
+        console.log("\n📋 Table Columns:");
+        console.log(Object.keys(sampleProps).join(', '));
+    }
 }
 
 check();
