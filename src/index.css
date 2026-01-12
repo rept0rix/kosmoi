@@ -131,57 +131,61 @@ button:focus-visible {
   }
 
   .dark {
-    /* Premium Dark Mode (Deep Navy/Slate, not just gray) */
+    /* Premium Dark Mode: Nano Banana (Midnight & Gold) */
     --background: 222 47% 11%;
-    /* Rich Deep Navy */
+    /* Deep Navy (#0f172a - Slate 900 base) */
     --foreground: 210 40% 98%;
-    /* Soft White */
 
-    --card: 222 47% 14%;
-    /* Slightly Lighter Navy */
+    --card: 222 47% 11%;
+    /* Same as bg for seamless feel, relying on glass borders */
     --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 14%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
-    /* Bright Electric Blue */
+    /* The "Banana" - Electric Gold/Amber */
+    --primary: 45 93% 47%;
+    /* #F59E0B (Amber-500) */
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 17%;
-    /* Muted Navy */
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 199 89% 48%;
-    /* Cyan Accent */
-    --accent-foreground: 210 40% 98%;
+    --accent: 45 93% 47%;
+    /* Match Primary for now, or slight variation */
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217 33% 20%;
-    /* Subtle Navy Border */
     --input: 217 33% 20%;
-    --ring: 217 91% 60%;
+    --ring: 45 93% 47%;
+    /* Gold Ring */
 
-    --chart-1: 217 91% 60%;
+    --chart-1: 45 93% 47%;
+    /* Gold */
     --chart-2: 199 89% 48%;
-    --chart-3: 45 93% 47%;
-    --chart-4: 262 83% 58%;
-    --chart-5: 335 78% 65%;
+    /* Cyan to contrast */
+    --chart-3: 262 83% 58%;
+    /* Purple */
+    --chart-4: 335 78% 65%;
+    /* Pink */
+    --chart-5: 221 83% 53%;
+    /* Blue */
 
-    --sidebar-background: 222 47% 10%;
-    /* Very Deep Navy */
+    --sidebar-background: 222 47% 8%;
+    /* Even darker for sidebar */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 222 47% 11%;
     --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-accent-foreground: 45 93% 47%;
     --sidebar-border: 217 33% 15%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 45 93% 47%;
   }
 }
 
@@ -208,6 +212,25 @@ button:focus-visible {
 
   .glass-card {
     @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+
+  .glass-card-premium {
+    @apply bg-slate-950/70 backdrop-blur-2xl border border-amber-500/20 shadow-xl shadow-amber-900/10 relative overflow-hidden;
+  }
+
+  .grainy-noise {
+    position: relative;
+  }
+
+  .grainy-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
   }
 
   .glass-panel {

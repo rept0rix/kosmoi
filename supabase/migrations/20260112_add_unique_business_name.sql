@@ -1,0 +1,1 @@
+create unique index if not exists service_providers_business_name_idx on public.service_providers (business_name);

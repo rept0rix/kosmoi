@@ -76,11 +76,11 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
 
   return (
     <Card
-      className="group relative overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl"
+      className="group relative overflow-hidden glass-card-premium hover:border-banana-500/30 transition-all duration-300 cursor-pointer rounded-2xl border-white/10"
       onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
     >
       {/* Image / Hero Section */}
-      <div className="h-48 relative overflow-hidden bg-slate-100">
+      <div className="h-48 relative overflow-hidden bg-slate-900/50">
         {(() => {
           // Strict Image Filtering Logic
           const isValidImage = (img, category) => {
@@ -128,7 +128,7 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
               <img
                 src={imageUrl}
                 alt={provider.business_name}
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   if (displayImages.length > 1) {
@@ -142,8 +142,8 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
             );
           } else {
             return (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                <CategoryIcon className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-2" />
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 border-b border-white/5">
+                <CategoryIcon className="w-16 h-16 text-slate-700 mb-2" />
               </div>
             );
           }
@@ -153,22 +153,22 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
         {/* Badges Overlay */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {provider.verified && (
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1.5 border border-emerald-100 dark:border-emerald-900/30">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500/10" />
-              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">Verified</span>
+            <div className="bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-banana-500/50">
+              <CheckCircle className="w-3.5 h-3.5 text-banana-400 fill-banana-400/20" />
+              <span className="text-[10px] font-bold text-banana-100 uppercase tracking-wide">Verified</span>
             </div>
           )}
         </div>
 
         {/* Rating Badge (Bottom Right of Image) */}
         <div className="absolute bottom-3 right-3">
-          <div className="bg-white dark:bg-slate-900 px-2 py-1 rounded-lg shadow-lg flex items-center gap-1 border border-slate-100 dark:border-slate-800">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+          <div className="bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg flex items-center gap-1 border border-white/10">
+            <Star className="w-3.5 h-3.5 fill-banana-400 text-banana-400" />
+            <span className="text-xs font-bold text-white">
               {(typeof provider.average_rating === 'number' ? provider.average_rating.toFixed(1) : parseFloat(provider.average_rating || 0).toFixed(1)) || 'NEW'}
             </span>
             {provider.total_reviews > 0 && (
-              <span className="text-[10px] text-slate-400">({provider.total_reviews})</span>
+              <span className="text-[10px] text-slate-300">({provider.total_reviews})</span>
             )}
           </div>
         </div>
@@ -178,17 +178,17 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
         {/* Category & Name */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1">
-            <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-0 text-[10px] uppercase tracking-wider font-semibold px-2">
+            <Badge variant="secondary" className="bg-white/10 text-slate-300 border-white/5 text-[10px] uppercase tracking-wider font-semibold px-2 hover:bg-white/20">
               {getSubCategoryLabel(provider.category, language)}
             </Badge>
             {showDistance && provider.distance != null && !isNaN(provider.distance) && (
-              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
-                <NavigationIcon className="w-3 h-3 text-blue-500" />
+              <div className="flex items-center gap-1 text-[11px] font-medium text-banana-400">
+                <NavigationIcon className="w-3 h-3" />
                 <span>{Number(provider.distance).toFixed(1)} km</span>
               </div>
             )}
           </div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight group-hover:text-blue-600 transition-colors">
+          <h3 className="text-lg font-bold text-white leading-tight group-hover:text-banana-400 transition-colors line-clamp-1 font-heading">
             {provider.business_name}
           </h3>
         </div>
@@ -196,16 +196,9 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
         {/* Metadata */}
         <div className="space-y-2 mb-4">
           {provider.location && (
-            <div className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 text-sm text-slate-400">
+              <MapPin className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
               <span className="line-clamp-1">{provider.location}</span>
-            </div>
-          )}
-
-          {provider.contact_name && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <User className="w-4 h-4 text-slate-400" />
-              <span>{provider.contact_name}</span>
             </div>
           )}
         </div>
@@ -219,7 +212,7 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
                 onCall(provider.phone);
               }}
               variant="outline"
-              className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-900/30"
+              className="w-full bg-transparent border-white/10 text-slate-300 hover:bg-white/5 hover:text-white"
               size="sm"
             >
               <Phone className="w-3.5 h-3.5 mr-1.5" />
@@ -231,7 +224,7 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
               e.stopPropagation();
               navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`);
             }}
-            className="w-full bg-slate-900 text-white hover:bg-blue-600 shadow-md shadow-slate-200 dark:shadow-none transition-all"
+            className="w-full bg-gradient-to-r from-banana-500 to-banana-600 text-midnight-950 font-bold hover:shadow-lg hover:shadow-banana-500/20 transition-all border-0"
             size="sm"
           >
             Details

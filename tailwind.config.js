@@ -67,6 +67,15 @@ export default {
 				},
 				'primary-glass': 'rgba(255, 255, 255, 0.1)',
 				'surface-glass': 'rgba(255, 255, 255, 0.05)',
+				'banana': {
+					400: '#FBBF24',
+					500: '#F59E0B',
+					600: '#D97706',
+				},
+				'midnight': {
+					900: '#0f172a',
+					950: '#020617',
+				}
 			},
 			backgroundImage: {
 				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
@@ -76,6 +85,7 @@ export default {
 				'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
 				'glass-hover': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
 				'neon': '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.2)',
+				'gold-glow': '0 0 15px rgba(245, 158, 11, 0.3), 0 0 30px rgba(245, 158, 11, 0.1)',
 			},
 			backdropBlur: {
 				'xs': '2px',
