@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import AgentProtocol from './lib/agent_protocol.js';
 
 // Initialize Services
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -25,6 +26,7 @@ class SalesCoordinator {
     constructor() {
         this.name = "Sarah";
         this.role = "Sales Coordinator";
+        this.protocol = new AgentProtocol('sales_coordinator');
     }
 
     async __scout_leads(limit = 5) {
@@ -126,29 +128,61 @@ class SalesCoordinator {
     }
 
     /**
-     * Workflow: Run the daily sales cycle
+     * Process a single lead from the mesh network
      */
-    async run_daily_cycle() {
-        console.log(`🚀 Starting Daily Sales Cycle...`);
+    async process_lead_signal(signal) {
+        // Parse the markdown content to extract potential DB ID or just use the text
+        const match = signal.content.match(/DB_ID:\s*([a-f0-9\-]+)/i);
+        if (match) {
+            const leadId = match[1];
+            console.log(`📨 Received Signal for Lead ID: ${leadId}`);
 
-        const leads = await this.scout_leads(3); // Start small
+            const { data: lead } = await supabase
+                .from('service_providers')
+                .select('*')
+                .eq('id', leadId)
+                .single();
 
-        for (const lead of leads) {
-            const invite = await this.generate_invitation(lead);
-            if (invite) {
-                console.log(`\n--------------------------------`);
-                console.log(`🎯 Target: ${lead.business_name}`);
-                console.log(`📝 Message:\n${invite.message}`);
-                console.log(`✅ Saved to 'invitations' table`);
-                console.log(`--------------------------------\n`);
-
-                // Future: Send Email/SMS logic here
+            if (lead) {
+                await this.generate_invitation(lead);
+                this.protocol.updateStatus('WORKING', `Thinking: ${lead.business_name}`);
             }
         }
-        console.log(`✅ Daily Cycle Complete.`);
+    }
+
+    /**
+     * Workflow: Run the infinite mesh loop
+     */
+    async run_mesh_cycle() {
+        console.log(`🚀 Sales Coordinator Joined Protocol 626 Mesh.`);
+        this.protocol.updateStatus('IDLE', 'Waiting for leads...');
+
+        while (true) {
+            // 1. Check Inbox
+            const inbox = this.protocol.readInbox();
+
+            if (inbox.length > 0) {
+                console.log(`📬 Inbox has ${inbox.length} messages.`);
+                this.protocol.updateStatus('WORKING', 'Processing Inbox');
+
+                for (const msg of inbox) {
+                    if (msg.type === 'lead_found') {
+                        await this.process_lead_signal(msg);
+                    }
+                    // Archive after processing
+                    this.protocol.archiveMessage(msg.filePath);
+                }
+            } else {
+                // Should we scout if bored? Maybe not, strictly reactive for now.
+                // await this.scout_leads(1);
+            }
+
+            // Sleep 5s
+            await new Promise(r => setTimeout(r, 5000));
+        }
     }
 }
 
 // Run if called directly
 const agent = new SalesCoordinator();
-agent.run_daily_cycle();
+agent.run_mesh_cycle();
