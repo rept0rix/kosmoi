@@ -80,8 +80,8 @@ export default function Dashboard() {
     queryKey: ['topProviders', userLocation],
     queryFn: async () => {
       const allProviders = await offlineQuery.ServiceProvider.filter({
-        status: 'active',
-        verified: true
+        status: 'active'
+        // verified: true - SHOW ALL for now (Crawler leads)
       });
 
       // Relaxed filters for visibility: Show all active and verified, sort by rating/distance
