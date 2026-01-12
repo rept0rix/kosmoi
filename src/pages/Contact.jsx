@@ -92,10 +92,30 @@ const Contact = () => {
                     </div>
                 </div>
 
-                <div className="text-center pt-8 border-t border-slate-200">
+                <div className="text-center pt-8 border-t border-slate-200 space-y-4">
                     <p className="text-slate-400 text-sm">
                         Prefer email? <a href="mailto:support@kosmoi.com" className="text-slate-500 hover:text-blue-600 underline decoration-slate-300 underline-offset-4">support@kosmoi.com</a>
                     </p>
+
+                    <div className="flex justify-center">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="text-xs text-slate-500"
+                            onClick={async () => {
+                                try {
+                                    const { NotificationService } = await import('@/services/NotificationService');
+                                    await NotificationService.subscribeUser();
+                                    alert("Subscribed to updates! 🔔");
+                                } catch (e) {
+                                    alert("Error: " + e.message);
+                                    console.error(e);
+                                }
+                            }}
+                        >
+                            🔔 Enable Push Updates
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

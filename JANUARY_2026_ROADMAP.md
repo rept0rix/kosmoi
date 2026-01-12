@@ -56,4 +56,17 @@
 ## 🚦 Bottlenecks / Risks
 1.  **Stripe Verification**: Need to confirm Thai Baht (THB) processing is live.
 2.  **Google Maps Quota**: Crawler might hit limits; monitor usage.
-3.  **Agent Costs**: Monitor tokens for "AI Receptionist".
+3.    - Agent Costs: Monitor tokens for "AI Receptionist".
+
+## 🚀 Acceleration Track (R&D & Innovation)
+*Parallel initiatives to leverage new AI breakthroughs (UI-TARS, OpenCode).*
+
+- [ ] **Autonomous Operation (UI-TARS Desktop)**:
+    - Experiment with `UI-TARS` for "Island Crawler" v2 (scraping without API).
+    - Automate local dev environments (VSCode self-healing).
+- [ ] **Agent Standardization (OpenCode / Skills)**:
+    - Define `project.skills` to document business logic for *any* compatible agent.
+    - Reduce vendor lock-in by abstracting prompt logic.
+- [ ] **Premium Design System (The "Apple" Standard)**:
+    - Implement "Nano Banana" design tokens (Glassmorphism, Fine/Premium UI).
+    - Upgrade "Mobile View" to confirm with new aesthetic standards.

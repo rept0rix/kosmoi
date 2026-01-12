@@ -23,3 +23,9 @@
 
 ## 4. 🧹 Cleanup
 - [x] Delete temporary debug scripts (`diagnose_gemini.js`, `test_optimizer_model.js`) if no longer needed.
+
+## 5. 🔬 R&D & Innovation (New!)
+*Integrating the latest breakthroughs.*
+
+- [ ] **Design System Upgrade**: Audit current tokens vs. "Nano Banana" premium standard.
+- [ ] **Agent Skills**: Draft a simple `skills` definition for the "Sales Coordinator".

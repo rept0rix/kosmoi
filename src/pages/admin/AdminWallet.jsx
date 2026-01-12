@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { WalletService } from '@/services/payments/WalletService';
+import { WalletService } from '@/services/WalletService';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { Loader2, Send, Wallet, RefreshCw, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { toast } from 'sonner';

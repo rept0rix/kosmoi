@@ -108,6 +108,25 @@ export const BookingService = {
                 const note = `Booking for ${bookingDetails.serviceName} on ${bookingDetails.date}`;
 
                 await WalletService.transferFunds(providerWalletId, bookingDetails.price, note);
+
+                // --- VIBE REWARD ---
+                // Rule: 10 Vibes per 100 THB
+                const vibesToAward = Math.floor(bookingDetails.price / 100) * 10;
+                if (vibesToAward > 0) {
+                    try {
+                        await db.rpc('award_vibes', {
+                            target_user_id: bookingDetails.userId,
+                            amount: vibesToAward,
+                            reason: `Booking Reward: ${bookingDetails.serviceName}`,
+                            source: 'system_booking'
+                        });
+                        console.log(`💎 Awarded ${vibesToAward} Vibes for booking!`);
+                    } catch (vibeError) {
+                        console.warn("Failed to award vibes:", vibeError);
+                        // Don't fail the booking for this
+                    }
+                }
+
                 console.log("Payment successful");
             } catch (paymentError) {
                 console.error("Payment failed:", paymentError);
