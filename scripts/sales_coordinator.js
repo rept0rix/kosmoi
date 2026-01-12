@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import AgentProtocol from './lib/agent_protocol.js';
+import { INVITATION_TEMPLATE } from './lib/email_templates.js';
 
 // Initialize Services
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -76,55 +77,60 @@ class SalesCoordinator {
      * Skill: Generate Invitation
      * Drafts message and SAVES invitation to DB.
      */
+    // Fixed import placement
+
+    /**
+     * Skill: Generate Invitation
+     */
     async generate_invitation(lead) {
         console.log(`💌 Drafting invite for: ${lead.business_name}...`);
 
-        // 1. Generate Token
-        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        const claimLink = `https://kosmoi.com/claim-profile?token=${token}`;
+        // 1. Generate Content (using Gemini or Template)
+        const claimLink = `https://kosmoi.site/claim?id=${lead.id}`;
+        const emailHtml = INVITATION_TEMPLATE(lead.business_name, claimLink);
 
-        // 2. Draft Message with Gemini
-        const prompt = `
-        You are Sarah, a partnership manager for "Samui Service Hub".
-        Draft a 1-sentence invite for "${lead.business_name}" (${lead.category}) in ${lead.location}.
-        Value: "Get verified for $1/month". 
-        Link placeholder: [LINK]
-        Tone: Casual, local.
-        `;
+        // 2. Determine Recipient (SAFETY MODE)
+        const recipientEmail = process.env.TEST_EMAIL || 'admin@kosmoi.com';
 
-        try {
-            const result = await model.generateContent(prompt);
-            const messageRaw = result.response.text().trim();
-            const message = messageRaw.replace('[LINK]', claimLink);
-
-            // 3. Persist to DB
-            const { error } = await supabase
-                .from('invitations')
-                .insert({
-                    service_provider_id: lead.id,
-                    token: token,
-                    status: 'pending',
-                    metadata: {
-                        channel: 'simulated_agent',
-                        target_message: message
-                    }
-                });
-
-            if (error) {
-                console.error(`❌ DB Save Failed for ${lead.business_name}:`, error.message);
-                return null;
+        // 3. Send Email via Edge Function
+        const { data, error } = await supabase.functions.invoke('send-email', {
+            body: {
+                to: recipientEmail,
+                subject: `Invitation for ${lead.business_name} - Kosmoi`,
+                html: emailHtml,
+                from: 'sarah@kosmoi.site'
             }
+        });
 
-            return {
-                business_id: lead.id,
-                message: message,
-                status: 'saved_to_db'
-            };
-
-        } catch (e) {
-            console.error("❌ GenAI Error:", e.message);
-            return null;
+        if (error) {
+            console.error(`❌ Email Failed:`, error);
+            // Fallback to DB save even if email fails
+        } else {
+            console.log(`🚀 Email Sent to ${recipientEmail}! ID: ${data?.id || 'OK'}`);
         }
+
+        // 4. Save to DB
+        console.log("💾 Saving invitation to DB...");
+        const result = await supabase
+            .from('invitations')
+            .insert({
+                service_provider_id: lead.id,
+                token: 'mock-token', // TODO: Generate real token
+                channel: 'email',
+                status: 'sent',
+                metadata: {
+                    target_email: recipientEmail,
+                    real_business_email: lead.email || 'unknown',
+                    subject: `Invitation for ${lead.business_name}`
+                }
+            })
+            .select()
+            .single();
+
+        if (result.error) console.error("❌ DB Insert Error:", result.error);
+        else console.log("✅ Invite Saved to DB:", result.data.id);
+
+        return result;
     }
 
     /**

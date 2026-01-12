@@ -91,6 +91,7 @@ import AdminOptimizer from './pages/admin/AdminOptimizer';
 import AdminHyperloop from './pages/admin/AdminHyperloop';
 import AdminSkills from './pages/admin/AdminSkills';
 import AdminWallet from './pages/admin/AdminWallet';
+import Roadmap from './pages/Roadmap'; // New Public Roadmap
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
