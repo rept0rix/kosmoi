@@ -1,0 +1,7 @@
+{
+  "agent": "manager",
+  "status": "INTERVENTION",
+  "current_task": "Pausing Crawler (Congestion)",
+  "last_heartbeat": "2026-01-12T06:44:47.820Z",
+  "metadata": {}
+}
