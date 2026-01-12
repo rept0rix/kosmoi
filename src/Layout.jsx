@@ -65,6 +65,25 @@ const LayoutContent = ({ children }) => {
   // If request is exact root '/' or '/he', it counts as Public Zone due to normalizedPath === '/' check above
   const isAppZone = !isPublicZone && !isBusinessZone && !isAdminZone;
 
+  // Vibe & Wallet State
+  const [wallet, setWallet] = React.useState(null);
+
+  React.useEffect(() => {
+    const fetchVibes = async () => {
+      try {
+        const { WalletService } = await import('@/services/WalletService');
+        const data = await WalletService.getWallet();
+        if (data) setWallet(data);
+      } catch (e) {
+        // silent fail
+      }
+    };
+
+    if (isAppZone) {
+      fetchVibes();
+    }
+  }, [isAppZone]);
+
   // If we are in Admin Zone, let the specific AdminLayout handle everything (no double header/nav)
   if (isAdminZone) {
     return children;
@@ -119,6 +138,16 @@ const LayoutContent = ({ children }) => {
           </Link>
 
           <div className="flex items-center gap-3">
+            {/* Vibe Token Counter */}
+            {isAppZone && (
+              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-full mr-2">
+                <Sparkles className="w-4 h-4 text-purple-500 fill-purple-500/20" />
+                <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
+                  {wallet?.vibes_balance || 0} Vibes
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center gap-1 mr-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

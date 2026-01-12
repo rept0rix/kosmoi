@@ -31,6 +31,21 @@ export const ReviewService = {
             .single();
 
         if (error) throw error;
+
+        // --- VIBE REWARD ---
+        // Rule: 50 Vibes per Review
+        try {
+            await supabase.rpc('award_vibes', {
+                target_user_id: user.id,
+                amount: 50,
+                reason: `Review Reward: ${providerId}`,
+                source: 'system_review'
+            });
+            console.log("💎 Awarded 50 Vibes for review!");
+        } catch (vibeError) {
+            console.warn("Failed to award vibes:", vibeError);
+        }
+
         return data;
     },
 
