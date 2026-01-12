@@ -88,6 +88,7 @@ import AdminSchema from './pages/admin/AdminSchema';
 import AdminMemory from './pages/admin/AdminMemory';
 import AdminSitemap from '@/pages/admin/AdminSitemap';
 import AdminOptimizer from './pages/admin/AdminOptimizer';
+import AdminHyperloop from './pages/admin/AdminHyperloop';
 import AdminSkills from './pages/admin/AdminSkills';
 import AdminWallet from './pages/admin/AdminWallet';
 import Studio from '@/pages/admin/Studio';
@@ -249,6 +250,7 @@ const AuthenticatedApp = () => {
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="evolution" element={<AdminEvolution />} />
                 <Route path="schema" element={<AdminSchema />} />
+                <Route path="hyperloop" element={<AdminHyperloop />} />
                 <Route path="memory" element={<AdminMemory />} />
                 <Route path="tasks" element={<AdminKanban />} />
                 <Route path="roadmap" element={<AdminRoadmap />} />
