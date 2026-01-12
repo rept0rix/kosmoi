@@ -147,8 +147,19 @@ export const BookingService = {
         const { data, error } = await db.from('bookings').insert([payload]).select().single();
 
         if (error) {
-            console.error("Booking failed:", error);
-            // TODO: Refund if payment was made? (Critical for prod)
+            console.error("Booking insert failed:", error);
+
+            if (bookingDetails.price > 0) {
+                console.error("CRITICAL: Payment processed but Booking failed. Initiating refund flow...");
+                await WalletService.refundTransaction(
+                    await BookingService.getProviderWalletId(bookingDetails.providerId),
+                    bookingDetails.price,
+                    "System Refund: Booking Insert Failed"
+                );
+                // Since we can't auto-refund securely yet, we change the error message
+                throw new Error("Booking failed, but payment was processed. Please contact support immediately with your transaction details.");
+            }
+
             throw error;
         }
 
