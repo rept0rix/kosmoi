@@ -91,6 +91,40 @@ serve(async (req: Request) => {
             if (session.mode === 'subscription') {
                 const subscriptionId = session.subscription
                 await manageSubscriptionStatusChange(subscriptionId as string, session.customer as string, true)
+            } else if (session.mode === 'payment' && session.metadata?.type === 'claim_profile') {
+                // Claim Profile Logic
+                const { userId, providerId } = session.metadata;
+                console.log(`Processing Claim Profile for Provider: ${providerId} by User: ${userId}`);
+
+                // 1. Update Service Provider
+                const { error: updateError } = await supabase
+                    .from('service_providers')
+                    .update({
+                        owner_id: userId,
+                        claimed: true,
+                        claimed_at: new Date().toISOString(),
+                        stripe_status: 'verified' // Assume verified since they paid
+                    })
+                    .eq('id', providerId);
+
+                if (updateError) {
+                    console.error('Failed to update provider claim status:', updateError);
+                    return new Response('Error updating provider', { status: 500 });
+                }
+
+                // 2. Record Transaction
+                const { error: txnError } = await supabase.rpc('process_transaction', {
+                    p_user_id: userId,
+                    p_amount: session.amount_total ? session.amount_total / 100 : 0,
+                    p_type: 'claim_fee',
+                    p_reference_id: session.id,
+                    p_metadata: session
+                });
+
+                if (txnError) console.error('Failed to record claim transaction:', txnError);
+
+                console.log(`Claim successful for provider ${providerId}`);
+
             } else if (session.type === 'topup' || session.metadata?.type === 'topup') {
                 // Legacy / Topup logic
                 const { type, userId } = session.metadata || {}
