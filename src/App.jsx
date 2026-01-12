@@ -200,6 +200,7 @@ const AuthenticatedApp = () => {
               ))}
 
             {/* Public Super App Routes */}
+            <Route path="roadmap" element={<Roadmap />} />
             <Route path="real-estate" element={<RealEstateHub />} />
             <Route path="test-drive" element={<OneDollar />} />
             <Route path="one-dollar" element={<OneDollar />} />
