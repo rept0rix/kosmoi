@@ -1,3 +1,4 @@
+
 import { supabase } from "../api/supabaseClient";
 
 export const WalletService = {
@@ -177,42 +178,28 @@ export const WalletService = {
             });
 
             if (error) throw error;
-            /**
-             * Refund a transaction (Reverse Transfer).
-             * @param {string} originalRecipientWalletId
-             * @param {number} amount
-             * @param {string} reason
-             */
-            refundTransaction: async (originalRecipientWalletId, amount, reason = "Refund") => {
-                try {
-                    // Note: In a real system, we requires a 'refund' RPC that checks the original txn ID.
-                    // For MVP, we use transfer_funds from the Provider back to the User?
-                    // Wait, client-side cannot force a transfer FROM the provider wallet (RLS violation).
-                    // Logic: Only an Admin or the Provider can initiate a refund. 
-                    // OR: We use a system-level RPC 'process_refund'.
+            return data;
+        } catch (error) {
+            console.error("Transfer Error:", error);
+            throw error;
+        }
+    },
 
-                    // Current Workaround: We assume this is called IMMEDIATELY after a failed booking insertion
-                    // inside the SAME server context? No, this is client-side.
-                    // Client-side, the User cannot take money back from the Provider.
+    /**
+     * Refund a transaction (Reverse Transfer).
+     * @param {string} originalRecipientWalletId
+     * @param {number} amount
+     * @param {string} reason
+     */
+    refundTransaction: async (originalRecipientWalletId, amount, reason = "Refund") => {
+        try {
+            console.warn("Refund requested but strictly secure refund RPC not implemented. Contacting Admin...");
 
-                    // CRITICAL: We need a backend Edge Function or RPC 'system_refund' that trusts the context 
-                    // if the booking insert failed.
-                    // However, since we don't have that RPC ready, I will Log this as a critical TODO and 
-                    // assume for the MVP demonstration we simulate the refund or use a stub that warns the user to contact support.
-
-                    console.warn("Refund requested but strictly secure refund RPC not implemented. Contacting Admin...");
-
-                    // Temporary: Call an Edge Function or just Log
-                    const { data: { user } } = await supabase.auth.getUser();
-
-                    // We'll log a 'refund_request' to a table if we had one.
-                    // For now, let's just throw a visual error to the user saying "Payment Taken, Booking Failed - Contact Support".
-                    // This is the honest MVP approach rather than insecurely hacking a reverse transfer.
-
-                    return false;
-                } catch (error) {
-                    console.error("Refund Error:", error);
-                    throw error;
-                }
-            },
+            // For now, let's just throw a visual error to the user
+            return false;
+        } catch (error) {
+            console.error("Refund Error:", error);
+            throw error;
+        }
+    },
 };
