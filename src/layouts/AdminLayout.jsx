@@ -92,6 +92,7 @@ export default function AdminLayout() {
                     </NavGroup>
 
                     <NavGroup title="Intelligence">
+                        <NavItem to="/admin/hyperloop" icon={<Activity />} label="Mission Control" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/optimizer" icon={<BrainCircuit />} label="Optimizer Agent" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/agents" icon={<Users />} label="Workforce" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/evolution" icon={<Network />} label="Network Graph" onClick={() => setIsMobileOpen(false)} />

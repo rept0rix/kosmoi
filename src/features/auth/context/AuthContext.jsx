@@ -191,20 +191,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const getLanguagePrefix = () => {
+    const path = window.location.pathname;
+    const languages = ['/he', '/th', '/ru', '/fr', '/de', '/es', '/zh'];
+    const prefix = languages.find(lang => path.startsWith(lang));
+    return prefix || '';
+  };
+
   const logout = async (shouldRedirect = true) => {
     await db.auth.signOut();
     setUser(null);
     setIsAuthenticated(false);
 
     if (shouldRedirect) {
-      // Manual redirect
-      window.location.href = '/login';
+      // Manual redirect with language awareness
+      const prefix = getLanguagePrefix();
+      window.location.href = `${prefix}/login`;
     }
   };
 
   const navigateToLogin = () => {
-    // Manual redirect
-    window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.href)}`;
+    // Manual redirect with language awareness
+    const prefix = getLanguagePrefix();
+    window.location.href = `${prefix}/login?returnUrl=${encodeURIComponent(window.location.href)}`;
   };
 
   const contextValue = React.useMemo(() => ({
