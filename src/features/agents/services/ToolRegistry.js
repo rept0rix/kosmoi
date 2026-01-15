@@ -3,6 +3,7 @@ import { SalesService } from "@/services/SalesService.js";
 import { MarketingService } from "@/services/integrations/MarketingService.js";
 import { AnalyticsService } from "@/services/integrations/AnalyticsService.js";
 import { BookingService } from "@/services/BookingService.js";
+import { AdminService } from "@/services/AdminService.js";
 
 /**
  * ToolRegistry
@@ -10,6 +11,48 @@ import { BookingService } from "@/services/BookingService.js";
  */
 export const ToolRegistry = {
     // --- AI TOOLS ---
+    'search_services': async (input) => {
+        const query = typeof input === 'string' ? input : input.query;
+        const location = input.location || 'Koh Samui';
+        console.log(`[ToolRegistry] Searching Services (Real DB): ${query} in ${location}`);
+
+        try {
+            // Use AdminService to fetch real data
+            // We'll search by text filter.
+            const { data } = await AdminService.getBusinessesPage(1, 10, { search: query });
+
+            if (!data || data.length === 0) {
+                return `No businesses found for "${query}". Try "restaurant", "hotel", or broader terms.`;
+            }
+
+            // Map to simplified format for Agent Observation
+            return data.map(b => ({
+                name: b.business_name,
+                category: b.category,
+                location: b.address || "Koh Samui",
+                rating: b.rating || "New", // Fallback if rating missing
+                price: b.price_level || "$$",
+                description: b.description ? b.description.substring(0, 100) + "..." : "No description."
+            }));
+
+        } catch (e) {
+            console.error("Search Tool Error:", e);
+            return "Error searching for services. The database might be offline.";
+        }
+    },
+
+    'suggest_itinerary': async (input) => {
+        const { location, interests } = input;
+        console.log(`[ToolRegistry] Generating Itinerary for ${location}`);
+        // This is a logic tool. It might trigger an internal chain or just format known spots.
+        // We return a structure for the Agent to "observe".
+        return {
+            morning: "Coffee at a local cafe in " + location,
+            afternoon: "Activity related to " + (interests || "relaxation"),
+            evening: "Sunset dinner at a beachfront venue"
+        };
+    },
+
     'search_knowledge_base': async (input) => {
         // Input can be a string or an object { query: "..." }
         const query = typeof input === 'string' ? input : input.query;

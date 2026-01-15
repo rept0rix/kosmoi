@@ -5,22 +5,30 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
+import { Send, MessageSquare } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+
+// ... existing imports
+
 const LiveAgentFeed = () => {
-    const [tasks, setTasks] = useState([]);
+    const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [replyingTo, setReplyingTo] = useState(null); // { id: string, sessionId: string, username: string }
+    const [replyText, setReplyText] = useState('');
     const scrollRef = useRef(null);
 
     // Initial Load
     useEffect(() => {
         const fetchRecent = async () => {
             const { data, error } = await realSupabase
-                .from('agent_tasks')
+                .from('agent_logs')
                 .select('*')
-                .order('updated_at', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(20);
 
             if (!error) {
-                setTasks(data);
+                setMessages(data);
             }
             setIsLoading(false);
         };
@@ -31,95 +39,151 @@ const LiveAgentFeed = () => {
     useEffect(() => {
         const channel = realSupabase
             .channel('agent-feed')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'agent_tasks' },
-                (payload) => {
-                    const newItem = payload.new;
-                    if (!newItem) return;
+            // @ts-ignore
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_logs' }, (payload) => {
+                const newItem = payload.new;
+                if (!newItem) return;
 
-                    setTasks((prev) => {
-                        // Remove existing if update, add to top
-                        const filtered = prev.filter(t => t.id !== newItem.id);
-                        return [newItem, ...filtered].slice(0, 50); // Keep max 50
-                    });
-                }
+                setMessages((prev) => {
+                    const filtered = prev.filter(t => t.id !== newItem.id);
+                    return [newItem, ...filtered].slice(0, 50);
+                });
+            }
             )
             .subscribe();
 
         return () => {
-            realSupabase.removeChannel(channel);
+            if (channel) channel.unsubscribe();
         };
     }, []);
 
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case 'in_progress':
-                return <Badge variant="outline" className="text-blue-500 border-blue-500 gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Working</Badge>;
-            case 'done':
-                return <Badge variant="outline" className="text-green-500 border-green-500 gap-1"><CheckCircle2 className="w-3 h-3" /> Done</Badge>;
-            case 'failed':
-                return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Failed</Badge>;
-            default:
-                return <Badge variant="secondary" className="gap-1"><Clock className="w-3 h-3" /> {status}</Badge>;
+    const handleSendReply = async () => {
+        if (!replyText.trim() || !replyingTo) return;
+
+        try {
+            const { error } = await realSupabase.from('agent_logs').insert({
+                agent_id: 'admin', // Or 'concierge' to spoof
+                level: 'chat',
+                message: replyText,
+                metadata: {
+                    role: 'admin', // Key for Client to detect
+                    userId: replyingTo.userId, // Target User
+                    username: 'Admin',
+                    sessionId: replyingTo.sessionId, // Target Session
+                    targetInfo: 'Direct Reply'
+                }
+            });
+
+            if (error) throw error;
+
+            // Clear state
+            setReplyText('');
+            setReplyingTo(null);
+
+        } catch (err) {
+            console.error("Failed to send reply:", err);
+            alert("Failed to send reply");
         }
     };
 
-    const getAgentAvatar = (agentId) => {
-        // Simplified mapping or generic fallback
-        // In a real app we'd map agentId to an avatar URL or Initials
+    const getAgentBadge = (msg) => {
+        const role = msg.metadata?.role || 'system';
+        if (role === 'user') return <Badge variant="secondary" className="gap-1 bg-yellow-500/10 text-yellow-500 border-yellow-500/20">User</Badge>;
+        if (role === 'assistant') return <Badge variant="secondary" className="gap-1 bg-blue-500/10 text-blue-400 border-blue-500/20">Concierge</Badge>;
+        if (role === 'admin') return <Badge variant="secondary" className="gap-1 bg-red-500/10 text-red-500 border-red-500/20">Admin</Badge>;
+        return <Badge variant="outline" className="text-slate-500">{msg.agent_id}</Badge>;
+    };
+
+    const getAgentAvatar = (msg) => {
+        const role = msg.metadata?.role || 'system';
         return (
-            <Avatar className="h-8 w-8 border">
-                {/* <AvatarImage src={...} /> */}
-                <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {agentId ? agentId.substring(0, 2).toUpperCase() : 'AG'}
+            <Avatar className="h-8 w-8 border bg-slate-800">
+                <AvatarFallback className={`text-xs ${role === 'user' ? 'bg-yellow-500/10 text-yellow-500' : role === 'admin' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                    {role === 'user' ? 'U' : role === 'admin' ? 'AD' : 'AI'}
                 </AvatarFallback>
             </Avatar>
         );
     };
 
     return (
-        <div className="bg-card border rounded-xl overflow-hidden flex flex-col h-[400px]">
-            <div className="p-3 border-b bg-muted/30 flex justify-between items-center">
-                <h3 className="font-semibold text-sm">Live Agent Feed</h3>
+        <div className="bg-slate-900/40 border border-white/5 rounded-xl overflow-hidden flex flex-col h-[400px]">
+            <div className="p-3 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
+                <h3 className="font-semibold text-sm text-slate-200">Live Agent Feed</h3>
                 <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span className="text-xs text-muted-foreground">Realtime</span>
+                    <span className="text-xs text-slate-500">Realtime</span>
                 </div>
             </div>
 
             <ScrollArea className="flex-1 p-0">
-                <div className="flex flex-col">
-                    {tasks.map((task) => (
-                        <div key={task.id} className="p-3 border-b hover:bg-muted/50 transition-colors group">
+                <div className="flex flex-col pb-20">
+                    {messages.map((msg) => (
+                        <div key={msg.id} className={`p-3 border-b border-white/5 hover:bg-white/5 transition-colors group ${replyingTo?.id === msg.id ? 'bg-blue-500/5' : ''}`}>
                             <div className="flex items-start gap-3">
-                                {getAgentAvatar(task.assigned_to)}
+                                {getAgentAvatar(msg)}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1">
-                                        <div className="font-medium text-sm truncate pr-2">{task.title}</div>
-                                        {getStatusBadge(task.status)}
+                                        <div className="font-bold text-xs truncate pr-2 flex items-center gap-2">
+                                            {getAgentBadge(msg)}
+                                            <span className="text-slate-500 lowercase">{msg.metadata?.username || 'Guest'}</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-600 font-mono">{new Date(msg.created_at).toLocaleTimeString()}</span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground mb-1 line-clamp-2">
-                                        {task.result || task.task}
+                                    <div className="text-xs text-slate-300 font-mono leading-relaxed break-words">
+                                        {msg.message}
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground/50 flex justify-between">
-                                        <span>{task.assigned_to || 'Unassigned'}</span>
-                                        <span>{new Date(task.updated_at || task.created_at).toLocaleTimeString()}</span>
+
+                                    {/* Action Bar */}
+                                    <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                        <button
+                                            onClick={() => setReplyingTo({
+                                                id: msg.id,
+                                                sessionId: msg.metadata?.sessionId,
+                                                username: msg.metadata?.username,
+                                                userId: msg.metadata?.userId
+                                            })}
+                                            className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                                        >
+                                            <MessageSquare className="w-3 h-3" /> Reply
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ))}
-                    {tasks.length === 0 && !isLoading && (
-                        <div className="p-8 text-center text-muted-foreground text-sm">
-                            No active tasks found.
+                    {messages.length === 0 && !isLoading && (
+                        <div className="p-8 text-center text-slate-600 text-sm">
+                            No active agents in the field.
                         </div>
                     )}
                 </div>
             </ScrollArea>
+
+            {/* Reply Input Area */}
+            {replyingTo && (
+                <div className="p-3 border-t border-white/10 bg-slate-900 animate-in slide-in-from-bottom-2">
+                    <div className="flex items-center justify-between mb-2 text-xs">
+                        <span className="text-slate-400">Replying to <span className="text-blue-400">{replyingTo.username}</span>...</span>
+                        <button onClick={() => setReplyingTo(null)} className="text-slate-500 hover:text-slate-300">Cancel</button>
+                    </div>
+                    <div className="flex gap-2">
+                        <Input
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleSendReply()}
+                            placeholder="Type admin override..."
+                            className="h-8 text-xs bg-slate-800 border-slate-700"
+                            autoFocus
+                        />
+                        <Button size="sm" onClick={handleSendReply} className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-500">
+                            <Send className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

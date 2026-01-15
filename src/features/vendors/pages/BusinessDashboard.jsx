@@ -37,6 +37,7 @@ import {
   X,
   Save,
   Loader2,
+  Bot
 } from "lucide-react";
 import GoogleMap from "@/components/GoogleMap";
 import {
@@ -88,6 +89,55 @@ export default function BusinessDashboard() {
     enabled: myBusinesses?.length > 0,
     initialData: [],
   });
+
+  // Fetch AI Settings
+  const { data: aiSettings, isLoading: isLoadingAI } = useQuery({
+    queryKey: ["businessSettings", myBusinesses?.[0]?.id],
+    queryFn: async () => {
+      const { data } = await db.from('business_settings').select('*').eq('provider_id', myBusinesses[0].id).single();
+      return data || { ai_auto_reply: false, ai_tone: 'professional', custom_instructions: '' };
+    },
+    enabled: !!myBusinesses?.[0]?.id,
+  });
+
+  const updateAIMutation = useMutation({
+    /** @param {Object} [newSettings] */
+    mutationFn: async (newSettings) => {
+      // Upsert settings
+      const settings = newSettings || {};
+      const { error } = await db.from('business_settings').upsert({
+        provider_id: myBusinesses[0].id,
+        ...settings
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["businessSettings"] });
+      alert("AI Settings Saved! 🤖");
+    },
+  });
+
+  // Fetch Real Analytics Data
+  const { data: rawAnalytics } = useQuery({
+    queryKey: ["businessAnalytics", myBusinesses?.[0]?.id],
+    queryFn: async () => {
+      // Fetch last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data, error } = await db.from('business_analytics')
+        .select('event_type, created_at')
+        .eq('provider_id', myBusinesses[0].id)
+        .gte('created_at', sevenDaysAgo.toISOString());
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!myBusinesses?.[0]?.id,
+    initialData: []
+  });
+
+
 
   const updateBusinessMutation = useMutation({
     /** @param {Object} data */
@@ -200,24 +250,48 @@ export default function BusinessDashboard() {
   const business = myBusinesses[0];
   const recentReviews = reviews.slice(0, 5);
 
-  // Activity data (placeholder for now, to be implemented with real analytics table)
-  // For now, we can show flatline or random data if we want, but better to show empty state or realistic defaults
-  const activityData = [
-    { day: "א'", views: 0, calls: 0, whatsapp: 0 },
-    { day: "ב'", views: 0, calls: 0, whatsapp: 0 },
-    { day: "ג'", views: 0, calls: 0, whatsapp: 0 },
-    { day: "ד'", views: 0, calls: 0, whatsapp: 0 },
-    { day: "ה'", views: 0, calls: 0, whatsapp: 0 },
-    { day: "ו'", views: 0, calls: 0, whatsapp: 0 },
-    { day: "ש'", views: 0, calls: 0, whatsapp: 0 },
-  ];
+  // Process Analytics
+  const activityData = React.useMemo(() => {
+    const days = ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\''];
+    const today = new Date();
+
+    // Initialize last 7 days map
+    const chartData = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const dayName = days[d.getDay()];
+      chartData.push({
+        day: dayName,
+        dateStr: d.toISOString().split('T')[0],
+        views: 0,
+        calls: 0,
+        whatsapp: 0
+      });
+    }
+
+    rawAnalytics.forEach(event => {
+      const dateStr = event.created_at.split('T')[0];
+      const dayEntry = chartData.find(d => d.dateStr === dateStr);
+      if (dayEntry) {
+        if (event.event_type === 'page_view') dayEntry.views++;
+        if (event.event_type === 'phone_click') dayEntry.calls++;
+        if (event.event_type === 'whatsapp_click') dayEntry.whatsapp++;
+      }
+    });
+
+    return chartData;
+  }, [rawAnalytics]);
+
+  const totalViews = rawAnalytics.filter(e => e.event_type === 'page_view').length;
+  const totalLeads = rawAnalytics.filter(e => ['phone_click', 'whatsapp_click'].includes(e.event_type)).length;
 
   const stats = [
     {
       icon: Eye,
-      label: "צפיות (סה״כ)",
-      value: business.views_count || "0", // Assuming views_count exists on business object
-      change: "מאז ההקמה",
+      label: "צפיות (7 ימים)",
+      value: totalViews,
+      change: "צפיות בפרופיל",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
@@ -232,16 +306,16 @@ export default function BusinessDashboard() {
     {
       icon: MessageSquare,
       label: "פניות (הודעות)",
-      value: business.messages_count || "0", // Placeholder column
+      value: business.messages_count || "0", // Still from DB count if available
       change: "סה״כ הודעות",
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
       icon: Users,
-      label: "קליקים (טלפון)",
-      value: business.phone_clicks || "0", // Placeholder column
-      change: "חשיפות למספר",
+      label: "קליקים (לידים)",
+      value: totalLeads,
+      change: "טלפון / וואטסאפ",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
@@ -694,7 +768,125 @@ export default function BusinessDashboard() {
             )}
           </div>
         </div>
+
+        {/* AI Receptionist Card - New Feature */}
+        <div className="mt-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <Card className="shadow-lg border-2 border-purple-100 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-full blur-3xl -z-10 opacity-50 pointer-events-none" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-purple-50 bg-purple-50/30">
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <Bot className="w-6 h-6 text-purple-600" />
+                נציגה וירטואלית (AI Receptionist)
+                <Badge className="bg-purple-200 text-purple-800 hover:bg-purple-300 ml-2">Alpha</Badge>
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">
+                  {aiSettings?.ai_auto_reply ? "פעיל" : "השירות כבוי"}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={aiSettings?.ai_auto_reply || false}
+                    onChange={(e) => updateAIMutation.mutate({ ...aiSettings, ai_auto_reply: e.target.checked })}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {aiSettings?.ai_auto_reply ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-purple-500" />
+                      סגנון דיבור (Tone)
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+                      {[
+                        { id: 'professional', label: 'מקצועי', emoji: '👔' },
+                        { id: 'friendly', label: 'חברי', emoji: '👋' },
+                        { id: 'enthusiastic', label: 'מתלהב', emoji: '🤩' },
+                      ].map(tone => (
+                        <div
+                          key={tone.id}
+                          onClick={() => updateAIMutation.mutate({ ...aiSettings, ai_tone: tone.id })}
+                          className={`cursor-pointer rounded-lg border p-3 text-center transition-all ${aiSettings.ai_tone === tone.id
+                            ? 'bg-purple-100 border-purple-500 text-purple-900 shadow-sm'
+                            : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                        >
+                          <div className="text-xl mb-1">{tone.emoji}</div>
+                          <div className="text-sm font-medium">{tone.label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Edit className="w-4 h-4 text-purple-500" />
+                      הוראות מיוחדות
+                    </h4>
+                    <p className="text-sm text-gray-500 mb-2">
+                      דברים שהנציגה צריכה לדעת (למשל: "יש לנו Happy Hour ב-17:00")
+                    </p>
+                    <Textarea
+                      placeholder="לדוגמה: תמיד להזכיר שאנחנו כשרים..."
+                      value={aiSettings.custom_instructions || ''}
+                      onChange={(e) => {
+                        // Optimization: usually debounce this, but for verify straightforward:
+                        const val = e.target.value;
+                        // We'll just update local state visually then save on blur or button?
+                        // For simplicity in this demo, let's add a save button below.
+                      }}
+                      onBlur={(e) => updateAIMutation.mutate({ ...aiSettings, custom_instructions: e.target.value })}
+                      className="min-h-[100px] border-purple-200 focus:border-purple-500"
+                    />
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h4 className="font-semibold text-gray-900 mb-4 text-center">סימולציה (איך זה נראה)</h4>
+                    <div className="space-y-4">
+                      <div className="flex gap-3 justify-end">
+                        <div className="bg-blue-600 text-white px-4 py-2 rounded-2xl rounded-tr-none text-sm max-w-[80%]">
+                          היי, פתוח היום?
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Bot className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div className="bg-white border border-gray-200 px-4 py-2 rounded-2xl rounded-tl-none text-sm max-w-[80%] shadow-sm text-gray-800">
+                          {aiSettings.ai_tone === 'professional' && "שלום! כן, אנחנו פתוחים היום בין השעות 09:00 ל-22:00. נשמח לראותך."}
+                          {aiSettings.ai_tone === 'friendly' && "היי! בטח, אנחנו פתוחים עד 22:00 בערב. בוא לבקר! 👋"}
+                          {aiSettings.ai_tone === 'enthusiastic' && "היי!! בטח שפתוח! 🎉 מחכים לך עד 22:00 עם האוכל הכי טעים באי! בוא!!"}
+                          {aiSettings.custom_instructions && <div className="mt-2 text-xs text-green-600 border-t pt-1 border-gray-100">"הערה: {aiSettings.custom_instructions}" (יוטמע בתשובה)</div>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Bot className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">הנציגה במנוחה</h3>
+                  <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                    הפעל את השירות כדי לאפשר לבינה המלאכותית לענות ללקוחות בשמך 24/7, לחסוך זמן ולסגור יותר עסקאות.
+                  </p>
+                  <Button
+                    onClick={() => updateAIMutation.mutate({ ...aiSettings, ai_auto_reply: true })}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    הפעל שירות
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
+
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -838,6 +1030,6 @@ export default function BusinessDashboard() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }

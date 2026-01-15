@@ -4,7 +4,7 @@ export const SYSTEM_MAPPING_AGENT = {
     id: "system-mapping-agent",
     layer: "documentation",
     role: "system-mapper",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "MapTrifold",
     systemPrompt: `אתה סוכן מיפוי מערכת (System Mapping Agent).
 מטרה: סורק את המערכת מקצה לקצה ומייצר מפה מלאה של הפיצ’רים, הזרימות, המסכים, התלויות וה-data flows.

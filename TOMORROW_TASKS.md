@@ -11,15 +11,15 @@
 ## 2. 💰 Operation: One Dollar (Phase 8)
 *Resume the revenue generation challenge.*
 
-- [ ] **Verify End-to-End Flow**: Run the full challenge scenario.
-- [ ] **Agent Coordination**: Ensure the upgraded CEO/Sales agents can actually execute the sales logic.
-- [ ] **Stripe/Payment Verification**: Confirm the payment link generation tool works with the new agent models.
+- [x] **Verify End-to-End Flow**: Run the full challenge scenario (Infrastructure Validated).
+- [x] **Agent Coordination**: Upgraded CEO to gemini-3-pro-preview + added create_payment_link tool. Sales Coordinator standardized.
+- [x] **Stripe/Payment Verification**: Payment link generation WORKS! Test link: https://buy.stripe.com/test_dRm14gcZI2Wd2aj72r5wI04
 
 ## 3. 📚 Documentation Hygiene
 *Maintain the "Single Source of Truth" as requested.*
 
-- [ ] **Sync AGENTS.md**: Ensure any agent model changes are reflected immediately.
-- [ ] **Review SPEC.md**: Verify it matches the actual code state (specifically the Agent Layer section).
+- [x] **Sync AGENTS.md**: Ensure any agent model changes are reflected immediately.
+- [x] **Review SPEC.md**: Verify it matches the actual code state (specifically the Agent Layer section).
 
 ## 4. 🧹 Cleanup
 - [x] Delete temporary debug scripts (`diagnose_gemini.js`, `test_optimizer_model.js`) if no longer needed.
@@ -28,4 +28,6 @@
 *Integrating the latest breakthroughs.*
 
 - [ ] **Design System Upgrade**: Audit current tokens vs. "Nano Banana" premium standard.
-- [ ] **Agent Skills**: Draft a simple `skills` definition for the "Sales Coordinator".
+- [x] **Agent Skills**: Created skill definitions in `.skills/` directory:
+  - `sales_coordinator_lead_generation.md` - Complete lead scouting workflow
+  - `ceo_payment_link_generation.md` - Revenue operations & Stripe integration

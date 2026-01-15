@@ -1,5 +1,5 @@
 import { db } from "../api/supabaseClient.js";
-import { WalletService } from "./WalletService";
+import { WalletService } from "./WalletService.js";
 
 /**
  * Service to handle booking logic backed by Supabase.

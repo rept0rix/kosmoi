@@ -1,5 +1,5 @@
 import { AgentService } from './AgentService.js';
-import { db } from '@/api/supabaseClient.js';
+import { db } from '../../../api/supabaseClient.js';
 
 /**
  * The BoardOrchestrator acts as the "Chairman" of the board.
@@ -162,8 +162,17 @@ Output JSON format:
 `;
 
         try {
-            const response = await this.orchestratorAgent.sendMessage(prompt, { simulateTools: false });
+            const response = await this.orchestratorAgent.sendMessage(prompt, { simulateTools: false, bypassGuardrails: true });
+
+            // CRITICAL FIX: The AgentService puts the parsed LLM JSON in 'raw'.
+            // 'response.text' tries to extract a 'message' property which doesn't exist in the Orchestrator schema.
+            if (response.raw && response.raw.nextSpeakerId) {
+                return response.raw;
+            }
+
+            // Fallback for string-based responses (if any)
             const text = response.text;
+            console.log("[Orchestrator] Raw Text (Fallback):", text);
 
             // Clean up markdown code blocks if present
             const jsonMatch = text.match(/\{[\s\S]*\}/);

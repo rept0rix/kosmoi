@@ -36,6 +36,18 @@ async function check() {
     if (inviteError) console.error("Anon Error (Invitations):", inviteError);
     else console.log(`👻 Anon (Public) sees Invitations: ${inviteCount} rows`);
 
+    // Check Roadmap (Deep Debug)
+    const { data: roadData, error: roadError } = await anonClient
+        .from('roadmap_features')
+        .select('*');
+
+    if (roadError) {
+        console.error("❌ Roadmap Error Object:", JSON.stringify(roadError, null, 2));
+    } else {
+        console.log(`✅ Roadmap Data Found: ${roadData?.length} items`);
+        if (roadData?.length > 0) console.log("Sample:", roadData[0].title);
+    }
+
     // 3. Inspect Columns
     const { data: sampleProps } = await serviceClient
         .from('service_providers')

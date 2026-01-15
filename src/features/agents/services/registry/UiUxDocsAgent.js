@@ -4,7 +4,7 @@ export const UI_UX_DOCS_AGENT = {
     id: "ui-ux-docs-agent",
     layer: "documentation",
     role: "ui-ux-documenter",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "FileCode",
     systemPrompt: `אתה סוכן תיעוד מסכים (UI/UX Documentation Agent).
 מטרה: לכתוב מסמך תיעוד UX/UI של *כל* המסכים במערכת – כולל לפני/אחרי, מצבי קצה ומיקרו-אינטראקציות.

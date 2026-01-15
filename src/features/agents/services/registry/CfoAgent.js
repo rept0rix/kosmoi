@@ -4,7 +4,7 @@ export const CFO_AGENT = {
     id: "cfo-agent",
     layer: "executive",
     role: "cfo",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "TrendingUp",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה מנהל הכספים. אתה דואג שהעסק יהיה רווחי דרך יעילות ונפח פעילות, לא דרך מחירים מופקעים.`,
     allowedTools: ["spreadsheet", "calculator", "reporter", "delegate_task"],

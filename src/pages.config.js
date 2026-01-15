@@ -40,6 +40,9 @@ import BlogPostDetail from './pages/BlogPostDetail';
 import Support from './pages/Support'; // New Support Page
 import __Layout from './Layout.jsx';
 import { lazy } from 'react';
+import WellnessHub from './pages/WellnessHub'; // Added Wellness
+import TransportHub from './pages/TransportHub'; // Added Transport
+
 
 // Wallet Pages
 import WalletScan from './pages/wallet/Scan';
@@ -54,6 +57,8 @@ export const PAGES = {
     "ProviderDashboard": ProviderDashboard, // /provider-dashboard (Drivers)
     "RealEstate": RealEstateHub, // /real-estate (Zillow Style)
     "Experiences": ExperiencesHub, // /experiences (GetYourGuide Style)
+    "Wellness": WellnessHub, // /wellness
+    "Transport": TransportHub, // /transport
     "ExperienceDetails": ExperienceDetails, // /experiences/:id
     "Business": BusinessLanding, // /business (Provider)
     "App": Dashboard,    // Main App Dashboard

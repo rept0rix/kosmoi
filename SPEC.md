@@ -44,12 +44,18 @@
 2. **Data Fetching**: `src/api/supabaseClient.js` initializes the connection. React Query hooks (likely in `src/hooks` or `src/services`) manage data fetching and caching.
 3. **Real-time**: Supabase subscriptions are likely used for `AIChat` or live updates (indicated by `SystemMonitor`).
 
-### 4. Key Configurations
+### 4. AI & Agent Architecture
+- **Orchestrator**: `BoardOrchestrator` drives multi-agent conversations.
+- **Agents**: Specialized personas (CEO, UX, Sales) defined in `src/features/agents/services/`.
+- **Infrastructure**: Powered by Google Gemini `gemini-2.0-flash` with structured JSON output.
+- **State**: Persisted in `board_meetings` and `board_messages`.
+
+### 5. Key Configurations
 - **Routing**: `src/pages.config.js` maps string keys to Component imports, allowing dynamic route generation.
 - **Styling**: Tailwind CSS configured via `tailwind.config.js`.
 - **Environment**: Vite environment variables for Supabase keys.
 
-### 5. Observations & Recommendations
+### 6. Observations & Recommendations
 - **Hybrid Routing**: The app uses both hardcoded routes in `App.jsx` and a dynamic loop over `Pages` from config. Ensure no collision occurs.
 - **MapView**: `MapView` is rendered persistently (`display: none` when inactive) to preserve map state/context, which is a critical performance optimization.
 - **Legacy/Alias**: "Welcome" maps to `BusinessLanding`, indicating a shift in terminology or focus.

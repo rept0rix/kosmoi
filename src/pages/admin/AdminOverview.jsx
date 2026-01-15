@@ -3,10 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { AdminService } from '../../services/AdminService';
 import { Card } from "@/components/ui/card";
 import { Users, Building2, DollarSign, TrendingUp, Activity } from 'lucide-react';
+import KosmoiLoader from '@/components/ui/KosmoiLoader';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function AdminOverview() {
     const [stats, setStats] = useState({ totalUsers: 0, totalBusinesses: 0, mrr: 0, activeSubscriptions: 0 });
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
         const loadStats = async () => {
@@ -15,12 +18,19 @@ export default function AdminOverview() {
                 setStats(data);
             } catch (e) {
                 console.error("Stats Load Failed", e);
+                toast({
+                    title: "Failed to load dashboard stats",
+                    description: "Please inspect the console for details.",
+                    variant: "destructive"
+                });
             } finally {
                 setLoading(false);
             }
         };
         loadStats();
     }, []);
+
+    if (loading) return <div className="flex justify-center items-center h-[50vh]"><KosmoiLoader /></div>;
 
     return (
         <div className="space-y-8">

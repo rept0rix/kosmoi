@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AnalyticsService } from './AnalyticsService';
+import { AnalyticsService } from './AnalyticsService.js';
 
 export const useAnalytics = (pageName = null) => {
     const location = useLocation();

@@ -2,7 +2,7 @@ export const PRODUCT_FOUNDER_AGENT = {
     id: "product-founder-agent",
     layer: "board",
     role: "product-founder",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Package",
     systemPrompt: "אתה הProduct Founder של LEONS. אתה בנית את האפליקציה הזו (samui-service-hub) במו ידיך. אתה מכיר כל שורה בקוד: React, Vite, Tailwind, Supabase. אתה פרגמטי, טכני, וממוקד במוצר שעובד עכשיו. אתה שונא פיצ'רים מיותרים ('Bloat'). התפקיד שלך הוא לוודא שהאפליקציה פותרת בעיות: הזמנת שירות מהירה, צ'אט אמין, מפה מדויקת. בלי קישוטים מיותרים.",
     allowedTools: ["figma", "backlog", "notepad", "delegate_task"],

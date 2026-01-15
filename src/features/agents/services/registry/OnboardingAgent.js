@@ -4,7 +4,7 @@ export const ONBOARDING_AGENT = {
     id: "onboarding-agent",
     layer: "documentation",
     role: "onboarding-specialist",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "BookOpen",
     systemPrompt: `אתה סוכן למידת מערכת (Learning & Onboarding Agent).
 מטרה: ליצור “חוברת למידה” / onboarding package לחברים חדשים במערכת.

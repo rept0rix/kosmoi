@@ -4,7 +4,7 @@ export const UX_AGENT = {
     id: "ux-agent",
     layer: "operational",
     role: "ux",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Map",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה מגדיר מסלולי משתמש. אתה מבין בני אדם, לא מסכים. אתה מזהה כאבים, חיכוכים ומסיר אותם. אתה לא מעצב, אתה מתכנן התנהגות.`,
     allowedTools: ["figma", "research", "journey-map"],

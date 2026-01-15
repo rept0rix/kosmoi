@@ -61,6 +61,8 @@ import Organizer from '@/pages/Organizer.jsx';
 import RealEstateHub from '@/pages/RealEstateHub';
 import OneDollar from '@/pages/OneDollar';
 import ClaimProfile from '@/pages/ClaimProfile';
+import WellnessHub from '@/pages/WellnessHub';
+import TransportHub from '@/pages/TransportHub';
 import CommandCenter from '@/features/agents/pages/CommandCenter';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
@@ -73,6 +75,7 @@ import AdminBusinesses from '@/pages/admin/AdminBusinesses';
 import AdminBookings from '@/pages/admin/AdminBookings';
 import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
+import AdminSales from '@/pages/admin/AdminSales';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminMarketing from './pages/admin/AdminMarketing';
 import AdminAutomations from './pages/admin/AdminAutomations';
@@ -95,6 +98,7 @@ import Roadmap from './pages/Roadmap'; // New Public Roadmap
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
+import TransactionHistoryPage from './pages/TransactionHistoryPage';
 
 import LocalBrain from '@/pages/LocalBrain';
 // import SystemMonitor from '@/components/dashboard/SystemMonitor'; // Unused?
@@ -203,6 +207,8 @@ const AuthenticatedApp = () => {
             <Route path="roadmap" element={<Roadmap />} />
             <Route path="real-estate" element={<RealEstateHub />} />
             <Route path="test-drive" element={<OneDollar />} />
+            <Route path="wellness" element={<Pages.Wellness />} />
+            <Route path="transport" element={<Pages.Transport />} />
             <Route path="one-dollar" element={<OneDollar />} />
             <Route path="claim" element={<ClaimProfile />} /> // Query param: ?token=...
             <Route path="marketplace" element={<Marketplace />} />
@@ -244,6 +250,7 @@ const AuthenticatedApp = () => {
                 <Route path="data" element={<AdminData />} />
                 <Route path="optimizer" element={<AdminOptimizer />} />
                 <Route path="crm" element={<AdminCRM />} />
+                <Route path="sales" element={<AdminSales />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="marketing" element={<AdminMarketing />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
@@ -270,7 +277,9 @@ const AuthenticatedApp = () => {
 
 
             <Route element={<ProtectedUserRoute />}>
+              <Route path="profile/edit" element={<Pages.EditProfile />} />
               <Route path="wallet" element={<Pages.Wallet />} />
+              <Route path="wallet/history" element={<TransactionHistoryPage />} />
               <Route path="wallet/scan" element={<Pages.WalletScan />} />
               <Route path="wallet/send" element={<Pages.WalletSend />} />
               <Route path="wallet/receive" element={<Pages.WalletReceive />} />

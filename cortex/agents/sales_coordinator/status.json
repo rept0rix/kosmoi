@@ -1,7 +1,7 @@
 {
   "agent": "sales_coordinator",
-  "status": "WORKING",
-  "current_task": "Thinking: Test Bar 400",
-  "last_heartbeat": "2026-01-12T08:49:31.849Z",
+  "status": "IDLE",
+  "current_task": "No fresh leads found",
+  "last_heartbeat": "2026-01-14T06:42:35.755Z",
   "metadata": {}
 }

@@ -1,5 +1,5 @@
-import { filterProviders, getProvider, searchProviders, getAllProviders } from './db';
-import { db } from '../api/supabaseClient';
+import { filterProviders, getProvider, searchProviders, getAllProviders } from './db.js';
+import { db } from '../api/supabaseClient.js';
 
 // Check if we're online
 function isOnline() {

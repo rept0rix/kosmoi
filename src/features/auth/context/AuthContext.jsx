@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { db, supabase } from '@/api/supabaseClient';
+import { ActivityLogService } from '@/services/ActivityLogService';
 
 export const AuthContext = createContext(null);
 
@@ -23,9 +24,9 @@ export const AuthProvider = ({ children }) => {
         // Fetch Role
         let userRole = 'user';
         if (currentUser) {
-          const { data: roleData, error: roleError } = await supabase.from('user_roles')
+          const { data: roleData, error: roleError } = await supabase.from('users')
             .select('role')
-            .eq('user_id', currentUser.id)
+            .eq('id', currentUser.id)
             .single();
           if (roleData) {
             userRole = roleData.role;
@@ -52,7 +53,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("Auth check timed out, forcing load completion");
       setIsLoadingAuth(false);
       setIsLoadingPublicSettings(false);
-    }, 5000); // Reduced to 5s as we are now optimistic
+    }, 10000); // 10s timeout
 
     try {
       setIsLoadingPublicSettings(true);
@@ -82,27 +83,30 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // 1. Optimistic Check: Get session from LocalStorage first
-      const { data: { session } } = await db.auth.getSession();
+      // 1. Optimistic Check: Get session from Supabase Client (memory/storage) with Timeout
+      // Fixes hanging getSession() issue
+      const getSessionPromise = db.auth.getSession();
+      const sessionTimeoutPromise = new Promise((resolve) =>
+        setTimeout(() => resolve({ data: { session: null } }), 1000)
+      );
 
+      const { data: { session } } = await Promise.race([getSessionPromise, sessionTimeoutPromise]);
+
+      // If we got a session (either from race win or slow load eventually)
       if (session?.user) {
         console.log("⚡ Optimistic Auth: Found session User -> Unblocking UI");
-        // IMMEDIATE UPDATE
         setUser(session.user);
         setIsAuthenticated(true);
-        setIsLoadingAuth(false); // <--- KEY CHANGE: Unblock immediately
+        setIsLoadingAuth(false); // Unblock immediately
 
-        // 2. Background Verification
-        // We verify the token and role in the background. 
-        // If it fails, we will handle it gracefully without blocking the user now.
+        // 2. Background Verification (non-blocking)
         checkUserAuth(true, true);
       } else {
-        // No session found
+        // No session found or timeout
         if (isPublicRoute) {
           setIsLoadingAuth(false); // Unblock for public pages
         }
-        // If protected route and no session, we still wait for strict check just in case, 
-        // or we could redirect immediately. For now, let's run strict check.
+        // Still try to verify in background in case race timed out but session exists
         await checkUserAuth(false, isPublicRoute);
       }
 
@@ -110,6 +114,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(false);
 
     } catch (error) {
+      // ... existing error handling
       console.error('Unexpected error:', error);
       setAuthError({
         type: 'unknown',
@@ -139,9 +144,9 @@ export const AuthProvider = ({ children }) => {
 
         // Fetch Role
         let userRole = 'user';
-        const { data: roleData, error: roleError } = await supabase.from('user_roles')
+        const { data: roleData, error: roleError } = await supabase.from('users')
           .select('role')
-          .eq('user_id', currentUser.id)
+          .eq('id', currentUser.id)
           .single();
 
         if (roleData) {
@@ -167,22 +172,31 @@ export const AuthProvider = ({ children }) => {
       if (authenticatedUser) {
         setUser(authenticatedUser);
         setIsAuthenticated(true);
+        // Log Login (Only if not just refreshing/background)
+        if (!hasOptimisticSession && !runInBackground) {
+          ActivityLogService.logAction(authenticatedUser.id, 'LOGIN', 'User logged in');
+        }
       } else {
-        setUser(null);
-        setIsAuthenticated(false);
+        // CRITICAL FIX: If we have an optimistic session but fetchUserAndRole returns null (e.g. network blip or race),
+        // DO NOT log out immediately. Trust the session for a bit longer.
+        if (hasOptimisticSession) {
+          console.warn("⚠️ User fetch failed but optimistic session exists. Retaining session.");
+          // We don't nullify user here. We hope the optimistic one is good enough.
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
 
     } catch (error) {
       console.error('User auth check failed:', error);
 
-      // Improved: Offline Support
-      // If we have an optimistic session and this is a network error, DO NOT LOGOUT.
-      const isNetworkError = error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('timeout') || error.status === 500;
+      const isSessionInvalid = error.message?.includes('Invalid session') || error.message?.includes('refresh_token_not_found') || error.message?.includes('JWT expired');
 
-      if (hasOptimisticSession && isNetworkError) {
-        console.warn("Network error during auth check. Keeping optimistic session (Offline Mode).");
-        // Keep existing user and isAuthenticated=true
+      if (hasOptimisticSession && !isSessionInvalid) {
+        console.warn("⚠️ Auth check failed but keeping optimistic session (Stability Mode). Error:", error.message);
       } else {
+        console.warn("❌ Session invalid, logging out.");
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -199,14 +213,37 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async (shouldRedirect = true) => {
-    await db.auth.signOut();
-    setUser(null);
-    setIsAuthenticated(false);
+    try {
+      if (user?.id) {
+        // Attempt logging, but don't block
+        ActivityLogService.logAction(user.id, 'LOGOUT', 'User logged out').catch(console.error);
+      }
 
-    if (shouldRedirect) {
-      // Manual redirect with language awareness
-      const prefix = getLanguagePrefix();
-      window.location.href = `${prefix}/login`;
+      // Race signOut against a 2-second timeout to prevent hanging
+      const signOutPromise = db.auth.signOut();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
+
+      await Promise.race([signOutPromise, timeoutPromise]);
+
+    } catch (error) {
+      console.error("Logout error (non-blocking):", error);
+    } finally {
+      // Force clear state regardless of signOut success
+      setUser(null);
+      setIsAuthenticated(false);
+
+      // Clear all Supabase-related local storage to be safe
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('sb-') && key.includes('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      if (shouldRedirect) {
+        // Manual redirect with language awareness
+        const prefix = getLanguagePrefix();
+        window.location.href = `${prefix}/login`;
+      }
     }
   };
 

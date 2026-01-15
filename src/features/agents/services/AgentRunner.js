@@ -1,4 +1,5 @@
 import { ToolRegistry } from "./ToolRegistry.js";
+import { supabase } from "../../../api/supabaseClient";
 
 /**
  * AgentRunner
@@ -13,6 +14,27 @@ export const AgentRunner = {
      */
     run: async (agent, input, context = {}) => {
         console.log(`[AgentRunner] Running ${agent.id}...`);
+
+        // --- HELPER: Log to DB ---
+        const logToDB = async (level, message, metadata = {}) => {
+            try {
+                await supabase.from('agent_logs').insert({
+                    agent_id: agent.id || 'unknown_agent',
+                    level,
+                    message,
+                    metadata: {
+                        role: 'assistant',
+                        username: agent.name || 'AI Assistant',
+                        ...metadata
+                    }
+                });
+            } catch (err) {
+                console.warn("Agent Logging Failed:", err);
+            }
+        };
+
+        // Log Start
+        await logToDB('info', `Processing: "${input.substring(0, 50)}..."`, { type: 'start', fullInput: input });
 
         try {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -70,44 +92,93 @@ Output JSON format:
 }
 `;
 
-            // --- STEP 3: CALL LLM ---
-            console.log(`[AgentRunner] Calling Gemini...`);
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ role: 'user', parts: [{ text: input }] }],
-                    generationConfig: { responseMimeType: "application/json" } // Force JSON
-                })
-            });
+            // --- STEP 3: EXECUTION LOOP (The Ralph Loop) ---
+            let iterations = 0;
+            const maxIterations = 5;
+            let currentContext = contextData;
+            let fullThoughtLog = ["Context Gathered"];
 
-            const data = await response.json();
-            const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            while (iterations < maxIterations) {
+                console.log(`[AgentRunner] Loop iteration ${iterations + 1}...`);
 
-            if (!textResponse) throw new Error("Empty response from AI");
-
-            const parsed = JSON.parse(textResponse);
-            const outputContent = parsed.output || parsed.email_draft || parsed.report; // Handle all content keys
-            const thoughts = parsed.thoughts || [];
-
-            // --- STEP 4: POST-ACTION (Side Effects) ---
-            // 4a. CRM Logging
-            if (agent.allowedTools.includes("insert_interaction") && context.lead?.id) {
-                console.log(`[AgentRunner] Logging interaction...`);
-                await ToolRegistry.insert_interaction({
-                    lead_id: context.lead.id,
-                    type: "email_draft",
-                    content: outputContent
+                // Call LLM
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        contents: [{ role: 'user', parts: [{ text: currentContext + (iterations > 0 ? "\n(Continue from observation...)" : `\nUser Input: ${input}`) }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
                 });
+
+                const data = await response.json();
+                const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResponse) throw new Error("Empty response from AI");
+
+                let parsed;
+                try {
+                    parsed = JSON.parse(textResponse);
+                } catch (e) {
+                    console.error("JSON Parse Error", textResponse);
+                    await logToDB('error', "Failed to parse Agent JSON response");
+                    // Fallback: If AI fails JSON, try to recover or just return text
+                    return { output: textResponse, thoughtProcess: fullThoughtLog };
+                }
+
+                // Log thoughts
+                if (parsed.thought) {
+                    fullThoughtLog.push(parsed.thought);
+                    await logToDB('info', parsed.thought, { type: 'thought' });
+                }
+                if (parsed.thoughts) {
+                    fullThoughtLog.push(...parsed.thoughts);
+                    await logToDB('info', parsed.thoughts.join(' | '), { type: 'thoughts' });
+                }
+
+                // CHECK: Is it an Action or Final Message?
+                if (parsed.action && parsed.action.tool) {
+                    // ACTION REQUIRED
+                    const { tool, params } = parsed.action;
+                    console.log(`[AgentRunner] Executing Tool: ${tool}`, params);
+                    fullThoughtLog.push(`Action: ${tool}`);
+                    await logToDB('action', `Executing ${tool}`, { tool, params });
+
+                    let observation;
+                    try {
+                        if (ToolRegistry[tool]) {
+                            observation = await ToolRegistry[tool](params);
+                        } else {
+                            observation = "Error: Tool not found.";
+                        }
+                    } catch (err) {
+                        observation = `Error executing tool: ${err.message}`;
+                        await logToDB('error', `Tool Error: ${tool}`, { error: err.message });
+                    }
+
+                    // Feed observation back into context for next turn
+                    currentContext += `\n\n--- TURN ${iterations + 1} ---\nAgent Action: ${tool}\nObservation: ${JSON.stringify(observation)}\n`;
+                } else {
+                    // FINAL ANSWER (or just message)
+                    const finalOutput = parsed.output || parsed.message || parsed.email_draft;
+                    await logToDB('chat', finalOutput, { type: 'final_response' });
+
+                    return {
+                        output: finalOutput,
+                        thoughtProcess: fullThoughtLog,
+                        // If there are UI choices/content, pass them through
+                        a2ui_content: parsed.a2ui_content,
+                        choices: parsed.choices
+                    };
+                }
+
+                iterations++;
             }
 
-            // 4b. Marketing Publishing (Auto-publish if configured, currently we just return content for review)
-            // If we wanted full autonomy, we would call ToolRegistry.publish_post(outputContent) here.
-
+            await logToDB('error', "Agent loop timed out", { maxIterations });
             return {
-                output: outputContent,
-                thoughtProcess: ["Context Gathered", ...thoughts, "Action Complete"]
+                output: "I thought about it for too long and got stuck. Please try again.",
+                thoughtProcess: fullThoughtLog
             };
 
         } catch (error) {

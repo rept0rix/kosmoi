@@ -1,4 +1,4 @@
-import { supabase } from '../../api/supabaseClient';
+import { supabase } from '../../api/supabaseClient.js';
 
 /**
  * Service to manage User Long-term Memory & Profiling.
