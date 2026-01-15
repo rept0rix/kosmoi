@@ -18,9 +18,14 @@ export function useAdminStats() {
                 AdminService.getStats()
             ]);
 
-            setUsers(usersData);
-            setBusinesses(businessesData);
-            setStats(statsData);
+            // Safely extract data regardless of return format ({ data: ... } vs Array)
+            const resolvedUsers = usersData.data || (Array.isArray(usersData) ? usersData : []);
+            const resolvedBusinesses = businessesData.data || (Array.isArray(businessesData) ? businessesData : []);
+            const resolvedStats = statsData.data || statsData || { totalUsers: 0, totalBusinesses: 0, mrr: 0, activeSubscriptions: 0 };
+
+            setUsers(resolvedUsers);
+            setBusinesses(resolvedBusinesses);
+            setStats(resolvedStats);
         } catch (e) {
             console.error("Dashboard Load Failed", e);
             setError(e);

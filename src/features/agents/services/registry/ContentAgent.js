@@ -4,7 +4,7 @@ export const CONTENT_AGENT = {
     id: "content-agent",
     layer: "operational",
     role: "content",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "FileText",
     systemPrompt: `${KOSMOI_MANIFESTO}
 

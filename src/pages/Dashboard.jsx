@@ -186,7 +186,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-midnight-950 text-white font-sans selection:bg-banana-500/30">
       <OfflineIndicator />
       {/* Hero Section with Search & Categories */}
-      <div className="relative isolate overflow-hidden bg-midnight-950 pb-12 pt-24 sm:pb-32 lg:pb-32 lg:pt-32 mb-8 border-b border-white/5 shadow-2xl shadow-midnight-900/50">
+      <div className="relative isolate overflow-hidden bg-midnight-950 pb-12 pt-16 sm:pb-32 lg:pb-32 lg:pt-32 mb-8 border-b border-white/5 shadow-2xl shadow-midnight-900/50">
         <div className="absolute inset-0 -z-10 h-full w-full bg-midnight-950"></div>
         {/* Ambient Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-banana-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -252,7 +252,7 @@ export default function Dashboard() {
           <div className="max-w-3xl mx-auto mb-16 relative">
             <div className="relative flex items-center group">
               <Input
-                className="h-16 pl-8 pr-20 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-lg shadow-2xl text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-banana-500/50 focus-visible:border-banana-500/50 transition-all group-hover:bg-white/10"
+                className="h-14 sm:h-16 pl-8 pr-20 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-lg shadow-2xl text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-banana-500/50 focus-visible:border-banana-500/50 transition-all group-hover:bg-white/10"
                 placeholder={t('dashboard.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

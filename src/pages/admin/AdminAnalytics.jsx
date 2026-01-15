@@ -1,132 +1,153 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Bot, PieChart, TrendingUp, AlertCircle } from "lucide-react";
-import { AgentRunner } from "@/features/agents/services/AgentRunner";
-import { ANALYTICS_AGENT } from "@/features/agents/services/registry/AnalyticsAgent";
-import { toast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { db } from '@/api/supabaseClient';
+import { Loader2, TrendingUp, Users, Store, Eye, ArrowUp, ArrowRight } from "lucide-react";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
+
+const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
+    <Card>
+        <CardContent className="p-6">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+                <p className="text-sm font-medium text-gray-500">{title}</p>
+                <Icon className={`h-4 w-4 ${color}`} />
+            </div>
+            <div className="flex flex-col gap-1">
+                <div className="text-2xl font-bold">{value}</div>
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                    {subtext}
+                </p>
+            </div>
+        </CardContent>
+    </Card>
+);
 
 const AdminAnalytics = () => {
-    const [isThinking, setIsThinking] = useState(false);
-    const [agentOutput, setAgentOutput] = useState(null);
+    // 1. Fetch Global Stats
+    const { data: globalStats, isLoading } = useQuery({
+        queryKey: ['adminGlobalStats'],
+        queryFn: async () => {
+            const [
+                { count: businesses } // Total Businesses
+                , { count: users } // Total Users 
+                , { count: views } // Total Analytics Events (Views)
+                , { data: trending } // Top providers
+            ] = await Promise.all([
+                db.from('service_providers').select('*', { count: 'exact', head: true }),
+                db.from('profiles').select('*', { count: 'exact', head: true }), // Assuming profiles table
+                db.from('business_analytics').select('*', { count: 'exact', head: true }).eq('event_type', 'page_view'),
+                // For trending, we need aggregation, which represents a complexity. 
+                // We'll fetch raw analytics for last 24h and aggreg manually for MVP
+                db.from('business_analytics').select('provider_id').gte('created_at', new Date(Date.now() - 86400000).toISOString())
+            ]);
 
-    const handleRunAnalysis = async () => {
-        setIsThinking(true);
-        setAgentOutput(null);
-
-        try {
-            const input = "Analyze the platform metrics for the last week and suggest improvements.";
-            const result = await AgentRunner.run(ANALYTICS_AGENT, input, {
-                period: "weekly"
+            // Aggregate Trending
+            const counts = {};
+            (trending || []).forEach(t => {
+                counts[t.provider_id] = (counts[t.provider_id] || 0) + 1;
             });
+            const topProviderIds = Object.entries(counts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+                .map(([id]) => id);
 
-            setAgentOutput(result);
-        } catch (error) {
-            console.error(error);
-            toast({ title: "Lara Error", description: "Analysis failed.", variant: "destructive" });
-        } finally {
-            setIsThinking(false);
+            // Fetch names of top providers
+            let topProviders = [];
+            if (topProviderIds.length > 0) {
+                const { data: providers } = await db.from('service_providers').select('id, business_name, category').in('id', topProviderIds);
+                topProviders = providers?.map(p => ({
+                    ...p,
+                    views: counts[p.id]
+                })).sort((a, b) => b.views - a.views) || [];
+            }
+
+            return {
+                businesses: businesses || 0,
+                users: users || 0,
+                views: views || 0,
+                topProviders
+            };
         }
-    };
+    });
+
+    if (isLoading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin" /></div>;
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Analytics Intelligence</h1>
-                    <p className="text-gray-500">Lara is monitoring your business performance</p>
-                </div>
-                <div className="flex gap-2">
-                    <Badge variant="outline" className="text-lg py-1 px-3 gap-1">
-                        <Bot className="w-4 h-4 text-blue-600" />
-                        Lara Status: <span className="text-green-600 font-bold">Active</span>
-                    </Badge>
-                </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">System Overview</h1>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard
+                    title="Total Businesses"
+                    value={globalStats?.businesses}
+                    subtext="+2 since yesterday"
+                    icon={Store}
+                    color="text-blue-600"
+                />
+                <StatCard
+                    title="Total Users"
+                    value={globalStats?.users}
+                    subtext="Registered accounts"
+                    icon={Users}
+                    color="text-green-600"
+                />
+                <StatCard
+                    title="Total Page Views"
+                    value={globalStats?.views}
+                    subtext="Global engagement"
+                    icon={Eye}
+                    color="text-purple-600"
+                />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Control Panel */}
-                <Card className="lg:col-span-1 border-blue-100 bg-blue-50/50">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <Card className="col-span-1">
                     <CardHeader>
-                        <CardTitle className="text-blue-800 flex items-center gap-2">
-                            <PieChart className="w-5 h-5" />
-                            Data Actions
-                        </CardTitle>
+                        <CardTitle>Trending Businesses (24h)</CardTitle>
+                        <CardDescription>Most viewed profiles today</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <p className="text-sm text-gray-600">
-                            Run a comprehensive analysis of user retention, revenue, and traffic.
-                        </p>
-                        <Button
-                            className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg"
-                            onClick={handleRunAnalysis}
-                            disabled={isThinking}
-                        >
-                            {isThinking ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                    Analyzing Data...
-                                </>
-                            ) : (
-                                <>
-                                    <TrendingUp className="w-5 h-5 mr-2" />
-                                    Run Weekly Report
-                                </>
-                            )}
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* Agent Workspace */}
-                <Card className="lg:col-span-2 shadow-sm border-2 border-blue-50">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-gray-700">
-                            <Bot className="w-5 h-5" />
-                            Lara's Insights
-                        </CardTitle>
-                        <CardDescription>
-                            AI-driven analysis and recommendations.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="min-h-[300px]">
-                        {!agentOutput && !isThinking && (
-                            <div className="flex flex-col items-center justify-center h-full text-gray-400 opacity-50 space-y-2">
-                                <Bot className="w-16 h-16" />
-                                <p>No report generated yet.</p>
-                            </div>
-                        )}
-
-                        {agentOutput && (
-                            <div className="space-y-6">
-                                {/* Thoughts */}
-                                <div className="space-y-2">
-                                    <h4 className="font-medium text-xs uppercase tracking-wider text-gray-500">Analysis Process</h4>
-                                    <div className="bg-gray-50 p-4 rounded-lg text-sm font-mono text-gray-700 space-y-2 border">
-                                        {agentOutput.thoughtProcess.map((t, i) => (
-                                            <div key={i} className="flex gap-2">
-                                                <span className="text-blue-500">{">"}</span>
-                                                <span>{t}</span>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {globalStats?.topProviders?.length === 0 ? "No data yet." : (
+                                globalStats?.topProviders?.map((p, i) => (
+                                    <div key={p.id} className="flex items-center justify-between border-b pb-2 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                                                {i + 1}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Result */}
-                                <div className="space-y-2">
-                                    <h4 className="font-medium text-xs uppercase tracking-wider text-gray-500">Strategic Report</h4>
-                                    <div className="bg-white p-6 rounded-xl border-2 border-blue-100 shadow-sm prose prose-blue max-w-none">
-                                        <div className="whitespace-pre-wrap font-sans text-gray-800">
-                                            {agentOutput.output}
+                                            <div>
+                                                <div className="font-semibold">{p.business_name}</div>
+                                                <div className="text-xs text-gray-500">{p.category}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-green-600 font-medium">
+                                            <TrendingUp className="w-3 h-3" />
+                                            {p.views} views
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                ))
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 
+                <Card className="col-span-1">
+                    <CardHeader>
+                        <CardTitle>Real-Time Activity</CardTitle>
+                        <CardDescription>Views per hour (Last 24h)</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px] flex items-center justify-center bg-gray-50 rounded-lg border border-dashed">
+                        <span className="text-gray-400 text-sm">Chart Placeholder (Requires Backend Aggregation)</span>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

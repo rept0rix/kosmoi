@@ -32,31 +32,80 @@ export default function Login() {
 
     const processingOAuth = React.useRef(false);
 
-    // Handle OAuth Hash & Global Auth State
+    // Handle OAuth Hash - Passive Polling Mode
     useEffect(() => {
-        // Disabled manual hash parsing to let Supabase AuthContext handle it naturally
-        // This prevents race conditions where both try to set the session
-        const handleOAuthCallback = async () => {
-            // 1. Detect OAuth Hash
-            if (location.hash && location.hash.includes('access_token')) {
-                console.log("🔐 OAuth Hash Detected - Waiting for AuthContext...");
-                // Just set verifying to show spinner while Context catches up
-                setVerifying(true);
+        let isChecking = false;
+        let pollInterval;
+
+        const checkSession = async () => {
+            if (isChecking) return;
+            isChecking = true;
+
+            try {
+                const { data: { session } } = await db.auth.getSession();
+
+                if (session) {
+                    console.log("✅ OAuth Success: Session detected via polling!", session.user.email);
+
+                    // Clear interval immediately
+                    if (pollInterval) clearInterval(pollInterval);
+
+                    // Provide visual feedback
+                    setVerifying(false);
+
+                    // SYNC STATE: Force triggers AuthContext to update 'isAuthenticated'
+                    await checkAppState();
+
+                    // SOFT REDIRECT: Use navigate instead of window.location.href
+                    // This preserves the session in memory without reloading the page
+                    // The main useEffect monitoring 'isAuthenticated' will also kick in, 
+                    // but we do this here to be sure.
+                    const role = session.user?.user_metadata?.role || 'user';
+                    // Check strict admin role from DB if possible, but metadata is a good first hint
+                    // for the immediate redirect.
+                    const target = (role === 'admin' || session.user.email === 'na0ryank0@gmail.com')
+                        ? '/admin/wallet'
+                        : '/profile';
+
+                    console.log(`🚀 Soft Redirecting to ${target}`);
+                    navigate(target, { replace: true });
+
+                    return true;
+                }
+            } catch (err) {
+                console.error("Polling check failed:", err);
+            } finally {
+                isChecking = false;
             }
+            return false;
         };
 
-        handleOAuthCallback();
+        if (location.hash && location.hash.includes('access_token')) {
+            console.log("🔐 OAuth Hash Detected - Starting Passive Polling...");
+            setVerifying(true);
 
-        // Safety: Timeout if stuck in verifying
-        const timer = setTimeout(() => {
-            if (verifying && !isAuthenticated) {
-                console.warn("⚠️ OAuth verification timed out (Manual Handler)");
-                setVerifying(false); // Just stop spinning
-            }
-        }, 8000); // 8s timeout
+            // Poll every 500ms
+            pollInterval = setInterval(checkSession, 500);
 
-        return () => clearTimeout(timer);
-    }, [location.hash, isAuthenticated]);
+            // Also run one immediately
+            checkSession();
+
+            // Safety timeout: 10 seconds
+            const timeoutTimer = setTimeout(() => {
+                clearInterval(pollInterval);
+                if (verifying) {
+                    console.warn("⚠️ OAuth polling timed out.");
+                    setError("Login seems slow. If you are not redirected, please refresh.");
+                    setVerifying(false);
+                }
+            }, 10000);
+
+            return () => {
+                clearInterval(pollInterval);
+                clearTimeout(timeoutTimer);
+            };
+        }
+    }, [location.hash]);
 
     // 2. React to Auth Success (from Context)
     useEffect(() => {
@@ -125,7 +174,9 @@ export default function Login() {
         try {
             if (isLogin) {
                 // LOGIN
-                await db.auth.signIn(email, password);
+                const { error: signInError } = await db.auth.signIn(email, password);
+                if (signInError) throw signInError;
+
                 console.log("Sign in successful, updating state...");
             } else {
                 // REGISTER
@@ -146,13 +197,38 @@ export default function Login() {
             }
 
             // Common Success Flow
-            await checkAppState();
+            console.log("Triggering global state update...");
+            checkAppState().catch(err => console.error("Background auth check failed:", err));
 
-            setTimeout(() => {
-                if (window.location.pathname === '/login') {
-                    // Check again? or just let the effect handle it
-                }
-            }, 2000);
+            // IMMEDIATE ACTION: Force redirect if session exists
+            // We do not wait for the global context to update because it seems to be hanging.
+            const { data: { session } } = await db.auth.getSession();
+
+            if (session) {
+                console.log("✅ Session confirmed immediately after login.");
+                setLoading(false);
+
+                // Determine target
+                // If we are admin, go to admin wallet directly to verify the fix
+                const role = session.user?.user_metadata?.role || 'user';
+                const targetPath = role === 'admin' ? '/admin/wallet' : '/profile';
+
+                console.log(`🚀 Forcing redirect to ${targetPath}`);
+                window.location.href = targetPath;
+            } else {
+                console.warn("❌ Login reported success but no session found in post-check.");
+                // It's possible the session needs a split second to persist?
+                // Let's retry once after short delay
+                setTimeout(async () => {
+                    const { data: { session: retrySession } } = await db.auth.getSession();
+                    if (retrySession) {
+                        window.location.href = '/admin/wallet';
+                    } else {
+                        setError("Login succeeded but session failed to persist. Please retry.");
+                        setLoading(false);
+                    }
+                }, 1000);
+            }
 
         } catch (err) {
             console.error('Auth error:', err);
@@ -193,9 +269,21 @@ export default function Login() {
     if (verifying) {
         return (
             <div className="min-h-screen relative flex items-center justify-center font-sans overflow-hidden bg-slate-900">
-                <div className="text-white flex flex-col items-center gap-4">
+                <div className="text-white flex flex-col items-center gap-4 relative z-50">
                     <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-lg font-light">Completing secure sign-in...</p>
+                    <button
+                        onClick={() => {
+                            setVerifying(false);
+                            if (window.location.hash) {
+                                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                            }
+                        }}
+                        className="mt-4 text-sm text-slate-400 hover:text-white underline"
+                    >
+                        Stuck? Click here to cancel
+                    </button>
+                    {/* Add invisible button for tests if needed */}
                 </div>
             </div>
         )

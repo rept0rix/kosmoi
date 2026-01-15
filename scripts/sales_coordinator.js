@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseServiceKey || !apiKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 /**
  * Sales Coordinator Agent ("Sarah")
@@ -89,25 +89,56 @@ class SalesCoordinator {
         const claimLink = `https://kosmoi.site/claim?id=${lead.id}`;
         const emailHtml = INVITATION_TEMPLATE(lead.business_name, claimLink);
 
+
         // 2. Determine Recipient (SAFETY MODE)
         const recipientEmail = process.env.TEST_EMAIL || 'admin@kosmoi.com';
+        const n8nWebhookUrl = process.env.VITE_N8N_EMAIL_WEBHOOK;
 
-        // 3. Send Email via Edge Function
-        const { data, error } = await supabase.functions.invoke('send-email', {
-            body: {
-                to: recipientEmail,
-                subject: `Invitation for ${lead.business_name} - Kosmoi`,
-                html: emailHtml,
-                from: 'sarah@kosmoi.site'
+        if (n8nWebhookUrl && !n8nWebhookUrl.includes('YOUR_N8N')) {
+            console.log(`🔌 Dispatching to n8n: ${n8nWebhookUrl}`);
+            try {
+                const response = await fetch(n8nWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: recipientEmail, // In production, this would be lead.email
+                        subject: `Invitation for ${lead.business_name} - Kosmoi`,
+                        html: emailHtml,
+                        business_name: lead.business_name,
+                        claim_link: claimLink,
+                        lead_id: lead.id,
+                        from: 'Sarah <onboarding@resend.dev>'
+                    })
+                });
+
+                if (response.ok) {
+                    console.log(`🚀 Email Dispatched via n8n to ${recipientEmail}!`);
+                } else {
+                    console.error(`❌ n8n Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (err) {
+                console.error(`❌ n8n Network Error:`, err);
             }
-        });
-
-        if (error) {
-            console.error(`❌ Email Failed:`, error);
-            // Fallback to DB save even if email fails
         } else {
-            console.log(`🚀 Email Sent to ${recipientEmail}! ID: ${data?.id || 'OK'}`);
+            console.log(`⚠️ No n8n Webhook configured. Falling back to Supabase Function.`);
+            // 3. Fallback: Send Email via Edge Function
+            const { data, error } = await supabase.functions.invoke('send-email', {
+                body: {
+                    to: recipientEmail,
+                    subject: `Invitation for ${lead.business_name} - Kosmoi`,
+                    html: emailHtml,
+                    from: 'Sarah <onboarding@resend.dev>'
+                }
+            });
+
+            if (error) {
+                console.error(`❌ Email Failed:`, error);
+                // Fallback to DB save even if email fails
+            } else {
+                console.log(`🚀 Email Sent to ${recipientEmail}! ID: ${data?.id || 'OK'}`);
+            }
         }
+
 
         // 4. Save to DB
         console.log("💾 Saving invitation to DB...");
@@ -179,12 +210,19 @@ class SalesCoordinator {
                     this.protocol.archiveMessage(msg.filePath);
                 }
             } else {
-                // Should we scout if bored? Maybe not, strictly reactive for now.
-                // await this.scout_leads(1);
+                // Active Mode: Scout for existing DB leads if inbox is empty
+                this.protocol.updateStatus('WORKING', 'Active Scouting');
+                const freshLeads = await this.scout_leads(1);
+                for (const lead of freshLeads) {
+                    await this.generate_invitation(lead);
+                }
+                if (freshLeads.length === 0) {
+                    this.protocol.updateStatus('IDLE', 'No fresh leads found');
+                }
             }
 
-            // Sleep 5s
-            await new Promise(r => setTimeout(r, 5000));
+            // Sleep 30s to avoid spamming
+            await new Promise(r => setTimeout(r, 30000));
         }
     }
 }

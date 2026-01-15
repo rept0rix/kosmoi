@@ -5,7 +5,7 @@ export const UX_DESIGNER_AGENT = {
     role: "ux-vision",
     name: "UX Visionary",
     layer: "intelligence",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Eye",
     systemPrompt: `${KOSMOI_MANIFESTO}
 

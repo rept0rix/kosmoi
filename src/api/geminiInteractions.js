@@ -22,9 +22,10 @@ const getClient = () => {
  * @param {string} params.prompt - The user prompt.
  * @param {string} [params.system_instruction] - System instructions.
  * @param {Object} [params.jsonSchema] - Optional JSON schema to enforce output.
+ * @param {boolean} [params.jsonMode] - Optional flag to enable JSON mode without schema.
  * @returns {Promise<Object>} The parsed JSON response.
  */
-export const callAgentInteraction = async ({ model, prompt, system_instruction, jsonSchema }) => {
+export const callAgentInteraction = async ({ model, prompt, system_instruction, jsonSchema, jsonMode }) => {
     try {
         const client = getClient();
 
@@ -45,9 +46,11 @@ export const callAgentInteraction = async ({ model, prompt, system_instruction, 
         if (jsonSchema) {
             generateConfig.config.responseMimeType = 'application/json';
             generateConfig.config.responseSchema = jsonSchema;
+        } else if (jsonMode) {
+            generateConfig.config.responseMimeType = 'application/json';
         }
 
-        console.log("DEBUG: Calling generateContent with config:", JSON.stringify(generateConfig, null, 2));
+        // console.log("DEBUG: Calling generateContent with config:", JSON.stringify(generateConfig, null, 2));
 
         // Retry Loop for 429 errors
         let response;
@@ -69,7 +72,7 @@ export const callAgentInteraction = async ({ model, prompt, system_instruction, 
             throw new Error("Gemini API Request Failed after retries.");
         }
 
-        console.log("DEBUG: Gemini GenerateContent Response:", JSON.stringify(response, null, 2));
+        // console.log("DEBUG: Gemini GenerateContent Response:", JSON.stringify(response, null, 2));
 
         const candidate = response.candidates?.[0];
         const outputText = candidate?.content?.parts?.[0]?.text;

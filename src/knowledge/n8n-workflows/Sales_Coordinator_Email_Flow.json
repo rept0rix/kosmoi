@@ -1,0 +1,49 @@
+{
+    "name": "Kosmoi Sales Coordinator - Email Dispatcher",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "send-invite",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "requestMethod": "POST",
+                "url": "https://api.resend.com/emails",
+                "jsonParameters": true,
+                "options": {},
+                "bodyParametersJson": "={\n  \"from\": \"Sarah <onboarding@resend.dev>\",\n  \"to\": [\"{{$json.body.to}}\"],\n  \"subject\": \"{{$json.body.subject}}\",\n  \"html\": \"{{$json.body.html}}\"\n}",
+                "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{ $env.RESEND_API_KEY }}\",\n  \"Content-Type\": \"application/json\"\n}"
+            },
+            "name": "Send via Resend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                680,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Send via Resend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

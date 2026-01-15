@@ -120,6 +120,7 @@ export const subCategoryTranslations = {
     health_clinics: "מרפאות ובריאות",
     legal_accounting: "עריכת דין וחשבון",
     digital_nomad: "נוודים דיגיטליים",
+    coworking: "חללי עבודה",
     cannabis_shops: "קנאביס",
 
     // Get Service additions
@@ -256,6 +257,7 @@ export const subCategoryTranslations = {
     health_clinics: "Health Clinics",
     legal_accounting: "Legal & Accounting",
     digital_nomad: "Digital Nomad",
+    coworking: "Coworking Spaces",
     cannabis_shops: "Cannabis",
 
     // Get Service additions
@@ -392,6 +394,7 @@ export const subCategoryTranslations = {
     health_clinics: "คลินิกสุขภาพ",
     legal_accounting: "กฎหมายและบัญชี",
     digital_nomad: "ดิจิทัลโนแมด",
+    coworking: "โคเวิร์กกิ้งสเปซ",
     cannabis_shops: "กัญชา",
 
     // Get Service additions
@@ -528,6 +531,7 @@ export const subCategoryTranslations = {
     health_clinics: "Медицинские клиники",
     legal_accounting: "Юридические услуги",
     digital_nomad: "Цифровой кочевник",
+    coworking: "Коворкинг",
     cannabis_shops: "Каннабис",
 
     // Get Service additions

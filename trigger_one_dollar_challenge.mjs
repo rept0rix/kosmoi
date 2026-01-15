@@ -25,8 +25,17 @@ async function triggerChallenge() {
     const meeting = meetings[0];
     console.log(`✅ Found active meeting: "${meeting.title}" (${meeting.id})`);
 
+    // 1.5 Clear previous messages (Reset Memory)
+    const { error: deleteError } = await supabase
+        .from('board_messages')
+        .delete()
+        .eq('meeting_id', meeting.id);
+
+    if (deleteError) console.error("Failed to clear history:", deleteError);
+    else console.log("🧹 Cleared previous meeting history.");
+
     // 2. Insert the trigger message
-    const prompt = "Start the One Dollar Challenge. Create a landing page for AI services and sell it to me.";
+    const prompt = "Start the One Dollar Challenge. FOCUS ON REVENUE. Do not analyze the UI yet. Your goal is to sell a 'Verified Badge' for $1. STRATEGY: 1) CEO: Define the offer. 2) Sales: Create a Stripe Payment Link using your tools. 3) Output the link here. GO.";
 
     const { error: msgError } = await supabase
         .from('board_messages')

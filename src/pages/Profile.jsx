@@ -15,14 +15,45 @@ import {
   HelpCircle,
   ChevronRight,
   LogOut,
-  CreditCard
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PushService } from "@/services/PushService";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const [isPushEnabled, setIsPushEnabled] = React.useState(false);
+  const [loadingPush, setLoadingPush] = React.useState(false);
+
+  React.useEffect(() => {
+    PushService.getSubscription().then(sub => {
+      setIsPushEnabled(!!sub);
+    });
+  }, []);
+
+  const handleTogglePush = async () => {
+    setLoadingPush(true);
+    try {
+      if (isPushEnabled) {
+        await PushService.unsubscribe();
+        setIsPushEnabled(false);
+        toast({ title: t('notifications.disabled'), description: "You will no longer receive push notifications." });
+      } else {
+        await PushService.subscribe();
+        setIsPushEnabled(true);
+        toast({ title: t('notifications.enabled'), description: "Push notifications enabled successfully!" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Error", description: "Failed to update notification settings.", variant: "destructive" });
+    } finally {
+      setLoadingPush(false);
+    }
+  };
 
   // Temporary Member ID generation (or fetch from metadata if exists)
   const memberId = user?.id ? `MM${user.id.substring(0, 8).toUpperCase()}` : "MM30593117";
@@ -32,7 +63,8 @@ export default function Profile() {
       title: t('account.section_personal'),
       items: [
         { icon: User, label: t('account.details'), path: "/profile/edit" },
-        { icon: History, label: t('account.purchase_history'), path: "/wallet" }, // Mapping to Wallet for now
+        { icon: Wallet, label: t('account.wallet'), path: "/wallet" },
+        { icon: History, label: t('account.purchase_history'), path: "/wallet/history" },
         //{ icon: Gift, label: "Benefit Redemption History", path: "/benefits" }, // Placeholder
         { icon: Ticket, label: t('account.booking_history'), path: "/my-bookings" },
         { icon: CalendarCheck, label: t('account.reservation'), path: "/vendor/calendar" }, // Mapping to Calendar for now
@@ -61,8 +93,12 @@ export default function Profile() {
         {/* Top Bar */}
         <div className="flex justify-between items-center mb-8 relative z-10 font-['Outfit']">
           <h1 className="text-2xl font-bold">{t('account.title')}</h1>
-          <button className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm">
-            <Bell className="w-5 h-5" />
+          <button
+            onClick={handleTogglePush}
+            disabled={loadingPush}
+            className={`p-2 rounded-full transition backdrop-blur-sm ${isPushEnabled ? 'bg-white text-[#E93B4E]' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+          >
+            <Bell className={`w-5 h-5 ${isPushEnabled ? 'fill-current' : ''}`} />
           </button>
         </div>
 

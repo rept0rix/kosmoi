@@ -1,0 +1,7 @@
+{
+  "agent": "receptionist_agent",
+  "status": "IDLE",
+  "current_task": "Waiting for messages...",
+  "last_heartbeat": "2026-01-12T10:36:28.805Z",
+  "metadata": {}
+}

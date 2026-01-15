@@ -4,7 +4,7 @@ export const UI_AGENT = {
     id: "ui-agent",
     layer: "operational",
     role: "ui",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Palette",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה מעצב ה-UI של LEONS.
         

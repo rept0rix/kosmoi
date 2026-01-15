@@ -43,9 +43,10 @@ export const KnowledgeService = {
             }
 
             // 3. Format Context
-            // Concatenate matched chunks with file path indicators
+            // Concatenate matched chunks with metadata indicators
             const contextArray = data.map(chunk => {
-                return `\n--- FILE: ${chunk.path} ---\n${chunk.content}\n`;
+                const source = chunk.metadata?.title || chunk.metadata?.name || chunk.category || 'Knowledge Base';
+                return `\n--- SOURCE: ${source} ---\n${chunk.content}\n`;
             });
 
             return contextArray.join("\n");

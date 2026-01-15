@@ -4,14 +4,19 @@ import { AdminService } from '../../services/AdminService';
 import UserTable from '../../components/admin/UserTable';
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from '../../api/supabaseClient';
+import { db } from '../../api/supabaseClient';
 import { UserPlus } from 'lucide-react';
+
+import AdminUserLogsDialog from '@/components/admin/AdminUserLogsDialog';
+import AdminUserDetailsDialog from '@/components/admin/AdminUserDetailsDialog';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedUserForDetails, setSelectedUserForDetails] = useState(null);
 
     const loadUsers = async () => {
+        // ... (existing loadUsers implementation)
         setLoading(true);
         try {
             const { data, error } = await AdminService.getUsers();
@@ -50,6 +55,85 @@ export default function AdminUsers() {
         if (type === 'ban') {
             await AdminService.toggleUserBan(user.id);
             await loadUsers();
+        } else if (type === 'logs' || type === 'view-details') {
+            setSelectedUserForDetails(user);
+        } else if (type === 'toggle-role') {
+            const newRole = user.role === 'admin' ? 'user' : 'admin';
+
+            // Optimistic Update or Wait? Let's wait to be sure.
+            const { error } = await AdminService.updateUserRole(user.id, newRole);
+
+            if (error) {
+                toast({
+                    title: "Role Update Failed",
+                    description: error.message,
+                    variant: "destructive"
+                });
+            } else {
+                toast({
+                    title: "Role Updated",
+                    description: `${user.email} is now ${newRole === 'admin' ? 'an Admin' : 'a User'}.`,
+                    className: "bg-green-600 text-white border-none"
+                });
+                await loadUsers();
+            }
+        } else if (type === 'delete-user') {
+            if (window.confirm(`Are you SURE you want to DELETE ${user.email} PERMANENTLY? This action CANNOT be undone.`)) {
+
+                // Double confirmation for admins
+                if (user.role === 'admin') {
+                    if (!window.confirm("WARNING: You are deleting an ADMIN user. Are you absolutely sure?")) {
+                        return;
+                    }
+                }
+
+                const { error } = await AdminService.deleteUser(user.id);
+                if (error) {
+                    toast({
+                        title: "Deletion Failed",
+                        description: error.message,
+                        variant: "destructive"
+                    });
+                } else {
+                    toast({
+                        title: "User Deleted",
+                        description: `${user.email} has been permanently deleted.`,
+                        className: "bg-red-600 text-white border-none"
+                    });
+                    await loadUsers();
+                }
+            }
+        } else if (type === 'impersonate-user') {
+            if (window.confirm(`GOD MODE: You are about to log in as ${user.email}.\n\nYou will be logged out of your Admin account.\nTo return, you must log out and sign back in as Admin.\n\nProceed?`)) {
+
+                toast({
+                    title: "Generating God Mode Link...",
+                    description: "Please wait.",
+                });
+
+                const { data, error } = await AdminService.impersonateUser(user.email);
+
+                if (error || !data) {
+                    console.error("Impersonation Error:", error);
+                    toast({
+                        title: "Impersonation Failed",
+                        description: error?.message || "Could not generate link",
+                        variant: "destructive"
+                    });
+                    return;
+                }
+
+                // Success
+                toast({
+                    title: "Redirecting...",
+                    description: "Switching identity.",
+                    className: "bg-purple-600 text-white border-none"
+                });
+
+                // Sign out current admin to prevent session conflicts, then go to magic link
+                await db.auth.signOut();
+                window.location.href = data.action_link;
+            }
         }
     };
 
@@ -59,18 +143,14 @@ export default function AdminUsers() {
         const password = 'password123';
 
         try {
-            const { data, error } = await supabase.auth.signUp({
+            await db.auth.signUp(
                 email,
                 password,
-                options: {
-                    data: {
-                        full_name: `Test User ${randomId}`,
-                        role: 'user'
-                    }
+                {
+                    full_name: `Test User ${randomId}`,
+                    role: 'user'
                 }
-            });
-
-            if (error) throw error;
+            );
 
             toast({
                 title: "Test User Created",
@@ -103,6 +183,12 @@ export default function AdminUsers() {
                 </Button>
             </div>
             <UserTable users={users} onAction={handleAction} />
+
+            <AdminUserDetailsDialog
+                isOpen={!!selectedUserForDetails}
+                onClose={() => setSelectedUserForDetails(null)}
+                userId={selectedUserForDetails?.id}
+            />
         </div>
     );
 }

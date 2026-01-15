@@ -1,5 +1,6 @@
-
-import { supabase } from "../api/supabaseClient";
+import { supabase } from "../api/supabaseClient.js";
+import { VibeCalculator } from "./rewards/VibeCalculator";
+import { ActivityLogService } from "./ActivityLogService";
 
 export const WalletService = {
     /**
@@ -166,18 +167,29 @@ export const WalletService = {
     },
 
     /**
-     * Transfer funds to another wallet (P2P).
-     * SECURE: Uses auth.uid() on server side.
+     * Transfer funds to another user (P2P).
+     * SECURE: Uses auth.uid() on server side for sender.
+     * @param {string} recipientUserId - The UUID of the recipient USER (not wallet)
+     * @param {number} amount
+     * @param {string} currency - 'THB' or 'VIBES'
+     * @param {string} note
      */
-    transferFunds: async (recipientWalletId, amount, note = "P2P Transfer") => {
+    transferFunds: async (recipientUserId, amount, currency = 'THB', note = "P2P Transfer") => {
         try {
-            const { data, error } = await supabase.rpc('transfer_funds', {
-                recipient_wallet_id: recipientWalletId,
+            console.log(`Transferring ${amount} ${currency} to ${recipientUserId}`);
+
+            const { data, error } = await supabase.rpc('transfer_funds_v2', {
+                recipient_id: recipientUserId,
                 amount: amount,
-                note: note
+                currency: currency,
+                description: note
             });
 
             if (error) throw error;
+
+            // Log the transfer
+            await ActivityLogService.logAction(null, 'TRANSFER', `Sent ${amount} ${currency} to ${recipientUserId}`, { recipient: recipientUserId, amount, currency, note });
+
             return data;
         } catch (error) {
             console.error("Transfer Error:", error);
@@ -199,6 +211,29 @@ export const WalletService = {
             return false;
         } catch (error) {
             console.error("Refund Error:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Process booking reward
+     */
+    processBookingReward: async (userId, bookingValueUsd, bookingId) => {
+        try {
+            const calculator = new VibeCalculator();
+            const vibes = calculator.calculateBookingReward(bookingValueUsd);
+
+            if (vibes > 0) {
+                const { data, error } = await supabase.rpc('award_vibes', {
+                    target_user_id: userId,
+                    amount: vibes,
+                    reason: `Booking Reward: ${bookingId}`
+                });
+                if (error) throw error;
+                return data;
+            }
+        } catch (error) {
+            console.error("Booking Reward Error:", error);
             throw error;
         }
     },

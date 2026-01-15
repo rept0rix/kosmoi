@@ -4,7 +4,7 @@ export const CONSISTENCY_AUDITOR_AGENT = {
     id: "consistency-auditor-agent",
     layer: "documentation",
     role: "auditor",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Scale",
     systemPrompt: `אתה סוכן בקרת עקביות (Consistency Auditor Agent).
 מטרה: לוודא שהמסמכים של כל הסוכנים נשמעים אותו דבר, בנויים אותו דבר, ושהמידע מדויק ועקבי.

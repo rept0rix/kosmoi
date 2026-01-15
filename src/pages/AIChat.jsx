@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, Sparkles, Map as MapIcon, Info, ArrowRight, Trash2, PlusCircle, History, ChevronUp, ChevronDown, Crosshair, Palmtree, UtensilsCrossed, Martini, ShoppingBag, Flower, Landmark, Car, Bike } from 'lucide-react';
+import { Bot, Send, Sparkles, Map as MapIcon, Info, ArrowRight, Trash2, PlusCircle, History, ChevronUp, ChevronDown, Crosshair, Palmtree, UtensilsCrossed, Martini, ShoppingBag, Flower, Landmark, Car, Bike, Phone, Mic, X } from 'lucide-react';
+import Vapi from '@vapi-ai/web';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { db } from '@/api/supabaseClient';
@@ -18,6 +19,8 @@ import SEO from '@/components/SEO';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
 import { memoryService } from '@/services/ai/MemoryService';
+import { ToolRegistry } from '@/services/tools/ToolRegistry';
+import '@/services/tools/registry/DatabaseTools'; // Register tools
 import A2UIRenderer from "@/components/a2ui/A2UIRenderer";
 
 const quickActions = [
@@ -84,6 +87,53 @@ export default function AIChat() {
 
     // Agent Selection State
     const [currentAgent, setCurrentAgent] = useState(CONCIERGE_AGENT);
+    const [agentStatus, setAgentStatus] = useState('idle'); // idle, thinking, searching, booking, reflecting
+
+    // --- VAPI VOICE INTEGRATION ---
+    const [vapi, setVapi] = useState(null);
+    const [isCallActive, setIsCallActive] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false); // For visualizer
+
+    useEffect(() => {
+        const vapiInstance = new Vapi(import.meta.env.VITE_VAPI_PUBLIC_KEY || ''); // Public Key
+        setVapi(vapiInstance);
+
+        vapiInstance.on('call-start', () => {
+            console.log('Call has started');
+            setIsCallActive(true);
+        });
+
+        vapiInstance.on('call-end', () => {
+            console.log('Call has stopped');
+            setIsCallActive(false);
+            setIsSpeaking(false);
+        });
+
+        vapiInstance.on('speech-start', () => setIsSpeaking(true));
+        vapiInstance.on('speech-end', () => setIsSpeaking(false));
+
+        // Optional: Capture transcripts if needed to log to chat
+        // vapiInstance.on('message', (message) => { ... });
+
+        return () => {
+            // Cleanup if needed? Vapi SDK doesn't always need explicit cleanup on unmount for singleton
+        };
+    }, []);
+
+    const toggleVoiceCall = () => {
+        if (!vapi) return;
+
+        if (isCallActive) {
+            vapi.stop();
+        } else {
+            // Check for keys
+            if (!import.meta.env.VITE_VAPI_PUBLIC_KEY || !import.meta.env.VITE_VAPI_ASSISTANT_ID) {
+                alert("Missing Vapi Keys! Please add VITE_VAPI_PUBLIC_KEY and VITE_VAPI_ASSISTANT_ID to your .env file.");
+                return;
+            }
+            vapi.start(import.meta.env.VITE_VAPI_ASSISTANT_ID);
+        }
+    };
 
     // Initialize/Load Session
     useEffect(() => {
@@ -113,6 +163,35 @@ export default function AIChat() {
             });
         }
     }, [messages, currentSessionId]);
+
+    // --- REALTIME ADMIN INJECTION (God Mode) ---
+    useEffect(() => {
+        // Only run if we have a session ID
+        if (!currentSessionId) return;
+
+        console.log("Listening for Admin messages on session:", currentSessionId);
+
+        const channel = db.channel(`chat-listener-${currentSessionId}`)
+            // @ts-ignore
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_logs', filter: `metadata->>sessionId=eq.${currentSessionId}` }, (payload) => {
+                const newItem = payload.new;
+                // Check if it's an ADMIN message
+                if (newItem && newItem.metadata && newItem.metadata.role === 'admin') {
+                    console.log("Admin message received:", newItem.message);
+                    setMessages(prev => [...prev, {
+                        role: 'assistant', // Render as assistant/model so it appears on left
+                        content: `[SUPPORT] ${newItem.message}`, // Prefix to indicate it's from human support
+                        metadata: { is_admin: true }
+                    }]);
+                }
+            }
+            )
+            .subscribe();
+
+        return () => {
+            if (channel) channel.unsubscribe();
+        };
+    }, [currentSessionId]);
 
     const createNewSession = () => {
         const newId = Date.now().toString();
@@ -202,111 +281,64 @@ export default function AIChat() {
         locateUser();
     }, []);
 
+    // --- LOGGING TO DB (For Admin Control Room) ---
+    const logToDB = async (role, content) => {
+        try {
+            await db.from('agent_logs').insert({
+                agent_id: 'concierge',
+                level: 'chat',
+                message: content,
+                metadata: {
+                    role,
+                    userId: user?.id,
+                    username: user?.user_metadata?.full_name || 'Guest',
+                    sessionId: currentSessionId
+                }
+            });
+        } catch (e) {
+            console.error("Failed to log chat:", e);
+        }
+    };
+
     const processMessage = async (text, context = "") => {
         setIsTyping(true);
+        setAgentStatus('thinking');
+
+        // Log User Message
+        logToDB('user', text);
 
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error("API Key Missing");
+            // Prepare Context
+            const runnerContext = {
+                userLocation,
+                weather: weatherData,
+                providers: providers // Or relevant subset
+            };
 
-            const providersContext = providers.map(p => {
-                let distInfo = "";
-                if (userLocation) {
-                    const dist = calculateDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
-                    if (dist) distInfo = `(${dist}km away)`;
-                }
-                return `${p.business_name} (${p.category}): ${p.description || ""} ${distInfo}`;
-            }).join("\n");
+            // Execute Agent Runner (Ralph Loop)
+            const result = await import('@/features/agents/services/AgentRunner').then(m => m.AgentRunner.run(currentAgent, text, runnerContext));
 
-            const weatherContext = weatherData ? `${weatherData.temp_c}°C, ${weatherData.condition?.text}` : "Sunny, 30°C";
+            // Log output for debugging
+            console.log("[AIChat] Agent Result:", result);
 
-            const systemInstruction = `
-${currentAgent.systemPrompt}
-
-**RUNTIME CONTEXT:**
-Weather: ${weatherContext}
-User Location: ${userLocation ? `${userLocation.lat}, ${userLocation.lng}` : 'Unknown'}
-Nearby Options:
-${providersContext}
-
-**INSTRUCTION:**
-- If the user asks for a recommendation, use the 'Available Options' above.
-- Always prefer to return a "carousel-vibe" in 'a2ui_content' for lists of places.
-- Keep the 'message' text engaging and conversational.
-`;
-
-            // MEMORY INJECTION
-            let memoryContext = "";
-            if (user?.id) {
-                memoryService.textToMemory(user.id, text).catch(err => console.error("Memory learning failed", err));
-                memoryContext = await memoryService.getSystemContext(user.id);
-            }
-
-            const finalSystemInstruction = systemInstruction + memoryContext;
-
-            const history = messages.map(msg => ({
-                role: msg.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: msg.content }]
-            }));
-
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: finalSystemInstruction }] },
-                    contents: [...history, { role: 'user', parts: [{ text: context ? `${context}\n\n${text}` : text }] }]
-                })
-            });
-
-            const data = await response.json();
-            const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-
-            let parsed;
-            try {
-                const match = responseText.match(/\{[\s\S]*\}/);
-                parsed = match ? JSON.parse(match[0]) : { message: responseText };
-            } catch (e) {
-                parsed = { message: responseText };
-            }
-
-            // --- POLYLINE LOGIC ---
-            if (parsed.carousel && parsed.carousel.length > 0 && userLocation) {
-                const newPolylines = parsed.carousel
-                    .filter(item => item.location && item.location.lat && item.location.lng)
-                    .map(item => ({
-                        path: [
-                            { lat: userLocation.lat, lng: userLocation.lng },
-                            { lat: item.location.lat, lng: item.location.lng }
-                        ],
-                        strokeColor: "#3B82F6", // Blue-500
-                        strokeOpacity: 0.6,
-                        strokeWeight: 4,
-                        options: {
-                            geodesic: true,
-                            icons: [{
-                                icon: { path: 2, scale: 2 }, // Forward arrow
-                                offset: '100%'
-                            }]
-                        }
-                    }));
-                setMapPolylines(newPolylines);
-            } else {
-                setMapPolylines([]);
-            }
-
+            // Update UI with Final Answer
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: parsed.message || "Here is what I found:",
-                carousel: parsed.carousel,
-                choices: parsed.choices,
-                a2ui_content: parsed.a2ui_content
+                content: result.output,
+                // thoughts: result.thoughtProcess, // Optional: Show debug thoughts?
+                a2ui_content: result.a2ui_content,
+                choices: result.choices
             }]);
 
+            // Log Assistant Message
+            logToDB('assistant', result.output);
+
         } catch (error) {
-            console.error(error);
-            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting to the island network. Please try again." }]);
+            console.error("Chat Error:", error);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I encountered an error. Please try again." }]);
         } finally {
             setIsTyping(false);
+            setAgentStatus('idle');
         }
     };
 
@@ -667,12 +699,16 @@ ${providersContext}
                                             </div>
                                         ))}
                                         {isTyping && (
-                                            <div className="flex gap-3 justify-start">
-                                                <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                    <Bot className="w-3 h-3 text-slate-500" />
+                                            <div className="flex gap-3 justify-start animate-in fade-in slide-in-from-bottom-2">
+                                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 animate-pulse">
+                                                    <Bot className="w-3 h-3 text-blue-600" />
                                                 </div>
-                                                <div className="px-4 py-2 bg-slate-100 rounded-2xl rounded-tl-none text-slate-500 text-xs italic">
-                                                    Thinking...
+                                                <div className="px-4 py-2 bg-white border border-blue-100 rounded-2xl rounded-tl-none text-blue-600 text-xs font-medium flex items-center gap-2 shadow-sm">
+                                                    <Sparkles className="w-3 h-3 animate-spin" />
+                                                    {agentStatus === 'thinking' && "Thinking..."}
+                                                    {agentStatus === 'searching' && "Searching availability..."}
+                                                    {agentStatus === 'booking' && "Confirming booking..."}
+                                                    {agentStatus === 'reflecting' && "Reviewing details..."}
                                                 </div>
                                             </div>
                                         )}
@@ -698,6 +734,17 @@ ${providersContext}
                                     </ScrollArea>
 
                                     <div className="relative flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            onClick={toggleVoiceCall}
+                                            className={`h-11 w-11 rounded-full shadow-sm p-0 flex items-center justify-center transition-all ${isCallActive
+                                                    ? 'bg-red-500 hover:bg-red-600 animate-pulse text-white'
+                                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                                                }`}
+                                            title={isCallActive ? "End Call" : "Start Voice Call"}
+                                        >
+                                            {isCallActive ? <Phone className="w-5 h-5 rotate-135" /> : <Phone className="w-5 h-5" />}
+                                        </Button>
                                         <div className="relative flex-1">
                                             <Input
                                                 value={input}

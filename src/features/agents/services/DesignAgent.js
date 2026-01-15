@@ -1,5 +1,5 @@
-import { callGroqInteraction } from '@/api/groqInteractions';
-import { callAgentInteraction } from '@/api/geminiInteractions';
+import { callGroqInteraction } from '../../../api/groqInteractions.js';
+import { callAgentInteraction } from '../../../api/geminiInteractions.js';
 
 // Structured Output Schema for React Flow
 const DESIGN_SCHEMA = {
