@@ -42,7 +42,7 @@ export const EmailTemplates = {
 </body>
 </html>
 `
-    ,
+    , // Comma fixed for build safety
     getRoleUpdateEmail: (userName, newRole) => `
 <!DOCTYPE html>
 <html>
