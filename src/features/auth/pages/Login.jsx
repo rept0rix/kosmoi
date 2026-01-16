@@ -87,8 +87,10 @@ export default function Login() {
             // Poll every 500ms
             pollInterval = setInterval(checkSession, 500);
 
-            // Also run one immediately
-            checkSession();
+            // Give Supabase client 1s to digest the hash before expecting session
+            setTimeout(() => {
+                checkSession();
+            }, 1000);
 
             // Safety timeout: 10 seconds
             const timeoutTimer = setTimeout(() => {
