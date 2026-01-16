@@ -72,6 +72,7 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
+      pool: 'threads',
       setupFiles: './src/setupTests.js',
       // Fix for ERR_REQUIRE_ESM in CI/CD when jsdom loads ESM-only packages
       server: {
