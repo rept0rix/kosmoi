@@ -213,7 +213,7 @@ export function useBoardRoom() {
         // Task Subscription removed (Handled by RxDB Replication)
 
         return () => {
-            msgSub.unsubscribe();
+            supabase.removeChannel(msgSub);
         };
     }, [selectedMeeting]);
 
@@ -230,7 +230,10 @@ export function useBoardRoom() {
                 fetchKnowledge();
             })
             .subscribe();
-        return () => { sub.unsubscribe(); };
+
+        return () => {
+            supabase.removeChannel(sub);
+        };
     }, []);
 
     // --- AGENT LOGIC ---
@@ -564,9 +567,9 @@ export function useBoardRoom() {
                 meeting_id: selectedMeeting.id,
                 title,
                 description,
-                assigned_to: 'Human',
+                assigned_to: 'tech-lead-agent',
                 priority,
-                status: 'in_progress',
+                status: 'pending',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             });
