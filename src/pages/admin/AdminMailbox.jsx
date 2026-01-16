@@ -23,15 +23,20 @@ const AdminMailbox = () => {
         fetchEmails();
 
         // Realtime Subscription
-        const channel = supabase
-            .channel('public:inbound_emails')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inbound_emails' }, (payload) => {
-                setEmails(prev => [payload.new, ...prev]);
-            })
+        const channel = supabase.channel('public:inbound_emails');
+
+        channel
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'inbound_emails' },
+                (payload) => {
+                    setEmails(prev => [payload.new, ...prev]);
+                }
+            )
             .subscribe();
 
         return () => {
-            channel.unsubscribe();
+            supabase.removeChannel(channel);
         };
     }, []);
 
