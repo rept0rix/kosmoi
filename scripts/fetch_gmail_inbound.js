@@ -38,8 +38,8 @@ async function main() {
 
         await connection.openBox('INBOX');
 
-        // Fetch unseen emails
-        const searchCriteria = ['UNSEEN'];
+        // DEBUG: Fetch ALL emails since yesterday to find the test messages
+        const searchCriteria = [['SINCE', new Date().toISOString().split('T')[0]]];
         const fetchOptions = {
             bodies: ['HEADER', 'TEXT', ''],
             markSeen: true
