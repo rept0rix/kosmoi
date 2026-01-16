@@ -68,7 +68,7 @@ export default defineConfig(({ mode }) => {
           '.js': 'jsx',
         },
       },
-    }
+    },
     test: {
       globals: true,
       environment: 'jsdom',
