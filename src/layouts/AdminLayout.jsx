@@ -29,25 +29,33 @@ import {
     Megaphone,
     BarChart3,
     CalendarCheck,
-    CircuitBoard
+    CircuitBoard,
+    Mail
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import AdminCopilotWidget from '../features/admin/components/AdminCopilotWidget';
 
+import { useAuth } from '@/features/auth/context/AuthContext'; // Ensure this import exists at top
+
+// ... inside component ...
 export default function AdminLayout() {
+    const { user } = useAuth(); // Get real user
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const { logout } = useAuth();
     const location = useLocation();
 
     return (
         <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
             {/* Mobile Overlay */}
-            {isMobileOpen && (
-                <div
-                    className="fixed inset-0 bg-black/80 z-30 md:hidden backdrop-blur-sm"
-                    onClick={() => setIsMobileOpen(false)}
-                />
-            )}
+            {
+                isMobileOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/80 z-30 md:hidden backdrop-blur-sm"
+                        onClick={() => setIsMobileOpen(false)}
+                    />
+                )
+            }
 
             {/* Sidebar */}
             <aside className={`
@@ -81,6 +89,8 @@ export default function AdminLayout() {
                         <NavItem to="/admin/businesses" icon={<Store />} label="Businesses" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM Dashboard" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/mailbox" icon={<Mail />} label="Mailbox" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/sales" icon={<Mail />} label="Sales Coordinator" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/leads" icon={<Users />} label="Leads List" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/marketing" icon={<Megaphone />} label="Marketing Center" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/analytics" icon={<BarChart3 />} label="Analytics & Lara" onClick={() => setIsMobileOpen(false)} />
@@ -113,14 +123,14 @@ export default function AdminLayout() {
                 </nav>
 
                 <div className="p-4 border-t border-white/5">
-                    <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer" onClick={() => logout && logout()}>
                         <Avatar className="w-8 h-8">
-                            <AvatarImage src="/placeholder-user.jpg" />
-                            <AvatarFallback>AD</AvatarFallback>
+                            <AvatarImage src={user?.avatar_url || "/placeholder-user.jpg"} />
+                            <AvatarFallback>{user?.email?.substring(0, 2).toUpperCase() || 'GU'}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">Admin User</p>
-                            <p className="text-xs text-slate-500 truncate">admin@kosmoi.com</p>
+                            <p className="text-sm font-medium truncate">{user?.full_name || user?.email || 'Guest User'}</p>
+                            <p className="text-xs text-slate-500 truncate">{user?.email || 'Not logged in'}</p>
                         </div>
                         <LogOut className="w-4 h-4 text-slate-500" />
                     </div>
@@ -157,7 +167,7 @@ export default function AdminLayout() {
                 </div>
             </main>
             <AdminCopilotWidget />
-        </div>
+        </div >
     );
 }
 

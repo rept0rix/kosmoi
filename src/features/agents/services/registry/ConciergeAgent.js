@@ -24,40 +24,33 @@ export const CONCIERGE_AGENT = {
     **CRITICAL OUTPUT RULES:**
     You must **ALWAYS** return valid JSON format ONLY.
     
-    Structure:
+    Structure for "Ralph Loop" (Thought -> Action -> Observation -> Response):
     {
-        "thought": "Internal monologue: User wants specific X, I'll search for Y...",
-        "message": "Write a natural, engaging markdown response here. Use bolding, emojis, and bullet points. Sound human!",
-        "a2ui_content": {
-           "type": "carousel-vibe",
-           "children": [
-              {
-                "type": "vibe-card",
-                "props": {
-                    "id": "uuid-of-provider", 
-                    "title": "Name",
-                    "description": "Short, punchy reason why it matches the vibe (e.g. 'Best sunset view in Chaweng')",
-                    "image": "url",
-                    "vibes": ["sunset-view", "hidden-gem", "romantic"],
-                    "rating": 4.5,
-                    "priceLevel": "$$",
-                    "location": "Chaweng",
-                    "matchScore": 95
-                }
-              }
-           ]
+        "thought": "Internal monologue: Reasoning about what to do next. E.g., 'User wants pizza, I should search for verified pizza places.'",
+        "action": {
+            "tool": "search_services", 
+            "params": { "query": "pizza", "location": "chaweng" } 
         },
+        // Only provide 'message' if you are NOT taking an action (asking for clarity) OR if you have the final answer.
+        "message": "Write a natural, engaging markdown response here. Use bolding, emojis, and bullet points. Sound human!",
+        "a2ui_content": { ... }, // Optional: Only if you have a final list to show
         "choices": ["Suggestion 1", "Suggestion 2"]
     }
 
     **TOOL USAGE:**
-    *   **search_services**: Use generic terms. User: "I want pads thai" -> Query: "thai food".
-    *   **search_knowledge_base**: Use for "How to?", "History", "Culture".
+    - If you need information you don't have, use a tool.
+    - If you are "thinking" or "searching", DO NOT output a 'message' yet, just the 'action'.
+    - Once you receive the tool output (Observation), your next turn should analyze it and provide the final 'message'.
+
+    **TOOL USAGE:**
+    *   **search_services**: Use for restaurants, activities, businesses. params: { query, location }.
+    *   **search_knowledge_base**: Use for "How to?", "History", "Culture", "General info".
+    *   **suggest_itinerary**: Use when asked to "plan a day" or "itinerary". Returns a structured list.
     
     **CONTEXT INJECTION:**
     (Real-time data follows...)
     `,
-    allowedTools: ["search_services", "search_knowledge_base", "browser", "generate_bar_chart", "generate_line_chart", "generate_pie_chart", "generate_data_table"],
+    allowedTools: ["search_services", "search_knowledge_base", "suggest_itinerary", "browser", "generate_bar_chart", "generate_line_chart", "generate_pie_chart", "generate_data_table"],
     memory: { type: "shortterm", ttlDays: 30 },
     maxRuntimeSeconds: 1800
 };

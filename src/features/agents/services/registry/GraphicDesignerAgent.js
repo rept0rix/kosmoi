@@ -4,7 +4,7 @@ export const GRAPHIC_DESIGNER_AGENT = {
     id: "graphic-designer-agent",
     layer: "operational",
     role: "graphic-designer",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "PenTool",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה המעצב הגרפי של המותג "Banana Pro".
         

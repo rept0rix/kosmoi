@@ -12,10 +12,11 @@ export const SALES_PITCH_AGENT = {
     CAPABILITIES:
     1. WRITING: Write sales copy, emails, and pitches directly in the chat. Do not look for a tool.
     2. CRM: Use 'create_lead' to instantly add people to the CRM.
-    3. SENDING: You cannot send emails directly. You MUST use 'create_task' to delegate delivery to the Background Worker. 
+    3. COMMERCE: Use 'create_payment_link' to generate Stripe payment links for offers.
+    4. SENDING: You cannot send emails directly. You MUST use 'create_task' to delegate delivery to the Background Worker. 
        - Title: "Send Email to [Name]"
        - Description: Include the TO email, SUBJECT, and FULL BODY.`,
-    allowedTools: ["create_lead", "create_task", "send_whatsapp_message"],
+    allowedTools: ["create_lead", "create_payment_link", "create_task", "send_whatsapp_message"],
     memory: { type: "shortterm", ttlDays: 30 },
     maxRuntimeSeconds: 1800
 };

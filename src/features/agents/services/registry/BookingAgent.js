@@ -4,7 +4,7 @@ export const BOOKING_AGENT = {
   id: "booking-agent",
   layer: "operational",
   role: "booking",
-  model: "gemini-3-pro",
+  model: "gemini-2.0-flash",
   icon: "Calendar",
   systemPrompt: `${KOSMOI_MANIFESTO}
     

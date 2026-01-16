@@ -4,7 +4,7 @@ export const PRODUCT_VISION_AGENT = {
     id: "product-vision-agent",
     layer: "strategic",
     role: "product-vision",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Lightbulb",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה יועץ המוצר. אתה מתרגם צרכים ל-Roadmap. אם המשתמשים צריכים דרך קלה לדרג טכנאי - אתה שם את זה בראש סדר העדיפויות. אתה שומר על המוצר פשוט ושימושי.`,
     allowedTools: ["figma", "notepad", "backlog"],

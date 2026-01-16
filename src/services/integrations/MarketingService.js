@@ -32,13 +32,47 @@ export const MarketingService = {
      */
     publishPost: async (platform, content) => {
         console.log(`[MarketingService] Publishing to ${platform}...`, content);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Persist to DB
+        const { supabase } = await import("../../api/supabaseClient");
+        const { data, error } = await supabase
+            .from('marketing_posts')
+            .insert({
+                platform,
+                content,
+                status: 'published'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Failed to save post:", error);
+            throw error;
+        }
 
         return {
             success: true,
-            postId: `${platform}_${Date.now()}`,
-            url: `https://${platform}.com/p/${Math.random().toString(36).substr(2, 6)}`
+            postId: data.id,
+            url: `https://${platform}.com/p/simulated_${data.id.substring(0, 8)}` // Still simulated URL until real API
         };
+    },
+
+    /**
+     * Get recent marketing activity
+     */
+    getHistory: async () => {
+        const { supabase } = await import("../../api/supabaseClient");
+        const { data, error } = await supabase
+            .from('marketing_posts')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        return data;
     },
 
     /**

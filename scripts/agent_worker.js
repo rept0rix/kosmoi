@@ -292,7 +292,7 @@ async function executeTool(toolName, payload) {
                     description: payload.description,
                     assigned_to: payload.assignee || 'human',
                     priority: payload.priority || 'medium',
-                    status: 'open',
+                    status: 'pending',
                     created_by: 'tech-lead-agent'
                 };
                 const { data: newTask, error: taskError } = await workerSupabase
@@ -450,6 +450,10 @@ async function executeTool(toolName, payload) {
                 const mcpTool = mcpTools.find(t => t.name === toolName);
 
                 if (mcpTool) {
+                    // Auto-inject projectRoot if expected by tool but missing
+                    if (!payload.projectRoot) {
+                        payload.projectRoot = PROJECT_ROOT;
+                    }
                     return await mcpManager.callTool(toolName, payload);
                 }
 
@@ -756,7 +760,7 @@ async function main() {
             let query = workerSupabase
                 .from('agent_tasks')
                 .select('*')
-                .in('status', ['open', 'pending', 'in_progress'])
+                .in('status', ['pending', 'in_progress', 'review'])
                 .limit(1);
 
             // If dedicated worker, filter by role. If universal, grab anything (or specifically where assigned_to matches a known agent)

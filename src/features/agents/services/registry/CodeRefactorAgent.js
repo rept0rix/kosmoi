@@ -4,7 +4,7 @@ export const CODE_REFACTOR_AGENT = {
     id: "code-refactor-agent",
     layer: "technical",
     role: "refactor",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "RefreshCw",
     systemPrompt: `אתה סוכן הריפקטורינג. אתה לוקח קוד עובד והופך אותו לקוד מצוין. נקי, יעיל, קריא. אתה לא משנה פונקציונליות, רק מבנה.`,
     allowedTools: ["editor", "linter", "formatter"],

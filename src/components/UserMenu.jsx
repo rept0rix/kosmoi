@@ -44,10 +44,9 @@ export default function UserMenu() {
         );
     }
 
-    // Determine role based on config for now (Debug Role)
-    // In real app, this would come from user metadata or claims
-    const isAdmin = config.debugRole === 'admin';
-    const isBusiness = config.debugRole === 'business';
+    // Determine role based on real user data (RBAC)
+    const isAdmin = user?.role === 'admin' || user?.user_metadata?.role === 'admin';
+    const isBusiness = user?.role === 'service_provider' || config.debugRole === 'business';
 
     const getInitials = (name) => {
         if (!name) return 'U';
@@ -108,7 +107,7 @@ export default function UserMenu() {
                         <>
                             <DropdownMenuSeparator className="my-1" />
                             <DropdownMenuItem asChild className="p-2 cursor-pointer rounded-md focus:bg-slate-50 dark:focus:bg-slate-800">
-                                <Link to="/admin" className="flex items-center font-medium text-amber-600">
+                                <Link to="/admin/wallet" className="flex items-center font-medium text-amber-600">
                                     <ShieldAlert className="mr-2 h-4 w-4" />
                                     <span>Admin Console</span>
                                 </Link>

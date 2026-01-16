@@ -110,6 +110,14 @@ async function seedCategory(area, category) {
                     console.error(`❌ Failed (DB): ${place.business_name}:`, error.message);
                 } else {
                     console.log(`   + Added: ${place.business_name}`);
+
+                    // PROTOCOL 626: Notify Sales Coordinator
+                    protocol.sendMessage('sales_coordinator', 'lead_found', `
+New Lead Discovered: **${place.business_name}**
+Location: ${place.location}
+Category: ${place.category}
+DB_ID: ${data[0].id}
+                    `, { priority: 'high' });
                 }
 
             } catch (err) {
@@ -122,17 +130,32 @@ async function seedCategory(area, category) {
     }
 }
 
+import AgentProtocol from './lib/agent_protocol.js';
+const protocol = new AgentProtocol('island_crawler');
+
 async function run() {
     console.log("🕷️ Island Crawler (Generative) Started...");
+    protocol.updateStatus('WORKING', 'Scanning areas...');
 
     for (const area of AREAS) {
         for (const cat of CATEGORIES) {
+
+            // Check Inbox for "STOP" command
+            const inbox = protocol.readInbox();
+            const stopMsg = inbox.find(m => m.type === 'STOP_CRAWLING');
+            if (stopMsg) {
+                console.log("🛑 Received STOP command.");
+                protocol.updateStatus('IDLE', 'Stopped by command');
+                return;
+            }
+
             await seedCategory(area, cat);
             // Nap to avoid rate limits
             await new Promise(r => setTimeout(r, 2000));
         }
     }
     console.log("✅ Crawl Complete.");
+    protocol.updateStatus('IDLE', 'Waiting for next run');
 }
 
 run();

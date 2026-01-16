@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { BlogAgent } from '@/features/agents/BlogAgent';
 import { supabase } from '@/api/supabaseClient';
 import { useToast } from "@/components/ui/use-toast";
+import LiveAgentFeed from '@/components/admin/LiveAgentFeed';
 
 const colorMap = {
     blue: { border: 'border-blue-100', bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -258,9 +259,10 @@ export default function AdminAgents() {
                 </DialogContent>
             </Dialog>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                 {filteredAgents.map((agent) => (
                     <Card key={agent.id} className={`overflow-hidden transition-all hover:shadow-md border-t-4 ${colorMap[agent.color]?.border || 'border-slate-200'}`}>
+                        {/* ... existing card content ... */}
                         <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-3">
@@ -288,15 +290,12 @@ export default function AdminAgents() {
                                             <Edit className="mr-2 h-4 w-4" />
                                             Configure Agent
                                         </DropdownMenuItem>
-
-                                        {/* Specific Action for Blog Agent */}
                                         {agent.id === 'agent_blog_writer' && (
                                             <DropdownMenuItem onSelect={() => setBlogDialogState({ isOpen: true, topic: '', tone: 'Inspirational' })}>
                                                 <Sparkles className="mr-2 h-4 w-4 text-purple-500" />
                                                 Draft Article
                                             </DropdownMenuItem>
                                         )}
-
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onSelect={() => handleDelete(agent.id)} className="text-red-600">
                                             <Trash2 className="mr-2 h-4 w-4" />
@@ -330,6 +329,12 @@ export default function AdminAgents() {
                         </CardContent>
                     </Card>
                 ))}
+            </div>
+
+            {/* Live Conversation Feed */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Live Neural Network</h2>
+                <LiveAgentFeed />
             </div>
         </div>
     );

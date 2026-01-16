@@ -10,11 +10,14 @@ import { Label } from "@/components/ui/label";
 import { ArrowRight, Save, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { useAuth } from "@/features/auth/context/AuthContext";
+
 export default function EditProfile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -23,19 +26,16 @@ export default function EditProfile() {
   });
   const [uploading, setUploading] = useState(false);
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: async () => {
-      const userData = await db.auth.me();
-      const metadata = userData?.user_metadata || {};
+  React.useEffect(() => {
+    if (user) {
+      const metadata = user.user_metadata || {};
       setFormData({
         full_name: metadata.full_name || "",
         phone: metadata.phone || "",
         profile_image: metadata.profile_image || "",
       });
-      return userData;
-    },
-  });
+    }
+  }, [user]);
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
@@ -62,13 +62,7 @@ export default function EditProfile() {
     setUploading(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">{t('loading')}</div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">

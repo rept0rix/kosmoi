@@ -123,17 +123,20 @@ export const SkillService = {
         if (!query) return [];
 
         try {
-            // 1. Keyword search on problem_pattern (description) - Removed metadata query to be safe
+            // Sanitize query: Remove characters that might break PostgREST filters
+            const sanitizedQuery = query.replace(/[()',%]/g, '');
+            if (!sanitizedQuery) return [];
+
+            // 1. Keyword search on problem_pattern (description)
             const { data, error } = await supabase
                 .from('agent_skills')
                 .select('*')
-                .or(`problem_pattern.ilike.%${query}%`)
+                .ilike('problem_pattern', `%${sanitizedQuery}%`)
                 .limit(3);
 
             if (error) throw error;
 
             return data.map(s => ({
-                // Fallback name logic if metadata is missing
                 name: (s.metadata && s.metadata.name) ? s.metadata.name : (s.trigger_tags ? s.trigger_tags[0] : "Skill"),
                 instructions: s.solution_pattern,
                 description: s.problem_pattern
