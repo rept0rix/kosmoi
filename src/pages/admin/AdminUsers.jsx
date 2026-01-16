@@ -70,9 +70,12 @@ export default function AdminUsers() {
                     variant: "destructive"
                 });
             } else {
+                // Send Notification Email
+                await AdminService.sendRoleUpdateEmail(user.email, user.full_name || 'User', newRole);
+
                 toast({
                     title: "Role Updated",
-                    description: `${user.email} is now ${newRole === 'admin' ? 'an Admin' : 'a User'}.`,
+                    description: `${user.email} is now ${newRole === 'admin' ? 'an Admin' : 'a User'}. Email notification sent.`,
                     className: "bg-green-600 text-white border-none"
                 });
                 await loadUsers();
