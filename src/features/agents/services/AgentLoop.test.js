@@ -10,6 +10,19 @@ vi.mock('./ToolRegistry', () => ({
     }
 }));
 
+// Mock Supabase to prevent network calls
+vi.mock('../../../api/supabaseClient', () => ({
+    supabase: {
+        from: vi.fn(() => ({
+            insert: vi.fn().mockResolvedValue({ error: null })
+        })),
+        auth: {
+            getUser: vi.fn().mockResolvedValue({ data: { user: {} } }),
+            getSession: vi.fn().mockResolvedValue({ data: { session: {} } })
+        }
+    }
+}));
+
 // Mock Fetch for Gemini
 global.fetch = vi.fn();
 
