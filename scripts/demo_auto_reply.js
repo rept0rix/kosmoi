@@ -1,16 +1,19 @@
 
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-const RESEND_API_KEY = process.env.VITE_RESEND_API_KEY;
 
-if (!RESEND_API_KEY) {
-    console.error('❌ Missing VITE_RESEND_API_KEY in .env');
+// Use the credentials we just validated for IMAP
+const SMTP_USER = process.env.IMAP_USER;
+const SMTP_PASS = process.env.IMAP_PASSWORD;
+
+if (!SMTP_USER || !SMTP_PASS) {
+    console.error('❌ Missing IMAP_USER or IMAP_PASSWORD in .env');
     process.exit(1);
 }
 
@@ -19,7 +22,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 async function main() {
     console.log('🔍 Fetching latest email from inbound_emails...');
 
-    // Get the most recent email
     const { data: emails, error } = await supabase
         .from('inbound_emails')
         .select('*')
@@ -37,58 +39,53 @@ async function main() {
     }
 
     const email = emails[0];
-    console.log(`📨 Found email from: ${email.sender}`);
-    console.log(`   Subject: ${email.subject}`);
-    console.log(`   To: ${email.recipient}`);
 
-    // Construct Reply
-    // Verify "From" address. It MUST be from @kosmoi.site verified domain.
-    // We try to match the recipient, but if it's external, we default to 'naor@kosmoi.site' or 'support@kosmoi.site'
-    let fromAddress = 'support@kosmoi.site';
-    if (email.recipient && email.recipient.includes('@kosmoi.site')) {
-        fromAddress = email.recipient; // Reply AS the alias receiving it
-    }
-
-    // Extract raw email from format "Name <email@domain.com>"
+    // Extract reply-to
     const replyToMatch = email.sender.match(/<(.+)>/);
     const replyTo = replyToMatch ? replyToMatch[1] : email.sender;
 
-    console.log(`📤 Sending reply to: ${replyTo} from ${fromAddress}...`);
+    console.log(`📨 Replying to: ${replyTo}`);
+    console.log(`   Re: ${email.subject}`);
+
+    // Clean password
+    let cleanPass = SMTP_PASS;
+    if (cleanPass.startsWith('"') && cleanPass.endsWith('"')) {
+        cleanPass = cleanPass.slice(1, -1);
+    }
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: SMTP_USER,
+            pass: cleanPass
+        }
+    });
 
     try {
-        const res = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${RESEND_API_KEY}`
-            },
-            body: JSON.stringify({
-                from: `Kosmoi Agent <${fromAddress}>`,
-                to: [replyTo],
-                subject: `Re: ${email.subject}`,
-                html: `
-                    <div style="font-family: sans-serif; color: #333;">
-                        <p>Hi there,</p>
-                        <p>I received your message: <strong>"${email.subject}"</strong></p>
-                        <p>This is an automated reply verifying that the Kosmoi Agent system is fully operational. 🚀</p>
-                        <hr />
-                        <p style="font-size: 12px; color: #666;">Original message received at: ${new Date(email.received_at).toLocaleString()}</p>
-                    </div>
-                `
-            })
+        const info = await transporter.sendMail({
+            from: `"Kosmoi Agent" <${SMTP_USER}>`,
+            to: replyTo,
+            subject: `Re: ${email.subject}`,
+            html: `
+                <div style="font-family: sans-serif; color: #333; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                    <h2 style="color: #4F46E5;">Kosmoi Intelligent System</h2>
+                    <p>Hi there,</p>
+                    <p>I successfully received your message: <strong>"${email.subject}"</strong></p>
+                    <p>I am the AI Agent thinking about your request. 🧠✨</p>
+                    <br/>
+                    <p><em>(This is an automated reply proving the loop is closed!)</em></p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                    <p style="font-size: 12px; color: #888;">Original message from: ${email.sender}</p>
+                    <p style="font-size: 12px; color: #888;">Received at: ${new Date(email.created_at).toLocaleString()}</p>
+                </div>
+            `
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-            console.log('✅ Reply sent successfully!');
-            console.log('   ID:', data.id);
-        } else {
-            console.error('❌ Resend API Error:', data);
-        }
+        console.log('✅ Reply sent via Gmail SMTP!');
+        console.log('   Message ID:', info.messageId);
 
     } catch (err) {
-        console.error('❌ Exception:', err.message);
+        console.error('❌ SMTP Error:', err);
     }
 }
 
