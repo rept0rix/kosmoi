@@ -37,31 +37,33 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <HelmetProvider>
-    <ErrorBoundary>
-      <AuthProvider>
-        <AppModeProvider>
-          <UserProfileProvider>
-            <LocationProvider>
-              <LanguageProvider>
-                <AppConfigProvider>
-                  <RxDBProvider>
-                    <QueryClientProvider client={queryClientInstance}>
-                      <App />
-                      <Toaster />
-                      <SonnerToaster />
-                    </QueryClientProvider>
-                  </RxDBProvider>
-                </AppConfigProvider>
-              </LanguageProvider>
-            </LocationProvider>
-          </UserProfileProvider>
-        </AppModeProvider>
-      </AuthProvider>
-    </ErrorBoundary>
-  </HelmetProvider>
-  <SpeedInsights />
-  <Analytics />,
+  <React.StrictMode>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <AppModeProvider>
+            <UserProfileProvider>
+              <LocationProvider>
+                <LanguageProvider>
+                  <AppConfigProvider>
+                    <RxDBProvider>
+                      <QueryClientProvider client={queryClientInstance}>
+                        <App />
+                        <Toaster />
+                        <SonnerToaster />
+                      </QueryClientProvider>
+                    </RxDBProvider>
+                  </AppConfigProvider>
+                </LanguageProvider>
+              </LocationProvider>
+            </UserProfileProvider>
+          </AppModeProvider>
+        </AuthProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
+    <SpeedInsights />
+    <Analytics />
+  </React.StrictMode>,
 )
 
 // Register Service Worker for PWA / Notifications
