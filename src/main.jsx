@@ -15,6 +15,10 @@ import { AppConfigProvider } from '@/components/AppConfigContext';
 import { RxDBProvider } from '@/core/db/RxDBProvider';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from '@/shared/lib/query-client';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
 // Initialize Sentry only if DSN is present
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -44,6 +48,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                   <RxDBProvider>
                     <QueryClientProvider client={queryClientInstance}>
                       <App />
+                      <Toaster />
+                      <SonnerToaster />
                     </QueryClientProvider>
                   </RxDBProvider>
                 </AppConfigProvider>
@@ -53,7 +59,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </AppModeProvider>
       </AuthProvider>
     </ErrorBoundary>
-  </HelmetProvider>,
+  </HelmetProvider>
+  <SpeedInsights />
+  <Analytics />,
 )
 
 // Register Service Worker for PWA / Notifications
