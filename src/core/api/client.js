@@ -22,12 +22,18 @@ class APIClient {
             this.supabase = {
                 from: () => createMock(),
                 auth: {
-                    getSession: async () => ({ data: { session: null } }),
-                    getUser: async () => ({ data: { user: null } }),
+                    getSession: async () => ({ data: { session: null }, error: null }),
+                    getUser: async () => ({ data: { user: null }, error: null }),
+                    signUp: async () => ({ data: { user: null, session: null }, error: null }),
+                    signInWithPassword: async () => ({ data: { user: null, session: null }, error: null }),
+                    signInWithOAuth: async () => ({ data: { provider: '', url: '' }, error: null }),
+                    signOut: async () => ({ error: null }),
+                    updateUser: async () => ({ data: { user: null }, error: null }),
+                    setSession: async () => ({ data: { session: null }, error: null }),
                     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
                 },
                 storage: { from: () => createMock() },
-                functions: { invoke: async () => ({ error: 'No functions' }) },
+                functions: { invoke: async () => ({ data: null, error: null }) },
                 channel: () => ({ on: () => ({ subscribe: () => { } }) }),
                 rpc: async () => ({ data: null, error: { message: 'RPC not available (Missing Env Vars)' } })
             };
