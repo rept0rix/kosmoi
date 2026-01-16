@@ -3,7 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Clock, CreditCard, Power, Star, Zap, LayoutGrid, Map as MapIcon, Trash2, Edit, Calendar as CalendarIcon, Image as ImageIcon } from 'lucide-react';
+import MapPin from 'lucide-react/icons/map-pin';
+import Navigation from 'lucide-react/icons/navigation';
+import Clock from 'lucide-react/icons/clock';
+import CreditCard from 'lucide-react/icons/credit-card';
+import Power from 'lucide-react/icons/power';
+import Star from 'lucide-react/icons/star';
+import Zap from 'lucide-react/icons/zap';
+import LayoutGrid from 'lucide-react/icons/layout-grid';
+import MapIcon from 'lucide-react/icons/map';
+import Trash2 from 'lucide-react/icons/trash-2';
+import Edit from 'lucide-react/icons/edit';
+import CalendarIcon from 'lucide-react/icons/calendar';
+import ImageIcon from 'lucide-react/icons/image';
+import Loader2 from 'lucide-react/icons/loader-2';
 import GoogleMap from '@/components/GoogleMap';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/api/supabaseClient';
@@ -11,7 +24,9 @@ import PricingModal from '@/components/payments/PricingModal';
 import { StripeService } from '@/services/payments/StripeService';
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { ProductCard } from '@/components/marketplace/ProductCard';
-import CalendarView from '@/pages/vendor/CalendarView'; // Import Calendar Component
+const CalendarView = React.lazy(() => import('@/pages/vendor/CalendarView')); // Import Calendar Component
+const EditProfileDialog = React.lazy(() => import('@/components/dashboard/EditProfileDialog'));
+const StatsOverview = React.lazy(() => import('@/components/dashboard/StatsOverview'));
 
 // Mock Incoming Job
 const MOCK_JOB = {
@@ -79,8 +94,7 @@ const GalleryView = ({ provider }) => {
     );
 };
 
-import EditProfileDialog from '@/components/dashboard/EditProfileDialog';
-import StatsOverview from '@/components/dashboard/StatsOverview';
+// Lazy loaded components above
 
 // ... (existing helper function MyListingsView unchanged, assume it is here) ...
 
@@ -102,14 +116,15 @@ export default function ProviderDashboard() {
     const fetchProfile = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            const { data } = await supabase.from('service_providers').select('*').eq('id', user.id).single();
-            if (data) setProviderProfile(data); // Might fail if id != user.id, usually user_id
+            // Optimized: Single query with OR condition instead of sequential lookups
+            const { data, error } = await supabase
+                .from('service_providers')
+                .select('*')
+                .or(`id.eq.${user.id},owner_id.eq.${user.id}`)
+                .maybeSingle();
 
-            // Backup fetch by user_id
-            if (!data) {
-                const { data: p2 } = await supabase.from('service_providers').select('*').eq('owner_id', user.id).single();
-                if (p2) setProviderProfile(p2);
-            }
+            if (data) setProviderProfile(data);
+            if (error) console.error("Error fetching profile:", error);
         }
     };
 
@@ -145,41 +160,43 @@ export default function ProviderDashboard() {
 
             console.log(`[Smart Dispatch] Subscribing to category: ${providerProfile.category}`);
 
-            channel = supabase
-                .channel('dispatch-channel')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'service_requests',
-                        filter: `category=eq.${providerProfile.category}` // Smart Filter
-                    },
-                    (payload) => {
-                        console.log('[Smart Dispatch] New Job:', payload);
-                        const job = payload.new;
+            /** @type {any} */
+            const newChannel = supabase.channel('dispatch-channel');
 
-                        // Client-side status check since we can only filter by one column in Realtime
-                        if (job.status !== 'pending') return;
+            newChannel.on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'service_requests',
+                    filter: `category=eq.${providerProfile.category}` // Smart Filter
+                },
+                (payload) => {
+                    console.log('[Smart Dispatch] New Job:', payload);
+                    const job = payload.new;
 
-                        setIncomingJob({
-                            id: job.id,
-                            customer: 'New Customer', // This would ideally be fetched via user_id
-                            service: job.service_type || job.category,
-                            distance: '2.4 km', // Mock distance
-                            estTime: '5 mins',
-                            price: `${job.price || 0} THB`,
-                            location: { lat: job.location_lat, lng: job.location_lng },
-                            status: job.status
-                        });
+                    // Client-side status check since we can only filter by one column in Realtime
+                    if (job.status !== 'pending') return;
 
-                        toast({
-                            title: "New Job Request! 🔔",
-                            description: `${job.service_type || 'Service'} nearby.`
-                        });
-                    }
-                )
-                .subscribe();
+                    setIncomingJob({
+                        id: job.id,
+                        customer: 'New Customer', // This would ideally be fetched via user_id
+                        service: job.service_type || job.category,
+                        distance: '2.4 km', // Mock distance
+                        estTime: '5 mins',
+                        price: `${job.price || 0} THB`,
+                        location: { lat: job.location_lat, lng: job.location_lng },
+                        status: job.status
+                    });
+
+                    toast({
+                        title: "New Job Request! 🔔",
+                        description: `${job.service_type || 'Service'} nearby.`
+                    });
+                }
+            ).subscribe();
+
+            channel = newChannel;
         };
 
         if (isOnline && providerProfile) {
@@ -187,7 +204,7 @@ export default function ProviderDashboard() {
         }
 
         return () => {
-            if (channel) supabase.removeChannel(channel);
+            if (channel) channel.unsubscribe();
         };
     }, [isOnline, providerProfile]); // Re-subscribe if online status or profile changes
 
@@ -347,7 +364,9 @@ export default function ProviderDashboard() {
 
                             {/* Edit Profile Entry */}
                             {providerProfile && (
-                                <EditProfileDialog provider={providerProfile} onUpdate={fetchProfile} />
+                                <React.Suspense fallback={null}>
+                                    <EditProfileDialog provider={providerProfile} onUpdate={fetchProfile} />
+                                </React.Suspense>
                             )}
                         </div>
 
@@ -468,14 +487,18 @@ export default function ProviderDashboard() {
 
                 {viewMode === 'calendar' && (
                     <div className="h-full bg-slate-900 overflow-y-auto pt-4">
-                        <CalendarView />
+                        <React.Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}>
+                            <CalendarView />
+                        </React.Suspense>
                     </div>
                 )}
 
                 {viewMode === 'stats' && (
                     <div className="h-full bg-slate-900 overflow-y-auto p-6 pt-4">
                         <h2 className="text-2xl font-bold text-white mb-6">Performance Analytics</h2>
-                        <StatsOverview provider={providerProfile} />
+                        <React.Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}>
+                            <StatsOverview provider={providerProfile} />
+                        </React.Suspense>
 
                         {/* More analytics placeholders or charts can be added here */}
                         <div className="p-12 border border-dashed border-white/10 rounded-xl flex items-center justify-center text-slate-500">

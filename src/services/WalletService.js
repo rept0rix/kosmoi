@@ -1,6 +1,6 @@
 import { supabase } from "../api/supabaseClient.js";
-import { VibeCalculator } from "./rewards/VibeCalculator";
-import { ActivityLogService } from "./ActivityLogService";
+import { VibeCalculator } from "./rewards/VibeCalculator.js";
+import { ActivityLogService } from "./ActivityLogService.js";
 
 export const WalletService = {
     /**
