@@ -36,7 +36,7 @@ async function main() {
         const connection = await imaps.connect(config);
         console.log('✅ Connected to IMAP');
 
-        await connection.openBox('INBOX');
+        await connection.openBox('[Gmail]/Spam');
 
         // DEBUG: Fetch ALL emails since yesterday to find the test messages
         const searchCriteria = [['SINCE', new Date().toISOString().split('T')[0]]];
