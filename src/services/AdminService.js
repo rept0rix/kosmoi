@@ -259,6 +259,18 @@ export const AdminService = {
     },
 
     /**
+     * Send Role Update Notification
+     */
+    sendRoleUpdateEmail: async (email, userName, newRole) => {
+        const html = EmailTemplates.getRoleUpdateEmail(userName, newRole);
+        return await SendEmail({
+            to: email,
+            subject: 'Your Account Role Has Changed',
+            html: html
+        });
+    },
+
+    /**
      * Create New Business (Admin)
      */
     createBusiness: async (data) => {
