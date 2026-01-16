@@ -21,7 +21,9 @@ const AdminMailbox = () => {
             })
             .subscribe();
 
-        return () => supabase.removeChannel(channel);
+        return () => {
+            channel.unsubscribe();
+        };
     }, []);
 
     const fetchEmails = async () => {
