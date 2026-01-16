@@ -342,45 +342,23 @@ const LanguageRoot = ({ lang }) => {
 };
 
 function App() {
-
   return (
-    <AuthProvider>
-      <AppModeProvider>
-        <UserProfileProvider>
-          <LocationProvider>
-            <LanguageProvider>
-              <AppConfigProvider>
-                <RxDBProvider>
-                  <QueryClientProvider client={queryClientInstance}>
-                    <GlobalErrorBoundary>
-                      <Router>
-                        <ScrollToTop />
-                        <Routes>
-                          <Route path="/he/*" element={<LanguageRoot lang="he" />} />
-                          <Route path="/th/*" element={<LanguageRoot lang="th" />} />
-                          <Route path="/ru/*" element={<LanguageRoot lang="ru" />} />
-                          <Route path="/fr/*" element={<LanguageRoot lang="fr" />} />
-                          <Route path="/de/*" element={<LanguageRoot lang="de" />} />
-                          <Route path="/es/*" element={<LanguageRoot lang="es" />} />
-                          <Route path="/zh/*" element={<LanguageRoot lang="zh" />} />
-                          <Route path="/*" element={<LanguageRoot lang="en" />} />
-                        </Routes>
-                        {/* <VisualEditAgent /> */}
-                      </Router>
-                    </GlobalErrorBoundary>
-                    <Toaster />
-                    <SonnerToaster />
-                  </QueryClientProvider>
-                </RxDBProvider>
-                <SpeedInsights />
-                <Analytics />
-              </AppConfigProvider>
-            </LanguageProvider>
-          </LocationProvider>
-        </UserProfileProvider>
-      </AppModeProvider>
-    </AuthProvider>
-  )
+    <GlobalErrorBoundary>
+      <Router>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/he/*" element={<LanguageRoot lang="he" />} />
+          <Route path="/th/*" element={<LanguageRoot lang="th" />} />
+          <Route path="/ru/*" element={<LanguageRoot lang="ru" />} />
+          <Route path="/fr/*" element={<LanguageRoot lang="fr" />} />
+          <Route path="/de/*" element={<LanguageRoot lang="de" />} />
+          <Route path="/es/*" element={<LanguageRoot lang="es" />} />
+          <Route path="/zh/*" element={<LanguageRoot lang="zh" />} />
+          <Route path="/*" element={<LanguageRoot lang="en" />} />
+        </Routes>
+      </Router>
+    </GlobalErrorBoundary>
+  );
 }
 
 export default App
