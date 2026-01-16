@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       // Fixes hanging getSession() issue
       const getSessionPromise = db.auth.getSession();
       const sessionTimeoutPromise = new Promise((resolve) =>
-        setTimeout(() => resolve({ data: { session: null } }), 1000)
+        setTimeout(() => resolve({ data: { session: null } }), 2000) // Increased to 2s
       );
 
       const { data: { session } } = await Promise.race([getSessionPromise, sessionTimeoutPromise]);
@@ -191,12 +191,16 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('User auth check failed:', error);
 
+      const isAbortError = error.name === 'AbortError' || error.message?.includes('signal is aborted');
       const isSessionInvalid = error.message?.includes('Invalid session') || error.message?.includes('refresh_token_not_found') || error.message?.includes('JWT expired');
 
-      if (hasOptimisticSession && !isSessionInvalid) {
+      if (isAbortError) {
+        console.warn("⚠️ Auth check aborted (likely navigation). Keeping current user state.");
+        // DO NOTHING - Do not log out on AbortError
+      } else if (hasOptimisticSession && !isSessionInvalid) {
         console.warn("⚠️ Auth check failed but keeping optimistic session (Stability Mode). Error:", error.message);
       } else {
-        console.warn("❌ Session invalid, logging out.");
+        console.warn("❌ Session invalid or critical error, logging out.");
         setIsAuthenticated(false);
         setUser(null);
       }
