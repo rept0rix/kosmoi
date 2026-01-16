@@ -7,7 +7,7 @@ export default function Security() {
     const { t } = useTranslation();
 
     return (
-        <div className="container mx-auto py-12 px-4 max-w-4xl">
+        <div className="container mx-auto pt-32 pb-12 px-4 max-w-4xl">
             <div className="text-center mb-12">
                 <ShieldCheck className="w-16 h-16 mx-auto text-green-600 mb-4" />
                 <h1 className="text-4xl font-bold mb-4">{t('legal.security_title', 'Security at Kosmoi')}</h1>
