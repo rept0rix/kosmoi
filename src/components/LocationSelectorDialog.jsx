@@ -72,7 +72,7 @@ export default function LocationSelectorDialog({ open, onOpenChange }) {
                     setLocationError(t('dashboard.location_error_generic'));
                 }
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
         );
     };
 
