@@ -132,12 +132,26 @@ export default function LocationSelectorDialog({ open, onOpenChange }) {
 
                 {locationDialogView === 'search' ? (
                     <div className="space-y-4 py-4">
+                        {locationError && (
+                            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-2 border border-red-100 flex items-center justify-between">
+                                <span>{locationError}</span>
+                                <Button className="h-4 w-4 p-0 text-red-800" variant="ghost" onClick={() => setLocationError(null)}>x</Button>
+                            </div>
+                        )}
+
                         <Button
                             onClick={handleUseCurrentLocation}
+                            disabled={locationPermission === 'loading'}
                             className="w-full bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-none border border-blue-200 h-12 flex items-center justify-center gap-2"
                         >
-                            <NavigationIcon className="w-5 h-5 fill-current" />
-                            {t('useCurrentLocation')}
+                            {locationPermission === 'loading' ? (
+                                <>Loading...</>
+                            ) : (
+                                <>
+                                    <NavigationIcon className="w-5 h-5 fill-current" />
+                                    {t('useCurrentLocation')}
+                                </>
+                            )}
                         </Button>
 
                         <div className="relative">
