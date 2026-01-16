@@ -79,13 +79,19 @@ ${formData.description}
             // Create clean payload with lat/lng mapping
             const { latitude, longitude, ...cleanData } = formData;
 
-            await MarketplaceService.createItem({
+            const createPromise = MarketplaceService.createItem({
                 ...cleanData,
                 description: enhancedDescription,
                 price: parseFloat(formData.price),
                 lat: latitude,
                 lng: longitude
             }, selectedImages);
+
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Request timed out. Please check your internet connection or try a smaller image.")), 15000)
+            );
+
+            await Promise.race([createPromise, timeoutPromise]);
 
             toast.success("Listing created successfully!");
             onSuccess();
