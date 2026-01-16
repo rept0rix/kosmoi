@@ -61,8 +61,13 @@ const LayoutContent = ({ children }) => {
   // e.g. /he/about -> /about, /he -> /
   const normalizedPath = currentPath.replace(/^\/(he|th|ru)(\/|$)/, '/$2') || '/';
 
-  const isPublicZone = ZONES.PUBLIC.some(path => normalizedPath === path || (path !== '/' && normalizedPath.startsWith(path)));
-  const isBusinessZone = ZONES.BUSINESS.some(path => normalizedPath.startsWith(path));
+  const isPublicZone = ZONES.PUBLIC.some(path => {
+    if (normalizedPath === path) return true;
+    if (path === '/') return false;
+    // Ensure it matches as a directory, not a prefix (e.g., /business stays public, /business-registration does not)
+    return normalizedPath.startsWith(path + '/');
+  });
+  const isBusinessZone = ZONES.BUSINESS.some(path => normalizedPath === path || normalizedPath.startsWith(path + '/'));
   const isAdminZone = ZONES.ADMIN.some(path => normalizedPath.startsWith(path));
 
   // Determine App Zone: Not Public, Business or Admin
