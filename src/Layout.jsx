@@ -29,7 +29,7 @@ import LandingNavbar from "@/components/LandingNavbar";
 // --- Configuration ---
 // Define which paths belong to which zone
 const ZONES = {
-  PUBLIC: ['/', '/about', '/team', '/pricing', '/business-info', '/legal'],
+  PUBLIC: ['/', '/about', '/team', '/pricing', '/business-info', '/legal', '/business'],
   BUSINESS: ['/business-registration', '/vendor-dashboard'],
   ADMIN: ['/admin', '/board-room', '/command-center', '/admin-importer'],
   // Everything else is considered APP
