@@ -98,8 +98,10 @@ export default function BusinessRegistration() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [images, setImages] = useState([]);
 
-  const [uploadingImages, setUploadingImages] = useState(false);
-  const [images, setImages] = useState([]);
+  /* 
+   * Duplicate state declarations removed. 
+   * The original declarations were at lines 97-98.
+   */
 
   const { user, isAuthenticated, isLoadingAuth } = useAuth();
 
