@@ -391,8 +391,8 @@ export const supabaseHelpers = {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return null;
 
-            // Timeout after 2 seconds (reduced from 5s)
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 2000));
+            // Timeout after 3 seconds (increased from 2s)
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 3000));
 
             try {
                 const { data: { user }, error } = await Promise.race([
