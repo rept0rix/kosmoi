@@ -62,27 +62,24 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="text-center space-y-6 max-w-4xl mx-auto"
+                    className="text-center space-y-6 max-w-4xl mx-auto px-2"
                 >
                     <div className="flex flex-col items-center gap-4">
-                        {/* Digital Nomad Button */}
-
-
-                        {/* Intelligent Guide Pill (Optional: keep or remove? User mentioned Digital Nomad button... let's keep both stacked or replace? I'll Keep Nomad as requested "above") */}
+                        {/* Intelligent Guide Pill */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-xs font-medium text-slate-300">
                             <MapPin className="w-3 h-3 text-rose-500" />
                             <span>{t('home.city_guide')}</span>
                         </div>
                     </div>
 
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+                    <h1 className="text-4xl md:text-7xl font-bold tracking-tight leading-tight">
                         {t('home.hero_title')} <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                             {t('home.hero_title_suffix')}
                         </span>
                     </h1>
 
-                    <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+                    <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto px-4">
                         {t('home.hero_subtitle')}
                     </p>
                 </motion.div>
@@ -92,20 +89,20 @@ export default function Home() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
-                    className="w-full max-w-2xl mt-12 relative group"
+                    className="w-full max-w-2xl mt-8 md:mt-12 relative group px-2"
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-xl group-hover:blur-2xl transition-all opacity-50"></div>
-                    <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-2 flex items-center shadow-2xl">
-                        <Search className="w-6 h-6 text-slate-300 ml-4" />
+                    <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1.5 md:p-2 flex items-center shadow-2xl">
+                        <Search className="w-5 h-5 md:w-6 md:h-6 text-slate-300 ml-2 md:ml-4" />
                         <input
                             type="text"
                             placeholder={t('home.search_placeholder', "Search for villas, food, drivers...")}
-                            className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-slate-400 h-12 px-4 text-lg outline-none"
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-slate-400 h-10 md:h-12 px-2 md:px-4 text-base md:text-lg outline-none min-w-0"
                             onKeyDown={(e) => e.key === 'Enter' && navigate('/marketplace')}
                         />
                         <Button
                             onClick={() => navigate('/marketplace')}
-                            className="rounded-full px-8 bg-white text-slate-900 hover:bg-slate-200 font-bold"
+                            className="rounded-full px-4 md:px-8 bg-white text-slate-900 hover:bg-slate-200 font-bold h-9 md:h-auto text-sm md:text-base"
                         >
                             {t('common.search', "Find")}
                         </Button>
