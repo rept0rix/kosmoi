@@ -42,6 +42,7 @@ export const EmailTemplates = {
 </body>
 </html>
 `
+    ,
     getRoleUpdateEmail: (userName, newRole) => `
 <!DOCTYPE html>
 <html>
