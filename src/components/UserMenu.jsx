@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAppConfig } from '@/components/AppConfigContext';
+import { useAppMode } from '@/contexts/AppModeContext';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,13 +14,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User, Settings, LogOut, LayoutDashboard, Briefcase, ShieldAlert, Calendar } from 'lucide-react';
+import { User, Settings, LogOut, LayoutDashboard, Briefcase, ShieldAlert, Calendar, RefreshCw } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserMenu() {
     const { t } = useTranslation();
     const { user, signOut } = useAuth();
     const { config } = useAppConfig();
+    const { activeMode, setMode } = useAppMode();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -107,13 +109,30 @@ export default function UserMenu() {
                         <>
                             <DropdownMenuSeparator className="my-1" />
                             <DropdownMenuItem asChild className="p-2 cursor-pointer rounded-md focus:bg-slate-50 dark:focus:bg-slate-800">
-                                <Link to="/admin/wallet" className="flex items-center font-medium text-amber-600">
+                                <Link to="/admin" className="flex items-center font-medium text-amber-600">
                                     <ShieldAlert className="mr-2 h-4 w-4" />
                                     <span>Admin Console</span>
                                 </Link>
                             </DropdownMenuItem>
                         </>
                     )}
+
+                    <DropdownMenuSeparator className="my-1" />
+                    <DropdownMenuItem
+                        onSelect={() => {
+                            const newMode = activeMode === 'personal' ? 'business' : 'personal';
+                            if (newMode === 'business' && user?.role !== 'vendor' && user?.role !== 'service_provider') {
+                                navigate('/business-registration');
+                            } else {
+                                setMode(newMode);
+                                navigate(newMode === 'business' ? '/provider-dashboard' : '/app');
+                            }
+                        }}
+                        className="p-2 cursor-pointer rounded-md focus:bg-slate-50 dark:focus:bg-slate-800"
+                    >
+                        <RefreshCw className="mr-2 h-4 w-4 text-blue-500" />
+                        <span className="flex-1">Switch to {activeMode === 'personal' ? 'Business' : 'Personal'}</span>
+                    </DropdownMenuItem>
 
                     {isBusiness && (
                         <>
