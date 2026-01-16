@@ -25,6 +25,8 @@ import {
 import { DirectionProvider } from '@radix-ui/react-direction';
 import QuickActionsFab from "@/components/QuickActionsFab";
 import LandingNavbar from "@/components/LandingNavbar";
+import { useAppMode } from "@/contexts/AppModeContext";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 // --- Configuration ---
 // Define which paths belong to which zone
@@ -40,6 +42,8 @@ const LayoutContent = ({ children }) => {
   const currentPath = location.pathname;
   const { t, i18n } = useTranslation();
   const { config, debugRole } = useAppConfig();
+  const { activeMode } = useAppMode();
+  const { user } = useAuth();
   const [notifications, setNotifications] = React.useState([
     { id: 1, title: 'New Feature', message: 'Check out the new Rentals category!', time: '2m ago', read: false },
     { id: 2, title: 'System Update', message: 'Maintenance scheduled for tonight.', time: '1h ago', read: false },
@@ -90,11 +94,16 @@ const LayoutContent = ({ children }) => {
   }
 
   // --- Navigation Items ---
-  // New Structure: Home, Chat, PAY (Center), Marketplace, Organizer
-  const appNavItems = [
+  const navItems = activeMode === 'business' ? [
+    { title: t('nav.dashboard') || 'Dashboard', url: '/provider-dashboard', icon: LayoutDashboard },
+    { title: t('nav.calendar') || 'Calendar', url: '/vendor/calendar', icon: Calendar },
+    { title: 'LEADS', url: '#', icon: Zap, isSpecial: true }, // Special button for business
+    { title: t('nav.chat') || 'Chat', url: '/chat-hub', icon: MessageCircle },
+    { title: t('nav.profile') || 'Profile', url: '/profile', icon: User },
+  ] : [
     { title: t('nav.home'), url: createPageUrl("App"), icon: Home },
     { title: t('nav.ai'), url: createPageUrl("AIChat"), icon: Sparkles },
-    // Center Button (Pay) - Special Styling -> Now Quick Action FAB
+    // Center Button (Pay) - Special Styling
     { title: 'PAY', url: '#', icon: QrCode, isSpecial: true },
     { title: 'Market', url: '/marketplace', icon: Store },
     { title: 'Organizer', url: '/organizer', icon: Calendar },
@@ -259,7 +268,7 @@ const LayoutContent = ({ children }) => {
             <div className="max-w-md mx-auto px-4">
               <div className="flex items-center justify-between relative">
 
-                {appNavItems.map((item) => {
+                {navItems.map((item) => {
                   const isActive = location.pathname === item.url;
 
                   if (item.isSpecial) {
