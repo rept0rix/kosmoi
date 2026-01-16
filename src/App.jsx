@@ -191,16 +191,20 @@ const AuthenticatedApp = () => {
             {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
             <Route path="mapview" element={null} />
 
-            {/* Protected Business Route */}
+            {/* Business Registration Flow (Non-Vendor) */}
+            <Route path="business-registration" element={<Pages.BusinessRegistration />} />
+
             <Route path="business" element={
               <RequireRole role="vendor">
                 <Pages.Business />
               </RequireRole>
             } />
 
+            <Route path="vendor-signup" element={<VendorSignup />} />
+
             {Object.entries(Pages)
               .filter(([path]) => path !== 'MapView')
-              .filter(([path]) => !['Wallet', 'ProviderDashboard', 'RealEstate', 'Experiences', 'Business', 'BusinessRegistration'].includes(path)) // Exclude Super App and Business pages for manual routing
+              .filter(([path]) => !['Wallet', 'ProviderDashboard', 'RealEstate', 'Experiences', 'Business', 'BusinessRegistration', 'Login', 'UpdatePassword', 'CompleteSignup', 'VendorSignup'].includes(path)) // Exclude Super App and Business pages for manual routing
               .map(([path, Page]) => (
                 <Route key={path} path={`${path.toLowerCase()}`} element={<Page />} />
               ))}
@@ -216,8 +220,6 @@ const AuthenticatedApp = () => {
             <Route path="marketplace" element={<Marketplace />} />
             <Route path="marketplace/:id" element={<ProductDetails />} />
             <Route path="organizer" element={<Organizer />} />
-            <Route path="business-registration" element={<Pages.BusinessRegistration />} />
-            <Route path="vendor-signup" element={<VendorSignup />} />
             <Route path="login" element={<Pages.Login />} />
             <Route path="update-password" element={<Pages.UpdatePassword />} />
             <Route path="complete-signup" element={<Pages.CompleteSignup />} />
