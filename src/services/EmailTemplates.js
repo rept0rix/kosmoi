@@ -42,4 +42,47 @@ export const EmailTemplates = {
 </body>
 </html>
 `
+    getRoleUpdateEmail: (userName, newRole) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #334155; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; }
+        .header { text-align: center; padding: 40px 0; background-color: #0f172a; border-radius: 12px 12px 0 0; }
+        .logo { color: #fff; font-size: 24px; font-weight: bold; text-decoration: none; }
+        .content { padding: 40px 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; }
+        .button { display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { text-align: center; padding-top: 20px; font-size: 12px; color: #94a3b8; }
+        .role-badge { display: inline-block; padding: 4px 12px; background-color: #dbeafe; color: #1e40af; border-radius: 9999px; font-weight: 600; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="https://kosmoi.site" class="logo">Samui Service Hub</a>
+        </div>
+        <div class="content">
+            <h2 style="color: #1e293b; margin-top: 0;">Account Update</h2>
+            <p>Hello ${userName || 'there'},</p>
+            <p>Your account permissions on <strong>Samui Service Hub</strong> have been updated.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <p>Your new role is:</p>
+                <div class="role-badge">${newRole.toUpperCase()}</div>
+            </div>
+
+            <p>If you are now an <strong>ADMIN</strong>, you have access to the dashboard command center.</p>
+            
+            <div style="text-align: center;">
+                <a href="https://kosmoi.site/admin/command-center" class="button">Go to Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Samui Service Hub. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+`,
 };
