@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
         window.location.pathname.startsWith('/he') ||
         window.location.pathname.startsWith('/th') ||
         window.location.pathname.startsWith('/ru') ||
-        ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy', '/login'].some(p => window.location.pathname.includes(p));
+        ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy', '/login', '/business-registration', '/marketplace', '/test-drive', '/one-dollar'].some(p => window.location.pathname.includes(p));
 
       // 0. Screenshot Agent Bypass (DEV Only)
       if (import.meta.env.DEV && navigator.userAgent.includes('ScreenshotAgent')) {
