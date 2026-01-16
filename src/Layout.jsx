@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AppConfigProvider, useAppConfig } from "@/components/AppConfigContext";
 import DebugRoleSwitcher from "@/components/DebugRoleSwitcher";
 import MiniWeather from "@/components/MiniWeather";
-import { Home, Search, User, Map, Languages, Sparkles, LayoutDashboard, Briefcase, ExternalLink, ShieldAlert, Monitor, Store, Calendar, QrCode, Menu, MessageCircle, Bell } from "lucide-react";
+import { Home, Search, User, Map, Languages, Sparkles, LayoutDashboard, Briefcase, ExternalLink, ShieldAlert, Monitor, Store, Calendar, QrCode, Menu, MessageCircle, Bell, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import Footer from "@/components/Footer";
