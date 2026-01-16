@@ -354,6 +354,7 @@ function App() {
           <Route path="/de/*" element={<LanguageRoot lang="de" />} />
           <Route path="/es/*" element={<LanguageRoot lang="es" />} />
           <Route path="/zh/*" element={<LanguageRoot lang="zh" />} />
+          <Route path="/en/*" element={<LanguageRoot lang="en" />} />
           <Route path="/*" element={<LanguageRoot lang="en" />} />
         </Routes>
       </Router>
