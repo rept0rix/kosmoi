@@ -17,7 +17,7 @@ const config = {
     },
     supabase: {
         url: process.env.VITE_SUPABASE_URL,
-        key: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+        key: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
     }
 };
 
