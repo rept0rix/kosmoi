@@ -471,6 +471,12 @@ export const supabaseHelpers = {
             return res;
         },
 
+        async resetPasswordForEmail(email, options = {}) {
+            const { data, error } = await supabase.auth.resetPasswordForEmail(email, options);
+            if (error) throw error;
+            return data;
+        },
+
         onAuthStateChange(callback) {
             return supabase.auth.onAuthStateChange(callback);
         },
