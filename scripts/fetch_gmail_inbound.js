@@ -36,10 +36,10 @@ async function main() {
         const connection = await imaps.connect(config);
         console.log('✅ Connected to IMAP');
 
-        await connection.openBox('[Gmail]/Spam');
+        await connection.openBox('INBOX');
 
-        // DEBUG: Fetch ALL emails since yesterday to find the test messages
-        const searchCriteria = [['SINCE', new Date().toISOString().split('T')[0]]];
+        // Fetch unseen emails
+        const searchCriteria = ['UNSEEN'];
         const fetchOptions = {
             bodies: ['HEADER', 'TEXT', ''],
             markSeen: true
