@@ -29,6 +29,7 @@ class APIClient {
                     signInWithOAuth: async () => ({ data: { provider: '', url: '' }, error: null }),
                     signOut: async () => ({ error: null }),
                     updateUser: async () => ({ data: { user: null }, error: null }),
+                    resetPasswordForEmail: async () => ({ data: {}, error: null }),
                     setSession: async () => ({ data: { session: null }, error: null }),
                     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
                 },
