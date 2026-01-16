@@ -7,7 +7,7 @@ export const AuditorSentinelService = {
 
     // Thresholds
     THRESHOLDS: {
-        RAPID_FIRE_LIMIT: 10,     // Actions per minute
+        RAPID_FIRE_LIMIT: 50,     // Actions per minute
         ERROR_LOOP_LIMIT: 5,      // Consecutive errors
         GUARDRAIL_SPIKE_LIMIT: 3  // Security blocks per analysis window
     },
