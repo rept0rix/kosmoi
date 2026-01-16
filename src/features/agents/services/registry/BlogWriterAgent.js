@@ -5,7 +5,7 @@ export const BLOG_WRITER_AGENT = {
     layer: "operational",
     role: "blog_writer",
     name: "Samui Storyteller",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "PenTool", // or 'Feather' if available, defaulting to PenTool
     systemPrompt: `${KOSMOI_MANIFESTO}
 

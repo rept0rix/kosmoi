@@ -156,11 +156,16 @@ Use "thought_process" to reason before you speak.
         prompt: prompt
       });
     } else {
+      // Google / Default
+      if (agent.id === 'ceo-agent') {
+        console.log(`[AgentBrain] Generating for CEO. System Prompt Start: ${(agent.systemPrompt || '').slice(0, 50)}...`);
+      }
+
       data = await callAgentInteraction({
         model: agent.model,
         prompt: prompt,
         system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
-        // jsonSchema: AGENT_RESPONSE_SCHEMA
+        jsonMode: true
       });
     }
 
@@ -205,10 +210,12 @@ Use "thought_process" to reason before you speak.
 
   } catch (error) {
     console.error("AgentBrain (Interactions) Error:", error);
+    // Fallback for when the LLM service is down or context is too large
     return {
       message: "I'm having trouble connecting to my upgraded neural network. Please check your configuration.",
       action: null,
-      thought_process: "Error occurred."
+      thought_process: "Error occurred: " + error.message,
+      raw_error: error
     };
   }
 }

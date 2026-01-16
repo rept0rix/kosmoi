@@ -10,15 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Phone, MessageCircle, Heart, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { useAuth } from "@/features/auth/context/AuthContext";
+
 export default function Favorites() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
 
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => db.auth.me(),
-  });
+  const { user } = useAuth();
 
   const { data: favorites = [], isLoading, refetch } = useQuery({
     queryKey: ['favorites'],

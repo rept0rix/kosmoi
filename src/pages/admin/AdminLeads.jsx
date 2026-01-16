@@ -111,7 +111,7 @@ export default function AdminLeads() {
                             <TableBody>
                                 {leads.map((lead) => (
                                     <TableRow key={lead.id}>
-                                        <TableCell className="font-medium">{lead.name}</TableCell>
+                                        <TableCell className="font-medium">{lead.company || `${lead.first_name || ''} ${lead.last_name || ''}` || 'Unknown'}</TableCell>
                                         <TableCell>{lead.business_type}</TableCell>
                                         <TableCell>
                                             <Badge variant={lead.status === 'contacted' ? 'default' : 'secondary'}>

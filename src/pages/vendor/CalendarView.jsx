@@ -3,7 +3,10 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, is
 import { supabase } from '@/api/supabaseClient';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import ChevronLeft from 'lucide-react/icons/chevron-left';
+import ChevronRight from 'lucide-react/icons/chevron-right';
+import Loader2 from 'lucide-react/icons/loader-2';
+import CalendarIcon from 'lucide-react/icons/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function CalendarView() {

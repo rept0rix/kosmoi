@@ -2,6 +2,8 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import AgentProtocol from './lib/agent_protocol.js';
+import { INVITATION_TEMPLATE } from './lib/email_templates.js';
 
 // Initialize Services
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -15,7 +17,7 @@ if (!supabaseUrl || !supabaseServiceKey || !apiKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 /**
  * Sales Coordinator Agent ("Sarah")
@@ -25,6 +27,7 @@ class SalesCoordinator {
     constructor() {
         this.name = "Sarah";
         this.role = "Sales Coordinator";
+        this.protocol = new AgentProtocol('sales_coordinator');
     }
 
     async __scout_leads(limit = 5) {
@@ -74,81 +77,156 @@ class SalesCoordinator {
      * Skill: Generate Invitation
      * Drafts message and SAVES invitation to DB.
      */
+    // Fixed import placement
+
+    /**
+     * Skill: Generate Invitation
+     */
     async generate_invitation(lead) {
         console.log(`💌 Drafting invite for: ${lead.business_name}...`);
 
-        // 1. Generate Token
-        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        const claimLink = `https://kosmoi.com/claim-profile?token=${token}`;
+        // 1. Generate Content (using Gemini or Template)
+        const claimLink = `https://kosmoi.site/claim?id=${lead.id}`;
+        const emailHtml = INVITATION_TEMPLATE(lead.business_name, claimLink);
 
-        // 2. Draft Message with Gemini
-        const prompt = `
-        You are Sarah, a partnership manager for "Samui Service Hub".
-        Draft a 1-sentence invite for "${lead.business_name}" (${lead.category}) in ${lead.location}.
-        Value: "Get verified for $1/month". 
-        Link placeholder: [LINK]
-        Tone: Casual, local.
-        `;
 
-        try {
-            const result = await model.generateContent(prompt);
-            const messageRaw = result.response.text().trim();
-            const message = messageRaw.replace('[LINK]', claimLink);
+        // 2. Determine Recipient (SAFETY MODE)
+        const recipientEmail = process.env.TEST_EMAIL || 'admin@kosmoi.com';
+        const n8nWebhookUrl = process.env.VITE_N8N_EMAIL_WEBHOOK;
 
-            // 3. Persist to DB
-            const { error } = await supabase
-                .from('invitations')
-                .insert({
-                    service_provider_id: lead.id,
-                    token: token,
-                    status: 'pending',
-                    metadata: {
-                        channel: 'simulated_agent',
-                        target_message: message
-                    }
+        if (n8nWebhookUrl && !n8nWebhookUrl.includes('YOUR_N8N')) {
+            console.log(`🔌 Dispatching to n8n: ${n8nWebhookUrl}`);
+            try {
+                const response = await fetch(n8nWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: recipientEmail, // In production, this would be lead.email
+                        subject: `Invitation for ${lead.business_name} - Kosmoi`,
+                        html: emailHtml,
+                        business_name: lead.business_name,
+                        claim_link: claimLink,
+                        lead_id: lead.id,
+                        from: 'Sarah <onboarding@resend.dev>'
+                    })
                 });
 
-            if (error) {
-                console.error(`❌ DB Save Failed for ${lead.business_name}:`, error.message);
-                return null;
+                if (response.ok) {
+                    console.log(`🚀 Email Dispatched via n8n to ${recipientEmail}!`);
+                } else {
+                    console.error(`❌ n8n Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (err) {
+                console.error(`❌ n8n Network Error:`, err);
             }
+        } else {
+            console.log(`⚠️ No n8n Webhook configured. Falling back to Supabase Function.`);
+            // 3. Fallback: Send Email via Edge Function
+            const { data, error } = await supabase.functions.invoke('send-email', {
+                body: {
+                    to: recipientEmail,
+                    subject: `Invitation for ${lead.business_name} - Kosmoi`,
+                    html: emailHtml,
+                    from: 'Sarah <onboarding@resend.dev>'
+                }
+            });
 
-            return {
-                business_id: lead.id,
-                message: message,
-                status: 'saved_to_db'
-            };
+            if (error) {
+                console.error(`❌ Email Failed:`, error);
+                // Fallback to DB save even if email fails
+            } else {
+                console.log(`🚀 Email Sent to ${recipientEmail}! ID: ${data?.id || 'OK'}`);
+            }
+        }
 
-        } catch (e) {
-            console.error("❌ GenAI Error:", e.message);
-            return null;
+
+        // 4. Save to DB
+        console.log("💾 Saving invitation to DB...");
+        const result = await supabase
+            .from('invitations')
+            .insert({
+                service_provider_id: lead.id,
+                token: 'mock-token', // TODO: Generate real token
+                channel: 'email',
+                status: 'sent',
+                metadata: {
+                    target_email: recipientEmail,
+                    real_business_email: lead.email || 'unknown',
+                    subject: `Invitation for ${lead.business_name}`
+                }
+            })
+            .select()
+            .single();
+
+        if (result.error) console.error("❌ DB Insert Error:", result.error);
+        else console.log("✅ Invite Saved to DB:", result.data.id);
+
+        return result;
+    }
+
+    /**
+     * Process a single lead from the mesh network
+     */
+    async process_lead_signal(signal) {
+        // Parse the markdown content to extract potential DB ID or just use the text
+        const match = signal.content.match(/DB_ID:\s*([a-f0-9\-]+)/i);
+        if (match) {
+            const leadId = match[1];
+            console.log(`📨 Received Signal for Lead ID: ${leadId}`);
+
+            const { data: lead } = await supabase
+                .from('service_providers')
+                .select('*')
+                .eq('id', leadId)
+                .single();
+
+            if (lead) {
+                await this.generate_invitation(lead);
+                this.protocol.updateStatus('WORKING', `Thinking: ${lead.business_name}`);
+            }
         }
     }
 
     /**
-     * Workflow: Run the daily sales cycle
+     * Workflow: Run the infinite mesh loop
      */
-    async run_daily_cycle() {
-        console.log(`🚀 Starting Daily Sales Cycle...`);
+    async run_mesh_cycle() {
+        console.log(`🚀 Sales Coordinator Joined Protocol 626 Mesh.`);
+        this.protocol.updateStatus('IDLE', 'Waiting for leads...');
 
-        const leads = await this.scout_leads(3); // Start small
+        while (true) {
+            // 1. Check Inbox
+            const inbox = this.protocol.readInbox();
 
-        for (const lead of leads) {
-            const invite = await this.generate_invitation(lead);
-            if (invite) {
-                console.log(`\n--------------------------------`);
-                console.log(`🎯 Target: ${lead.business_name}`);
-                console.log(`📝 Message:\n${invite.message}`);
-                console.log(`✅ Saved to 'invitations' table`);
-                console.log(`--------------------------------\n`);
+            if (inbox.length > 0) {
+                console.log(`📬 Inbox has ${inbox.length} messages.`);
+                this.protocol.updateStatus('WORKING', 'Processing Inbox');
 
-                // Future: Send Email/SMS logic here
+                for (const msg of inbox) {
+                    if (msg.type === 'lead_found') {
+                        await this.process_lead_signal(msg);
+                    }
+                    // Archive after processing
+                    this.protocol.archiveMessage(msg.filePath);
+                }
+            } else {
+                // Active Mode: Scout for existing DB leads if inbox is empty
+                this.protocol.updateStatus('WORKING', 'Active Scouting');
+                const freshLeads = await this.scout_leads(1);
+                for (const lead of freshLeads) {
+                    await this.generate_invitation(lead);
+                }
+                if (freshLeads.length === 0) {
+                    this.protocol.updateStatus('IDLE', 'No fresh leads found');
+                }
             }
+
+            // Sleep 30s to avoid spamming
+            await new Promise(r => setTimeout(r, 30000));
         }
-        console.log(`✅ Daily Cycle Complete.`);
     }
 }
 
 // Run if called directly
 const agent = new SalesCoordinator();
-agent.run_daily_cycle();
+agent.run_mesh_cycle();

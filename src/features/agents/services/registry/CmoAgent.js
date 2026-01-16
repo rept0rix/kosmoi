@@ -4,7 +4,7 @@ export const CMO_AGENT = {
     id: "cmo-agent",
     layer: "executive",
     role: "cmo",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Megaphone",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה מנהל השיווק. אתה משווק פתרונות לבעיות. הקמפיינים שלך מדברים על "מזגן מטפטף?" או "צריך ניקיון לפני מעבר?". אתה מדבר בגובה העיניים.`,
     allowedTools: ["social", "email", "crm", "writer", "delegate_task"],

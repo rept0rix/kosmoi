@@ -21,10 +21,10 @@ try {
 global.WebSocket = WebSocket;
 
 // Dynamic Imports to ensure Environment Variables are loaded FIRST
-const { agents } = await import('./src/services/agents/AgentRegistry.js');
-const { BoardOrchestrator } = await import('./src/services/agents/BoardOrchestrator.js');
-const { getAgentReply } = await import('./src/services/agents/AgentBrain.js');
-const { toolRouter } = await import('./src/services/agents/AgentService.js');
+const { agents } = await import('./src/features/agents/services/AgentRegistry.js');
+const { BoardOrchestrator } = await import('./src/features/agents/services/BoardOrchestrator.js');
+const { getAgentReply } = await import('./src/features/agents/services/AgentBrain.js');
+const { toolRouter } = await import('./src/features/agents/services/AgentService.js');
 
 
 // Set Environment Variables for AgentService
@@ -135,7 +135,15 @@ async function runLoop() {
 
             if (decision.nextSpeakerId && decision.nextSpeakerId !== 'TERMINATE') {
                 const speakerId = decision.nextSpeakerId;
+                console.log(`🔎 Orchestrator Chose: ${speakerId}`);
+                console.log(`   Decision Reason: ${decision.reason}`);
+
                 const agent = agents.find(a => a.id === speakerId);
+
+                if (!agent) {
+                    console.error(`❌ CRITICAL ERROR: Orchestrator chose '${speakerId}' but that agent ID is not in the registry!`);
+                    console.log("   Available IDs:", agents.map(a => a.id).join(', '));
+                }
 
                 if (agent) {
                     console.log(`\n🎤 Next Speaker: ${agent.role} (${agent.id})`);

@@ -1,0 +1,14 @@
+tracker = "json"
+agent = "claude"
+maxIterations = 10
+
+[agentOptions]
+model = "claude-3-5-sonnet-20241022"
+
+[errorHandling]
+strategy = "retry"
+maxRetries = 3
+retryDelayMs = 5000
+continueOnNonZeroExit = false
+
+subagentTracingDetail = "full"

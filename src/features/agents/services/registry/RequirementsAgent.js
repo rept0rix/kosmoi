@@ -4,7 +4,7 @@ export const REQUIREMENTS_AGENT = {
     id: "requirements-agent",
     layer: "documentation",
     role: "prd-writer",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "FilePlus",
     systemPrompt: `אתה סוכן דרישות פונקציונליות (Requirements Agent / PRD).
 מטרה: הפיכת כל המידע למפרט PRD מקצועי עם דרישות, טבלת פיצ’רים והגדרות טכניות.

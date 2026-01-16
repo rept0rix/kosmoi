@@ -17,19 +17,21 @@ export const ProtectedAdminRoute = () => {
         );
     }
 
-    // STRICT: Only allow access if user exists AND email matches the ENV variable
-    // Allow bypass in DEV mode for easier testing
-    if (import.meta.env.DEV) {
-        return <Outlet />;
-    }
+    // RBAC: Role-Based Access Control
+    // Allow access if the user has the 'admin' role in the database.
+    // This allows for multiple admins to be managed dynamically.
+    const hasAdminRole = user?.role === 'admin' || user?.user_metadata?.role === 'admin';
 
-    if (!user || !adminEmail || user.email !== adminEmail) {
-        console.warn(`Unauthorized Admin Access Attempt by: ${user?.email || 'Guest'}`);
-        // Redirect to login if not logged in, or home if logged in but not admin
+    if (!user || !hasAdminRole) {
+        console.warn(`Unauthorized Admin Access Attempt by: ${user?.email || 'Guest'} (Role: ${user?.role})`);
+
+        // Redirect logic
         if (!user) {
             const returnUrl = encodeURIComponent(location.pathname + location.search);
             return <Navigate to={`/login?returnUrl=${returnUrl}`} replace />;
         }
+
+        // Logged in but not admin -> home
         return <Navigate to="/" replace />;
     }
 

@@ -6,55 +6,21 @@ import { Card } from '@/components/ui/card';
 import { MapPin, Navigation, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export default function LiveMap() {
-    const [providers, setProviders] = useState([]);
-    const [loading, setLoading] = useState(true);
+export default function LiveMap({ businesses = [] }) {
     const [selectedProvider, setSelectedProvider] = useState(null);
 
-    // Initial Load
-    useEffect(() => {
-        const loadProviders = async () => {
-            setLoading(true);
-            const data = await AdminService.getBusinesses();
-            if (data) {
-                // Filter for those who might have location data, even if offline, but primarily we want online
-                setProviders(data);
-            }
-            setLoading(false);
-        };
-        loadProviders();
-    }, []);
+    // Map businesses to ensure we have lat/lng - support both field name formats
+    const visibleProviders = businesses
+        .filter(p => (p.current_lat || p.latitude) && (p.current_lng || p.longitude))
+        .map(p => ({
+            ...p,
+            current_lat: p.current_lat || p.latitude,
+            current_lng: p.current_lng || p.longitude
+        }));
 
-    // Real-time Subscription
-    useEffect(() => {
-        const channel = supabase
-            .channel('admin-live-map')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'service_providers'
-                },
-                (payload) => {
-                    setProviders(current => {
-                        const updated = payload.new;
-                        return current.map(p => p.id === updated.id ? updated : p);
-                    });
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const onlineProviders = providers.filter(p => p.is_online && p.current_lat && p.current_lng);
-
-    // Calculate center based on first online user or default to Samui
-    const mapCenter = onlineProviders.length > 0
-        ? { lat: onlineProviders[0].current_lat, lng: onlineProviders[0].current_lng }
+    // Calculate center based on first user or default to Samui
+    const mapCenter = visibleProviders.length > 0
+        ? { lat: visibleProviders[0].current_lat, lng: visibleProviders[0].current_lng }
         : { lat: 9.512017, lng: 100.013593 };
 
     return (
@@ -63,7 +29,7 @@ export default function LiveMap() {
                 center={mapCenter}
                 zoom={12}
                 height="100%"
-                markers={onlineProviders.map(p => ({
+                markers={visibleProviders.map(p => ({
                     lat: p.current_lat,
                     lng: p.current_lng,
                     title: p.business_name || 'Provider',
@@ -79,8 +45,8 @@ export default function LiveMap() {
             <div className="absolute top-4 left-4 flex flex-col gap-2">
                 <Card className="bg-black/60 backdrop-blur-md border-white/10 text-white p-3">
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span className="font-bold">{onlineProviders.length} Online</span>
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="font-bold">{visibleProviders.length} Providers</span>
                     </div>
                 </Card>
             </div>

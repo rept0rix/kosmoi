@@ -3,3 +3,12 @@ verify_jwt = false
 
 [functions.validate-invitation]
 verify_jwt = false
+
+[functions.sales-scout]
+verify_jwt = false
+
+[functions.track-invitation]
+verify_jwt = false
+
+[functions.search-knowledge]
+verify_jwt = false

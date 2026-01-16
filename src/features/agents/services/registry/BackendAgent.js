@@ -4,7 +4,7 @@ export const BACKEND_AGENT = {
     id: "backend-agent",
     layer: "operational",
     role: "backend",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Database",
     systemPrompt: `${KOSMOI_MANIFESTO}\n\nאתה המנוע. אתה מפתח לוגיקה, APIs, מסדי נתונים ודואג שהכל עובד מהר ובטוח.`,
     allowedTools: ["editor", "terminal", "db", "http"],

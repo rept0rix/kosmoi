@@ -1,0 +1,7 @@
+{
+  "agent": "sales_coordinator",
+  "status": "IDLE",
+  "current_task": "No fresh leads found",
+  "last_heartbeat": "2026-01-14T06:42:35.755Z",
+  "metadata": {}
+}

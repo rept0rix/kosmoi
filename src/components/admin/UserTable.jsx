@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Shield, User as UserIcon, Info } from "lucide-react";
+import { MoreHorizontal, Shield, User as UserIcon, Info, Trash2, VenetianMask } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
@@ -76,10 +76,68 @@ export default function UserTable({ users, onAction }) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
+                                    onClick={() => onAction && onAction('logs', user)}
+                                    className="h-8 px-2 text-blue-400 hover:text-blue-300 mr-2"
+                                >
+                                    <Info className="w-4 h-4 mr-1" /> Details
+                                </Button>
+
+                                {/* Role Management Button */}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onAction && onAction('toggle-role', user)}
+                                    className={`h-8 px-2 mr-2 ${user.role === 'admin'
+                                        ? 'text-amber-500 hover:text-amber-400'
+                                        : 'text-purple-400 hover:text-purple-300'
+                                        }`}
+                                >
+                                    {user.role === 'admin' ? (
+                                        <>
+                                            <UserIcon className="w-3 h-3 mr-1" /> Demote
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Shield className="w-3 h-3 mr-1" /> Promote
+                                        </>
+                                    )}
+                                </Button>
+
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => onAction && onAction('impersonate-user', user)}
+                                                className="h-8 px-2 text-purple-400 hover:text-purple-300 mr-2"
+                                            >
+                                                <VenetianMask className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="bg-slate-900 border-slate-700 text-purple-300">
+                                            <p>Impersonate (God Mode)</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => onAction && onAction('ban', user)}
                                     className={`h-8 px-2 ${user.status === 'banned' ? 'text-red-400 hover:text-red-300' : 'text-slate-500 hover:text-white'}`}
                                 >
                                     {user.status === 'banned' ? 'Unban' : 'Ban'}
+                                </Button>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onAction && onAction('delete-user', user)}
+                                    className="h-8 px-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 ml-2"
+                                    title="Delete User Permanently"
+                                >
+                                    <Trash2 className="w-4 h-4" />
                                 </Button>
                             </td>
                         </tr>

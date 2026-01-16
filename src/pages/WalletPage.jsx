@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import ShimmerButton from '@/components/animations/ShimmerButton';
-import { Wallet, QrCode, ArrowUpRight, ArrowDownLeft, History, RefreshCcw, CreditCard, Plus, Send, X } from 'lucide-react';
+import { Wallet, QrCode, ArrowUpRight, ArrowDownLeft, History, RefreshCcw, CreditCard, Plus, Send, X, ArrowLeft } from 'lucide-react';
 import { WalletService } from '@/services/WalletService';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -50,12 +50,12 @@ const TransactionItem = ({ txn }) => {
                 </div>
                 <div>
                     <p className="font-medium text-slate-900 dark:text-white capitalize">
-                        {txn.type.replace('_', ' ')}
+                        {txn.description || txn.metadata?.note || txn.type.replace('_', ' ')}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                         {new Date(txn.created_at).toLocaleDateString()} • {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    {txn.reference_id && <p className="text-[10px] text-slate-400 font-mono">Ref: {txn.reference_id}</p>}
+                    {txn.reference_id && <p className="text-[10px] text-slate-400 font-mono">Ref: {txn.reference_id.substring(0, 18)}...</p>}
                 </div>
             </div>
             <div className="text-right">
@@ -178,7 +178,17 @@ export default function WalletPage() {
 
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold font-['Outfit'] text-slate-900 dark:text-white">Kosmoi Pay</h1>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="bg-white/5 hover:bg-white/10 -ml-2 rounded-full"
+                            onClick={() => navigate('/profile')}
+                        >
+                            <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-slate-200" />
+                        </Button>
+                        <h1 className="text-2xl font-bold font-['Outfit'] text-slate-900 dark:text-white">Kosmoi Pay</h1>
+                    </div>
                     <Button variant="ghost" size="icon" onClick={fetchWalletData} disabled={loading}>
                         <RefreshCcw size={20} className={loading ? "animate-spin" : ""} />
                     </Button>

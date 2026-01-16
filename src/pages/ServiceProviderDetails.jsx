@@ -146,10 +146,19 @@ export default function ServiceProviderDetails() {
   });
 
   /* Analytics Helpers */
-  const incrementStats = async (type) => {
+  const trackEvent = async (type) => {
     try {
       if (!providerId) return;
-      await db.rpc('increment_provider_stats', { p_id: providerId, stat_type: type });
+      await db.from('business_analytics').insert({
+        provider_id: providerId,
+        event_type: type,
+        visitor_id: user?.id || 'anonymous', // Simple tracking
+        metadata: {
+          path: window.location.pathname,
+          referrer: document.referrer,
+          timestamp: new Date().toISOString() // Redundant but useful?
+        }
+      });
     } catch (err) {
       console.warn('Failed to track stat:', err);
     }
@@ -158,14 +167,13 @@ export default function ServiceProviderDetails() {
   // Track View on Mount
   React.useEffect(() => {
     if (providerId) {
-      // Debounce or just fire? For MVP just fire.
-      // Ideally we check if it's the owner viewing their own profile, but typically views count everyone.
-      incrementStats('view');
+      // Simple dedupe or just fire on mount
+      trackEvent('page_view');
     }
   }, [providerId]);
 
   const handleCall = async (phone) => {
-    incrementStats('click');
+    trackEvent('phone_click');
     if (phone) {
       window.location.href = `tel:${phone}`;
     } else {
@@ -174,14 +182,14 @@ export default function ServiceProviderDetails() {
   };
 
   const handleWhatsApp = async (phone) => {
-    incrementStats('click');
+    trackEvent('whatsapp_click');
     if (phone) {
       window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
     }
   };
 
   const handleNavigate = () => {
-    incrementStats('click'); // Navigation is also a click/intent
+    trackEvent('navigate_click'); // Navigation is also a click/intent
     if (provider?.latitude && provider?.longitude) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${provider.latitude},${provider.longitude}`, "_blank");
     }

@@ -66,3 +66,13 @@ The frontend is deployed to `kosmoi.site`.
 1. Ensure all Edge Functions are deployed.
 2. Run `npm run build` to verify the build.
 3. Push to `main` branch (triggers CI/CD if configured).
+
+## ⚙️ Admin Modules (Placeholder - Needs Update)
+
+**Important:** This section is a placeholder. Please provide the correct information about the Admin Modules.
+
+We have several admin modules available to manage the platform. Details on accessing and using these modules will be documented here.
+
+## 🔄 Auto-Sync Docs
+
+Documentation is automatically synchronized and can be found in the [docs](.taskmaster/docs) folder. Refer to these documents for up-to-date information on the system.

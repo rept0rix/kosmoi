@@ -1,4 +1,4 @@
-import { supabase } from '../api/supabaseClient';
+import { supabase } from '../api/supabaseClient.js';
 
 export const AnalyticsService = {
     /**

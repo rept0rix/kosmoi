@@ -1,4 +1,6 @@
-import { supabase } from "../api/supabaseClient";
+import { supabase } from "../api/supabaseClient.js";
+import { VibeCalculator } from "./rewards/VibeCalculator.js";
+import { ActivityLogService } from "./ActivityLogService.js";
 
 export const WalletService = {
     /**
@@ -165,54 +167,74 @@ export const WalletService = {
     },
 
     /**
-     * Transfer funds to another wallet (P2P).
-     * SECURE: Uses auth.uid() on server side.
+     * Transfer funds to another user (P2P).
+     * SECURE: Uses auth.uid() on server side for sender.
+     * @param {string} recipientUserId - The UUID of the recipient USER (not wallet)
+     * @param {number} amount
+     * @param {string} currency - 'THB' or 'VIBES'
+     * @param {string} note
      */
-    transferFunds: async (recipientWalletId, amount, note = "P2P Transfer") => {
+    transferFunds: async (recipientUserId, amount, currency = 'THB', note = "P2P Transfer") => {
         try {
-            const { data, error } = await supabase.rpc('transfer_funds', {
-                recipient_wallet_id: recipientWalletId,
+            console.log(`Transferring ${amount} ${currency} to ${recipientUserId}`);
+
+            const { data, error } = await supabase.rpc('transfer_funds_v2', {
+                recipient_id: recipientUserId,
                 amount: amount,
-                note: note
+                currency: currency,
+                description: note
             });
 
             if (error) throw error;
-            /**
-             * Refund a transaction (Reverse Transfer).
-             * @param {string} originalRecipientWalletId
-             * @param {number} amount
-             * @param {string} reason
-             */
-            refundTransaction: async (originalRecipientWalletId, amount, reason = "Refund") => {
-                try {
-                    // Note: In a real system, we requires a 'refund' RPC that checks the original txn ID.
-                    // For MVP, we use transfer_funds from the Provider back to the User?
-                    // Wait, client-side cannot force a transfer FROM the provider wallet (RLS violation).
-                    // Logic: Only an Admin or the Provider can initiate a refund. 
-                    // OR: We use a system-level RPC 'process_refund'.
 
-                    // Current Workaround: We assume this is called IMMEDIATELY after a failed booking insertion
-                    // inside the SAME server context? No, this is client-side.
-                    // Client-side, the User cannot take money back from the Provider.
+            // Log the transfer
+            await ActivityLogService.logAction(null, 'TRANSFER', `Sent ${amount} ${currency} to ${recipientUserId}`, { recipient: recipientUserId, amount, currency, note });
 
-                    // CRITICAL: We need a backend Edge Function or RPC 'system_refund' that trusts the context 
-                    // if the booking insert failed.
-                    // However, since we don't have that RPC ready, I will Log this as a critical TODO and 
-                    // assume for the MVP demonstration we simulate the refund or use a stub that warns the user to contact support.
+            return data;
+        } catch (error) {
+            console.error("Transfer Error:", error);
+            throw error;
+        }
+    },
 
-                    console.warn("Refund requested but strictly secure refund RPC not implemented. Contacting Admin...");
+    /**
+     * Refund a transaction (Reverse Transfer).
+     * @param {string} originalRecipientWalletId
+     * @param {number} amount
+     * @param {string} reason
+     */
+    refundTransaction: async (originalRecipientWalletId, amount, reason = "Refund") => {
+        try {
+            console.warn("Refund requested but strictly secure refund RPC not implemented. Contacting Admin...");
 
-                    // Temporary: Call an Edge Function or just Log
-                    const { data: { user } } = await supabase.auth.getUser();
+            // For now, let's just throw a visual error to the user
+            return false;
+        } catch (error) {
+            console.error("Refund Error:", error);
+            throw error;
+        }
+    },
 
-                    // We'll log a 'refund_request' to a table if we had one.
-                    // For now, let's just throw a visual error to the user saying "Payment Taken, Booking Failed - Contact Support".
-                    // This is the honest MVP approach rather than insecurely hacking a reverse transfer.
+    /**
+     * Process booking reward
+     */
+    processBookingReward: async (userId, bookingValueUsd, bookingId) => {
+        try {
+            const calculator = new VibeCalculator();
+            const vibes = calculator.calculateBookingReward(bookingValueUsd);
 
-                    return false;
-                } catch (error) {
-                    console.error("Refund Error:", error);
-                    throw error;
-                }
-            },
+            if (vibes > 0) {
+                const { data, error } = await supabase.rpc('award_vibes', {
+                    target_user_id: userId,
+                    amount: vibes,
+                    reason: `Booking Reward: ${bookingId}`
+                });
+                if (error) throw error;
+                return data;
+            }
+        } catch (error) {
+            console.error("Booking Reward Error:", error);
+            throw error;
+        }
+    },
 };

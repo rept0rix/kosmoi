@@ -1,0 +1,7 @@
+{
+  "agent": "island_crawler",
+  "status": "IDLE",
+  "current_task": "Stopped by command",
+  "last_heartbeat": "2026-01-13T08:46:56.425Z",
+  "metadata": {}
+}

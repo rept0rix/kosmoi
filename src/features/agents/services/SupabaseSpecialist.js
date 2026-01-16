@@ -5,7 +5,7 @@ export const SUPABASE_SPECIALIST_AGENT = {
     role: "database-specialist",
     name: "Supabase Specialist",
     layer: "operational",
-    model: "gemini-3-pro",
+    model: "gemini-2.0-flash",
     icon: "Database",
     systemPrompt: `${KOSMOI_MANIFESTO}
 

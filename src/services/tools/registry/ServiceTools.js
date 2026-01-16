@@ -26,14 +26,18 @@ ToolRegistry.register("create_booking", async (payload) => {
 }, "Create a new booking. Params: { userId, providerId, serviceType, date, startTime, endTime }");
 
 ToolRegistry.register("create_payment_link", async (payload) => {
-    // payload: { businessName, productName, amount, currency }
+    // payload: { businessName, productName/product_name, amount, currency }
+    // Support both snake_case (agent output) and camelCase (internal)
+    const productName = payload.productName || payload.product_name;
+    const businessName = payload.businessName || payload.business_name || "Kosmoi Inc";
+
     return await StripeService.createPaymentLink(
-        payload.businessName || "Kosmoi Inc",
-        payload.productName,
+        businessName,
+        productName,
         payload.amount,
-        payload.currency
+        payload.currency || 'usd'
     );
-}, "Create a Stripe payment link. Params: { productName, amount, currency, businessName? }");
+}, "Create a Stripe payment link. Params: { productName OR product_name, amount, currency?, businessName? }");
 
 console.log("✅ ServiceTools Registered");
 

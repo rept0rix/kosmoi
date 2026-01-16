@@ -1,4 +1,4 @@
-import { db } from '../api/supabaseClient';
+import { db } from '../api/supabaseClient.js';
 import {
     saveProviders,
     getAllProviders,
@@ -50,10 +50,8 @@ export async function downloadAllProviders() {
 
         let providers = [];
 
-        if (isDevelopment) {
-            // Try to fetch from Remote DB, but fall back to empty array if it fails
-            providers = await db.entities.ServiceProvider.filter({ status: 'active' });
-        }
+        // Always fetch from Remote DB
+        providers = await db.entities.ServiceProvider.filter({ status: 'active' });
 
         updateSyncStatus({ total: providers.length, progress: 0 });
 

@@ -15,7 +15,7 @@ const Pricing = () => {
 
             <div className="container mx-auto px-4 relative z-10">
                 <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight text-white drop-shadow-xl font-heading">
+                    <h1 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight text-white drop-shadow-xl font-heading">
                         Simple, <span className="text-transparent bg-clip-text bg-gradient-to-r from-banana-400 to-banana-600 animate-pulse">Transparent</span> Pricing
                     </h1>
                     <p className="text-xl text-slate-400">
@@ -25,7 +25,7 @@ const Pricing = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                     {/* Free Plan */}
-                    <div className="glass-card-premium p-8 rounded-3xl flex flex-col hover:border-banana-500/30 transition-all duration-300">
+                    <div className="glass-card-premium p-6 md:p-8 rounded-3xl flex flex-col hover:border-banana-500/30 transition-all duration-300">
                         <div className="mb-8">
                             <h3 className="text-lg font-bold text-slate-300 mb-2 font-heading">Basic</h3>
                             <div className="flex items-baseline gap-1">
@@ -55,7 +55,7 @@ const Pricing = () => {
                     </div>
 
                     {/* 35 THB Test Drive */}
-                    <div className="glass-card-premium p-8 rounded-3xl flex flex-col border-banana-400/30 shadow-gold-glow hover:scale-[1.02] transition-all relative overflow-hidden group">
+                    <div className="glass-card-premium p-6 md:p-8 rounded-3xl flex flex-col border-banana-400/30 shadow-gold-glow hover:scale-[1.02] transition-all relative overflow-hidden group">
                         <div className="grainy-noise absolute inset-0 opacity-20"></div>
                         <div className="absolute top-0 right-0 bg-gradient-to-l from-banana-500 to-banana-400 text-midnight-950 text-[10px] font-bold px-3 py-1 rounded-bl-xl z-20">
                             POPULAR
@@ -90,7 +90,7 @@ const Pricing = () => {
                     </div>
 
                     {/* 1500 THB Growth */}
-                    <div className="glass-card-premium p-8 rounded-3xl flex flex-col hover:border-blue-400/30 transition-all duration-300">
+                    <div className="glass-card-premium p-6 md:p-8 rounded-3xl flex flex-col hover:border-blue-400/30 transition-all duration-300">
                         <div className="mb-8">
                             <h3 className="text-lg font-bold text-blue-200 mb-2 font-heading">Growth</h3>
                             <div className="flex items-baseline gap-1">
@@ -122,7 +122,7 @@ const Pricing = () => {
                     </div>
 
                     {/* 3500 THB Scale / Premium */}
-                    <div className="glass-card-premium p-8 rounded-3xl flex flex-col relative transform md:-translate-y-4 border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20 transition-all">
+                    <div className="glass-card-premium p-6 md:p-8 rounded-3xl flex flex-col relative transform md:-translate-y-4 border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20 transition-all">
                         <div className="absolute top-0 right-0 bg-purple-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
                             MOST POWERFUL
                         </div>

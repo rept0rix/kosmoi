@@ -91,16 +91,79 @@ serve(async (req: Request) => {
             if (session.mode === 'subscription') {
                 const subscriptionId = session.subscription
                 await manageSubscriptionStatusChange(subscriptionId as string, session.customer as string, true)
+            } else if (session.mode === 'payment' && session.metadata?.type === 'claim_profile') {
+                // Claim Profile Logic
+                const { userId, providerId } = session.metadata;
+                console.log(`Processing Claim Profile for Provider: ${providerId} by User: ${userId}`);
+
+                // 1. Update Service Provider
+                const { error: updateError } = await supabase
+                    .from('service_providers')
+                    .update({
+                        owner_id: userId,
+                        claimed: true,
+                        claimed_at: new Date().toISOString(),
+                        stripe_status: 'verified' // Assume verified since they paid
+                    })
+                    .eq('id', providerId);
+
+                if (updateError) {
+                    console.error('Failed to update provider claim status:', updateError);
+                    return new Response('Error updating provider', { status: 500 });
+                }
+
+                // 2. Record Transaction
+                const { error: txnError } = await supabase.rpc('process_transaction', {
+                    target_user_id: userId,
+                    amount: session.amount_total ? session.amount_total / 100 : 0,
+                    type: 'payment',
+                    reference_id: session.id,
+                    metadata: session
+                });
+
+                if (txnError) console.error('Failed to record claim transaction:', txnError);
+
+                if (txnError) console.error('Failed to record claim transaction:', txnError);
+
+                console.log(`Claim successful for provider ${providerId}`);
+
+            } else if (session.mode === 'payment' && session.metadata?.type === 'booking_payment') {
+                // Booking Payment Logic (Vibe System Integration)
+                const { userId, bookingId } = session.metadata;
+
+                // Calculate Reward: 10% of total amount (amount_total is in cents)
+                // bookingValueUsd = amount_total / 100
+                // vibes = bookingValueUsd * 0.10
+
+                const amountTotal = session.amount_total || 0;
+                const bookingValueUsd = amountTotal / 100;
+                const vibeReward = Math.floor(bookingValueUsd * 0.10); // Round down to integer vibes
+
+                console.log(`Processing Booking Payment for User: ${userId}. Value: $${bookingValueUsd}. Reward: ${vibeReward} Vibes.`);
+
+                if (vibeReward > 0) {
+                    const { error: vibeError } = await supabase.rpc('award_vibes', {
+                        target_user_id: userId,
+                        amount: vibeReward,
+                        reason: `Booking Reward: ${bookingId}`
+                    });
+
+                    if (vibeError) {
+                        console.error('Failed to award vibes for booking:', vibeError);
+                    } else {
+                        console.log(`Awarded ${vibeReward} Vibes to user ${userId}`);
+                    }
+                }
             } else if (session.type === 'topup' || session.metadata?.type === 'topup') {
                 // Legacy / Topup logic
                 const { type, userId } = session.metadata || {}
                 // RPC
                 const { error } = await supabase.rpc('process_transaction', {
-                    p_user_id: userId, // Needs to be passed in metadata!
-                    p_amount: session.amount_total ? session.amount_total / 100 : 0,
-                    p_type: 'topup',
-                    p_reference_id: session.id,
-                    p_metadata: session
+                    target_user_id: userId, // Needs to be passed in metadata!
+                    amount: session.amount_total ? session.amount_total / 100 : 0,
+                    type: 'topup', // 'topup' is likely valid if in enum, otherwise check.
+                    reference_id: session.id,
+                    metadata: session
                 })
 
                 if (error) {

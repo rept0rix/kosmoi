@@ -182,9 +182,9 @@ export default function EditProfileDialog({ provider, onUpdate }) {
                                             <button
                                                 type="button"
                                                 onClick={() => setFormData(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))}
-                                                className="absolute top-1 right-1 bg-red-500/80 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-1 right-1 bg-red-500/90 p-1.5 rounded-full text-white hover:bg-red-600 transition-colors shadow-sm"
                                             >
-                                                <X className="w-3 h-3 text-white" />
+                                                <X className="w-3 h-3" />
                                             </button>
                                         </div>
                                     ))}
