@@ -6,6 +6,15 @@ import './i18n'
 import { HelmetProvider } from 'react-helmet-async';
 import * as Sentry from "@sentry/react";
 import ErrorBoundary from './components/ErrorBoundary';
+import { AuthProvider } from '@/features/auth/context/AuthContext';
+import { AppModeProvider } from '@/contexts/AppModeContext';
+import { UserProfileProvider } from '@/contexts/UserProfileContext';
+import { LocationProvider } from '@/contexts/LocationContext';
+import { LanguageProvider } from '@/components/LanguageContext';
+import { AppConfigProvider } from '@/components/AppConfigContext';
+import { RxDBProvider } from '@/core/db/RxDBProvider';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClientInstance } from '@/shared/lib/query-client';
 
 // Initialize Sentry only if DSN is present
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -26,7 +35,23 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <HelmetProvider>
     <ErrorBoundary>
-      <App />
+      <AuthProvider>
+        <AppModeProvider>
+          <UserProfileProvider>
+            <LocationProvider>
+              <LanguageProvider>
+                <AppConfigProvider>
+                  <RxDBProvider>
+                    <QueryClientProvider client={queryClientInstance}>
+                      <App />
+                    </QueryClientProvider>
+                  </RxDBProvider>
+                </AppConfigProvider>
+              </LanguageProvider>
+            </LocationProvider>
+          </UserProfileProvider>
+        </AppModeProvider>
+      </AuthProvider>
     </ErrorBoundary>
   </HelmetProvider>,
 )
