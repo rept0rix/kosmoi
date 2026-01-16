@@ -23,7 +23,7 @@ async function main() {
     const { data: emails, error } = await supabase
         .from('inbound_emails')
         .select('*')
-        .order('received_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1);
 
     if (error) {
