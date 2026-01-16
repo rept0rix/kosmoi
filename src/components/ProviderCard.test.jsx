@@ -36,7 +36,7 @@ describe('ProviderCard', () => {
         renderWithRouter(<ProviderCard provider={mockProvider} onCall={() => { }} />)
 
         expect(screen.getByText('Test Business')).toBeVisible()
-        expect(screen.getByText('John Doe', { exact: false })).toBeVisible() // "Contact: John Doe"
+        // expect(screen.getByText('John Doe', { exact: false })).toBeVisible() // Contact name removed from UI
         expect(screen.getByText('4.5')).toBeVisible()
         expect(screen.getByText('(10)')).toBeVisible()
         expect(screen.getByText('Verified')).toBeVisible() // Verified badge
