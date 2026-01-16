@@ -216,6 +216,7 @@ const AuthenticatedApp = () => {
             <Route path="marketplace" element={<Marketplace />} />
             <Route path="marketplace/:id" element={<ProductDetails />} />
             <Route path="organizer" element={<Organizer />} />
+            <Route path="business-registration" element={<Pages.BusinessRegistration />} />
             <Route path="vendor-signup" element={<VendorSignup />} />
             <Route path="login" element={<Pages.Login />} />
             <Route path="update-password" element={<Pages.UpdatePassword />} />
