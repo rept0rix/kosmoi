@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/shared/lib/utils";
 import { db } from '@/api/supabaseClient';
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,10 +98,10 @@ export default function BusinessRegistration() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [images, setImages] = useState([]);
 
-  const { data: user } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => db.auth.me(),
-  });
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [images, setImages] = useState([]);
+
+  const { user, isAuthenticated, isLoadingAuth } = useAuth();
 
   const createBusinessMutation = useMutation({
     mutationFn: async (/** @type {any} */ businessData) => {
@@ -186,7 +187,15 @@ export default function BusinessRegistration() {
     return mapPosition !== null;
   };
 
-  if (!user) {
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-blue-50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -229,8 +238,8 @@ export default function BusinessRegistration() {
               <div key={s} className="flex items-center">
                 <div
                   className={`w - 10 h - 10 rounded - full flex items - center justify - center font - bold ${step >= s
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-500"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-500"
                     } `}
                 >
                   {s}
@@ -419,8 +428,8 @@ export default function BusinessRegistration() {
                         key={lang.value}
                         onClick={() => handleLanguageToggle(lang.value)}
                         className={`cursor - pointer ${formData.languages.includes(lang.value)
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-700"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-700"
                           } `}
                       >
                         {lang.label}
@@ -452,8 +461,8 @@ export default function BusinessRegistration() {
                         key={area}
                         onClick={() => handleAreaToggle(area)}
                         className={`cursor - pointer ${formData.service_areas.includes(area)
-                            ? "bg-green-600 text-white"
-                            : "bg-gray-200 text-gray-700"
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-200 text-gray-700"
                           } `}
                       >
                         {area}
