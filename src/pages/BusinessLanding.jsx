@@ -33,7 +33,7 @@ const BusinessLanding = () => {
 
 
       {/* Hero Section */}
-      <header id="vision" className="relative overflow-hidden pt-16 pb-24 lg:pt-32 bg-slate-50">
+      <header id="vision" className="relative overflow-hidden pt-24 pb-24 lg:pt-32 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-100 px-4 py-2 rounded-full mb-8 animate-fade-in-up">

@@ -9,7 +9,7 @@ import { Check, CheckCircle, Smartphone, Building, Zap, Star } from 'lucide-reac
  */
 const Pricing = () => {
     return (
-        <div className="min-h-screen bg-midnight-950 text-white py-20 font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-midnight-950 text-white pt-32 pb-20 font-sans relative overflow-hidden">
             {/* Background Ambient Glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-banana-500/10 rounded-full blur-[120px] pointer-events-none" />
 

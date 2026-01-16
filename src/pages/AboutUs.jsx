@@ -10,7 +10,7 @@ const AboutUs = () => {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
             {/* Compact Hero Section */}
-            <div className="bg-slate-900 text-white py-12 md:py-16 relative overflow-hidden">
+            <div className="bg-slate-900 text-white pt-24 pb-12 md:pt-32 md:pb-16 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 <div className="container mx-auto px-4 text-center relative z-10">
                     <Badge variant="secondary" className="mb-4 bg-slate-800 text-slate-300 hover:bg-slate-700 border-0">Our Story</Badge>
