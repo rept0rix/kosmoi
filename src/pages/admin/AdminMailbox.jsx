@@ -9,6 +9,15 @@ const AdminMailbox = () => {
     const [emails, setEmails] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedEmail, setSelectedEmail] = useState(null);
+    const [activeInbox, setActiveInbox] = useState('all');
+
+    // Extract unique recipients from emails
+    const uniqueRecipients = [...new Set(emails.map(e => e.recipient).filter(Boolean))];
+
+    // Filter emails based on active inbox
+    const filteredEmails = activeInbox === 'all'
+        ? emails
+        : emails.filter(e => e.recipient === activeInbox);
 
     useEffect(() => {
         fetchEmails();
@@ -50,27 +59,61 @@ const AdminMailbox = () => {
                     <Mail className="w-8 h-8 text-indigo-500" />
                     <h1 className="text-3xl font-bold tracking-tight text-white">Admin Mailbox</h1>
                 </div>
-                <button onClick={fetchEmails} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition">
-                    <RefreshCw className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={fetchEmails} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition">
+                        <RefreshCw className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
             </header>
 
             <div className="grid grid-cols-12 gap-6 h-full">
-                {/* Email List */}
-                <Card className="col-span-4 bg-slate-900 border-slate-800 flex flex-col h-full overflow-hidden">
+                {/* Mailboxes Sidebar */}
+                <Card className="col-span-2 bg-slate-900 border-slate-800 flex flex-col h-full overflow-hidden">
                     <CardHeader className="py-3 bg-slate-950/50 border-b border-slate-800">
-                        <CardTitle className="text-sm font-medium text-slate-400">Inbox ({emails.length})</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-500">Accounts</CardTitle>
                     </CardHeader>
                     <ScrollArea className="flex-1">
+                        <div className="p-2 space-y-1">
+                            <button
+                                onClick={() => setActiveInbox('all')}
+                                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition ${activeInbox === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                            >
+                                All Inboxes
+                            </button>
+                            {uniqueRecipients.map(recipient => (
+                                <button
+                                    key={recipient}
+                                    onClick={() => setActiveInbox(recipient)}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition ${activeInbox === recipient ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                                >
+                                    <div className="truncate">{recipient}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </Card>
+
+                {/* Email List */}
+                <Card className="col-span-3 bg-slate-900 border-slate-800 flex flex-col h-full overflow-hidden">
+                    <CardHeader className="py-3 bg-slate-950/50 border-b border-slate-800 flex justify-between items-center">
+                        <CardTitle className="text-sm font-medium text-slate-400">
+                            {activeInbox === 'all' ? 'All Messages' : activeInbox}
+                        </CardTitle>
+                        <Badge variant="secondary" className="text-xs bg-slate-800 text-slate-400">{filteredEmails.length}</Badge>
+                    </CardHeader>
+                    <div className="p-2 border-b border-slate-800">
+                        {/* Search could go here */}
+                    </div>
+                    <ScrollArea className="flex-1">
                         <div className="flex flex-col">
-                            {emails.map(email => (
+                            {filteredEmails.map(email => (
                                 <div
                                     key={email.id}
                                     onClick={() => { setSelectedEmail(email); if (email.processed_status === 'unread') markAsRead(email.id); }}
                                     className={`p-4 border-b border-slate-800 cursor-pointer hover:bg-slate-800/50 transition ${selectedEmail?.id === email.id ? 'bg-indigo-900/20 border-l-4 border-l-indigo-500' : ''} ${email.processed_status === 'unread' ? 'bg-slate-800/10' : ''}`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className={`text-sm font-semibold ${email.processed_status === 'unread' ? 'text-white' : 'text-slate-400'}`}>
+                                        <span className={`text-sm font-semibold truncate max-w-[120px] ${email.processed_status === 'unread' ? 'text-white' : 'text-slate-400'}`}>
                                             {email.sender}
                                         </span>
                                         <span className="text-xs text-slate-500">
@@ -85,15 +128,15 @@ const AdminMailbox = () => {
                                     </div>
                                 </div>
                             ))}
-                            {emails.length === 0 && !loading && (
-                                <div className="p-8 text-center text-slate-500 text-sm">No emails yet.</div>
+                            {filteredEmails.length === 0 && !loading && (
+                                <div className="p-8 text-center text-slate-500 text-sm">No emails found.</div>
                             )}
                         </div>
                     </ScrollArea>
                 </Card>
 
                 {/* Email Detail */}
-                <Card className="col-span-8 bg-slate-900 border-slate-800 flex flex-col h-full">
+                <Card className="col-span-7 bg-slate-900 border-slate-800 flex flex-col h-full">
                     {selectedEmail ? (
                         <>
                             <CardHeader className="py-4 bg-slate-950/50 border-b border-slate-800">
