@@ -551,7 +551,7 @@ export const db = {
     rpc: (fn, args) => supabase.rpc(fn, args),
     storage: supabase.storage,
     channel: (name, config) => supabase.channel(name, config),
-    auth: supabaseHelpers.auth // Use wrapper to match previous structure
+    auth: supabaseHelpers.auth || supabase.auth // Use wrapper if exists, fallback to client
 };
 
 // Export supabaseAdmin for AdminImporter
