@@ -200,7 +200,7 @@ const AuthenticatedApp = () => {
 
             {Object.entries(Pages)
               .filter(([path]) => path !== 'MapView')
-              .filter(([path]) => !['Wallet', 'ProviderDashboard', 'RealEstate', 'Experiences'].includes(path)) // Exclude Super App pages for manual routing
+              .filter(([path]) => !['Wallet', 'ProviderDashboard', 'RealEstate', 'Experiences', 'Business', 'BusinessRegistration'].includes(path)) // Exclude Super App and Business pages for manual routing
               .map(([path, Page]) => (
                 <Route key={path} path={`${path.toLowerCase()}`} element={<Page />} />
               ))}
