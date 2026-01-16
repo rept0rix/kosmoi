@@ -21,11 +21,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { PushService } from "@/services/PushService";
 import { toast } from "@/components/ui/use-toast";
+import { useAppMode } from "@/contexts/AppModeContext";
+import { Store, RefreshCw } from "lucide-react";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const { activeMode, setMode } = useAppMode();
   const [isPushEnabled, setIsPushEnabled] = React.useState(false);
   const [loadingPush, setLoadingPush] = React.useState(false);
 
@@ -127,8 +130,47 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* --- Mode Switcher Card --- */}
+      <div className="px-4 -mt-6 relative z-30 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${activeMode === 'business' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+              {activeMode === 'business' ? <Store className="w-6 h-6" /> : <User className="w-6 h-6" />}
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white">
+                {activeMode === 'business' ? 'Business Mode' : 'Personal Mode'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {activeMode === 'business' ? 'Managing your services' : 'Standard user view'}
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 font-bold flex gap-2"
+            onClick={() => {
+              const newMode = activeMode === 'personal' ? 'business' : 'personal';
+              if (newMode === 'business' && user?.role !== 'vendor' && user?.role !== 'service_provider') {
+                navigate('/business-registration');
+                toast({ title: "Registration Required", description: "Please register your business to access Business Mode." });
+              } else {
+                setMode(newMode);
+                toast({ title: `Switched to ${newMode === 'business' ? 'Business' : 'Personal'} Mode` });
+                if (newMode === 'business') navigate('/provider-dashboard');
+                else navigate('/app');
+              }
+            }}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Switch
+          </Button>
+        </div>
+      </div>
+
       {/* --- Menu List --- */}
-      <div className="px-4 -mt-4 relative z-20">
+      <div className="px-4 relative z-20">
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
 
           {menuItems.map((section, idx) => (
