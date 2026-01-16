@@ -36,7 +36,7 @@ export const BookingService = {
 
         // 3. Filter out booked slots
         // Booking start_time comes as "09:00:00" from DB usually
-        const bookedTimes = new Set(bookings.map(b => b.start_time.substring(0, 5)));
+        const bookedTimes = new Set((bookings || []).map(b => b.start_time.substring(0, 5)));
 
         const availableSlots = allSlots.filter(slot => !bookedTimes.has(slot));
 
