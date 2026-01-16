@@ -89,6 +89,7 @@ export default function AdminLayout() {
                         <NavItem to="/admin/businesses" icon={<Store />} label="Businesses" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/users" icon={<Users />} label="Users" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/crm" icon={<Target />} label="CRM Dashboard" onClick={() => setIsMobileOpen(false)} />
+                        <NavItem to="/admin/mailbox" icon={<Mail />} label="Mailbox" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/sales" icon={<Mail />} label="Sales Coordinator" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/leads" icon={<Users />} label="Leads List" onClick={() => setIsMobileOpen(false)} />
                         <NavItem to="/admin/marketing" icon={<Megaphone />} label="Marketing Center" onClick={() => setIsMobileOpen(false)} />

@@ -43,8 +43,9 @@ async function bridgeDailyTasks() {
     const content = fs.readFileSync(plannerPath, 'utf8');
 
     // Regex to find the Task Table
-    // Looks for the table header and captures rows until end of table
-    const tableRegex = /\| Task ID \| Description \| Assigned Agent \| Dependencies \| Status \|\n\|[\s:-|]*\|\n((?:\|.*\|\n)+)/;
+    // Matches the header row, the separator row, and captures the body rows
+    // Flexible with spaces around pipes and newlines
+    const tableRegex = /\|\s*Task ID\s*\|\s*Description\s*\|\s*Assigned Agent\s*\|\s*Dependencies\s*\|\s*Status\s*\|\s*\n\s*\|[\s\S]*?\|\s*\n((?:\|.*\|\s*\n)+)/;
     const match = content.match(tableRegex);
 
     if (!match || !match[1]) {

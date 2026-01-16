@@ -77,6 +77,7 @@ import AdminData from '@/pages/admin/AdminData';
 import AdminCRM from '@/pages/admin/AdminCRM';
 import AdminSales from '@/pages/admin/AdminSales';
 import AdminLeads from './pages/admin/AdminLeads';
+import AdminMailbox from './pages/admin/AdminMailbox';
 import AdminMarketing from './pages/admin/AdminMarketing';
 import AdminAutomations from './pages/admin/AdminAutomations';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
@@ -251,6 +252,7 @@ const AuthenticatedApp = () => {
                 <Route path="optimizer" element={<AdminOptimizer />} />
                 <Route path="crm" element={<AdminCRM />} />
                 <Route path="sales" element={<AdminSales />} />
+                <Route path="mailbox" element={<AdminMailbox />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="marketing" element={<AdminMarketing />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
