@@ -9,42 +9,45 @@ import { Button } from "@/components/ui/button";
  * @param {string} [props.className]
  * @param {React.ReactNode} props.children
  */
+/**
+ * GlassCard - A premium card with deep blur and subtle reflections
+ * @param {object} props
+ */
 export const GlassCard = React.forwardRef(({ className, children, ...props }, ref) => (
     <div
         ref={ref}
         className={cn(
-            "relative overflow-hidden rounded-xl border border-white/20 bg-white/30 backdrop-blur-xl shadow-lg dark:bg-black/30 dark:border-white/10",
+            "glass-card grainy-noise p-6 shadow-2xl transition-all duration-500",
+            "hover:shadow-banana-500/10 hover:border-white/20",
             className
         )}
         {...props}
     >
-        {/* Shine effect overlay (optional, subtle) */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white/40 to-white/0 pointer-events-none opacity-50 dark:from-white/10" />
         {children}
     </div>
 ));
 GlassCard.displayName = "GlassCard";
 
 /**
- * GlassButton - A button with glass effect
+ * GlassButton - A tactical button with neon glow and high-end feedback
  * @param {object} props
- * @param {string} [props.className]
- * @param {string} [props.variant]
- * @param {React.ReactNode} [props.children]
  */
 export const GlassButton = React.forwardRef(({ className, variant = "default", children, ...props }, ref) => {
-    // We wrap the standard Button but override styles
     return (
         <Button
             ref={ref}
-            variant="ghost" // Base style
+            variant="ghost"
             className={cn(
-                "bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/40 text-foreground transition-all duration-300 shadow-sm hover:shadow-md",
-                "dark:bg-black/20 dark:border-white/10 dark:hover:bg-white/10 dark:text-white",
+                "relative overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 text-white",
+                "hover:bg-white/10 hover:border-white/20 hover:text-white shadow-lg transition-all duration-300",
+                "active:scale-95 group",
                 className
             )}
             {...props}
-        />
+        >
+            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-banana-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="relative z-10 flex items-center gap-2">{children}</span>
+        </Button>
     );
 });
 GlassButton.displayName = "GlassButton";
@@ -56,7 +59,7 @@ export const GlassPanel = React.forwardRef(({ className, children, ...props }, r
     <div
         ref={ref}
         className={cn(
-            "rounded-lg bg-white/20 backdrop-blur-md border border-white/10 p-4 shadow-sm dark:bg-black/20 dark:border-white/5",
+            "glass-panel rounded-2xl p-4 transition-colors duration-300",
             className
         )}
         {...props}

@@ -76,7 +76,7 @@ export default function ProviderCard({ provider, onCall, showDistance = false })
 
   return (
     <Card
-      className="group relative overflow-hidden glass-card-premium hover:border-banana-500/30 transition-all duration-300 cursor-pointer rounded-2xl border-white/10"
+      className="group relative overflow-hidden glass-card-premium provider-card-hover transition-all duration-500 cursor-pointer rounded-2xl border-white/10"
       onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
     >
       {/* Image / Hero Section */}

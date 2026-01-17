@@ -53,7 +53,7 @@ function BoardRoomContent() {
     } = useBoardRoom();
 
     return (
-        <div className="flex h-full w-full bg-gray-50 overflow-hidden font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex h-full w-full bg-slate-950 overflow-hidden font-sans grainy-noise" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* DEBUG INFO */}
             <div className="fixed top-0 left-0 bg-black text-white text-xs p-1 z-50 opacity-50 pointer-events-none">
                 App: {config?.appName} | Theme: {config?.themeColor}
@@ -108,7 +108,7 @@ function BoardRoomContent() {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col relative bg-white">
+                <div className="flex-1 flex flex-col relative bg-slate-950/50 backdrop-blur-md">
                     {/* Worker Alert */}
                     {isWorkerStopped && (
                         <div className="p-4 bg-red-50 border-b border-red-200">
@@ -129,8 +129,8 @@ function BoardRoomContent() {
                     )}
 
                     {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                    <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fbbf24' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
                     }} />
 
 
@@ -183,7 +183,7 @@ function BoardRoomContent() {
                                     setBookingDetails(details);
                                     setIsBookingOpen(true);
                                 }}
-                                className="max-w-3xl mx-auto w-full border-x border-gray-100 dark:border-slate-800 shadow-sm bg-white min-h-screen"
+                                className="max-w-3xl mx-auto w-full border-x border-white/5 shadow-2xl bg-black/20 backdrop-blur-xl min-h-screen"
                             />
 
                             <BoardRoomInput
@@ -204,9 +204,9 @@ function BoardRoomContent() {
                                 transition={{ duration: 0.5 }}
                                 className="relative"
                             >
-                                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-                                <GlassCard className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center relative z-10 glass-shine border-white/10">
-                                    <Layout className="w-16 h-16 md:w-20 md:h-20 opacity-60 text-foreground" />
+                                <div className="absolute inset-0 bg-banana-500/20 blur-3xl rounded-full animate-pulse" />
+                                <GlassCard className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center relative z-10 border-banana-500/20">
+                                    <Layout className="w-16 h-16 md:w-20 md:h-20 text-banana-400 drop-shadow-glow" />
                                 </GlassCard>
                             </motion.div>
 
@@ -216,7 +216,7 @@ function BoardRoomContent() {
                                 transition={{ delay: 0.2 }}
                                 className="text-center space-y-3 z-10 max-w-lg"
                             >
-                                <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50 py-1">
+                                <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white text-glow-banana bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 py-1">
                                     {isRTL ? 'חדר הישיבות' : 'The Board Room'}
                                 </h2>
                                 <p className="text-base md:text-lg text-muted-foreground/80 max-w-sm mx-auto leading-relaxed">

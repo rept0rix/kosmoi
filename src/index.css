@@ -110,8 +110,13 @@ button:focus-visible {
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
 
-    --radius: 0.75rem;
-    /* More rounded, modern feel */
+    --radius: 1rem;
+    /* Ultra-rounded for premium feel */
+
+    /* Glass Tokens - Light */
+    --glass-bg: 0 0% 100% / 0.4;
+    --glass-border: 0 0% 100% / 0.2;
+    --glass-reflection: 0 0% 100% / 0.5;
 
     /* Chart / Vis Colors */
     --chart-1: 221 83% 53%;
@@ -166,6 +171,11 @@ button:focus-visible {
     --ring: 45 93% 47%;
     /* Gold Ring */
 
+    /* Glass Tokens - Dark (Midnight) */
+    --glass-bg: 222 47% 11% / 0.6;
+    --glass-border: 255 255% 255% / 0.1;
+    --glass-reflection: 255 255% 255% / 0.05;
+
     --chart-1: 45 93% 47%;
     /* Gold */
     --chart-2: 199 89% 48%;
@@ -211,11 +221,45 @@ button:focus-visible {
   }
 
   .glass-card {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden;
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  .glass-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.05) 100%);
+    mask-image: linear-gradient(black, black);
+    -webkit-mask-image: linear-gradient(black, black);
   }
 
   .glass-card-premium {
-    @apply bg-slate-950/70 backdrop-blur-2xl border border-amber-500/20 shadow-xl shadow-amber-900/10 relative overflow-hidden;
+    @apply bg-slate-950/70 backdrop-blur-2xl border border-amber-500/20 shadow-2xl shadow-amber-900/10 relative overflow-hidden;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-card-premium::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    transform: rotate(30deg);
+    transition: 0.5s;
+    pointer-events: none;
+  }
+
+  .provider-card-hover:hover .glass-card-premium::before {
+    left: 100%;
   }
 
   .grainy-noise {
@@ -228,24 +272,38 @@ button:focus-visible {
     inset: 0;
     width: 100%;
     height: 100%;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 0;
   }
 
   .glass-panel {
-    @apply bg-slate-950/80 backdrop-blur-md border border-slate-800;
+    @apply bg-slate-950/80 backdrop-blur-lg border border-white/5 shadow-inner;
   }
 
-  .text-glow {
-    text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  .text-glow-banana {
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.4), 0 0 20px rgba(245, 158, 11, 0.2);
+  }
+
+  .text-glow-blue {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.4), 0 0 20px rgba(59, 130, 246, 0.2);
   }
 
   .text-gradient-gold {
-    @apply bg-gradient-to-r from-amber-200 to-yellow-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 bg-clip-text text-transparent font-bold;
   }
 
   .text-gradient-blue {
-    @apply bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-600 bg-clip-text text-transparent font-bold;
+  }
+
+  /* Micro-animations */
+  @keyframes float-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  .animate-float-gentle {
+    animation: float-gentle 4s ease-in-out infinite;
   }
 }
