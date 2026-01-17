@@ -1,6 +1,6 @@
 import { ToolRegistry } from "../ToolRegistry.js";
 
-ToolRegistry.register("market_scanner", async (payload) => {
+ToolRegistry.register("market_scanner", "Scan the market for trends in a specific category and region.", { category: "string", region: "string" }, async (payload) => {
     // payload: { category, region }
     const category = payload.category || "General";
     const region = payload.region || "Global";
@@ -44,7 +44,7 @@ Insight: The market is shifting towards automation and personalization. Recommen
     return report;
 });
 
-ToolRegistry.register("analyze_competitors", async (payload) => {
+ToolRegistry.register("analyze_competitors", "Perform a SWOT analysis on a competitor URL.", { url: "string" }, async (payload) => {
     // payload: { url }
     return `[Competitor Analysis]
 Target: ${payload.url}

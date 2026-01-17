@@ -205,7 +205,7 @@ if (!isUniversal && agentConfig) {
 === WORKER MODE ACTIVE ===
 You are running as a WORKER on the target machine.
 1. You ARE allowed and EXPECTED to use 'execute_command', 'write_code', 'read_file' directly.
-2. Ignore any previous instructions about delegating tasks or using 'create_task'.
+2. Use 'create_task' ONLY if your role is 'ceo' or 'board-chairman' and you need to delegate a sub-task. Otherwise, EXECUTE the task yourself.
 3. EXECUTE the task description immediately using the appropriate tool.
 4. Do not ask for permission. Just do it.
 `;
@@ -532,7 +532,7 @@ When finished, reply with "TASK_COMPLETED".
                 action.payload = {
                     title: action.title,
                     description: action.description,
-                    assignee: action.assignee,
+                    assigned_to: action.assignee || action.assigned_to,
                     priority: action.priority
                 };
             } else if (action.type === 'execute_command') { // In case it uses type instead of tool_call
@@ -814,7 +814,7 @@ async function main() {
 === WORKER MODE ACTIVE ===
 You are running as a WORKER on the target machine.
 1. You ARE allowed and EXPECTED to use 'execute_command', 'write_code', 'read_file' directly.
-2. Ignore any previous instructions about delegating tasks or using 'create_task'.
+2. Use 'create_task' ONLY if your role is 'ceo' or 'board-chairman' and you need to delegate a sub-task. Otherwise, EXECUTE the task yourself.
 3. EXECUTE the task description immediately using the appropriate tool.
 4. Do not ask for permission. Just do it.
 `;

@@ -5,14 +5,14 @@ import { GenerateImage, CreatePaymentLink } from "../../../api/integrations.js";
 import { db } from "../../../api/supabaseClient.js"; // Needed for delegating tasks
 
 // --- CREATIVE TOOLS ---
-ToolRegistry.register("generate_image", async (payload) => {
+ToolRegistry.register("generate_image", "Generate a new image using AI based on a text prompt.", { prompt: "string", aspectRatio: "string" }, async (payload) => {
     return await GenerateImage({
         prompt: payload.prompt,
         aspectRatio: payload.aspectRatio
     });
 });
 
-ToolRegistry.register("nano_banana_api", async (payload) => {
+ToolRegistry.register("nano_banana_api", "Generate premium images in the Nano Banana style.", { prompt: "string", style: "string" }, async (payload) => {
     const prompt = payload.prompt || "abstract design";
     const style = payload.style || "modern";
     const enhancedPrompt = `${prompt}, ${style} style, high quality, professional design, vector art`;
@@ -23,7 +23,7 @@ ToolRegistry.register("nano_banana_api", async (payload) => {
 });
 
 // --- CALENDAR TOOLS ---
-ToolRegistry.register("calendar-api", async (payload) => {
+ToolRegistry.register("calendar-api", "Interact with the provider's calendar for availability and bookings.", { action: "string", date: "string", providerId: "string", details: "object" }, async (payload) => {
     const { action } = payload;
     try {
         if (action === "get_slots") {
@@ -43,7 +43,7 @@ ToolRegistry.register("calendar-api", async (payload) => {
     }
 });
 
-ToolRegistry.register("scheduler", async (payload, options) => {
+ToolRegistry.register("scheduler", "Alias for calendar-api. Schedule events.", { action: "string" }, async (payload, options) => {
     return ToolRegistry.execute("calendar-api", payload, options);
 });
 
@@ -62,7 +62,7 @@ ToolRegistry.register("scheduler", async (payload, options) => {
 // });
 
 
-ToolRegistry.register("payment-gateway", async (payload) => {
+ToolRegistry.register("payment-gateway", "Legacy payment gateway alias.", { action: "string" }, async (payload) => {
     const { action } = payload;
     if (action === "create_link") {
         return ToolRegistry.execute("create_payment_link", payload);
@@ -100,6 +100,7 @@ Status: Pending`;
     }
 };
 
-ToolRegistry.register("github_create_issue", async (payload) => delegateToWorker("github_create_issue", payload));
-ToolRegistry.register("github_create_pr", async (payload) => delegateToWorker("github_create_pr", payload));
-ToolRegistry.register("github_list_issues", async (payload) => delegateToWorker("list_dir", payload)); // Mapping list to list for test, or implement specific list logic in worker
+ToolRegistry.register("github_create_issue", "Delegate creating a GitHub issue to a worker.", { title: "string", body: "string" }, async (payload) => delegateToWorker("github_create_issue", payload));
+ToolRegistry.register("github_create_pr", "Delegate creating a GitHub PR to a worker.", { title: "string", head: "string", base: "string" }, async (payload) => delegateToWorker("github_create_pr", payload));
+ToolRegistry.register("github_list_issues", "Delegate listing GitHub issues to a worker.", { repo: "string" }, async (payload) => delegateToWorker("list_dir", payload));
+// Mapping list to list for test, or implement specific list logic in worker

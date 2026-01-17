@@ -8,24 +8,24 @@ import { AgentTools } from "../../../features/agents/services/AgentTools.js";
  * - Book Services
  */
 
-ToolRegistry.register("search_providers", async (payload) => {
+ToolRegistry.register("search_providers", "Search for service providers in the marketplace.", { query: "string" }, async (payload) => {
     // payload: { query: string }
     return await AgentTools.searchProviders(payload.query);
-}, "Search for service providers. Params: { query: 'string' }");
+});
 
-ToolRegistry.register("check_availability", async (payload) => {
+ToolRegistry.register("check_availability", "Check if a provider is available on a specific date.", { providerId: "string", date: "string" }, async (payload) => {
     // payload: { providerId: string, date: string }
     return await AgentTools.checkAvailability(payload.providerId, payload.date);
-}, "Check provider availability. Params: { providerId: 'uuid', date: 'YYYY-MM-DD' }");
+});
 
 import { StripeService } from "../../../services/payments/StripeService.js";
 
-ToolRegistry.register("create_booking", async (payload) => {
+ToolRegistry.register("create_booking", "Create a new service booking.", { userId: "string", providerId: "string", serviceType: "string", date: "string", startTime: "string", endTime: "string" }, async (payload) => {
     // payload: { userId, providerId, serviceType, date, startTime, endTime }
     return await AgentTools.createBooking(payload);
-}, "Create a new booking. Params: { userId, providerId, serviceType, date, startTime, endTime }");
+});
 
-ToolRegistry.register("create_payment_link", async (payload) => {
+ToolRegistry.register("create_payment_link", "Generate a Stripe payment link for a product.", { businessName: "string", product_name: "string", amount: "number", currency: "string" }, async (payload) => {
     // payload: { businessName, productName/product_name, amount, currency }
     // Support both snake_case (agent output) and camelCase (internal)
     const productName = payload.productName || payload.product_name;
@@ -37,13 +37,13 @@ ToolRegistry.register("create_payment_link", async (payload) => {
         payload.amount,
         payload.currency || 'usd'
     );
-}, "Create a Stripe payment link. Params: { productName OR product_name, amount, currency?, businessName? }");
+});
 
 console.log("✅ ServiceTools Registered");
 
 import { mimoService } from "../../ai/MimoService.js";
 
-ToolRegistry.register("ask_mimo", async (payload) => {
+ToolRegistry.register("ask_mimo", "Ask the Mimo V2 Flash LLM for assistance.", { prompt: "string", temperature: "number" }, async (payload) => {
     // payload: { prompt: string, temperature?: number }
     try {
         const response = await mimoService.generateText(payload.prompt, undefined, payload.temperature);
@@ -51,4 +51,4 @@ ToolRegistry.register("ask_mimo", async (payload) => {
     } catch (e) {
         return `[Error] Mimo generation failed: ${e.message}`;
     }
-}, "Ask Xiaomi Mimo V2 Flash (faster/cheaper LLM). Params: { prompt: 'string' }");
+});

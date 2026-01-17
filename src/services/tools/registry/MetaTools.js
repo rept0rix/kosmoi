@@ -6,7 +6,7 @@ import { agents } from "../../../features/agents/services/AgentRegistry.js";
  * Update Agent Prompt (Plasticity Tool)
  * Allows the Optimizer to rewrite an agent's system prompt.
  */
-ToolRegistry.register("update_agent_prompt", async ({ agentId, addedRule }, { agentId: callerId }) => {
+ToolRegistry.register("update_agent_prompt", "Rewrite an agent's system prompt with a new rule (Administrator only).", { agentId: "string", addedRule: "string" }, async ({ agentId, addedRule }, { agentId: callerId }) => {
     if (callerId !== 'optimizer-agent' && callerId !== 'human-user') {
         throw new Error("Only the Optimizer or Admin can rewrite neural pathways.");
     }
@@ -46,7 +46,7 @@ ToolRegistry.register("update_agent_prompt", async ({ agentId, addedRule }, { ag
  * Read Agent Logs
  * Allows the Optimizer to analyze recent performance.
  */
-ToolRegistry.register("read_agent_logs", async ({ agentId, limit = 20 }) => {
+ToolRegistry.register("read_agent_logs", "Read recent performance logs for agents.", { agentId: "string", limit: "number" }, async ({ agentId, limit = 20 }) => {
     const { data, error } = await db.entities.AgentLogs.listLatest(limit);
     if (error) throw error;
 

@@ -21,7 +21,7 @@ const createChartPayload = (type, data, config = {}) => {
 
 // --- CHARTING TOOLS ---
 
-ToolRegistry.register("generate_bar_chart", async ({ data, title, description, xKey, categories }) => {
+ToolRegistry.register("generate_bar_chart", "Generate an A2UI Bar Chart component.", { data: "array", title: "string", description: "string", xKey: "string", categories: "array" }, async ({ data, title, description, xKey, categories }) => {
     // Input Validation
     if (!data || !Array.isArray(data)) return "[Error] 'data' must be an array of objects.";
 
@@ -42,7 +42,7 @@ ToolRegistry.register("generate_bar_chart", async ({ data, title, description, x
     return JSON.stringify(cardNode);
 });
 
-ToolRegistry.register("generate_line_chart", async ({ data, title, description, xKey, categories }) => {
+ToolRegistry.register("generate_line_chart", "Generate an A2UI Line Chart component.", { data: "array", title: "string", description: "string", xKey: "string", categories: "array" }, async ({ data, title, description, xKey, categories }) => {
     if (!data || !Array.isArray(data)) return "[Error] 'data' must be an array of objects.";
 
     const chartNode = createChartPayload("line-chart", data, {
@@ -62,7 +62,7 @@ ToolRegistry.register("generate_line_chart", async ({ data, title, description, 
     return JSON.stringify(cardNode);
 });
 
-ToolRegistry.register("generate_pie_chart", async ({ data, title, description, nameKey, valueKey }) => {
+ToolRegistry.register("generate_pie_chart", "Generate an A2UI Pie Chart component.", { data: "array", title: "string", description: "string", nameKey: "string", valueKey: "string" }, async ({ data, title, description, nameKey, valueKey }) => {
     if (!data || !Array.isArray(data)) return "[Error] 'data' must be an array of objects.";
 
     const chartNode = createChartPayload("pie-chart", data, {
@@ -90,7 +90,7 @@ ToolRegistry.register("generate_pie_chart", async ({ data, title, description, n
 
 // --- DATA TOOLS ---
 
-ToolRegistry.register("generate_data_table", async ({ headers, rows, title, caption }) => {
+ToolRegistry.register("generate_data_table", "Generate an A2UI Data Table component.", { headers: "array", rows: "array", title: "string", caption: "string" }, async ({ headers, rows, title, caption }) => {
     if (!headers || !rows) return "[Error] 'headers' (array) and 'rows' (array of arrays) are required.";
 
     const tableNode = {
@@ -115,7 +115,7 @@ ToolRegistry.register("generate_data_table", async ({ headers, rows, title, capt
     return JSON.stringify(tableNode);
 });
 
-ToolRegistry.register("generate_dashboard_view", async ({ stats, charts }) => {
+ToolRegistry.register("generate_dashboard_view", "Generate a full A2UI Dashboard layout.", { stats: "array", charts: "array" }, async ({ stats, charts }) => {
     // Helper to generate a full dashboard layout
     // Stats: Array of { title, value, icon, change, trend }
     // Charts: Array of { type, data, ... } (Usually simplified refs or full objects)

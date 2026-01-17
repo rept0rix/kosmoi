@@ -3,7 +3,7 @@ import { db } from "../../../api/supabaseClient.js";
 import { createTicketInSupabase } from "../../../features/agents/services/memorySupabase.js";
 import { syncAgentsWithDatabase, getAgentById } from "../../../features/agents/services/AgentRegistry.js";
 
-ToolRegistry.register("create_task", async (payload, options) => {
+ToolRegistry.register("create_task", "Delegate a task to an agent or yourself.", { title: "string", description: "string", assigned_to: "string", priority: "string" }, async (payload, options) => {
     // payload: { title, description, assigned_to, priority }
     try {
         const { title, description, assigned_to, priority } = payload;
@@ -14,7 +14,7 @@ ToolRegistry.register("create_task", async (payload, options) => {
             description: description || title,
             assigned_to: assigned_to || options.agentId, // Assign to self if not specified
             priority: priority || 'medium',
-            status: 'open',
+            status: 'pending',
             created_by: options.agentId || 'unknown'
         });
 
@@ -25,7 +25,7 @@ ToolRegistry.register("create_task", async (payload, options) => {
     }
 });
 
-ToolRegistry.register("update_task_status", async (payload, options) => {
+ToolRegistry.register("update_task_status", "Update the status of an existing task.", { taskId: "string", status: "string" }, async (payload, options) => {
     if (!options.userId) return `[Error] Login required to update tasks.`;
     try {
         const { taskId, status } = payload;
@@ -37,7 +37,7 @@ ToolRegistry.register("update_task_status", async (payload, options) => {
     }
 });
 
-ToolRegistry.register("dev_ticket", async (payload, options) => {
+ToolRegistry.register("dev_ticket", "Create a development ticket.", { title: "string", description: "string", priority: "string" }, async (payload, options) => {
     const { userId, agentId } = options;
     const ticket = {
         id: `ticket_${Date.now()}`,
@@ -56,7 +56,7 @@ ToolRegistry.register("dev_ticket", async (payload, options) => {
     }
 });
 
-ToolRegistry.register("update_agent_config", async (payload) => {
+ToolRegistry.register("update_agent_config", "Update configuration for a specific agent.", { agentId: "string", key: "string", value: "any" }, async (payload) => {
     try {
         const { agentId, key, value } = payload;
         if (!agentId || !key) return `[Error] Missing agentId or key.`;
@@ -68,7 +68,7 @@ ToolRegistry.register("update_agent_config", async (payload) => {
     }
 });
 
-ToolRegistry.register("escalate_issue", async (payload, options) => {
+ToolRegistry.register("escalate_issue", "Escalate an issue to the reporting manager.", { title: "string", description: "string" }, async (payload, options) => {
     try {
         const { title, description } = payload;
         const agentId = options.agentId;
@@ -95,7 +95,7 @@ ToolRegistry.register("escalate_issue", async (payload, options) => {
     }
 });
 
-ToolRegistry.register("analyze_failure", async (payload, options) => {
+ToolRegistry.register("analyze_failure", "Analyze an error log to find a root cause.", { error_log: "string", context: "string" }, async (payload, options) => {
     try {
         const { error_log, context } = payload;
         if (!error_log) return "[Error] No error log provided for analysis.";
