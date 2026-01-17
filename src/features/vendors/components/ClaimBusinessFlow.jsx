@@ -42,7 +42,13 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
                 return await db.entities.ServiceProvider.create(payload);
             } catch (error) {
                 // Handle 409 Conflict (Duplicate) gracefully
-                if (error.message?.includes('409') || error.code === '409') {
+                const isConflict =
+                    error?.code === '23505' ||
+                    error?.status === 409 ||
+                    error?.message?.includes('duplicate key') ||
+                    error?.message?.includes('409');
+
+                if (isConflict) {
                     console.warn("Business already exists. Checking ownership...");
                     // Try to find the business by place_id or name
                     // Since we can't easily query by place_id via simple entity wrapper if not set up, 
