@@ -132,7 +132,7 @@ export default function BusinessDashboard() {
             </Button>
           </div>
 
-          {myBusinesses?.length === 0 ? (
+          {(!myBusinesses || myBusinesses.length === 0) ? (
             <Card className="border-dashed border-2 border-slate-300 bg-slate-50/50">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
@@ -147,7 +147,7 @@ export default function BusinessDashboard() {
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 gap-6">
-              {myBusinesses.map(bus => (
+              {myBusinesses?.map(bus => (
                 <Card key={bus.id} className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-600" onClick={() => handleBusinessSelect(bus.id)}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
