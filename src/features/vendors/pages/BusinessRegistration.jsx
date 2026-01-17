@@ -122,7 +122,7 @@ export default function BusinessRegistration() {
               כדי לנהל או לרשום עסק בקוסמוי, עליך להתחבר למערכת תחילה.
             </p>
             <Button
-              onClick={() => db.auth.redirectToLogin(window.location.pathname)}
+              onClick={() => navigateToLogin()}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
               התחבר / הרשם לחשבון
@@ -336,6 +336,9 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
 
   const claimMutation = useMutation({
     mutationFn: async (placeData) => {
+      // Validate input to prevent 'void' access error
+      if (!placeData) throw new Error("No place data provided");
+
       // Create 'pending' service provider from Google Data
       const payload = {
         business_name: placeData.name,
