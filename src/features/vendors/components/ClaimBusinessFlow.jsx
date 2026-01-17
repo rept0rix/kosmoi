@@ -37,6 +37,10 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
                 owner_id: user?.id
             };
 
+        };
+
+        try {
+            return await db.entities.ServiceProvider.create(payload);
         } catch(error) {
             // Handle 409 Conflict (Duplicate) gracefully
             if (error.message?.includes('409') || error.code === '409') {
