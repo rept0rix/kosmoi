@@ -356,8 +356,12 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
         return await db.entities.ServiceProvider.create(payload);
       } catch (error) {
         // Handle 409 Conflict (Duplicate) gracefully
-        // Check if the error object contains 409 or message
-        const isConflict = error?.status === 409 || error?.message?.includes('409') || error.toString().includes('409');
+        // Check for Postgres Code 23505 (Unique Violation) OR HTTP 409
+        const isConflict =
+          error?.code === '23505' ||
+          error?.status === 409 ||
+          error?.message?.includes('duplicate key') ||
+          error?.message?.includes('409');
 
         if (isConflict) {
           console.warn("Business already exists (409). Checking if it belongs to user...");
