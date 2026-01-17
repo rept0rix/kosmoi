@@ -364,9 +364,9 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
           error?.message?.includes('409');
 
         if (isConflict) {
-          console.warn("Business already exists (409). Checking if it belongs to user...");
+          console.warn("Business already exists (409/23505). Checking if it belongs to user...");
           // Check if user already owns it
-          const { data: myBiz } = await db.entities.ServiceProvider.get({ owner_id: user?.id });
+          const { data: myBiz } = await db.from('service_providers').select('*').eq('owner_id', user?.id);
           const found = Array.isArray(myBiz) ? myBiz.find(b => b.google_place_id === placeData.placeId || b.business_name === placeData.name) : null;
 
           if (found) {
