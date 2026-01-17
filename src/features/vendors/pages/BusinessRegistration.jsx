@@ -79,7 +79,7 @@ const areaOptions = [
 
 export default function BusinessRegistration() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoadingAuth } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth, navigateToLogin } = useAuth();
 
   // View State: 'landing' | 'claim' | 'register'
   const [view, setView] = useState('landing');
