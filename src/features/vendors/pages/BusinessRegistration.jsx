@@ -37,8 +37,10 @@ import {
   Globe,
   Clock,
   Map as MapIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Settings
 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 import GoogleMap from '@/components/GoogleMap';
 import { RegisterBusinessForm } from '@/features/vendors/components/RegisterBusinessForm';
 import { CategorySelector } from '@/features/vendors/components/CategorySelector';
