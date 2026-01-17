@@ -154,12 +154,12 @@ export default function Profile() {
               const newMode = activeMode === 'personal' ? 'business' : 'personal';
               if (newMode === 'business' && user?.role !== 'vendor' && user?.role !== 'service_provider') {
                 // Determine if we should send them to dashboard (which handles empty state) or registration
-                navigate('/business-dashboard');
+                navigate('/businessdashboard');
                 toast({ title: "Welcome to Business Mode", description: "Let's set up your business profile." });
               } else {
                 setMode(newMode);
                 toast({ title: `Switched to ${newMode === 'business' ? 'Business' : 'Personal'} Mode` });
-                if (newMode === 'business') navigate('/business-dashboard'); // Updated from provider-dashboard to business-dashboard for vendors
+                if (newMode === 'business') navigate('/businessdashboard'); // Updated from provider-dashboard to businessdashboard for vendors
                 else navigate('/app');
               }
             }}
