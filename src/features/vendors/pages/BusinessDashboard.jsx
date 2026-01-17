@@ -40,6 +40,15 @@ export default function BusinessDashboard() {
     },
   });
 
+  // Strict Auth Check: Redirect if no user found after loading
+  useEffect(() => {
+    if (!user && !localStorage.getItem('sb-access-token')) {
+      // Double check local storage to avoid premature redirect during load
+      console.warn("⚠️ No user found in BusinessDashboard. Redirecting to login...");
+      navigate('/login?returnUrl=/business-registration');
+    }
+  }, [user, navigate]);
+
   // Fetch ALL businesses owned by user
   const { data: myBusinesses, isLoading: isLoadingBusinesses } = useQuery({
     queryKey: ['my-businesses', user?.id],
