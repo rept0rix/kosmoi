@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Store, CheckCircle, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
+    const { user } = useAuth();
     const claimMutation = useMutation({
         mutationFn: async (/** @type {any} */ placeData) => {
             if (!placeData || !placeData.name) throw new Error("No place data provided");
@@ -29,7 +31,8 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
                 metadata: {
                     google_rating: placeData.rating || 0,
                     google_photos: placeData.photos?.map(p => p.getUrl()) || []
-                }
+                },
+                owner_id: user?.id
             };
 
             return await db.entities.ServiceProvider.create(payload);
