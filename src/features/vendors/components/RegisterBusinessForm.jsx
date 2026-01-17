@@ -469,7 +469,7 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
                                             ) : (
                                                 <Plus className="w-8 h-8 text-slate-300" />
                                             )}
-                                            <span className="text-xs text-slate-400 mt-1">Add Photo</span>
+                                            <span className="text-xs text-slate-400 mt-1">Add Photos</span>
                                         </label>
                                     )}
                                 </div>
@@ -477,22 +477,26 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
 
                             <div className="flex justify-between mt-8 pt-4">
                                 <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
-                                <Button onClick={handleSubmit} disabled={createBusinessMutation.isPending || !mainImage} className="bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20">
-                                    <span className="flex items-center justify-center">
-                                        {createBusinessMutation.isPending ? (
-                                            <Loader2 className="animate-spin mr-2" />
-                                        ) : (
-                                            <CheckCircle className="mr-2" />
-                                        )}
-                                        <span>Submit Registration</span>
-                                    </span>
-                                </Button>
-                            </div>
+                            </Button>
+                            <Button variant="outline" onClick={handleSubmit} disabled={createBusinessMutation.isPending} className="ml-auto mr-2 text-slate-500 hover:text-slate-700">
+                                Skip for now
+                            </Button>
+                            <Button onClick={handleSubmit} disabled={createBusinessMutation.isPending || (!mainImage && galleryImages.length === 0)} className="bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20">
+                                <span className="flex items-center justify-center">
+                                    {createBusinessMutation.isPending ? (
+                                        <Loader2 className="animate-spin mr-2" />
+                                    ) : (
+                                        <CheckCircle className="mr-2" />
+                                    )}
+                                    <span>Submit Registration</span>
+                                </span>
+                            </Button>
+                        </div>
                         </div>
                     )}
 
-                </CardContent>
-            </Card>
-        </motion.div>
+            </CardContent>
+        </Card>
+        </motion.div >
     );
 }
