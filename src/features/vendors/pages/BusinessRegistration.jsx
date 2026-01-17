@@ -350,7 +350,28 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
         owner_id: user?.id
       };
 
-      return await db.entities.ServiceProvider.create(payload);
+      try {
+        return await db.entities.ServiceProvider.create(payload);
+      } catch (error) {
+        // Handle 409 Conflict (Duplicate) gracefully
+        // Check if the error object contains 409 or message
+        const isConflict = error?.status === 409 || error?.message?.includes('409') || error.toString().includes('409');
+
+        if (isConflict) {
+          console.warn("Business already exists (409). Checking if it belongs to user...");
+          // Check if user already owns it
+          const { data: myBiz } = await db.entities.ServiceProvider.get({ owner_id: user?.id });
+          const found = Array.isArray(myBiz) ? myBiz.find(b => b.google_place_id === placeData.placeId || b.business_name === placeData.name) : null;
+
+          if (found) {
+            toast({ title: "Already Claimed", description: "You have already claimed this business." });
+            return found;
+          }
+
+          throw new Error("This business is already claimed by another user.");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       onClaimSuccess();
