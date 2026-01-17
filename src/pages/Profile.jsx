@@ -153,12 +153,13 @@ export default function Profile() {
             onClick={() => {
               const newMode = activeMode === 'personal' ? 'business' : 'personal';
               if (newMode === 'business' && user?.role !== 'vendor' && user?.role !== 'service_provider') {
-                navigate('/business-registration');
-                toast({ title: "Registration Required", description: "Please register your business to access Business Mode." });
+                // Determine if we should send them to dashboard (which handles empty state) or registration
+                navigate('/business-dashboard');
+                toast({ title: "Welcome to Business Mode", description: "Let's set up your business profile." });
               } else {
                 setMode(newMode);
                 toast({ title: `Switched to ${newMode === 'business' ? 'Business' : 'Personal'} Mode` });
-                if (newMode === 'business') navigate('/provider-dashboard');
+                if (newMode === 'business') navigate('/business-dashboard'); // Updated from provider-dashboard to business-dashboard for vendors
                 else navigate('/app');
               }
             }}
