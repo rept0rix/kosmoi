@@ -431,4 +431,5 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
       </Card>
     </motion.div>
   );
+}
 
