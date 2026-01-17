@@ -255,6 +255,7 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
 }
 
 function ClaimBusinessView({ onBack, onClaimSuccess }) {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [predictions, setPredictions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -345,7 +346,8 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
         metadata: {
           google_rating: placeData.rating || 0,
           google_photos: placeData.photos?.map(p => p.getUrl()) || []
-        }
+        },
+        owner_id: user?.id
       };
 
       return await db.entities.ServiceProvider.create(payload);
