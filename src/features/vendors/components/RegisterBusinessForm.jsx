@@ -18,7 +18,10 @@ import {
     Map as MapIcon,
     ImageIcon,
     Globe,
-    ArrowLeft
+    ArrowLeft,
+    Plus,
+    X,
+    User
 } from 'lucide-react';
 import GoogleMap from '@/components/GoogleMap';
 import { CategorySelector } from './CategorySelector';
@@ -59,7 +62,8 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
     });
     const [mapPosition, setMapPosition] = useState(null);
     const [uploadingImages, setUploadingImages] = useState(false);
-    const [images, setImages] = useState([]);
+    const [mainImage, setMainImage] = useState(null);
+    const [galleryImages, setGalleryImages] = useState([]);
 
     // Google Places State
     const [addressInput, setAddressInput] = useState('');
@@ -168,9 +172,29 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
         }));
     };
 
-    const handleImageUpload = async (e) => {
+    const handleMainImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingImages(true);
+        try {
+            const { file_url } = await db.integrations.Core.UploadFile({ file });
+            setMainImage(file_url);
+        } catch (error) {
+            console.error('Error uploading main image:', error);
+        } finally {
+            setUploadingImages(false);
+        }
+    };
+
+    const handleGalleryUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
+
+        if (galleryImages.length + files.length > 10) {
+            alert("Maximum 10 gallery images allowed.");
+            return;
+        }
 
         setUploadingImages(true);
         try {
@@ -179,12 +203,16 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
                 return file_url;
             });
             const uploadedUrls = await Promise.all(uploadPromises);
-            setImages((prev) => [...prev, ...uploadedUrls]);
+            setGalleryImages((prev) => [...prev, ...uploadedUrls]);
         } catch (error) {
-            console.error('Error uploading images:', error);
+            console.error('Error uploading gallery images:', error);
         } finally {
             setUploadingImages(false);
         }
+    };
+
+    const removeGalleryImage = (index) => {
+        setGalleryImages(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleMapLocationChange = (loc) => {
@@ -194,11 +222,12 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
     };
 
     const handleSubmit = () => {
+        const finalImages = [mainImage, ...galleryImages].filter(Boolean);
         createBusinessMutation.mutate({
             ...formData,
             latitude: mapPosition?.lat || 0,
             longitude: mapPosition?.lng || 0,
-            images,
+            images: finalImages,
             status: 'pending_verification',
             verified: false,
             average_rating: 0,
@@ -368,20 +397,87 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
 
                     {/* Step 3: Images & Submit */}
                     {step === 3 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <Label>Images (Max 5)</Label>
-                            <div className="flex gap-4 flex-wrap">
-                                {images.map((url, i) => <img key={i} src={url} className="w-24 h-24 object-cover rounded" />)}
-                                {images.length < 5 && (
-                                    <label className="w-24 h-24 border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-slate-50">
-                                        <input type="file" onChange={handleImageUpload} className="hidden" />
-                                        {uploadingImages ? <Loader2 className="animate-spin" /> : <Upload />}
-                                    </label>
-                                )}
+                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="text-center space-y-2">
+                                <h3 className="text-lg font-semibold">Visual Identity</h3>
+                                <p className="text-sm text-slate-500">Upload a logo/profile picture and a gallery to showcase your business.</p>
                             </div>
-                            <div className="flex justify-between mt-8">
+
+                            {/* Main Image / Logo Section */}
+                            <div className="space-y-4">
+                                <Label className="text-base font-medium">Main Profile Image / Logo <span className="text-red-500">*</span></Label>
+                                <div className="flex justify-center">
+                                    {mainImage ? (
+                                        <div className="relative group">
+                                            <img
+                                                src={mainImage}
+                                                alt="Main Profile"
+                                                className="w-40 h-40 object-cover rounded-full border-4 border-white shadow-lg"
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                <label className="cursor-pointer p-2 bg-white/20 rounded-full hover:bg-white/40 text-white transition-colors">
+                                                    <input type="file" onChange={handleMainImageUpload} className="hidden" accept="image/*" />
+                                                    <Upload className="w-5 h-5" />
+                                                </label>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <label className="w-40 h-40 rounded-full border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors bg-white group">
+                                            <input type="file" onChange={handleMainImageUpload} className="hidden" accept="image/*" />
+                                            {uploadingImages ? (
+                                                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <div className="p-3 bg-blue-50 rounded-full mb-2 group-hover:bg-blue-100 transition-colors">
+                                                        <User className="w-6 h-6 text-blue-600" />
+                                                    </div>
+                                                    <span className="text-xs font-medium text-slate-600">Upload Logo</span>
+                                                </>
+                                            )}
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="border-t border-slate-100" />
+
+                            {/* Gallery Section */}
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <Label className="text-base font-medium">Gallery Images</Label>
+                                    <span className="text-xs text-slate-400">{galleryImages.length} / 10</span>
+                                </div>
+
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                    {galleryImages.map((url, i) => (
+                                        <div key={i} className="relative aspect-square group rounded-lg overflow-hidden border bg-slate-50">
+                                            <img src={url} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
+                                            <button
+                                                onClick={() => removeGalleryImage(i)}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {galleryImages.length < 10 && (
+                                        <label className="aspect-square border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors bg-white">
+                                            <input type="file" multiple onChange={handleGalleryUpload} className="hidden" accept="image/*" />
+                                            {uploadingImages ? (
+                                                <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+                                            ) : (
+                                                <Plus className="w-8 h-8 text-slate-300" />
+                                            )}
+                                            <span className="text-xs text-slate-400 mt-1">Add Photo</span>
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between mt-8 pt-4">
                                 <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
-                                <Button onClick={handleSubmit} disabled={createBusinessMutation.isPending} className="bg-green-600 text-white">
+                                <Button onClick={handleSubmit} disabled={createBusinessMutation.isPending || !mainImage} className="bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20">
                                     <span className="flex items-center justify-center">
                                         {createBusinessMutation.isPending ? (
                                             <Loader2 className="animate-spin mr-2" />
