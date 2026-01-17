@@ -277,8 +277,14 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
                             <div className="flex justify-between mt-8">
                                 <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
                                 <Button onClick={handleSubmit} disabled={createBusinessMutation.isPending} className="bg-green-600 text-white">
-                                    {createBusinessMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />}
-                                    Submit
+                                    <span className="flex items-center justify-center">
+                                        {createBusinessMutation.isPending ? (
+                                            <Loader2 className="animate-spin mr-2" />
+                                        ) : (
+                                            <CheckCircle className="mr-2" />
+                                        )}
+                                        <span>Submit</span>
+                                    </span>
                                 </Button>
                             </div>
                         </div>
