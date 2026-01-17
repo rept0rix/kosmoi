@@ -11,6 +11,8 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
     const { user } = useAuth();
     const claimMutation = useMutation({
         mutationFn: async (/** @type {any} */ placeData) => {
+            console.log("Claiming business for user:", user?.id);
+            if (!user?.id) throw new Error("User authentication missing during claim");
             if (!placeData || !placeData.name) throw new Error("No place data provided");
 
             // Check if business with this google_place_id already exists
@@ -84,7 +86,14 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
 
                     <Button
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 shadow-lg text-lg"
-                        onClick={() => claimMutation.mutate(selectedPlace)}
+                        onClick={() => {
+                            if (!user?.id) {
+                                alert("Session expired or invalid. Please reload the page.");
+                                return;
+                            }
+                            console.log("Starting claim mutation...");
+                            claimMutation.mutate(selectedPlace);
+                        }}
                         disabled={claimMutation.isPending}
                     >
                         <span className="flex items-center justify-center">
