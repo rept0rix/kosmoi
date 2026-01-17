@@ -62,7 +62,7 @@ export function CategorySelector({ value, onChange, error }) {
     // Helper to format "beach_club" -> "Beach Club" if translation fails or for fallback
     const formatLabel = (key) => {
         // Try to get translation first
-        const label = getSubCategoryLabel(key, 'en'); // Hardcoded EN for now as per user request, or use {language}
+        const label = getSubCategoryLabel(key, language);
         if (label && label !== key) return label;
 
         // Fallback: replace underscores and capitalize
