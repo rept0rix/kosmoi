@@ -229,6 +229,13 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
     };
 
     const handleSubmit = () => {
+        if (!user?.id) {
+            alert("Authentication missing or session invalid. Please reload.");
+            console.error("Submit failed: User ID missing from context");
+            return;
+        }
+        console.log("Submitting form with user:", user.id);
+
         const finalImages = [mainImage, ...galleryImages].filter(Boolean);
         createBusinessMutation.mutate({
             ...formData,
