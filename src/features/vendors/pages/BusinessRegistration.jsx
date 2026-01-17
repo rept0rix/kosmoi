@@ -117,15 +117,15 @@ export default function BusinessRegistration() {
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold mb-3 text-slate-800">התחברות נדרשת</h2>
+            <h2 className="text-2xl font-bold mb-3 text-slate-800">Login Required</h2>
             <p className="text-slate-600 mb-6">
-              כדי לנהל או לרשום עסק בקוסמוי, עליך להתחבר למערכת תחילה.
+              Please log in to manage or register your business on Kosmoi.
             </p>
             <Button
               onClick={() => navigateToLogin()}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
-              התחבר / הרשם לחשבון
+              Login / Register
             </Button>
           </CardContent>
         </Card>
@@ -134,7 +134,7 @@ export default function BusinessRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4 font-sans text-slate-900" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4 font-sans text-slate-900">
       <div className="max-w-4xl mx-auto">
         <AnimatePresence mode="wait">
           {view === 'landing' && (
@@ -177,12 +177,20 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-8 text-center"
     >
-      <div className="space-y-2">
+      <div className="relative">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/profile')}
+          className="absolute left-0 top-0 -mt-2 text-slate-400 hover:text-slate-600"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Profile
+        </Button>
         <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          מרכז העסקים של קוסמוי
+          Kosmoi Business Hub
         </h1>
-        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-          נהל את הנוכחות הדיגיטלית שלך, קבל הזמנות והגדל את החשיפה ללקוחות חדשים.
+        <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-2">
+          Manage your digital presence, receive bookings, and grow your customer base.
         </p>
       </div>
 
@@ -200,10 +208,10 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
                 <Building2 className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">{existingBusiness.business_name}</h3>
-              <p className="text-slate-500 mb-6 text-sm">העסק שלך כבר רשום במערכת</p>
+              <p className="text-slate-500 mb-6 text-sm">Your business is already registered.</p>
               <Button className="w-full bg-slate-900 text-white hover:bg-slate-800">
-                מעבר לניהול העסק
-                <ArrowRight className="w-4 h-4 mr-2" />
+                Manage My Business
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>
@@ -223,12 +231,12 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Search className="w-7 h-7 text-blue-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-3">יש לי כבר עסק קיים</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">I have an existing business</h3>
             <p className="text-slate-500 mb-6 flex-grow">
-              העסק שלך מופיע ב-Google Maps? תבע אותו וקבל גישה מיידית לניהול הפרופיל.
+              Is your business on Google Maps? Claim it and get instant access to manage your profile.
             </p>
             <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800">
-              חיפוש ואימות עסק
+              Find & Claim Business
             </Button>
           </CardContent>
         </Card>
@@ -243,12 +251,12 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
             <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Sparkles className="w-7 h-7 text-purple-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-3">אני רוצה להקים עסק חדש</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">I want to list a new business</h3>
             <p className="text-slate-500 mb-6 flex-grow">
-              הצטרף למאגר הספקים שלנו, פתח דף עסק חדש והתחל לקבל הזמנות.
+              Join our provider network, create a new business page, and start receiving bookings.
             </p>
             <Button variant="outline" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800">
-              הרשמת עסק חדש
+              Register New Business
             </Button>
           </CardContent>
         </Card>
@@ -361,6 +369,10 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
     },
     onSuccess: () => {
       onClaimSuccess();
+    },
+    onError: (error) => {
+      console.error("Claim failed:", error);
+      // Ideally show toast error here
     }
   });
 
@@ -372,20 +384,20 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
       className="max-w-2xl mx-auto"
     >
       <Button variant="ghost" onClick={onBack} className="mb-6 pl-0 hover:pl-2 transition-all">
-        <ArrowRight className="w-4 h-4 ml-2" />
-        חזרה לבחירה
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
       </Button>
 
       <Card>
         <CardContent className="p-8">
-          <h2 className="text-2xl font-bold mb-6 text-center">איתור עסק קיים</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center">Find Your Business</h2>
 
           <div className="relative mb-6">
             <Search className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
             <Input
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="הקלד שם עסק (באנגלית או עברית)..."
+              placeholder="Type business name..."
               className="pr-10 py-6 text-lg"
               autoFocus
             />
