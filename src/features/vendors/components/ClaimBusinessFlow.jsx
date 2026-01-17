@@ -25,7 +25,7 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
                 location: placeData.formatted_address || '',
                 latitude: placeData.geometry?.location?.lat() || 0,
                 longitude: placeData.geometry?.location?.lng() || 0,
-                status: 'pending_verification',
+                status: 'pending',
                 verified: false,
                 phone: placeData.international_phone_number || '',
                 category: 'other',

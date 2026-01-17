@@ -242,7 +242,7 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
             latitude: mapPosition?.lat || 0,
             longitude: mapPosition?.lng || 0,
             images: finalImages,
-            status: 'pending_verification',
+            status: 'pending',
             verified: false,
             average_rating: 0,
             total_reviews: 0,
