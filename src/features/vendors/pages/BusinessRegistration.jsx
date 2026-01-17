@@ -32,6 +32,7 @@ import {
   Building2,
   Sparkles,
   Zap,
+  ArrowLeft,
 } from 'lucide-react';
 import GoogleMap from '@/components/GoogleMap';
 import { subCategoriesBySuperCategory } from '@/components/subCategories';
@@ -547,9 +548,9 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
     >
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" onClick={onBack} size="icon" className="rounded-full">
-          <ArrowRight className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h2 className="text-2xl font-bold">טופס רישום עסק</h2>
+        <h2 className="text-2xl font-bold">Business Registration Form</h2>
       </div>
 
       <div className="grid grid-cols-4 gap-2 mb-8 h-1 bg-gray-200 rounded-full overflow-hidden">
@@ -565,26 +566,26 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
               <div className="flex items-center gap-2 text-blue-600 mb-4">
                 <Store className="w-6 h-6" />
-                <h3 className="text-lg font-semibold">מידע בסיסי</h3>
+                <h3 className="text-lg font-semibold">Basic Information</h3>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">שם העסק <span className="text-red-500">*</span></label>
-                  <Input value={formData.business_name} onChange={(e) => setFormData({ ...formData, business_name: e.target.value })} placeholder="שם העסק באנגלית/עברית" />
+                  <label className="text-sm font-medium">Business Name <span className="text-red-500">*</span></label>
+                  <Input value={formData.business_name} onChange={(e) => setFormData({ ...formData, business_name: e.target.value })} placeholder="Business Name" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">איש קשר <span className="text-red-500">*</span></label>
-                  <Input value={formData.contact_name} onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })} placeholder="שם מלא" />
+                  <label className="text-sm font-medium">Contact Name <span className="text-red-500">*</span></label>
+                  <Input value={formData.contact_name} onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })} placeholder="Full Name" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">טלפון <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium">Phone <span className="text-red-500">*</span></label>
                   <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+66..." dir="ltr" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">קטגוריה <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium">Category <span className="text-red-500">*</span></label>
                   <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger><SelectValue placeholder="בחר קטגוריה" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}
                     </SelectContent>
@@ -594,8 +595,8 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
 
               <div className="flex justify-end mt-8">
                 <Button onClick={() => setStep(2)} disabled={!isStep1Valid()} className="bg-blue-600 hover:bg-blue-700">
-                  המשך לשלב הבא
-                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </motion.div>
