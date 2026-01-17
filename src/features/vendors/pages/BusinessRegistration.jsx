@@ -85,11 +85,19 @@ export default function BusinessRegistration() {
     queryKey: ['my-business', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await db.entities.ServiceProvider.get({ owner_id: user.id });
+      // FIX: Use db.from instead of .get helper which doesn't exist
+      const { data } = await db.from('service_providers').select('*').eq('owner_id', user.id);
       return Array.isArray(data) ? data[0] : data;
     },
     enabled: !!user?.id,
   });
+
+  // Redirect if business exists
+  useEffect(() => {
+    if (existingBusiness && !isLoadingBusiness) {
+      navigate('/BusinessDashboard');
+    }
+  }, [existingBusiness, isLoadingBusiness, navigate]);
 
   if (isLoadingAuth || isLoadingBusiness) {
     return (
