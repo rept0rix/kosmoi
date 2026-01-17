@@ -327,21 +327,22 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
 
   const claimMutation = useMutation({
     mutationFn: async (placeData) => {
-      if (!placeData) throw new Error("No place data provided");
+      // Fix: Strictly check placeData to avoid 'void' inference which caused lint errors
+      if (!placeData || !placeData.name) throw new Error("No place data provided");
 
       const payload = {
         business_name: placeData.name,
-        description: `Imported from Google Maps: ${placeData.formatted_address}`,
-        location: placeData.formatted_address,
-        latitude: placeData.geometry?.location?.lat(),
-        longitude: placeData.geometry?.location?.lng(),
+        description: `Imported from Google Maps: ${placeData.formatted_address || 'No address'}`,
+        location: placeData.formatted_address || '',
+        latitude: placeData.geometry?.location?.lat() || 0,
+        longitude: placeData.geometry?.location?.lng() || 0,
         status: 'pending_verification',
         verified: false,
         phone: placeData.international_phone_number || '',
         category: 'other',
-        google_place_id: placeData.placeId,
+        google_place_id: placeData.placeId || '',
         metadata: {
-          google_rating: placeData.rating,
+          google_rating: placeData.rating || 0,
           google_photos: placeData.photos?.map(p => p.getUrl()) || []
         }
       };
@@ -545,9 +546,7 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
     formData.service_areas.length > 0;
 
   // Step 3: Map Position Set?
-  const isStep3Valid = () => true; // Optional strictly, but good to have. Let's make it optional for now or require marker drag.
-  // Actually, mapPosition is crucial for spatial search. Let's require it if possible, but GoogleMap might default?
-  // Let's assume if they passed step 2 (location string), we try to geocode or they dragged.
+  const isStep3Valid = () => true;
 
   return (
     <motion.div
@@ -604,6 +603,7 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
                   <PhoneVerification
                     value={formData.phone}
                     onChange={(val) => setFormData({ ...formData, phone: val })}
+                    error={null}
                   />
                   <p className="text-xs text-slate-400">We will send a verification code to this number.</p>
                 </div>
@@ -613,6 +613,7 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
                   <CategorySelector
                     value={formData.category} // e.g. "bars"
                     onChange={(val) => setFormData({ ...formData, category: val })}
+                    error={null}
                   />
                 </div>
               </div>
@@ -713,24 +714,21 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
               <p className="text-sm text-slate-500">Drag the map or click to pin the exact entrance of your business.</p>
 
               <div className="h-[400px] w-full rounded-xl overflow-hidden border-2 border-slate-200 relative">
-                {/* 
-                    Using GoogleMap component logic implicitly. 
-                    In a real implementation, we would pass 'draggable' props.
-                    Assuming GoogleMap handles internal state, but we need to extract it.
-                    Since we can't easily modify GoogleMap right now to strict specifications without seeing it,
-                    we will use a placeholder message if the map integration is complex, 
-                    OR assume we can pass an `onLocationSelect` prop if we added it.
-                    Let's assume we need to just confirm the location.
-                 */}
                 <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
-                  {/* Simulating Map Component for this view - user requested visual fix primarily */}
-                  <GoogleMap
-                    className="w-full h-full"
-                    onLocationSelect={handleMapLocationChange}
-                    // Default to Samui center if no location
-                    center={mapPosition || { lat: 9.512, lng: 100.058 }}
-                    zoom={13}
-                  />
+                  {/* Wrap GoogleMap in a full-size container since it doesn't accept className */}
+                  <div className="w-full h-full">
+                    <GoogleMap
+                      height="100%"
+                      center={mapPosition || { lat: 9.512, lng: 100.058 }}
+                      zoom={13}
+                      onMapClick={handleMapLocationChange}
+                      markers={mapPosition ? [{
+                        lat: mapPosition.lat,
+                        lng: mapPosition.lng,
+                        title: 'Business Location'
+                      }] : []}
+                    />
+                  </div>
                 </div>
                 {/* Overlay for interaction hint */}
                 {!mapPosition && (
@@ -783,6 +781,8 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
                 <p><strong>Phone:</strong> {formData.phone}</p>
                 <p><strong>Category:</strong> {formData.category}</p>
                 <p><strong>Description:</strong> {formData.description.substring(0, 50)}...</p>
+                <p><strong>Location:</strong> {mapPosition ? `${mapPosition.lat.toFixed(4)}, ${mapPosition.lng.toFixed(4)}` : 'Not set'}</p>
+                <p><strong>Address:</strong> {formData.location}</p>
               </div>
 
               <div className="flex justify-between mt-8">
