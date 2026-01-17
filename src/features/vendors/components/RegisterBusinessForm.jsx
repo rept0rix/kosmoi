@@ -21,8 +21,6 @@ import {
     ArrowLeft,
     Plus,
     X,
-    Plus,
-    X,
     User
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
