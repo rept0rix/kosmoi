@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Store, CheckCircle, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 
 export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
     const { user } = useAuth();
