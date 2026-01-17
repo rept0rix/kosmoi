@@ -38,7 +38,6 @@ export default function BusinessDashboard() {
       const { data } = await db.auth.getUser();
       return data?.user || null;
     },
-    queryFn: () => db.auth.getUser(),
   });
 
   // Fetch ALL businesses owned by user
