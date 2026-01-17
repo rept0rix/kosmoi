@@ -279,6 +279,7 @@ function BoardRoomContent() {
                         category: bookingDetails?.serviceName || 'Service'
                     }}
                     onBookingConfirmed={() => { }}
+                    selectedPackage={null}
                 />
             </div>
         </div>
