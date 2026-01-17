@@ -19,6 +19,15 @@ const countryCodes = [
     { code: '+7', country: 'RU', label: 'Russia (+7)' },
     { code: '+33', country: 'FR', label: 'France (+33)' },
     { code: '+49', country: 'DE', label: 'Germany (+49)' },
+    { code: '+61', country: 'AU', label: 'Australia (+61)' },
+    { code: '+86', country: 'CN', label: 'China (+86)' },
+    { code: '+81', country: 'JP', label: 'Japan (+81)' },
+    { code: '+82', country: 'KR', label: 'South Korea (+82)' },
+    { code: '+65', country: 'SG', label: 'Singapore (+65)' },
+    { code: '+886', country: 'TW', label: 'Taiwan (+886)' },
+    { code: '+60', country: 'MY', label: 'Malaysia (+60)' },
+    { code: '+852', country: 'HK', label: 'Hong Kong (+852)' },
+    { code: '+91', country: 'IN', label: 'India (+91)' },
 ];
 
 export function PhoneVerification({ value, onChange, error }) { // value is assumed to be the full number string or object
