@@ -59,7 +59,7 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
                     // Actually, let's just return a mock success if we think it's ours, 
                     // or let the UI handle it. 
                     // A better approach:
-                    const existing = await db.entities.ServiceProvider.get({ owner_id: user.id });
+                    const { data: existing } = await db.from('service_providers').select('*').eq('owner_id', user.id);
                     const isMine = Array.isArray(existing) && existing.some(b => b.business_name === placeData.name || b.google_place_id === placeData.placeId);
 
                     if (isMine) {
