@@ -33,7 +33,12 @@ export default function BusinessDashboard() {
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
-    queryFn: () => db.auth.me(),
+    queryFn: async () => {
+      // Use getUser() for better type compatibility if me() is missing in types
+      const { data } = await db.auth.getUser();
+      return data?.user || null;
+    },
+    queryFn: () => db.auth.getUser(),
   });
 
   // Fetch ALL businesses owned by user
@@ -100,7 +105,7 @@ export default function BusinessDashboard() {
   };
 
   const handleAddSuccess = () => {
-    queryClient.invalidateQueries(['my-businesses']);
+    queryClient.invalidateQueries({ queryKey: ['my-businesses'] });
     // Wait for refetch?
     setTimeout(() => {
       setViewMode('list'); // Go back to list to see new business
@@ -150,7 +155,10 @@ export default function BusinessDashboard() {
                       <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center font-bold text-blue-700 text-xl">
                         {bus.business_name.charAt(0)}
                       </div>
-                      <Badge variant={bus.verified ? "success" : "secondary"}>
+                      <Badge
+                        variant="secondary"
+                        className={bus.verified ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+                      >
                         {bus.status || 'Pending'}
                       </Badge>
                     </div>
