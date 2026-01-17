@@ -50,8 +50,10 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
             className="max-w-2xl mx-auto"
         >
             <Button variant="ghost" onClick={onBack} className="mb-6 pl-0 hover:pl-2 transition-all">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Search
+                <span className="flex items-center">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    <span>Back to Search</span>
+                </span>
             </Button>
 
             <Card>
@@ -82,8 +84,14 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
                         onClick={() => claimMutation.mutate(selectedPlace)}
                         disabled={claimMutation.isPending}
                     >
-                        {claimMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Store className="w-5 h-5 mr-2" />}
-                        Confirm & Claim Business
+                        <span className="flex items-center justify-center">
+                            {claimMutation.isPending ? (
+                                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            ) : (
+                                <Store className="w-5 h-5 mr-2" />
+                            )}
+                            <span>Confirm & Claim Business</span>
+                        </span>
                     </Button>
                 </CardContent>
             </Card>
