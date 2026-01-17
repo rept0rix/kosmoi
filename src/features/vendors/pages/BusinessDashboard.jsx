@@ -16,6 +16,7 @@ import { toast } from '@/components/ui/use-toast';
 import { BusinessSearchStep } from "@/features/vendors/components/BusinessSearchStep";
 import { ClaimBusinessFlow } from "@/features/vendors/components/ClaimBusinessFlow";
 import { RegisterBusinessForm } from "@/features/vendors/components/RegisterBusinessForm";
+import { DashboardSingleView } from "@/features/vendors/pages/DashboardSingleView";
 
 // --- Sub-components for Dashboard View ---
 // We'll keep the dashboard logic mostly inline or extract later if too big.
