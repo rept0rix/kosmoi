@@ -12,6 +12,7 @@ import {
   TrendingUp, Users, MessageSquare, Star, Eye,
   LayoutDashboard, MapPin
 } from "lucide-react";
+import { toast } from '@/components/ui/use-toast';
 import { BusinessSearchStep } from "@/features/vendors/components/BusinessSearchStep";
 import { ClaimBusinessFlow } from "@/features/vendors/components/ClaimBusinessFlow";
 import { RegisterBusinessForm } from "@/features/vendors/components/RegisterBusinessForm";
@@ -114,10 +115,15 @@ export default function BusinessDashboard() {
 
   const handleAddSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['my-businesses'] });
+    toast({
+      title: "Success! Business added.",
+      description: "Your business has been successfully registered.",
+      variant: "default", // or "success" if you have that variant
+    });
     // Wait for refetch?
     setTimeout(() => {
       setViewMode('list'); // Go back to list to see new business
-    }, 500);
+    }, 1500); // Increased delay to 1.5s so user sees the message
   };
 
 
