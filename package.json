@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "worker": "node scripts/agent_worker.js",
+    "worker": "npx tsx scripts/agent_worker.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "worker:universal": "node scripts/agent_worker.js",
