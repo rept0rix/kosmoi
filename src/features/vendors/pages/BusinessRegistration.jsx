@@ -40,6 +40,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import GoogleMap from '@/components/GoogleMap';
+import { RegisterBusinessForm } from '@/features/vendors/components/RegisterBusinessForm';
 import { CategorySelector } from '@/features/vendors/components/CategorySelector';
 import { PhoneVerification } from '@/features/vendors/components/PhoneVerification';
 
@@ -430,221 +431,6 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
       </Card>
     </motion.div>
   );
-}
-
-function RegisterBusinessForm({ onBack, onSuccess }) {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    business_name: '',
-    contact_name: '',
-    // phone now stores "+66..." string
-    phone: '',
-    whatsapp: '',
-    email: '',
-    category: '', // will be "eat_restaurant" or similar
-    description: '',
-    languages: [],
-    location: '',
-    service_areas: [],
-    available_hours: '',
-    emergency_service: false,
-    price_range: 'moderate',
-  });
-  const [mapPosition, setMapPosition] = useState(null); // { lat, lng }
-  const [uploadingImages, setUploadingImages] = useState(false);
-  const [images, setImages] = useState([]);
-
-  // Mock map ref for the hidden element if needed, but we used GoogleMap component
-
-  const createBusinessMutation = useMutation({
-    mutationFn: async (/** @type {any} */ businessData) => {
-      // Ensure we have coords
-      if (!businessData.latitude || !businessData.longitude) {
-        // Fallback or error?
-      }
-      return await db.entities.ServiceProvider.create(businessData);
-    },
-    onSuccess: () => {
-      onSuccess();
-    },
-  });
-
-  const handleLanguageToggle = (lang) => {
-    setFormData((prev) => ({
-      ...prev,
-      languages: prev.languages.includes(lang)
-        ? prev.languages.filter((l) => l !== lang)
-        : [...prev.languages, lang],
-    }));
-  };
-
-  const handleAreaToggle = (area) => {
-    setFormData((prev) => ({
-      ...prev,
-      service_areas: prev.service_areas.includes(area)
-        ? prev.service_areas.filter((a) => a !== area)
-        : [...prev.service_areas, area],
-    }));
-  };
-
-  const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    setUploadingImages(true);
-    try {
-      const uploadPromises = files.map(async (file) => {
-        const { file_url } = await db.integrations.Core.UploadFile({ file });
-        return file_url;
-      });
-
-      const uploadedUrls = await Promise.all(uploadPromises);
-      setImages((prev) => [...prev, ...uploadedUrls]);
-    } catch (error) {
-      console.error('Error uploading images:', error);
-    } finally {
-      setUploadingImages(false);
-    }
-  };
-
-  // Called when GoogleMap user drags marker or selects place
-  const handleMapLocationChange = (loc) => {
-    setMapPosition({ lat: loc.lat, lng: loc.lng });
-    // If loc has address text, update it?
-    if (loc.address) {
-      setFormData(prev => ({ ...prev, location: loc.address }));
-    }
-  };
-
-  const handleSubmit = () => {
-    const businessData = {
-      ...formData,
-      latitude: mapPosition?.lat || 0,
-      longitude: mapPosition?.lng || 0,
-      images,
-      status: 'pending_verification',
-      verified: false,
-      average_rating: 0,
-      total_reviews: 0,
-    };
-
-    createBusinessMutation.mutate(businessData);
-  };
-
-  // Validation
-  // Step 1: Name, Contact, Phone (Implicitly valid if filled?), Category
-  const isStep1Valid = () =>
-    formData.business_name.length > 2 &&
-    formData.contact_name.length > 2 &&
-    formData.phone.length > 8 &&
-    formData.category;
-
-  // Step 2: Description, Location (Address string), Areas
-  const isStep2Valid = () =>
-    formData.description.length > 10 &&
-    formData.location.length > 2 &&
-    formData.service_areas.length > 0;
-
-  // Step 3: Map Position Set?
-  const isStep3Valid = () => true;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-    >
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" onClick={onBack} size="icon" className="rounded-full">
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h2 className="text-2xl font-bold">Business Registration Form</h2>
-      </div>
-
-      <div className="grid grid-cols-4 gap-2 mb-8 h-1 bg-gray-200 rounded-full overflow-hidden">
-        {[1, 2, 3, 4].map(s => (
-          <div key={s} className={`h-full transition-all duration-500 ${step >= s ? 'bg-blue-600' : 'bg-transparent'}`} />
-        ))}
-      </div>
-
-      <Card className="shadow-lg border-none bg-white/90 backdrop-blur-sm">
-        <CardContent className="p-8">
-
-          {/* Step 1: Essential Info */}
-          {step === 1 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="flex items-center gap-2 text-blue-600 mb-4 border-b pb-2">
-                <Store className="w-6 h-6" />
-                <h3 className="text-lg font-semibold">Basic Information</h3>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Business Name <span className="text-red-500">*</span></Label>
-                  <Input
-                    value={formData.business_name}
-                    onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                    placeholder="e.g. Sunny Side Cafe"
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Contact Name <span className="text-red-500">*</span></Label>
-                  <Input
-                    value={formData.contact_name}
-                    onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                    placeholder="Your Full Name"
-                    className="h-12"
-                  />
-                </div>
-
-                <div className="space-y-2 underline-offset-2">
-                  <Label>Phone Number <span className="text-red-500">*</span></Label>
-                  <PhoneVerification
-                    value={formData.phone}
-                    onChange={(val) => setFormData({ ...formData, phone: val })}
-                    error={null}
-                  />
-                  <p className="text-xs text-slate-400">We will send a verification code to this number.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Category <span className="text-red-500">*</span></Label>
-                  <CategorySelector
-                    value={formData.category} // e.g. "bars"
-                    onChange={(val) => setFormData({ ...formData, category: val })}
-                    error={null}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-8">
-                <Button onClick={() => setStep(2)} disabled={!isStep1Valid()} className="bg-blue-600 hover:bg-blue-700 h-12 px-8">
-                  Continue &nbsp; <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 2: Details & Location */}
-          {step === 2 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="flex items-center gap-2 text-blue-600 mb-4 border-b pb-2">
-                <MapIcon className="w-6 h-6" />
-                <h3 className="text-lg font-semibold">Details & Location</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Description <span className="text-red-500">*</span></Label>
-                  <Textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe your business, services, and what makes it special..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Main Address / Location <span className="text-red-500">*</span></Label>
@@ -692,115 +478,120 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
                 </div>
 
 
-              </div>
+              </div >
 
-              <div className="flex justify-between mt-8">
-                <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                <Button onClick={() => setStep(3)} disabled={!isStep2Valid()} className="bg-blue-600 hover:bg-blue-700 h-12 px-8">
-                  Next: Map Pin &nbsp; <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
+    <div className="flex justify-between mt-8">
+      <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
+      <Button onClick={() => setStep(3)} disabled={!isStep2Valid()} className="bg-blue-600 hover:bg-blue-700 h-12 px-8">
+        Next: Map Pin &nbsp; <ArrowRight className="w-4 h-4" />
+      </Button>
+    </div>
+            </motion.div >
+          )
+}
 
-          {/* Step 3: Map Pin */}
-          {step === 3 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="flex items-center gap-2 text-blue-600 mb-4 border-b pb-2">
-                <MapPin className="w-6 h-6" />
-                <h3 className="text-lg font-semibold">Confirm Location on Map</h3>
-              </div>
+{/* Step 3: Map Pin */ }
+{
+  step === 3 && (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <div className="flex items-center gap-2 text-blue-600 mb-4 border-b pb-2">
+        <MapPin className="w-6 h-6" />
+        <h3 className="text-lg font-semibold">Confirm Location on Map</h3>
+      </div>
 
-              <p className="text-sm text-slate-500">Drag the map or click to pin the exact entrance of your business.</p>
+      <p className="text-sm text-slate-500">Drag the map or click to pin the exact entrance of your business.</p>
 
-              <div className="h-[400px] w-full rounded-xl overflow-hidden border-2 border-slate-200 relative">
-                <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
-                  {/* Wrap GoogleMap in a full-size container since it doesn't accept className */}
-                  <div className="w-full h-full">
-                    <GoogleMap
-                      height="100%"
-                      center={mapPosition || { lat: 9.512, lng: 100.058 }}
-                      zoom={13}
-                      onMapClick={handleMapLocationChange}
-                      markers={mapPosition ? [{
-                        lat: mapPosition.lat,
-                        lng: mapPosition.lng,
-                        title: 'Business Location'
-                      }] : []}
-                    />
-                  </div>
-                </div>
-                {/* Overlay for interaction hint */}
-                {!mapPosition && (
-                  <div className="absolute top-4 left-4 right-4 bg-white/90 p-4 rounded-lg shadow-md text-center z-10 pointer-events-none">
-                    <p className="font-semibold text-blue-800">Please click on the map to set location</p>
-                  </div>
-                )}
-              </div>
+      <div className="h-[400px] w-full rounded-xl overflow-hidden border-2 border-slate-200 relative">
+        <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
+          {/* Wrap GoogleMap in a full-size container since it doesn't accept className */}
+          <div className="w-full h-full">
+            <GoogleMap
+              height="100%"
+              center={mapPosition || { lat: 9.512, lng: 100.058 }}
+              zoom={13}
+              onMapClick={handleMapLocationChange}
+              markers={mapPosition ? [{
+                lat: mapPosition.lat,
+                lng: mapPosition.lng,
+                title: 'Business Location'
+              }] : []}
+            />
+          </div>
+        </div>
+        {/* Overlay for interaction hint */}
+        {!mapPosition && (
+          <div className="absolute top-4 left-4 right-4 bg-white/90 p-4 rounded-lg shadow-md text-center z-10 pointer-events-none">
+            <p className="font-semibold text-blue-800">Please click on the map to set location</p>
+          </div>
+        )}
+      </div>
 
-              <div className="flex justify-between mt-8">
-                <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
-                <Button onClick={() => setStep(4)} className="bg-blue-600 hover:bg-blue-700 h-12 px-8">
-                  Confirm Location &nbsp; <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 4: Images & Review */}
-          {step === 4 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="flex items-center gap-2 text-blue-600 mb-4 border-b pb-2">
-                <ImageIcon className="w-6 h-6" />
-                <h3 className="text-lg font-semibold">Images & Final Review</h3>
-              </div>
-
-              <div className="space-y-4">
-                <Label>Business Photos (Max 5)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {images.map((img, idx) => (
-                    <div key={idx} className="aspect-square rounded-lg overflow-hidden border relative group">
-                      <img src={img} alt="business" className="w-full h-full object-cover" />
-                      <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 h-6 w-6" onClick={() => setImages(images.filter((_, i) => i !== idx))}>
-                        &times;
-                      </Button>
-                    </div>
-                  ))}
-                  {images.length < 5 && (
-                    <label className="aspect-square border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
-                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                      {uploadingImages ? <Loader2 className="w-6 h-6 animate-spin text-slate-400" /> : <Upload className="w-6 h-6 text-slate-400 mb-2" />}
-                      <span className="text-xs text-slate-500 font-medium">Upload</span>
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-4 rounded-lg border text-sm space-y-2 mt-4">
-                <p><strong>Name:</strong> {formData.business_name}</p>
-                <p><strong>Phone:</strong> {formData.phone}</p>
-                <p><strong>Category:</strong> {formData.category}</p>
-                <p><strong>Description:</strong> {formData.description.substring(0, 50)}...</p>
-                <p><strong>Location:</strong> {mapPosition ? `${mapPosition.lat.toFixed(4)}, ${mapPosition.lng.toFixed(4)}` : 'Not set'}</p>
-                <p><strong>Address:</strong> {formData.location}</p>
-              </div>
-
-              <div className="flex justify-between mt-8">
-                <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={createBusinessMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700 text-white h-12 px-8 shadow-md"
-                >
-                  {createBusinessMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                  Submit Registration
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-        </CardContent>
-      </Card>
+      <div className="flex justify-between mt-8">
+        <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
+        <Button onClick={() => setStep(4)} className="bg-blue-600 hover:bg-blue-700 h-12 px-8">
+          Confirm Location &nbsp; <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
     </motion.div>
+  )
+}
+
+{/* Step 4: Images & Review */ }
+{
+  step === 4 && (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <div className="flex items-center gap-2 text-blue-600 mb-4 border-b pb-2">
+        <ImageIcon className="w-6 h-6" />
+        <h3 className="text-lg font-semibold">Images & Final Review</h3>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Business Photos (Max 5)</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {images.map((img, idx) => (
+            <div key={idx} className="aspect-square rounded-lg overflow-hidden border relative group">
+              <img src={img} alt="business" className="w-full h-full object-cover" />
+              <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 h-6 w-6" onClick={() => setImages(images.filter((_, i) => i !== idx))}>
+                &times;
+              </Button>
+            </div>
+          ))}
+          {images.length < 5 && (
+            <label className="aspect-square border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
+              <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+              {uploadingImages ? <Loader2 className="w-6 h-6 animate-spin text-slate-400" /> : <Upload className="w-6 h-6 text-slate-400 mb-2" />}
+              <span className="text-xs text-slate-500 font-medium">Upload</span>
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-slate-50 p-4 rounded-lg border text-sm space-y-2 mt-4">
+        <p><strong>Name:</strong> {formData.business_name}</p>
+        <p><strong>Phone:</strong> {formData.phone}</p>
+        <p><strong>Category:</strong> {formData.category}</p>
+        <p><strong>Description:</strong> {formData.description.substring(0, 50)}...</p>
+        <p><strong>Location:</strong> {mapPosition ? `${mapPosition.lat.toFixed(4)}, ${mapPosition.lng.toFixed(4)}` : 'Not set'}</p>
+        <p><strong>Address:</strong> {formData.location}</p>
+      </div>
+
+      <div className="flex justify-between mt-8">
+        <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={createBusinessMutation.isPending}
+          className="bg-green-600 hover:bg-green-700 text-white h-12 px-8 shadow-md"
+        >
+          {createBusinessMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+          Submit Registration
+        </Button>
+      </div>
+    </motion.div>
+  )
+}
+
+        </CardContent >
+      </Card >
+    </motion.div >
   );
 }
