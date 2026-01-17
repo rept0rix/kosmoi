@@ -326,7 +326,7 @@ function ClaimBusinessView({ onBack, onClaimSuccess }) {
   };
 
   const claimMutation = useMutation({
-    mutationFn: async (placeData) => {
+    mutationFn: async (/** @type {any} */ placeData) => {
       // Fix: Strictly check placeData to avoid 'void' inference which caused lint errors
       if (!placeData || !placeData.name) throw new Error("No place data provided");
 
@@ -457,7 +457,7 @@ function RegisterBusinessForm({ onBack, onSuccess }) {
   // Mock map ref for the hidden element if needed, but we used GoogleMap component
 
   const createBusinessMutation = useMutation({
-    mutationFn: async (businessData) => {
+    mutationFn: async (/** @type {any} */ businessData) => {
       // Ensure we have coords
       if (!businessData.latitude || !businessData.longitude) {
         // Fallback or error?
