@@ -126,8 +126,8 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
         });
     };
 
-    const isStep1Valid = () => formData.business_name.length > 2 && formData.contact_name.length > 2 && formData.phone.length > 8 && formData.category;
-    const isStep2Valid = () => formData.description.length > 10 && formData.location.length > 2 && formData.service_areas.length > 0;
+    const isStep1Valid = () => formData.business_name.length > 1 && formData.contact_name.length > 1 && formData.phone.length > 8 && formData.category;
+    const isStep2Valid = () => formData.description.length > 5 && formData.location.length > 2 && formData.service_areas.length > 0;
 
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
