@@ -493,9 +493,10 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
                                 </Button>
                             </div>
 
+                        </div>
                     )}
 
-                        </CardContent>
+                </CardContent>
             </Card>
         </motion.div >
     );
