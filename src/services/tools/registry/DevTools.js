@@ -6,14 +6,21 @@ import { syncAgentsWithDatabase, getAgentById } from "../../../features/agents/s
 ToolRegistry.register("create_task", "Delegate a task to an agent or yourself.", { title: "string", description: "string", assigned_to: "string", priority: "string" }, async (payload, options) => {
     // payload: { title, description, assigned_to, priority }
     try {
-        const { title, description, assigned_to, priority } = payload;
+        const { title, description, assigned_to, assignee, priority } = payload;
         if (!title) return `[Error] Task title is required.`;
+
+        const finalAssignee = assigned_to || assignee || options.agentId;
+
+        // Normalize Priority (Allowed: low, medium, high, critical)
+        let finalPriority = (priority || 'medium').toLowerCase();
+        if (finalPriority === 'p0' || finalPriority === 'urgent') finalPriority = 'critical';
+        if (!['low', 'medium', 'high', 'critical'].includes(finalPriority)) finalPriority = 'medium';
 
         const newTask = await db.entities.AgentTasks.create({
             title,
             description: description || title,
-            assigned_to: assigned_to || options.agentId, // Assign to self if not specified
-            priority: priority || 'medium',
+            assigned_to: finalAssignee,
+            priority: finalPriority,
             status: 'pending',
             created_by: options.agentId || 'unknown'
         });

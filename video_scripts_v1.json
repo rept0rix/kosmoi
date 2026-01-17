@@ -1,0 +1,14 @@
+[
+  {
+    "category": "Restaurant",
+    "script": "(Open on a vibrant beachside restaurant) Craving authentic Thai? [Restaurant Name] in [Location] offers the freshest seafood and stunning sunset views! #KohSamui #ThaiFood #BeachLife (5s visual of food, then sunset)"
+  },
+  {
+    "category": "Bike Rental",
+    "script": "(Quick shots of someone riding a scooter through scenic Samui roads) Explore Samui your way! [Bike Rental Name] has the perfect scooter for your adventure. Freedom awaits! #KohSamui #ScooterRental #IslandLife (visuals of beaches, temples, and roads)"
+  },
+  {
+    "category": "Tour",
+    "script": "(Exciting clips of island tours - snorkeling, temples, waterfalls) Discover hidden gems! [Tour Company Name] offers unforgettable Samui adventures. Book your experience today! #KohSamui #IslandTours #AdventureTime (Show snippets of key tour offerings)"
+  }
+]

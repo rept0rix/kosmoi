@@ -126,7 +126,7 @@ console.error = function (...args) {
 // Since package.json has "type": "module", we can use imports.
 import { db, realSupabase } from '../src/api/supabaseClient.js';
 import { AuditorSentinelService } from '../src/services/security/AuditorSentinelService.js';
-import { AgentService } from '../src/features/agents/services/AgentService.js';
+import { AgentService, toolRouter } from '../src/features/agents/services/AgentService.js';
 // import { AgentBrain } from '../src/features/agents/services/AgentBrain.js'; // Not used directly in worker loop yet
 import { agents } from '../src/features/agents/services/AgentRegistry.js';
 import { clearMemory } from '../src/features/agents/services/memorySupabase.js';
@@ -225,6 +225,9 @@ You are running as a WORKER on the target machine.
     console.log("🌍 Universal Mode: Agent initialized dynamically per task.");
 }
 
+let lastAgentId = 'tech-lead-agent';
+let globalUserId = '2ff0dcb1-37f2-4338-bb3b-f71fb6dd444e';
+
 async function executeTool(toolName, payload) {
     console.log(`🛠️ Executing Tool: ${toolName}`, payload);
     if (!toolName) return "Error: No tool name provided.";
@@ -256,12 +259,14 @@ async function executeTool(toolName, payload) {
                 });
             case 'write_file':
             case 'write_code':
-                const filePath = path.resolve(PROJECT_ROOT, payload.path || payload.title);
+                const rawWritePath = payload.path || payload.filename || payload.title;
+                if (!rawWritePath) return "Error: No path/filename provided.";
+                const writeFilePath = path.resolve(PROJECT_ROOT, rawWritePath);
                 const content = payload.content || payload.code;
-                const dir = path.dirname(filePath);
+                const dir = path.dirname(writeFilePath);
                 if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-                fs.writeFileSync(filePath, content);
-                return `File written to ${filePath}`;
+                fs.writeFileSync(writeFilePath, content);
+                return `File written to ${writeFilePath}`;
             case 'read_file':
                 const rawPath = payload.path || payload.filename || payload.target_file || payload.file;
                 if (!rawPath) return "Error: No path provided for read_file.";
@@ -445,7 +450,23 @@ async function executeTool(toolName, payload) {
                 return `Subject: Hello from Kosmoi\n\nDear Lead,\n\nWe saw you are interested in... [Generated Content Stub]`;
 
             default:
-                // Check if it's an MCP Tool
+                // 1. Check if tool is in the ToolRegistry (via Router)
+                try {
+                    console.log(`📡 Routing '${toolName}' to ToolRegistry...`);
+                    const registryRes = await toolRouter(toolName, payload, {
+                        userId: globalUserId,
+                        agentId: lastAgentId,
+                        dbClient: workerSupabase,
+                        approved: true // Worker mode bypasses safety queue
+                    });
+                    if (!registryRes.includes("not supported")) {
+                        return registryRes;
+                    }
+                } catch (routerErr) {
+                    console.warn(`ToolRegistry Router failed for ${toolName}:`, routerErr.message);
+                }
+
+                // 2. Check if it's an MCP Tool
                 const mcpTools = mcpManager.getTools();
                 const mcpTool = mcpTools.find(t => t.name === toolName);
 
@@ -477,9 +498,9 @@ async function processTask(task, agentService, agentConfigOverride) {
     }
 
     // Use the override config if provided (Universal Mode), otherwise fallback to global (Dedicated Mode)
-    // Actually, in Universal Mode step we pass both. In dedicated mode (old code) we rely on global.
-    // Let's assume we always pass agentService now.
     const activeAgent = agentService || agent;
+    lastAgentId = agentConfigOverride?.id || 'tech-lead-agent';
+    globalUserId = agentService?.userId || '2ff0dcb1-37f2-4338-bb3b-f71fb6dd444e';
 
     const prompt = `
 You have been assigned a task:
@@ -526,7 +547,10 @@ When finished, reply with "TASK_COMPLETED".
                 action.payload = action.payload;
             } else if (action.type === 'write_code') {
                 action.name = 'write_code';
-                action.payload = { path: action.title, content: action.code };
+                action.payload = {
+                    path: action.payload?.path || action.payload?.filename || action.title,
+                    content: action.payload?.content || action.code
+                };
             } else if (action.type === 'create_task') {
                 action.name = 'create_task';
                 action.payload = {
@@ -551,7 +575,14 @@ When finished, reply with "TASK_COMPLETED".
                         action = data.action;
                         // Map again
                         if (action.type === 'write_code') {
-                            action = { name: 'write_code', payload: { path: action.title, content: action.code } };
+                            // Map 'title' or 'filename' to 'path'
+                            action = {
+                                name: 'write_code',
+                                payload: {
+                                    path: action.payload?.path || action.payload?.filename || action.title,
+                                    content: action.payload?.content || action.code
+                                }
+                            };
                         } else if (action.type === 'tool_call') {
                             action = { name: action.name, payload: action.payload };
                         }
@@ -628,11 +659,15 @@ When finished, reply with "TASK_COMPLETED".
             // No tool call. Check if done.
             if (response.text.toUpperCase().includes("TASK_COMPLETED") || response.text.toUpperCase().includes("TERMINATE")) {
                 console.log("✅ Task Completed by Agent.");
+
+                // Capture the text BEFORE the completion token if possible, or the whole thing
+                const finalResult = response.text.replace(/TASK_COMPLETED/gi, '').trim() || response.text;
+
                 const { error: completeError } = await workerSupabase
                     .from('agent_tasks')
                     .update({
                         status: 'done',
-                        result: response.text
+                        result: finalResult
                     })
                     .eq('id', task.id);
 
