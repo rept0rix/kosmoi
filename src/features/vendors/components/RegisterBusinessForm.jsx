@@ -21,8 +21,11 @@ import {
     ArrowLeft,
     Plus,
     X,
+    Plus,
+    X,
     User
 } from 'lucide-react';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import GoogleMap from '@/components/GoogleMap';
 import { CategorySelector } from './CategorySelector';
 import { PhoneVerification } from './PhoneVerification';
@@ -44,6 +47,7 @@ const areaOptions = [
 ];
 
 export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
+    const { user } = useAuth();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         business_name: initialName,
@@ -148,7 +152,11 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
 
     const createBusinessMutation = useMutation({
         mutationFn: async (/** @type {any} */ businessData) => {
-            return await db.entities.ServiceProvider.create(businessData);
+            if (!user?.id) throw new Error("User not authenticated");
+            return await db.entities.ServiceProvider.create({
+                ...businessData,
+                owner_id: user.id
+            });
         },
         onSuccess: () => onSuccess(),
         onError: (err) => console.error("Create failed", err)
