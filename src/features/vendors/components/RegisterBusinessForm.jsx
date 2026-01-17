@@ -150,6 +150,7 @@ export function RegisterBusinessForm({ initialName = '', onBack, onSuccess }) {
 
     const createBusinessMutation = useMutation({
         mutationFn: async (/** @type {any} */ businessData) => {
+            console.log("Creating business for user:", user?.id);
             if (!user?.id) throw new Error("User not authenticated");
             return await db.entities.ServiceProvider.create({
                 ...businessData,
