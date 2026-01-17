@@ -55,7 +55,7 @@ export default function BusinessDashboard() {
     queryKey: ['my-businesses', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data } = await db.entities.ServiceProvider.get({ owner_id: user.id });
+      const { data } = await db.from('service_providers').select('*').eq('owner_id', user.id);
       return Array.isArray(data) ? data : (data ? [data] : []);
     },
     enabled: !!user?.id
