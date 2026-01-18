@@ -48,11 +48,12 @@ export default function TransportHub() {
             let query = supabase
                 .from('service_providers')
                 .select('*')
-                .eq('category', 'transport')
+                .eq('super_category', 'travel') // Fix: Look in travel super_category
+                .in('category', ['taxis', 'car_rental', 'motorbike_rental', 'ferries', 'transport']) // Fix: Explicit transport types
                 .eq('status', 'active');
 
             if (activeCategory !== 'all') {
-                query = query.eq('sub_category', activeCategory);
+                query = query.eq('category', activeCategory); // Fix: Match normalized category column
             }
 
             const { data, error } = await query;
@@ -64,7 +65,7 @@ export default function TransportHub() {
                 title: item.business_name,
                 location: item.location,
                 price: item.metadata?.price || 0,
-                category: item.sub_category || 'transport',
+                category: item.category || 'transport', // Fix: Use normalized category
                 specs: item.metadata?.specs || 'Standard',
                 rating: item.average_rating || 0,
                 reviews_count: item.total_reviews || 0,
@@ -152,10 +153,10 @@ export default function TransportHub() {
 
     const categories = [
         { id: 'all', label: 'All Transport' },
-        { id: 'scooter', label: 'Scooters' },
-        { id: 'car', label: 'Car Rental' },
-        { id: 'taxi', label: 'Taxi / Van' },
-        { id: 'boat', label: 'Ferries & Boats' },
+        { id: 'motorbike_rental', label: 'Scooters' },
+        { id: 'car_rental', label: 'Car Rental' },
+        { id: 'taxis', label: 'Taxi / Van' },
+        { id: 'ferries', label: 'Ferries & Boats' },
     ];
 
     return (
