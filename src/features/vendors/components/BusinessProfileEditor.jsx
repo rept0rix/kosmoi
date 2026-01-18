@@ -36,7 +36,7 @@ export function BusinessProfileEditor({ business }) {
 
     // Update business mutation
     const updateMutation = useMutation({
-        mutationFn: async (newData) => {
+        mutationFn: async (/** @type {any} */ newData) => {
             const { error } = await db
                 .from('service_providers')
                 .update(newData)
