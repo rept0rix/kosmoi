@@ -50,8 +50,8 @@ export function BusinessProfileEditor({ business }) {
                 title: "Profile Updated",
                 description: "Your business details have been saved successfully.",
             });
-            queryClient.invalidateQueries(['my-businesses']);
-            queryClient.invalidateQueries(['my-business']);
+            queryClient.invalidateQueries({ queryKey: ['my-businesses'] });
+            queryClient.invalidateQueries({ queryKey: ['my-business'] });
         },
         onError: (err) => {
             console.error("Update failed:", err);
@@ -112,6 +112,7 @@ export function BusinessProfileEditor({ business }) {
                             <CategorySelector
                                 value={formData.category}
                                 onChange={(val) => handleChange('category', val)}
+                                error={null}
                             />
                         </div>
 
