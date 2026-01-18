@@ -27,6 +27,7 @@ import { ProductCard } from '@/components/marketplace/ProductCard';
 const CalendarView = React.lazy(() => import('@/pages/vendor/CalendarView')); // Import Calendar Component
 const EditProfileDialog = React.lazy(() => import('@/components/dashboard/EditProfileDialog'));
 const StatsOverview = React.lazy(() => import('@/components/dashboard/StatsOverview'));
+import { FinanceView } from '@/features/vendors/components/FinanceView';
 
 // Mock Incoming Job
 const MOCK_JOB = {
@@ -412,6 +413,14 @@ export default function ProviderDashboard() {
                             >
                                 <Zap className="w-4 h-4 mr-2" /> Analytics
                             </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className={`h-8 px-3 rounded-md ${viewMode === 'finance' ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'}`}
+                                onClick={() => setViewMode('finance')}
+                            >
+                                <CreditCard className="w-4 h-4 mr-2" /> Finance
+                            </Button>
                         </div>
                     </div>
 
@@ -504,6 +513,12 @@ export default function ProviderDashboard() {
                         <div className="p-12 border border-dashed border-white/10 rounded-xl flex items-center justify-center text-slate-500">
                             More insights coming soon...
                         </div>
+                    </div>
+                )}
+
+                {viewMode === 'finance' && (
+                    <div className="h-full bg-slate-900 overflow-y-auto pt-4">
+                        <FinanceView provider={providerProfile} />
                     </div>
                 )}
             </div>
