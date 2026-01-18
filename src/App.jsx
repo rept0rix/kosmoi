@@ -104,6 +104,7 @@ import TransactionHistoryPage from './pages/TransactionHistoryPage';
 import LocalBrain from '@/pages/LocalBrain';
 // import SystemMonitor from '@/components/dashboard/SystemMonitor'; // Unused?
 import ProviderProfile from '@/pages/ProviderProfile';
+import LandingPage_SmokeTest from '@/pages/LandingPage_SmokeTest';
 
 // Speed Pass Injection
 // import SpeedPassCard from '@/components/SpeedPassCard'; // Disabled
@@ -299,6 +300,9 @@ const AuthenticatedApp = () => {
             {/* Trust Pages */}
             <Route path="about" element={<AboutUs />} />
             <Route path="use-cases" element={<UseCases />} />
+            {/* Campaign Routes */}
+            <Route path="r/:category" element={<LandingPage_SmokeTest />} />
+
             <Route path="pricing" element={<Pricing />} />
             <Route path="legal/terms" element={<TermsOfService />} />
             <Route path="legal/privacy" element={<PrivacyPolicy />} />
