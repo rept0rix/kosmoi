@@ -58,32 +58,11 @@ const OverviewTab = ({ business }) => (
     </div>
 );
 
+import { BusinessProfileEditor } from '@/features/vendors/components/BusinessProfileEditor';
+
+// Profile Tab is now handled by the dedicated editor component
 const ProfileTab = ({ business }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>Business Profile</CardTitle>
-            <CardDescription>Manage how your business appears on Kosmoi.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <h4 className="font-semibold mb-2">Business Name</h4>
-                        <p className="p-2 border rounded-md bg-slate-50">{business.business_name}</p>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold mb-2">Category</h4>
-                        <p className="p-2 border rounded-md bg-slate-50 capitalize">{business.category}</p>
-                    </div>
-                </div>
-                <div>
-                    <h4 className="font-semibold mb-2">Description</h4>
-                    <p className="p-2 border rounded-md bg-slate-50 min-h-[100px]">{business.description || 'No description provided.'}</p>
-                </div>
-                <Button variant="outline">Edit Profile (Coming Soon)</Button>
-            </div>
-        </CardContent>
-    </Card>
+    <BusinessProfileEditor business={business} />
 );
 
 export function DashboardSingleView({ business, onBack }) {
@@ -114,8 +93,8 @@ export function DashboardSingleView({ business, onBack }) {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === item.id
-                                    ? 'bg-blue-50 text-blue-700'
-                                    : 'text-slate-600 hover:bg-slate-100'
+                                ? 'bg-blue-50 text-blue-700'
+                                : 'text-slate-600 hover:bg-slate-100'
                                 }`}
                         >
                             <item.icon className="w-5 h-5" />
@@ -223,8 +202,8 @@ export function DashboardSingleView({ business, onBack }) {
                                         setIsSidebarOpen(false);
                                     }}
                                     className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === item.id
-                                            ? 'bg-blue-50 text-blue-700'
-                                            : 'text-slate-600 hover:bg-slate-100'
+                                        ? 'bg-blue-50 text-blue-700'
+                                        : 'text-slate-600 hover:bg-slate-100'
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5" />
