@@ -46,6 +46,16 @@ export default function LeadCaptureForm({ category, source = 'web', onSuccess })
 
             if (error) throw error;
 
+            // Analytics: Push to Data Layer
+            if (window.dataLayer) {
+                window.dataLayer.push({
+                    event: 'generate_lead',
+                    conversion_id: 'auto_generated', // Placeholder since we don't have a real ID back easily from insert in some cases, or use data.id if available from select().
+                    lead_category: category,
+                    lead_source: source
+                });
+            }
+
             setIsSuccess(true);
             if (onSuccess) onSuccess();
 

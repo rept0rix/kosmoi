@@ -42,6 +42,7 @@
     - **FB/TikTok/Google Ads**: Activate CMO & Marketing Intelligence to draft high-conversion copy.
     - **Graphics/Video**: Assign `video-agent` and `graphic-designer` to produce creative assets.
     - **GTM & Analytics**: Set up Google Tag Manager and conversion tracking via `analytics-agent`.
+    - **Optimization**: Use `/marketing_swarm_blitz` workflow for new verticals.
 - [ ] **Human Notification System**:
     - Implement triggers for `notify_admin` when human action (budget approval, manual review) is required.
 

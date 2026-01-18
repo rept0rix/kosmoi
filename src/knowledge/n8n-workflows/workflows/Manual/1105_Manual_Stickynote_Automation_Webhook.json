@@ -63,7 +63,7 @@
         "options": {},
         "sendBody": true,
         "sendHeaders": true,
-        "authentication": "{{ $credentials.predefinedCredentialType }}",
+        "authentication": "headerAuth",
         "bodyParameters": {
           "parameters": [
             {
@@ -84,11 +84,11 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer $OPENAI_API_KEY"
+              "value": "Bearer {{ $credentials.openAiApi.apiKey }}"
             }
           ]
         },
-        "nodeCredentialType": "YOUR_CREDENTIAL_HERE"
+        "nodeCredentialType": "openAiApi"
       },
       "credentials": {
         "openAiApi": {
