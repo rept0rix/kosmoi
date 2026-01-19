@@ -55,8 +55,11 @@ export default function BusinessDashboard() {
   const { data: myBusinesses, isLoading: isLoadingBusinesses } = useQuery({
     queryKey: ['my-businesses', user?.id],
     queryFn: async () => {
+      console.log("Fetching businesses for user:", user?.id);
       if (!user?.id) return [];
-      const { data } = await db.from('service_providers').select('*').eq('owner_id', user.id);
+      const { data, error } = await db.from('service_providers').select('*').eq('owner_id', user.id);
+      console.log("Business fetch result:", { data, error, userId: user.id });
+      if (error) throw error;
       return Array.isArray(data) ? data : (data ? [data] : []);
     },
     enabled: !!user?.id

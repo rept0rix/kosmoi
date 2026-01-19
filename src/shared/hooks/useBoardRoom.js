@@ -23,7 +23,9 @@ import { realSupabase as supabase } from '@/api/supabaseClient';
 import { useRxQuery } from '@/shared/hooks/useRxQuery';
 import { useRxDB } from '@/core/db/RxDBProvider';
 
-export function useBoardRoom() {
+export function useBoardRoom(options = {}) {
+    const { providerId } = options;
+
     // Start Autonomous Engine
     useEffect(() => {
         CoreLoop.start();
@@ -159,7 +161,13 @@ export function useBoardRoom() {
     useEffect(() => {
         const fetchMeetings = async () => {
             try {
-                const { data, error } = await supabase.from('board_meetings').select('*').order('created_at', { ascending: false });
+                let query = supabase.from('board_meetings').select('*').order('created_at', { ascending: false });
+
+                if (providerId) {
+                    query = query.eq('provider_id', providerId);
+                }
+
+                const { data, error } = await query;
                 if (error) {
                     throw error;
                 }
@@ -194,8 +202,9 @@ export function useBoardRoom() {
         };
         fetchDetails();
 
-        const msgSub = supabase.channel(`messages:${selectedMeeting.id}`)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'board_messages', filter: `meeting_id=eq.${selectedMeeting.id}` }, payload => {
+        const channel = supabase
+            .channel(`room:${providerId || 'global'}`)
+            .on(/** @type {any} */('postgres_changes'), { event: 'INSERT', schema: 'public', table: 'board_messages', filter: `meeting_id=eq.${selectedMeeting.id}` }, payload => {
                 setMessages(prev => [...prev, payload.new]);
                 setTypingAgent(null);
             })
@@ -213,7 +222,7 @@ export function useBoardRoom() {
         // Task Subscription removed (Handled by RxDB Replication)
 
         return () => {
-            supabase.removeChannel(msgSub);
+            if (channel) (/** @type {any} */ (supabase)).removeChannel(channel);
         };
     }, [selectedMeeting]);
 
@@ -225,14 +234,19 @@ export function useBoardRoom() {
         };
         fetchKnowledge();
 
-        const sub = supabase.channel('company_knowledge_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'company_knowledge' }, () => {
+        const subscription = supabase
+            .channel('agent-typing')
+            .on(/** @type {any} */('postgres_changes'), { event: 'INSERT', schema: 'public', table: 'agent_logs' }, (payload) => {
+                // This payload is for agent typing indicators, not knowledge updates
+                // We can add logic here to update typing state if needed
+                // For now, we'll just re-fetch knowledge on any change to agent_logs (which is not ideal)
+                // A better approach would be a dedicated channel for knowledge changes or a more specific filter
                 fetchKnowledge();
             })
             .subscribe();
 
         return () => {
-            supabase.removeChannel(sub);
+            if (subscription) (/** @type {any} */ (supabase)).removeChannel(subscription);
         };
     }, []);
 

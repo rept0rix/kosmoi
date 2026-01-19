@@ -14,7 +14,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User, Settings, LogOut, LayoutDashboard, Briefcase, ShieldAlert, Calendar, RefreshCw } from 'lucide-react';
+import { User, Settings, LogOut, LayoutDashboard, Briefcase, ShieldAlert, Calendar, RefreshCw, Store } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserMenu() {
@@ -134,17 +134,13 @@ export default function UserMenu() {
                         <span className="flex-1">Switch to {activeMode === 'personal' ? 'Business' : 'Personal'}</span>
                     </DropdownMenuItem>
 
-                    {isBusiness && (
-                        <>
-                            <DropdownMenuSeparator className="my-1" />
-                            <DropdownMenuItem asChild className="p-2 cursor-pointer rounded-md focus:bg-slate-50 dark:focus:bg-slate-800">
-                                <Link to="/vendor-dashboard" className="flex items-center font-medium text-purple-600">
-                                    <Briefcase className="mr-2 h-4 w-4" />
-                                    <span>Vendor Dashboard</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        </>
-                    )}
+                    <DropdownMenuSeparator className="my-1" />
+                    <DropdownMenuItem asChild className="p-2 cursor-pointer rounded-md focus:bg-slate-50 dark:focus:bg-slate-800">
+                        <Link to="/vendor-dashboard" className="flex items-center font-medium text-purple-600">
+                            <Store className="mr-2 h-4 w-4" />
+                            <span>Business Interface</span>
+                        </Link>
+                    </DropdownMenuItem>
 
 
                     <DropdownMenuSeparator className="my-1" />

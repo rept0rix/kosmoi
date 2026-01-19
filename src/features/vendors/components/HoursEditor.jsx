@@ -52,55 +52,52 @@ export function HoursEditor({ value, onChange }) {
                 </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
                 {DAYS.map((day) => {
                     const dayData = hours[day.key] || DEFAULT_HOURS;
                     const isClosed = dayData.is_closed;
 
                     return (
-                        <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-4 p-3 rounded-lg border bg-card/50">
-                            <div className="w-24 font-medium flex-shrink-0">
+                        <div key={day.key} className="flex items-center gap-2 p-2 rounded-md border bg-card/50 text-sm">
+                            <div className="w-20 font-medium shrink-0 capitalize">
                                 {day.label}
                             </div>
 
-                            <div className="flex items-center gap-2 mr-auto">
-                                <Switch
-                                    checked={!isClosed}
-                                    onCheckedChange={(checked) => handleChange(day.key, 'is_closed', !checked)}
-                                />
-                                <span className="text-sm text-muted-foreground w-16">
-                                    {isClosed ? 'Closed' : 'Open'}
-                                </span>
-                            </div>
+                            <Switch
+                                className="scale-75 origin-left"
+                                checked={!isClosed}
+                                onCheckedChange={(checked) => handleChange(day.key, 'is_closed', !checked)}
+                            />
 
-                            {!isClosed && (
-                                <div className="flex items-center gap-2">
+                            {!isClosed ? (
+                                <div className="flex items-center gap-1 ml-auto">
                                     <Input
                                         type="time"
-                                        className="w-32"
+                                        className="w-20 h-7 text-xs px-1"
                                         value={dayData.open}
                                         onChange={(e) => handleChange(day.key, 'open', e.target.value)}
                                     />
                                     <span className="text-muted-foreground">-</span>
                                     <Input
                                         type="time"
-                                        className="w-32"
+                                        className="w-20 h-7 text-xs px-1"
                                         value={dayData.close}
                                         onChange={(e) => handleChange(day.key, 'close', e.target.value)}
                                     />
-
                                     {day.key === 'monday' && (
                                         <Button
                                             variant="ghost"
-                                            size="sm"
-                                            title="Copy Monday hours to all days"
+                                            size="icon"
+                                            className="h-6 w-6 ml-1 text-muted-foreground"
+                                            title="Copy Monday to all"
                                             onClick={() => copyToAll('monday')}
-                                            className="ml-2 text-muted-foreground hover:text-primary"
                                         >
-                                            <Copy className="w-4 h-4" />
+                                            <Copy className="w-3 h-3" />
                                         </Button>
                                     )}
                                 </div>
+                            ) : (
+                                <span className="text-muted-foreground ml-auto bg-slate-100 px-2 py-0.5 rounded text-xs">Closed</span>
                             )}
                         </div>
                     );

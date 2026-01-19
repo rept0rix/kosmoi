@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true); // Keeping state for compatibility but setting to false
+  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState(null);
 
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("Auth check timed out, forcing load completion");
       setIsLoadingAuth(false);
       setIsLoadingPublicSettings(false);
-    }, 10000); // 10s timeout
+    }, 30000); // 30s timeout
 
     try {
       setIsLoadingPublicSettings(true);
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       // Fixes hanging getSession() issue
       const getSessionPromise = db.auth.getSession();
       const sessionTimeoutPromise = new Promise((resolve) =>
-        setTimeout(() => resolve({ data: { session: null } }), 2000) // Increased to 2s
+        setTimeout(() => resolve({ data: { session: null } }), 5000) // Increased to 5s
       );
 
       const { data: { session } } = await Promise.race([getSessionPromise, sessionTimeoutPromise]);
@@ -114,7 +114,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(false);
 
     } catch (error) {
-      // ... existing error handling
       console.error('Unexpected error:', error);
       setAuthError({
         type: 'unknown',
@@ -159,9 +158,9 @@ export const AuthProvider = ({ children }) => {
       };
 
       // Race the entire operation against a timeout
-      // Increased timeout to 10s to account for potential Supabase cold starts
+      // Increased timeout to 20s to account for potential Supabase cold starts
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Auth verification timed out")), 10000)
+        setTimeout(() => reject(new Error("Auth verification timed out")), 20000)
       );
 
       const authenticatedUser = await Promise.race([
@@ -189,20 +188,28 @@ export const AuthProvider = ({ children }) => {
       }
 
     } catch (error) {
-      console.error('User auth check failed:', error);
-
       const isAbortError = error.name === 'AbortError' || error.message?.includes('signal is aborted');
+
+      if (!isAbortError) {
+        console.error('User auth check failed:', error);
+      }
+
       const isSessionInvalid = error.message?.includes('Invalid session') || error.message?.includes('refresh_token_not_found') || error.message?.includes('JWT expired');
 
       if (isAbortError) {
-        console.warn("⚠️ Auth check aborted (likely navigation). Keeping current user state.");
-        // DO NOTHING - Do not log out on AbortError
+        // console.debug("Auth check aborted.");
       } else if (hasOptimisticSession && !isSessionInvalid) {
         console.warn("⚠️ Auth check failed but keeping optimistic session (Stability Mode). Error:", error.message);
-      } else {
-        console.warn("❌ Session invalid or critical error, logging out.");
+      } else if (error.message?.includes('timed out')) {
+        console.warn("⚠️ Auth validation timed out. Assuming offline/slow network. NOT logging out.");
+        // Do not setAuthenticated(false) here. We give the benefit of the doubt.
+      } else if (isSessionInvalid) {
+        console.warn("❌ Session invalid (explicit), logging out.");
         setIsAuthenticated(false);
         setUser(null);
+      } else {
+        console.warn("⚠️ Unknown auth error, preserving state for stability:", error);
+        // Default to stability: don't kill session unless we are sure.
       }
     } finally {
       setIsLoadingAuth(false);

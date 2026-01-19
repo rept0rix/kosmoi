@@ -9,6 +9,8 @@ import { cn } from "@/shared/lib/utils"
  * @property {boolean} [checked]
  * @property {(checked: boolean) => void} [onCheckedChange]
  * @property {boolean} [disabled]
+ * @property {string} [id]
+ * @property {boolean} [defaultChecked]
  */
 
 /** @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>} */

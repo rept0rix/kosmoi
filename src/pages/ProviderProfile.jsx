@@ -81,6 +81,8 @@ export default function ProviderProfile() {
         }
     };
 
+
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -101,6 +103,10 @@ export default function ProviderProfile() {
         );
     }
 
+    const effectiveImages = (provider.images && provider.images.length > 0)
+        ? provider.images
+        : (provider.metadata?.google_photos || []);
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -110,7 +116,7 @@ export default function ProviderProfile() {
             {/* Hero Section */}
             <div className="relative h-64 md:h-80 w-full overflow-hidden">
                 <img
-                    src={provider.logo_url || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1600&q=80"}
+                    src={effectiveImages[0] || provider.logo_url || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1600&q=80"}
                     alt={provider.business_name}
                     className="w-full h-full object-cover blur-sm brightness-75 scale-105"
                 />
@@ -208,8 +214,7 @@ export default function ProviderProfile() {
                     </GlassCard>
 
                     {/* Services / Packages */}
-                    {provider.price_packages && provider.price_packages.length > 0 && (
-                        /* @ts-ignore */
+                    {provider.price_packages && provider.price_packages.length > 0 && ( /* @ts-ignore */
                         <GlassCard className="p-6 bg-white dark:bg-slate-900 border-0 shadow-sm">
                             <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">Services & Pricing</h2>
                             <div className="space-y-4">
@@ -237,12 +242,11 @@ export default function ProviderProfile() {
                     )}
 
                     {/* Gallery */}
-                    {provider.images && provider.images.length > 0 && (
-                        /* @ts-ignore */
+                    {effectiveImages.length > 0 && ( /* @ts-ignore */
                         <GlassCard className="p-6 bg-white dark:bg-slate-900 border-0 shadow-sm overflow-hidden">
                             <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">Gallery</h2>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                {provider.images.slice(0, 8).map((img, i) => (
+                                {effectiveImages.slice(0, 8).map((img, i) => (
                                     <div key={i} className="aspect-square rounded-lg overflow-hidden bg-slate-100">
                                         <img src={img} alt={`Gallery ${i}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
                                     </div>
