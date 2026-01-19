@@ -45,7 +45,29 @@ async function ingestData() {
         // but for simplicity in Batch 1, we might just store the array of filenames.
 
         // Cleaning Phone Number (basic)
-        let phone = extractPhone(item.description);
+        let phone = extractPhone(item.phone || item.content_snippet || '');
+
+        // --- MATCHING LOGIC ---
+        // 1. Try to find by Source URL
+        let { data: existing } = await supabase
+            .from('service_providers')
+            .select('id')
+            .eq('source_url', item.url)
+            .single();
+
+        // 2. If not found, try by Name (to update Google imports)
+        if (!existing) {
+            const { data: byName } = await supabase
+                .from('service_providers')
+                .select('id')
+                .ilike('business_name', item.title) // Case-insensitive match
+                .single();
+
+            if (byName) {
+                console.log(`🔗 Linked "${item.title}" to existing record: ${byName.id}`);
+                existing = byName;
+            }
+        }
 
         const payload = {
             business_name: item.title,
@@ -54,16 +76,36 @@ async function ingestData() {
             category: (item.category && item.category !== 'other') ? item.category : guessCategory(item.url),
             source_url: item.url,
             phone: item.phone,
+            email: item.email,
+            website: item.website,
+            opening_hours: item.opening_hours && item.opening_hours.length > 0 ? {
+                weekday_text: item.opening_hours,
+                open_now: false
+            } : undefined,
             images: item.images,
             status: 'active',
             verified: false,
             imported_at: new Date().toISOString()
         };
 
-        const { error } = await supabase
-            .from('service_providers')
-            .upsert(payload, { onConflict: 'source_url' }) // Dedup by URL
-            .select();
+        // Remove undefined keys
+        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
+
+        let error;
+        if (existing) {
+            // UPDATE
+            const { error: updateError } = await supabase
+                .from('service_providers')
+                .update(payload)
+                .eq('id', existing.id);
+            error = updateError;
+        } else {
+            // INSERT
+            const { error: insertError } = await supabase
+                .from('service_providers')
+                .insert(payload);
+            error = insertError;
+        }
 
         if (error) {
             console.error(`❌ Failed to insert: ${item.title}`, error.message);

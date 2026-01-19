@@ -9,10 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "worker": "node scripts/agent_worker.js",
+    "worker": "tsx scripts/agent_worker.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "worker:universal": "node scripts/agent_worker.js",
+    "worker:universal": "tsx scripts/agent_worker.js",
     "cron:crawler": "node scripts/harvest_samuimap.js",
     "ingest:harvest": "node scripts/ingest_harvested_data.js"
   },

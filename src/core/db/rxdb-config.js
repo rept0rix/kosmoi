@@ -26,11 +26,16 @@ import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 // we use the EXACT SAME storage instance to avoid DB9 errors.
 const getGlobalStorage = () => {
     const key = '__KOSMOI_RXDB_STORAGE_V4__';
-    if (!window[key]) {
-        const rawStorage = getRxStorageDexie();
-        window[key] = rawStorage;
+    if (typeof window !== 'undefined') {
+        if (!window[key]) {
+            const rawStorage = getRxStorageDexie();
+            window[key] = rawStorage;
+        }
+        return window[key];
+    } else {
+        // Node.js environment - return regular instance or mock if needed for simple scripts
+        return getRxStorageDexie();
     }
-    return window[key];
 };
 
 export const storage = getGlobalStorage();
@@ -49,7 +54,7 @@ export const createDatabase = async () => {
         eventReduce: true
     });
 
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
         window['db'] = db; // accessible in console
     }
 
