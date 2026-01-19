@@ -131,6 +131,7 @@ import { AgentService } from '../src/features/agents/services/AgentService.js';
 import { agents } from '../src/features/agents/services/AgentRegistry.js';
 import { clearMemory } from '../src/features/agents/services/memorySupabase.js';
 import { StripeService } from '../src/services/payments/StripeService.js'; // Import StripeService
+import { ReceptionistAgent } from '../src/features/agents/services/ReceptionistAgent.js'; // Import Receptionist Agent
 import './WorkflowTools.js'; // Register Workflow Tools (Node only)
 import { MCPClientManager } from './mcp_client.js'; // Import MCP Manager
 
@@ -739,7 +740,63 @@ async function main() {
     console.log("🚀 Worker Loop Started. Polling for tasks...");
     console.log("💡 TIP: You can type here to send commands to the Board Room!");
 
+    // --- RECEPTIONIST LOOP ---
+    async function runReceptionistCycle() {
+        // Poll for active provider chats with unread messages
+        try {
+            // 1. Get active meetings linked to providers
+            const { data: meetings, error: meetingError } = await workerSupabase
+                .from('board_meetings')
+                .select('id, provider_id')
+                .eq('status', 'active')
+                .not('provider_id', 'is', null);
+
+            if (meetingError) throw meetingError;
+            if (!meetings || meetings.length === 0) return;
+
+            for (const meeting of meetings) {
+                // 2. Get last message
+                const { data: lastMsg, error: msgError } = await workerSupabase
+                    .from('board_messages')
+                    .select('*')
+                    .eq('meeting_id', meeting.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (msgError && msgError.code !== 'PGRST116') {
+                    console.warn(`[Receptionist] Error fetching msg for meeting ${meeting.id}:`, msgError.message);
+                    continue;
+                }
+
+                // 3. If last message is from USER (or null/unknown), trigger receptionist
+                if (lastMsg && (lastMsg.agent_id === 'HUMAN_USER' || !lastMsg.agent_id)) {
+                    // Check if we already replied (simple check: verify no recent reply from receptionist... 
+                    // actually if lastMsg is USER, then we haven't replied yet, as reply would be top of stack)
+
+                    // Trigger Agent with workerSupabase (Service Role)
+                    const responseText = await ReceptionistAgent.handleIncomingMessage(lastMsg, meeting.provider_id, workerSupabase);
+
+                    if (responseText) {
+                        console.log(`[Receptionist] Auto-Replying to ${meeting.id}`);
+                        await workerSupabase.from('board_messages').insert([{
+                            meeting_id: meeting.id,
+                            agent_id: `receptionist-${meeting.provider_id}`,
+                            content: responseText,
+                            type: 'text'
+                        }]);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("[ReceptionistCycle] Error:", e.message);
+        }
+    }
+
     while (true) {
+        // Run Receptionist Cycle
+        await runReceptionistCycle();
+
         try {
             // Report Heartbeat / Status
             // Report Heartbeat / Status (Non-blocking)

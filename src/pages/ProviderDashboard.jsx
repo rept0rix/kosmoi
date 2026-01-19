@@ -17,6 +17,8 @@ import Edit from 'lucide-react/icons/edit';
 import CalendarIcon from 'lucide-react/icons/calendar';
 import ImageIcon from 'lucide-react/icons/image';
 import Loader2 from 'lucide-react/icons/loader-2';
+import Bot from 'lucide-react/icons/bot'; // Added Bot
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'; // Added Card components
 import GoogleMap from '@/components/GoogleMap';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/api/supabaseClient';
@@ -28,6 +30,7 @@ const CalendarView = React.lazy(() => import('@/pages/vendor/CalendarView')); //
 const EditProfileDialog = React.lazy(() => import('@/components/dashboard/EditProfileDialog'));
 const StatsOverview = React.lazy(() => import('@/components/dashboard/StatsOverview'));
 import { FinanceView } from '@/features/vendors/components/FinanceView';
+import { ReceptionistConfig } from '@/features/vendors/components/ReceptionistConfig';
 
 // Mock Incoming Job
 const MOCK_JOB = {
@@ -421,6 +424,14 @@ export default function ProviderDashboard() {
                             >
                                 <CreditCard className="w-4 h-4 mr-2" /> Finance
                             </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className={`h-8 px-3 rounded-md ${viewMode === 'agents' ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'}`}
+                                onClick={() => setViewMode('agents')}
+                            >
+                                <Bot className="w-4 h-4 mr-2" /> Agents
+                            </Button>
                         </div>
                     </div>
 
@@ -519,6 +530,25 @@ export default function ProviderDashboard() {
                 {viewMode === 'finance' && (
                     <div className="h-full bg-slate-900 overflow-y-auto pt-4">
                         <FinanceView provider={providerProfile} />
+                    </div>
+                )}
+
+                {viewMode === 'agents' && (
+                    <div className="h-full bg-slate-900 overflow-y-auto pt-4 p-4 sm:p-8 max-w-4xl mx-auto">
+                        <h2 className="text-2xl font-bold text-white mb-6">AI Workforce</h2>
+                        <div className="space-y-6">
+                            <ReceptionistConfig provider={providerProfile} />
+
+                            {/* Future Agents placeholders */}
+                            <div className="opacity-50 pointer-events-none filter blur-[1px]">
+                                <Card className="border-slate-800 bg-slate-900/50">
+                                    <CardHeader>
+                                        <CardTitle className="text-slate-400">Sales Scout (Coming Soon)</CardTitle>
+                                        <CardDescription>Finds new leads automatically.</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

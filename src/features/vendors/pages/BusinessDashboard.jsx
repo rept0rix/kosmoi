@@ -33,7 +33,7 @@ export default function BusinessDashboard() {
   const [selectedPlaceForClaim, setSelectedPlaceForClaim] = useState(null);
   const [newBusinessName, setNewBusinessName] = useState('');
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
       // Use getUser() for better type compatibility if me() is missing in types
@@ -44,12 +44,12 @@ export default function BusinessDashboard() {
 
   // Strict Auth Check: Redirect if no user found after loading
   useEffect(() => {
-    if (!user && !localStorage.getItem('sb-access-token')) {
+    if (!isLoadingUser && !user && !localStorage.getItem('sb-access-token')) {
       // Double check local storage to avoid premature redirect during load
       console.warn("⚠️ No user found in BusinessDashboard. Redirecting to login...");
       navigate('/login?returnUrl=/business-registration');
     }
-  }, [user, navigate]);
+  }, [user, isLoadingUser, navigate]);
 
   // Fetch ALL businesses owned by user
   const { data: myBusinesses, isLoading: isLoadingBusinesses } = useQuery({
@@ -254,98 +254,4 @@ export default function BusinessDashboard() {
   return null;
 }
 
-// --- Internal Component: Single Business Dashboard ---
-// (Refactored from original file)
 
-function DashboardSingleView({ business, onBack }) {
-  const navigate = useNavigate();
-  // Re-implement the dashboard UI here, accepting `business` prop
-  // For brevity, I'll include the header and basic stats structure.
-
-  return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10 px-4 py-4 shadow-sm">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={onBack}>
-              <LayoutDashboard className="w-5 h-5 mr-2" /> All Businesses
-            </Button>
-            <div className="h-6 w-px bg-slate-200" />
-            <h1 className="font-bold text-lg">{business.business_name}</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${business.id}`)}>
-              <Eye className="w-4 h-4 mr-2" /> View Public Page
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                <Eye className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Total Views</p>
-                <p className="text-2xl font-bold">1,234</p>
-                <p className="text-xs text-green-600">+12% this week</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">New Inquiries</p>
-                <p className="text-2xl font-bold">15</p>
-                <p className="text-xs text-slate-400">Since last week</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
-                <Star className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Rating</p>
-                <p className="text-2xl font-bold">{business.average_rating || 'N/A'}</p>
-                <p className="text-xs text-slate-400">{business.total_reviews} reviews</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Business Details Preview */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Business Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-500">Category</label>
-                <p>{business.category}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-500">Phone</label>
-                <p>{business.phone}</p>
-              </div>
-              <div className="col-span-2">
-                <label className="text-sm font-medium text-slate-500">Address</label>
-                <p>{business.location}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}

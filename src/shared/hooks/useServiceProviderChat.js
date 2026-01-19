@@ -66,7 +66,8 @@ export function useServiceProviderChat(provider) {
           .from('board_meetings')
           .insert([{
             title: meetingTitle,
-            status: 'active'
+            status: 'active',
+            provider_id: provider.id
           }])
           .select()
           .single();
@@ -119,6 +120,7 @@ export function useServiceProviderChat(provider) {
 
     const channel = supabase
       .channel(`customer_chat:${meetingId}`)
+      // @ts-ignore
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -271,8 +273,10 @@ export function useServiceProviderChat(provider) {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64 = reader.result.split(',')[1];
-      setSelectedImage(base64);
+      if (typeof reader.result === 'string') {
+        const base64 = reader.result.split(',')[1];
+        setSelectedImage(base64);
+      }
     };
     reader.readAsDataURL(file);
   }, []);

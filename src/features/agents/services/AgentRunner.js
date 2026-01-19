@@ -37,7 +37,7 @@ export const AgentRunner = {
         await logToDB('info', `Processing: "${input.substring(0, 50)}..."`, { type: 'start', fullInput: input });
 
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            const apiKey = import.meta.env?.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
             if (!apiKey) throw new Error("API Key Missing");
 
             // --- STEP 1: GATHER CONTEXT (RAG & TOOLS) ---

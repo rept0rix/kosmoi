@@ -128,6 +128,11 @@ async function processPage(url) {
             let phone = '';
             let address = '';
             let category = '';
+            let email = '';
+            let website = '';
+            let openingHours = [];
+            let jsonDescription = '';
+            let jsonImages = [];
 
             $('script[type="application/ld+json"]').each((i, el) => {
                 try {
@@ -135,8 +140,26 @@ async function processPage(url) {
                     const graph = json['@graph'] || [json];
                     graph.forEach(item => {
                         if (item.telephone) phone = item.telephone;
-                        if (item.address && typeof item.address === 'string') address = item.address;
-                        else if (item.address && item.address.streetAddress) address = item.address.streetAddress;
+                        if (item.email) email = item.email;
+                        if (item.url && item.url !== url && !item.url.includes('samui-map.info')) website = item.url;
+
+                        if (item.address) {
+                            if (typeof item.address === 'string') address = item.address;
+                            else if (item.address.streetAddress) address = item.address.streetAddress;
+                        }
+
+                        if (item.openingHours) {
+                            openingHours = Array.isArray(item.openingHours) ? item.openingHours : [item.openingHours];
+                        }
+
+                        if (item.description) jsonDescription = item.description;
+
+                        if (item.image && typeof item.image === 'string') jsonImages.push(item.image);
+                        if (item.photo && typeof item.photo === 'string') jsonImages.push(item.photo);
+                        if (item.photos) {
+                            if (typeof item.photos === 'string') jsonImages.push(item.photos);
+                            else if (Array.isArray(item.photos)) jsonImages.push(...item.photos.filter(p => typeof p === 'string'));
+                        }
                     });
                 } catch (e) { }
             });
@@ -146,6 +169,14 @@ async function processPage(url) {
                 const phoneMatch = content.match(/\+?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{4,10}/);
                 if (phoneMatch) phone = phoneMatch[0];
             }
+
+            // Fallback website extraction from DOM
+            if (!website) {
+                website = $('a:contains("Website"), a.website-link').attr('href');
+            }
+
+            // Prefer JSON description if available (often cleaner)
+            const finalDescription = jsonDescription || description || content;
 
             // Category from breadcrumbs or tags
             category = $('.category-name').first().text().trim() ||
@@ -167,12 +198,15 @@ async function processPage(url) {
             const pageData = {
                 url,
                 title,
-                description,
+                description: finalDescription,
                 phone,
                 address,
                 category,
+                email,
+                website,
+                opening_hours: openingHours,
                 content_snippet: content.substring(0, 300),
-                images
+                images: [...new Set([...images, ...jsonImages])] // Merge and dedup
             };
 
             RESULTS.push(pageData);
@@ -214,7 +248,7 @@ async function run() {
 
     // Sitemap Discovery (Optional but recommended for Full Mode)
     // If we are looking for a specific category, sitemaps are the fastest way to find them
-    await fetchSitemaps();
+    if (!categoryArg) await fetchSitemaps();
 
     // Breadth-First Search / Queue Processing
     while (QUEUE.length > 0 && RESULTS.length < HARVEST_LIMIT) {
