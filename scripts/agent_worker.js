@@ -869,13 +869,32 @@ You are running as a WORKER on the target machine.
 3. EXECUTE the task description immediately using the appropriate tool.
 4. Do not ask for permission. Just do it.
 `;
-                    // If it's a quota error, we might want to wait longer or just crash?
-                    // For now, allow the loop to continue (maybe it was transient), but the UI will know.
                 }
 
-                // Sleep 5s
+                // Initialize Service with this config
+                const dynamicAgent = new AgentService(currentAgentConfig, { userId: WORKER_UUID });
+
+                // 5. Process Task
+                await processTask(task, dynamicAgent, currentAgentConfig);
+
+                // 6. Auto-Commit Work (Save)
+                if (task.status !== 'failed') {
+                    await gitSync(task.title);
+                }
+
+            } else {
+                if (error) console.error("Polling Error:", error);
+                // Idle Wait
                 await new Promise(resolve => setTimeout(resolve, 5000));
             }
-        }
 
-main();
+        } catch (e) {
+            console.error("\n❌ Error in Worker Loop:", e.message);
+            // Wait a bit before retrying to prevent rapid error loops
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
+}
+
+// Start Main
+main().catch(err => console.error("Fatal Error:", err));
