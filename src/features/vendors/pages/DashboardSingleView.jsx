@@ -23,7 +23,9 @@ import {
     Eye,
     MessageCircle,
     FileText,
-    ImageIcon
+    ImageIcon,
+    Crown,
+    ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
