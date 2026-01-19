@@ -16,61 +16,62 @@ export function ClaimBusinessFlow({ selectedPlace, onBack, onSuccess }) {
             if (!user?.id) throw new Error("User authentication missing during claim");
             if (!placeData || !placeData.name) throw new Error("No place data provided");
 
-            // Check if business with this google_place_id already exists
-            // Note: In a real app, you might want to handle the "already exists" case more gracefully in the search step
-            // But RLS or constraints will likely block duplicates or we can check here.
+            const googlePlaceId = placeData.placeId;
 
+            // 1. Check if business exists by google_place_id
+            const { data: existing, error: fetchError } = await db.from('service_providers')
+                .select('*')
+                .eq('google_place_id', googlePlaceId)
+                .maybeSingle();
+
+            if (fetchError) throw fetchError;
+
+            if (existing) {
+                console.log("Business found in DB:", existing);
+                if (existing.owner_id === user.id) {
+                    // Already owned by this user
+                    return existing;
+                }
+                if (existing.owner_id) {
+                    throw new Error("This business is already registered by another user.");
+                }
+
+                // Exists but no owner -> Claim it!
+                const { data: updated, error: updateError } = await db.from('service_providers')
+                    .update({
+                        owner_id: user.id,
+                        status: 'verified', // Auto-verify if they claim it via map (simplified for now)
+                        claimed_at: new Date().toISOString()
+                    })
+                    .eq('id', existing.id)
+                    .select()
+                    .single();
+
+                if (updateError) throw updateError;
+                return updated;
+            }
+
+            // 2. Create new business
             const payload = {
                 business_name: placeData.name,
                 description: `Imported from Google Maps: ${placeData.formatted_address || 'No address'}`,
                 location: placeData.formatted_address || '',
                 latitude: placeData.geometry?.location?.lat() || 0,
                 longitude: placeData.geometry?.location?.lng() || 0,
-                status: 'pending',
-                verified: false,
+                status: 'active', // Set active immediately for claimed businesses
+                verified: true,
                 phone: placeData.international_phone_number || '',
                 category: 'other',
-                google_place_id: placeData.placeId || '',
+                google_place_id: googlePlaceId || '',
                 metadata: {
                     google_rating: placeData.rating || 0,
-                    google_photos: placeData.photos?.map(p => p.getUrl()) || []
+                    google_photos: placeData.photos?.map(p => typeof p.getUrl === 'function' ? p.getUrl() : p) || []
                 },
-                owner_id: user?.id
+                owner_id: user?.id,
+                claimed_at: new Date().toISOString()
             };
 
-            try {
-                return await db.entities.ServiceProvider.create(payload);
-            } catch (error) {
-                // Handle 409 Conflict (Duplicate) gracefully
-                const isConflict =
-                    error?.code === '23505' ||
-                    error?.status === 409 ||
-                    error?.message?.includes('duplicate key') ||
-                    error?.message?.includes('409');
-
-                if (isConflict) {
-                    console.warn("Business already exists. Checking ownership...");
-                    // Try to find the business by place_id or name
-                    // Since we can't easily query by place_id via simple entity wrapper if not set up, 
-                    // we'll assume if it's 409, it might be ours.
-                    // But we can check if it's in user's businesses.
-                    // For now, let's just treat as success if it belongs to user, or throw better error.
-
-                    // Actually, let's just return a mock success if we think it's ours, 
-                    // or let the UI handle it. 
-                    // A better approach:
-                    const { data: existing } = await db.from('service_providers').select('*').eq('owner_id', user.id);
-                    const isMine = Array.isArray(existing) && existing.some(b => b.business_name === placeData.name || b.google_place_id === placeData.placeId);
-
-                    if (isMine) {
-                        toast({ title: "Business already claimed", description: "You already own this business." });
-                        return existing.find(b => b.business_name === placeData.name || b.google_place_id === placeData.placeId);
-                    }
-
-                    throw new Error("This business is already registered by someone else.");
-                }
-                throw error;
-            }
+            return await db.entities.ServiceProvider.create(payload);
         },
         onSuccess: () => {
             onSuccess();

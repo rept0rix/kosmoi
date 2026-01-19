@@ -430,7 +430,17 @@ export const supabaseHelpers = {
             }
         },
 
-        async signUp(email, password, metadata = {}) {
+        async signUp(arg1, arg2, arg3 = {}) {
+            let email, password, metadata;
+            if (typeof arg1 === 'object') {
+                email = arg1.email;
+                password = arg1.password;
+                metadata = arg1.options?.data || {};
+            } else {
+                email = arg1;
+                password = arg2;
+                metadata = arg3;
+            }
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -442,16 +452,38 @@ export const supabaseHelpers = {
             return data;
         },
 
-        async signIn(email, password) {
+        // Backward compatible alias + Standard support
+        async signInWithPassword(emailOrObj, password) {
+            let email, pass;
+            if (typeof emailOrObj === 'object') {
+                email = emailOrObj.email;
+                pass = emailOrObj.password;
+            } else {
+                email = emailOrObj;
+                pass = password;
+            }
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
-                password
+                password: pass
             });
             if (error) throw error;
             return data;
         },
 
-        async signInWithOAuth(provider, options = {}) {
+        async signOut() {
+            return await supabase.auth.signOut();
+        },
+
+        async signInWithOAuth(arg1, arg2 = {}) {
+            let provider, options;
+            if (typeof arg1 === 'object') {
+                provider = arg1.provider;
+                options = arg1.options || {};
+            } else {
+                provider = arg1;
+                options = arg2;
+            }
+
             const redirectTo = options.redirectTo || window.location.origin;
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider,

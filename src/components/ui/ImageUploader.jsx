@@ -11,6 +11,7 @@ export function ImageUploader({
     bucket = 'uploads',
     folder = 'business-identities',
     multiple = false,
+    compact = false,
     className = ''
 }) {
     const fileInputRef = useRef(null);
@@ -68,6 +69,50 @@ export function ImageUploader({
             onChange(null);
         }
     };
+
+    // Compact View (Button only / Small Preview)
+    if (compact) {
+        return (
+            <div className={cn("relative", className)}>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleUpload}
+                />
+
+                {value ? (
+                    <div className="relative group w-full h-full rounded-md overflow-hidden border">
+                        <img src={value} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-white hover:text-red-400 hover:bg-transparent"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemove(value);
+                                }}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-full p-0 flex items-center justify-center border-dashed"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    </Button>
+                )}
+            </div>
+        );
+    }
 
     // Single Image View
     if (!multiple) {

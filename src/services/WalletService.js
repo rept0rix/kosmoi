@@ -26,6 +26,7 @@ export const WalletService = {
             if (error) throw error;
             return data;
         } catch (error) {
+            if (error.name === 'AbortError') throw error; // Re-throw or ignore, but don't log error
             console.error("Wallet Fetch Error:", error);
             throw error;
         }
@@ -161,6 +162,7 @@ export const WalletService = {
             if (error) throw error;
             return data?.data || [];
         } catch (error) {
+            if (error.name === 'AbortError') return []; // Ignore aborts
             console.error("Fetch Cards Error:", error);
             return [];
         }

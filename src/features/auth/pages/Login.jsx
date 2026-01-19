@@ -32,81 +32,28 @@ export default function Login() {
 
     const processingOAuth = React.useRef(false);
 
-    // Handle OAuth Hash - Passive Polling Mode
+    // Simplified OAuth handling: Rely on AuthContext's listener
+    // Just show the spinner while we wait for AuthContext to pick up the session.
     useEffect(() => {
-        let isChecking = false;
-        let pollInterval;
-
-        const checkSession = async () => {
-            if (isChecking) return;
-            isChecking = true;
-
-            try {
-                const { data: { session } } = await db.auth.getSession();
-
-                if (session) {
-                    console.log("✅ OAuth Success: Session detected via polling!", session.user.email);
-
-                    // Clear interval immediately
-                    if (pollInterval) clearInterval(pollInterval);
-
-                    // Provide visual feedback
-                    setVerifying(false);
-
-                    // SYNC STATE: Force triggers AuthContext to update 'isAuthenticated'
-                    await checkAppState();
-
-                    // SOFT REDIRECT: Use navigate instead of window.location.href
-                    // This preserves the session in memory without reloading the page
-                    // The main useEffect monitoring 'isAuthenticated' will also kick in, 
-                    // but we do this here to be sure.
-                    const role = session.user?.user_metadata?.role || 'user';
-                    // Check strict admin role from DB if possible, but metadata is a good first hint
-                    // for the immediate redirect.
-                    const target = (role === 'admin' || session.user.email === 'na0ryank0@gmail.com')
-                        ? '/admin/wallet'
-                        : '/profile';
-
-                    console.log(`🚀 Soft Redirecting to ${target}`);
-                    navigate(target, { replace: true });
-
-                    return true;
-                }
-            } catch (err) {
-                console.error("Polling check failed:", err);
-            } finally {
-                isChecking = false;
-            }
-            return false;
-        };
+        let timeoutTimer;
 
         if (location.hash && location.hash.includes('access_token')) {
-            console.log("🔐 OAuth Hash Detected - Starting Passive Polling...");
+            console.log("🔐 OAuth Hash Detected - Waiting for AuthContext...");
             setVerifying(true);
 
-            // Poll every 500ms
-            pollInterval = setInterval(checkSession, 500);
-
-            // Give Supabase client 1s to digest the hash before expecting session
-            setTimeout(() => {
-                checkSession();
-            }, 1000);
-
             // Safety timeout: 10 seconds
-            const timeoutTimer = setTimeout(() => {
-                clearInterval(pollInterval);
+            timeoutTimer = setTimeout(() => {
                 if (verifying) {
-                    console.warn("⚠️ OAuth polling timed out.");
-                    setError("Login seems slow. If you are not redirected, please refresh.");
-                    setVerifying(false);
+                    console.warn("⚠️ OAuth verification timed out.");
+                    setError("Login took too long. Please refresh the page.");
+                    setVerifying(false); // Stop spinner
                 }
             }, 10000);
-
-            return () => {
-                clearInterval(pollInterval);
-                clearTimeout(timeoutTimer);
-            };
         }
+
+        return () => {
+            if (timeoutTimer) clearTimeout(timeoutTimer);
+        };
     }, [location.hash]);
 
     // 2. React to Auth Success (from Context)
@@ -176,15 +123,21 @@ export default function Login() {
         try {
             if (isLogin) {
                 // LOGIN
-                const { error: signInError } = await db.auth.signIn(email, password);
+                const { error: signInError } = await db.auth.signInWithPassword({ email, password });
                 if (signInError) throw signInError;
 
                 console.log("Sign in successful, updating state...");
             } else {
                 // REGISTER
-                const { user: newUser, session } = await db.auth.signUp(email, password, {
-                    role: 'user',
-                    registered_at: new Date().toISOString()
+                const { user: newUser, session } = await db.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            role: 'user',
+                            registered_at: new Date().toISOString()
+                        }
+                    }
                 });
 
                 if (!session && !newUser) {
@@ -254,11 +207,14 @@ export default function Login() {
             // Ensure we redirect back correctly to process hash
             const redirectUrl = `${window.location.origin}/login`;
 
-            await db.auth.signInWithOAuth('google', {
-                redirectTo: redirectUrl,
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent',
+            await db.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    }
                 }
             });
         } catch (err) {
@@ -324,7 +280,7 @@ export default function Login() {
         // Auto-submit
         setLoading(true);
         try {
-            await db.auth.signIn(devEmail, devPass);
+            await db.auth.signInWithPassword({ email: devEmail, password: devPass });
             console.log("Dev Login successful");
             await checkAppState(); // This will trigger the redirect effect
         } catch (err) {
