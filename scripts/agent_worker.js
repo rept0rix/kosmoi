@@ -793,13 +793,10 @@ async function main() {
         }
     }
 
+    // --- WORKER LOOP ---
     while (true) {
-        // Run Receptionist Cycle
-        await runReceptionistCycle();
-
         try {
-            // Report Heartbeat / Status
-            // Report Heartbeat / Status (Non-blocking)
+            // 0. Report Heartbeat
             try {
                 await workerSupabase.from('company_knowledge').upsert({
                     key: 'WORKER_STATUS',
@@ -811,51 +808,49 @@ async function main() {
                 console.warn("⚠️ Heartbeat failed (non-fatal):", err.message);
             }
 
-            // Poll for tasks...
-            console.log(`[DEBUG] Polling Query Params: Universal=${isUniversal}, AssignedTo=${isUniversal ? 'ANY' : agentRole}, Status=['open', 'pending','in_progress']`);
+            // 1. Run Receptionist Cycle (Priority)
+            await runReceptionistCycle();
 
+            // 2. Poll for Tasks
+            // console.log(`[DEBUG] Polling...`);
+
+            // Build Query
             let query = workerSupabase
                 .from('agent_tasks')
                 .select('*')
                 .in('status', ['pending', 'in_progress', 'review'])
                 .limit(1);
 
-            // If dedicated worker, filter by role. If universal, grab anything (or specifically where assigned_to matches a known agent)
             if (!isUniversal) {
                 query = query.eq('assigned_to', agentRole);
             }
-            // For Universal, we could optionally filter for unassigned or specific pools, but "grab anything pending" is best for now.
-            // But we should prioritize tasks assigned to "known agents" over generic garbage
 
             const { data: tasks, error } = await query;
-
-            if (error) console.error("Polling Error Details:", JSON.stringify(error, null, 2));
 
             if (tasks && tasks.length > 0) {
                 const task = tasks[0];
                 console.log(`\n👀 Found Task: "${task.title}" (ID: ${task.id})`);
-                console.log(`   Assigned To: ${task.assigned_to}`);
 
-                // Determine Agent Logic
+                // 3. Git Pull (Just-in-Time Update)
+                // Before starting, ensure we have the latest code (e.g. new tools/scripts)
+                console.log("🔄 Task Found! Syncing code before execution...");
+                try {
+                    await new Promise(r => exec('git pull', { cwd: PROJECT_ROOT }, r));
+                    console.log("✅ Code Synced.");
+                } catch (e) {
+                    console.warn("⚠️ Pre-task sync failed:", e.message);
+                }
+
+                // 4. Determine Agent Logic (Universal Mode Adaptation)
                 let currentAgentConfig;
                 if (!isUniversal) {
                     currentAgentConfig = agents.find(a => a.id === agentRole || a.role.toLowerCase() === agentRole.toLowerCase());
                 } else {
                     // Dynamic Load - Robust Matching Strategy
-                    // 1. Try Exact ID Match (e.g. 'agent_cmo')
-                    currentAgentConfig = agents.find(a => a.id === task.assigned_to);
+                    currentAgentConfig = agents.find(a => a.id === task.assigned_to) ||
+                        agents.find(a => a.role === task.assigned_to) ||
+                        agents.find(a => a.role.toLowerCase().includes(task.assigned_to.toLowerCase()));
 
-                    // 2. Try Role Match (e.g. 'cmo-agent')
-                    if (!currentAgentConfig) {
-                        currentAgentConfig = agents.find(a => a.role === task.assigned_to);
-                    }
-
-                    // 3. Try Fuzzy Role Match
-                    if (!currentAgentConfig && task.assigned_to) {
-                        currentAgentConfig = agents.find(a => a.role.toLowerCase().includes(task.assigned_to.toLowerCase()));
-                    }
-
-                    // 4. Default Fallback
                     if (!currentAgentConfig) {
                         console.warn(`⚠️ Unknown agent type '${task.assigned_to}'. Using default Tech Lead.`);
                         currentAgentConfig = agents.find(a => a.id === 'tech-lead-agent');
@@ -863,7 +858,6 @@ async function main() {
                 }
                 console.log(`🎭 Universal Worker adapting persona: ${currentAgentConfig.role}`);
 
-                // Inject Worker Mode Prompt Dynamically
                 // Inject Worker Mode Prompt Dynamically
                 if (!currentAgentConfig.systemPrompt.includes("WORKER MODE ACTIVE")) {
                     currentAgentConfig.systemPrompt += `
@@ -875,40 +869,13 @@ You are running as a WORKER on the target machine.
 3. EXECUTE the task description immediately using the appropriate tool.
 4. Do not ask for permission. Just do it.
 `;
+                    // If it's a quota error, we might want to wait longer or just crash?
+                    // For now, allow the loop to continue (maybe it was transient), but the UI will know.
                 }
 
-                // Initialize Service with this config
-                const dynamicAgent = new AgentService(currentAgentConfig, { userId: WORKER_UUID });
-
-                // Process Task
-                await processTask(task, dynamicAgent, currentAgentConfig);
-
-                // 3. AUTO-COMMIT WORK
-                await gitSync(task.title);
-            } else {
-                if (error) console.error("Polling Error:", error);
-                // process.stdout.write('.'); // Comment out dot for now
-                console.log(`[${new Date().toISOString().split('T')[1]}] Polling... No tasks.`);
+                // Sleep 5s
+                await new Promise(resolve => setTimeout(resolve, 5000));
             }
-
-        } catch (e) {
-            console.error("\n❌ Error in Polling Loop:", e.message);
-
-            // Report Error State
-            await workerSupabase.from('company_knowledge').upsert({
-                key: 'WORKER_STATUS',
-                value: { status: 'STOPPED', error: e.message, last_seen: new Date().toISOString(), worker: workerName },
-                category: 'system',
-                updated_at: new Date().toISOString()
-            });
-
-            // If it's a quota error, we might want to wait longer or just crash?
-            // For now, allow the loop to continue (maybe it was transient), but the UI will know.
         }
-
-        // Sleep 5s
-        await new Promise(resolve => setTimeout(resolve, 5000));
-    }
-}
 
 main();
