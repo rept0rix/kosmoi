@@ -39,6 +39,7 @@ Your goal is to assist in developing, debugging, and optimizing the platform whi
 ## Capabilities & Modes
 
 You have specialized modes available. Use them when appropriate:
+
 - **Default**: General coding and debugging (You are here).
 - **Plan**: Architecture and detailed planning (`logan plan`).
 - **Audit**: Security and quality reviews (`logan audit`).
