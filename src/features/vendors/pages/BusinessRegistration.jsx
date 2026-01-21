@@ -45,6 +45,7 @@ import GoogleMap from '@/components/GoogleMap';
 import { RegisterBusinessForm } from '@/features/vendors/components/RegisterBusinessForm';
 import { CategorySelector } from '@/features/vendors/components/CategorySelector';
 import { PhoneVerification } from '@/features/vendors/components/PhoneVerification';
+import { ReceptionistChat } from '@/features/vendors/components/ReceptionistChat'; // Integrated Chat Logic
 
 // --- Constants ---
 
@@ -99,6 +100,23 @@ export default function BusinessRegistration() {
     }
   }, [existingBusiness, isLoadingBusiness, navigate]);
 
+  // Mutation for Chat-based registration
+  const createBusinessMutation = useMutation({
+    mutationFn: async (businessData) => {
+         return await db.entities.ServiceProvider.create({
+            ...businessData,
+            owner_id: user.id,
+            status: 'pending',
+            verified: false
+        });
+    },
+    onSuccess: () => {
+        toast({ title: "Welcome Aboard!", description: "Your business has been registered." });
+        navigate(createPageUrl('BusinessDashboard'));
+    },
+    onError: (e) => toast({ title: "Registration Failed", description: e.message, variant: "destructive" })
+  });
+
   if (isLoadingAuth || isLoadingBusiness) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -140,6 +158,7 @@ export default function BusinessRegistration() {
               key="landing"
               existingBusiness={existingBusiness}
               onSelectClaim={() => setView('claim')}
+              onSelectChat={() => setView('chat')}
               onSelectRegister={() => setView('register')}
             />
           )}
@@ -157,6 +176,13 @@ export default function BusinessRegistration() {
               onSuccess={() => navigate(createPageUrl('BusinessDashboard'))}
             />
           )}
+          {view === 'chat' && (
+            <ReceptionistChat 
+               key="chat"
+               onBack={() => setView('landing')}
+               onComplete={(data) => createBusinessMutation.mutate(data)}
+            />
+          )}
         </AnimatePresence>
       </div>
     </div>
@@ -165,7 +191,7 @@ export default function BusinessRegistration() {
 
 // --- Sub-Views ---
 
-function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
+function LandingView({ existingBusiness, onSelectClaim, onSelectRegister, onSelectChat }) {
   const navigate = useNavigate();
 
   return (
@@ -217,9 +243,52 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
       )}
 
       {/* Options Grid */}
-      <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mt-8">
+      <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-8">
 
-        {/* Claim Option */}
+        {/* Option 1: AI Receptionist (NEW) */}
+        <Card
+          className="group relative overflow-hidden border-2 border-transparent hover:border-indigo-100 hover:shadow-xl transition-all cursor-pointer bg-white col-span-1 md:col-span-1"
+          onClick={onSelectChat}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute top-0 right-0 p-2">
+            <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0">New</Badge>
+          </div>
+          <CardContent className="p-8 relative z-10 flex flex-col items-center h-full text-center">
+            <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
+               <Sparkles className="w-7 h-7 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">AI Fast Track</h3>
+            <p className="text-slate-500 mb-6 flex-grow text-sm">
+                Chat with our AI Receptionist to get set up in minutes. No boring forms, just a quick conversation.
+            </p>
+            <Button className="w-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+              Chat with Receptionist
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Option 2: Register Form */}
+         <Card
+          className="group relative overflow-hidden border-2 border-transparent hover:border-purple-100 hover:shadow-xl transition-all cursor-pointer bg-white"
+          onClick={onSelectRegister}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-8 relative z-10 flex flex-col items-center h-full text-center">
+            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Store className="w-7 h-7 text-purple-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">Manual Registration</h3>
+            <p className="text-slate-500 mb-6 flex-grow text-sm">
+              Prefer doing it yourself? Fill out our standard registration form at your own pace.
+            </p>
+            <Button variant="outline" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800">
+              Use Registration Form
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Option 3: Claim */}
         <Card
           className="group relative overflow-hidden border-2 border-transparent hover:border-blue-100 hover:shadow-xl transition-all cursor-pointer bg-white"
           onClick={onSelectClaim}
@@ -229,32 +298,12 @@ function LandingView({ existingBusiness, onSelectClaim, onSelectRegister }) {
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Search className="w-7 h-7 text-blue-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-3">I have an existing business</h3>
-            <p className="text-slate-500 mb-6 flex-grow">
-              Is your business on Google Maps? Claim it and get instant access to manage your profile.
+            <h3 className="text-xl font-bold text-slate-800 mb-3">Claim Existing</h3>
+            <p className="text-slate-500 mb-6 flex-grow text-sm">
+              Already on Google Maps? Find and claim your business instantly.
             </p>
             <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800">
               Find & Claim Business
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Register New Option */}
-        <Card
-          className="group relative overflow-hidden border-2 border-transparent hover:border-purple-100 hover:shadow-xl transition-all cursor-pointer bg-white"
-          onClick={onSelectRegister}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-8 relative z-10 flex flex-col items-center h-full text-center">
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Sparkles className="w-7 h-7 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-3">I want to list a new business</h3>
-            <p className="text-slate-500 mb-6 flex-grow">
-              Join our provider network, create a new business page, and start receiving bookings.
-            </p>
-            <Button variant="outline" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800">
-              Register New Business
             </Button>
           </CardContent>
         </Card>
