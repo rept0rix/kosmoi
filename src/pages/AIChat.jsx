@@ -22,6 +22,8 @@ import { memoryService } from '@/services/ai/MemoryService';
 import { ToolRegistry } from '@/services/tools/ToolRegistry';
 import '@/services/tools/registry/DatabaseTools'; // Register tools
 import A2UIRenderer from "@/components/a2ui/A2UIRenderer";
+import { AdService } from '@/services/AdService';
+import ChatAd from '@/components/ads/ChatAd';
 
 const quickActions = [
     { id: 'tour_guide', label: 'Tour Guide', icon: MapIcon, prompt: "Act as a local tour guide. What are the must-see places in Koh Samui?" },
@@ -315,8 +317,13 @@ export default function AIChat() {
                 providers: providers // Or relevant subset
             };
 
+            // Fetch Contextual Ads (Parallel to Agent)
+            const adsPromise = AdService.getAdsForContext(text, userLocation);
+
             // Execute Agent Runner (Ralph Loop)
             const result = await import('@/features/agents/services/AgentRunner').then(m => m.AgentRunner.run(currentAgent, text, runnerContext));
+            
+            const ads = await adsPromise;
 
             // Log output for debugging
             console.log("[AIChat] Agent Result:", result);
@@ -327,7 +334,8 @@ export default function AIChat() {
                 content: result.output,
                 // thoughts: result.thoughtProcess, // Optional: Show debug thoughts?
                 a2ui_content: result.a2ui_content,
-                choices: result.choices
+                choices: result.choices,
+                ads: ads // Inject ads
             }]);
 
             // Log Assistant Message
@@ -628,6 +636,15 @@ export default function AIChat() {
                                                             : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'
                                                             }`}>
                                                             {msg.content}
+                                                        </div>
+                                                    )}
+
+                                                    {/* SMART ADS INTEGRATION */}
+                                                    {msg.ads && msg.ads.length > 0 && (
+                                                        <div className="w-full mt-2">
+                                                            {msg.ads.map(ad => (
+                                                                <ChatAd key={ad.id} ad={ad} />
+                                                            ))}
                                                         </div>
                                                     )}
 
