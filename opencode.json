@@ -15,6 +15,16 @@
     },
     "build": {
        "prompt": ".opencode/prompts/kosmoi-system.md" 
+    },
+    "receptionist": {
+      "model": "claude-3-5-sonnet-latest",
+      "prompt": ".opencode/prompts/receptionist.md",
+      "tools": ["read_file", "search_files", "run_command"]
+    },
+    "consultant": {
+      "model": "claude-3-5-sonnet-latest",
+      "prompt": ".opencode/prompts/consultant.md",
+      "tools": ["read_file", "search_files", "run_command"]
     }
   }
 }
