@@ -29,6 +29,8 @@ import {
 import GoogleMap from "../components/GoogleMap";
 import MapProviderCard from "@/components/MapProviderCard";
 import { getCategoryIcon } from "@/shared/utils/mapIcons";
+import { ScoutSearch } from "@/features/scout/components/ScoutSearch";
+import { toast } from "sonner";
 
 const categories = [
   { value: "all", label: "הכל" },
@@ -238,108 +240,28 @@ export default function MapView() {
     onClick: () => setSelectedProvider(provider)
   }));
 
+  const handleScoutAction = (action) => {
+    if (action.name === 'move_map') {
+        const { lat, lng, zoom } = action.data || action.payload || {};
+        if (lat && lng) {
+            setMapCenter({ lat, lng });
+            if (zoom) setMapZoom(zoom);
+        }
+    } else if (action.name === 'filter_map') {
+        const { category } = action.data || action.payload || {};
+        if (category) {
+            setCategoryFilter(category);
+            toast.info(`Filtered map by ${category}`);
+        }
+    }
+  };
+
   return (
-    <div className="h-[calc(100vh-56px)] flex flex-col bg-gray-50">
-      {/* Search Bar */}
-      <div className="bg-white px-4 py-3 shadow-sm z-10">
-        <div className="max-w-7xl mx-auto space-y-3">
-          <div className="flex gap-2">
-            <Input
-              placeholder="חפש שירות..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-base"
-            />
-            <Button
-              variant={isAroundMe ? "default" : "outline"}
-              onClick={toggleAroundMe}
-              className={`px-3 ${isAroundMe ? "bg-blue-600 text-white" : ""}`}
-              title="סביבי עכשיו"
-            >
-              <Crosshair className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-3"
-            >
-              <Filter className="w-5 h-5" />
-            </Button>
-          </div>
-
-          {showFilters && (
-            <div className="space-y-2">
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר קטגוריה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder="מיין לפי" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nearest">הכי קרוב</SelectItem>
-                  <SelectItem value="highestRated">דירוג גבוה</SelectItem>
-                  <SelectItem value="mostReviewed">הכי מבוקר</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2">
-                <Select value={minRating.toString()} onValueChange={(v) => setMinRating(Number(v))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="דירוג מינימלי" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">כל הדירוגים</SelectItem>
-                    <SelectItem value="3">3+ כוכבים</SelectItem>
-                    <SelectItem value="4">4+ כוכבים</SelectItem>
-                    <SelectItem value="4.5">4.5+ כוכבים</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={minReviews.toString()} onValueChange={(v) => setMinReviews(Number(v))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="ביקורות מינימליות" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">הכל</SelectItem>
-                    <SelectItem value="3">3+ ביקורות</SelectItem>
-                    <SelectItem value="5">5+ ביקורות</SelectItem>
-                    <SelectItem value="10">10+ ביקורות</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <Button
-                  variant={isOpenNow ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsOpenNow(!isOpenNow)}
-                  className="text-xs"
-                >
-                  פתוח עכשיו
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <div className="text-xs text-gray-600">
-            {filteredProviders.length} מקומות על המפה
-          </div>
-        </div>
-      </div>
+    <div className="h-[calc(100vh-56px)] flex flex-col bg-gray-50 relative">
+      <ScoutSearch onMapAction={handleScoutAction} />
 
       {/* Map */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative z-0">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-gray-500">טוען מפה...</div>
@@ -352,7 +274,7 @@ export default function MapView() {
             markers={mapMarkers}
             userLocation={userLocation}
             onMapClick={(position) => {
-              // console.log('Map clicked:', position);
+               console.log('Map clicked:', position);
             }}
           />
         )}

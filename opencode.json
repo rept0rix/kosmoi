@@ -25,6 +25,11 @@
       "model": "claude-3-5-sonnet-latest",
       "prompt": ".opencode/prompts/consultant.md",
       "tools": ["read_file", "search_files", "run_command"]
+    },
+    "scout": {
+      "model": "claude-3-5-sonnet-latest",
+      "prompt": ".opencode/prompts/scout.md",
+      "tools": ["read_file", "search_files", "run_command"]
     }
   }
 }
