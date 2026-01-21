@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Plus, Filter, Tag, ChevronDown, ChevronRight, X, LayoutGrid, Box, Map as MapIcon, List, Home, Car, Smartphone, Sofa } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MarketplaceService } from '@/services/MarketplaceService';
+import { supabase } from '@/api/supabaseClient';
 import { ProductCard } from '@/components/marketplace/ProductCard';
 import { CreateListingDialog } from '@/components/marketplace/CreateListingDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,79 +30,7 @@ var DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const MOCK_PRODUCTS = [
-    {
-        id: 'm1',
-        title: 'Honda Click 160cc (2023)',
-        price: 45000,
-        description: 'Perfect condition, low mileage. Green book ready.',
-        location: 'Chaweng',
-        category_id: 'vehicles',
-        subcategory: 'motorbikes',
-        images: [{ url: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800&q=80' }],
-        status: 'active',
-        lat: 9.512, lng: 100.05
-    },
-    {
-        id: 'm2',
-        title: 'Luxury Sea View Villa',
-        price: 25000000,
-        description: '3 Bedroom villa with panoramic ocean views.',
-        location: 'Chaweng Noi',
-        category_id: 'real-estate',
-        subcategory: 'sale',
-        images: [{ url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80' }],
-        status: 'active',
-        lat: 9.500, lng: 100.04
-    },
-    {
-        id: 'm3',
-        title: 'iPhone 14 Pro Max - 256GB',
-        price: 28900,
-        description: 'Deep Purple, no scratches, battery 95%.',
-        location: 'Lamai',
-        category_id: 'electronics',
-        subcategory: 'phones',
-        images: [{ url: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&q=80' }],
-        status: 'active',
-        lat: 9.45, lng: 100.03
-    },
-    {
-        id: 'm4',
-        title: 'L-Shape Sofa (Grey)',
-        price: 8500,
-        description: 'Comfortable sofa, moving out sale. Must pick up.',
-        location: 'Bophut',
-        category_id: 'furniture',
-        images: [{ url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' }],
-        status: 'active',
-        lat: 9.55, lng: 100.02
-    },
-    {
-        id: 'm-ark',
-        title: 'Ark Bar Beach Club VIP Table',
-        price: 5000,
-        description: 'Premium VIP table package at the famous Ark Bar Beach Club. Includes bottle service and best view.',
-        location: 'Chaweng Beach',
-        category_id: 'services',
-        subcategory: 'entertainment',
-        images: [{ url: 'https://images.unsplash.com/photo-1544422116-2d1d02c2f623?w=800&q=80' }],
-        status: 'active',
-        lat: 9.532, lng: 100.06
-    },
-    {
-        id: 'm5',
-        title: 'Toyota Fortuner 2018',
-        price: 950000,
-        description: 'Well maintained, diesel engine, pure white.',
-        location: 'Maenam',
-        category_id: 'vehicles',
-        subcategory: 'cars',
-        images: [{ url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80' }],
-        status: 'active',
-        lat: 9.57, lng: 99.99
-    }
-];
+const MOCK_PRODUCTS = [];
 
 // Re-usable Filter Component
 const FilterBar = ({ activeCategory }) => {
@@ -178,7 +107,7 @@ const FilterBar = ({ activeCategory }) => {
 
 // Section Component for "Home View"
 // Section Component for "Home View"
-const CategorySection = ({ title, categoryId, products, onSeeAll }) => {
+const CategorySection = ({ title, categoryId, products, onSeeAll, onContact }) => {
     // Filter from passed real products
     const sectionProducts = products.filter(p => p.category_id === categoryId).slice(0, 4);
 
@@ -197,7 +126,7 @@ const CategorySection = ({ title, categoryId, products, onSeeAll }) => {
                     <ProductCard
                         key={product.id}
                         product={product}
-                        onContact={() => { }}
+                        onContact={onContact}
                         onShowMap={() => onSeeAll()}
                     />
                 ))}
@@ -252,30 +181,19 @@ export default function Marketplace() {
                 searchTerm
             });
 
-            let finalProducts = (items && items.length > 0) ? items : MOCK_PRODUCTS;
-
-            if (!items || items.length === 0) {
-                if (activeCategory) {
-                    finalProducts = finalProducts.filter(p => p.category_id === activeCategory.id);
-                }
-                if (activeSubCategory) {
-                    finalProducts = finalProducts.filter(p => p.subcategory === activeSubCategory.id || p.category_id === activeSubCategory.id);
-                }
-                if (searchTerm) {
-                    const lowerTerm = searchTerm.toLowerCase();
-                    finalProducts = finalProducts.filter(p =>
-                        p.title.toLowerCase().includes(lowerTerm) ||
-                        p.description.toLowerCase().includes(lowerTerm)
-                    );
-                }
-            }
-
-            let sortedProducts = [...finalProducts];
-
-            if (sort === 'price_asc') sortedProducts.sort((a, b) => a.price - b.price);
-            if (sort === 'price_desc') sortedProducts.sort((a, b) => b.price - a.price);
-
-            setProducts(sortedProducts);
+            // Map DB fields (latitude/longitude) to Component fields (lat/lng) if distinct
+            const finalProducts = items.map(item => ({
+                ...item,
+                lat: item.latitude || item.lat,
+                lng: item.longitude || item.lng
+            }));
+            
+            // Client side filtering (if DB search was partial or for mock fallback previously)
+            // Ideally DB handles this, but for robust 'categories' filtering if DB logic isn't perfect:
+            // Since we passed categoryId to service, DB should return filtered.
+            // But we can keep extra safety if needed, OR just trust the service result.
+            
+            setProducts(finalProducts);
         } catch (error) {
             console.error("Failed to load products", error);
             setProducts([]);
@@ -356,6 +274,34 @@ export default function Marketplace() {
             </div>
         </div>
     );
+
+    // --- Contact Seller Logic ---
+    const handleContactSeller = async (product) => {
+        // Quick auth check handled by component usually, but double check
+        if (!isAuthenticated) {
+            setShowLoginDialog(true);
+            return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const userId = session.user.id;
+        const sellerId = product.seller_id;
+
+        if (userId === sellerId) {
+            // alert("This is your own product!"); 
+             // Ideally use Toast here, but for now silent return or console log
+            console.log("Cannot chat with self");
+            return;
+        }
+
+        // Navigate to Chat Hub with context
+        // We will pass the sellerId and productId as query params to ChatHub
+        // ChatHub will handle finding/creating the conversation
+        navigate(`/chat-hub?sellerId=${sellerId}&productId=${product.id}&productTitle=${encodeURIComponent(product.title)}`);
+    };
+
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -484,24 +430,28 @@ export default function Marketplace() {
                                     categoryId="real-estate"
                                     products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'real-estate'))}
+                                    onContact={handleContactSeller}
                                 />
                                 <CategorySection
                                     title="Latest Vehicles"
                                     categoryId="vehicles"
                                     products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'vehicles'))}
+                                    onContact={handleContactSeller}
                                 />
                                 <CategorySection
                                     title="Tech & Electronics"
                                     categoryId="electronics"
                                     products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'electronics'))}
+                                    onContact={handleContactSeller}
                                 />
                                 <CategorySection
                                     title="Home & Furniture"
                                     categoryId="furniture"
                                     products={products}
                                     onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'furniture'))}
+                                    onContact={handleContactSeller}
                                 />
                             </div>
                         ) : (
@@ -534,7 +484,7 @@ export default function Marketplace() {
                                             <ProductCard
                                                 key={product.id}
                                                 product={product}
-                                                onContact={() => { }}
+                                                onContact={handleContactSeller}
                                                 onShowMap={() => setViewMode('map')}
                                             />
                                         ))}
