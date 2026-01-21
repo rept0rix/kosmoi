@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,137 +23,223 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from '@/api/supabaseClient';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
-// MOCK CONVERSATIONS
-const MOCK_CHATS = [
-    {
-        id: 'c1',
-        name: 'Kosmoi Concierge',
-        subtitle: 'AI Assistant',
-        avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150',
-        lastMessage: 'Here are the top 3 island tours for tomorrow.',
-        time: 'Now',
-        unread: 1,
-        isAi: true
-    },
-    {
-        id: 'c4',
-        name: 'העוזר האישי',
-        subtitle: 'נציג וירטואלי',
-        avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150',
-        lastMessage: 'מצאתי עבורך 3 וילות שמתאימות לתקציב.',
-        time: 'עכשיו',
-        unread: 1,
-        isAi: true
-    },
-    {
-        id: 'c2',
-        name: 'Sarah Jenkins',
-        subtitle: 'Premium Agent',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-        lastMessage: 'The villa owner accepted your offer! 🎉',
-        time: '12:30 PM',
-        unread: 0,
-        isOnline: true
-    },
-    {
-        id: 'c3',
-        name: 'Mike Motorbikes',
-        subtitle: 'Vendor',
-        avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150',
-        lastMessage: 'When would you like to pick up the Honda Click?',
-        time: 'Yesterday',
-        unread: 0
-    }
-];
 
-const MOCK_MESSAGES = {
-    'c1': [
-        { id: 1, sender: 'ai', text: 'Sawasdee! How can I help you plan your day in Koh Samui?', time: '10:00 AM' },
-        { id: 2, sender: 'me', text: 'I want to go snorkeling somewhere quiet.', time: '10:01 AM' },
-        { id: 3, sender: 'ai', text: 'I found a perfect private customized trip for you. Take a look:', time: '10:01 AM' },
-        {
-            id: 4,
-            sender: 'ai',
-            type: 'rich-card',
-            content: {
-                title: 'Pig Island & Snorkeling Private Tour',
-                price: '3,500 THB',
-                image: 'https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?w=600',
-                rating: 4.8,
-                action: 'Book Now'
-            },
-            time: '10:01 AM'
-        }
-    ],
-    'c4': [
-        { id: 1, sender: 'ai', text: 'שלום! אני העוזר האישי שלך ב-Kosmoi. איך אני יכול לעזור לך היום?', time: '10:00' },
-        { id: 2, sender: 'me', text: 'אני מחפש וילה למשפחה בצ׳אוונג נוי.', time: '10:01' },
-        { id: 3, sender: 'ai', text: 'מעולה. מצאתי כמה אפשרויות מצוינות באזור הזה:', time: '10:01' },
-        {
-            id: 4,
-            sender: 'ai',
-            type: 'rich-card',
-            content: {
-                title: 'וילה יוקרתית עם בריכת אינסוף',
-                price: '25,000,000 ₪',
-                image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600',
-                rating: 5.0,
-                action: 'צפה בפרטים'
-            },
-            time: '10:02'
-        }
-    ],
-    'c2': [
-        { id: 1, sender: 'me', text: 'Hi Sarah, is the villa still available?', time: 'Mon' },
-        { id: 2, sender: 'sarah', text: 'Yes it is! Would you like to schedule a viewing?', time: 'Mon' },
-        { id: 3, sender: 'sarah', text: 'The villa owner accepted your offer! 🎉', time: '12:30 PM' }
-    ]
-};
 
 export default function ChatHub() {
-    const [selectedChat, setSelectedChat] = useState(MOCK_CHATS[0]);
-    const [messageInput, setMessageInput] = useState('');
-
-    const [messages, setMessages] = useState(MOCK_MESSAGES['c1']);
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
-    // The "Array behind it" - storing bookings
-    // The "Array behind it" - storing bookings
-    const [bookings, setBookings] = useState([]);
-    const [showMobileChat, setShowMobileChat] = useState(false);
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { toast } = useToast();
+    const scrollRef = useRef(null);
+
+    const [chats, setChats] = useState([]);
+    const [selectedChat, setSelectedChat] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [messageInput, setMessageInput] = useState('');
+    const [loadingChats, setLoadingChats] = useState(true);
+
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [showMobileChat, setShowMobileChat] = useState(false);
+
+    // Initial Load: Fetch Chats
+    useEffect(() => {
+        if (user) {
+            fetchChats();
+        }
+    }, [user]);
+
+    // Handle Query Params (Start new chat or Open existing)
+    useEffect(() => {
+        const sellerId = searchParams.get('sellerId');
+        const productId = searchParams.get('productId');
+        const productTitle = searchParams.get('productTitle');
+
+        if (user && sellerId && chats.length >= 0) {
+            handleStartChat(sellerId, productId, productTitle);
+        }
+    }, [searchParams, user, chats]);
+
+    // Fetch Messages when chat selected
+    useEffect(() => {
+        if (selectedChat) {
+            // Subscribe to real-time changes
+            // Subscribe to real-time changes
+            /** @type {any} */
+            const channel = supabase.channel(`room:${selectedChat.id}`);
+
+            channel
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'messages', 
+                    filter: `conversation_id=eq.${selectedChat.id}` 
+                }, (payload) => {
+                    setMessages(prev => [...prev, mapMessage(payload.new)]);
+                })
+                .subscribe();
+
+            fetchMessages(selectedChat.id);
+
+            return () => {
+                channel.unsubscribe();
+            };
+        }
+    }, [selectedChat]);
+
+    // Scroll to bottom on new message
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages]);
+
+
+    const fetchChats = async () => {
+        setLoadingChats(true);
+        try {
+            // We need to fetch conversations where we are p1 or p2
+            const { data, error } = await supabase
+                .from('conversations')
+                .select(`
+                    *,
+                    p1:participant1_id(raw_user_meta_data),
+                    p2:participant2_id(raw_user_meta_data),
+                    listing:product_id(title)
+                `)
+                .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+
+            const mappedChats = data.map(c => {
+                const isP1 = c.participant1_id === user.id;
+                const otherUser = isP1 ? c.p2 : c.p1; // This might fail if user meta is missing/null
+                const otherMeta = otherUser?.raw_user_meta_data || {};
+                
+                return {
+                    id: c.id,
+                    name: otherMeta.full_name || otherMeta.name || 'User',
+                    subtitle: c.listing?.title || 'Direct Message',
+                    avatar: otherMeta.avatar_url || otherMeta.picture,
+                    lastMessage: c.last_message || 'Start chatting...',
+                    time: new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    otherUserId: isP1 ? c.participant2_id : c.participant1_id,
+                    isOnline: false, // implementation pending
+                    unread: 0
+                };
+            });
+            setChats(mappedChats);
+        } catch (error) {
+            console.error("Error loading chats:", error);
+        } finally {
+            setLoadingChats(false);
+        }
+    };
+
+    const handleStartChat = async (sellerId, productId, productTitle) => {
+        // Check if we already have this conversation in our list
+        const existingChat = chats.find(c => c.otherUserId === sellerId && c.subtitle === productTitle);
+        
+        if (existingChat) {
+            setSelectedChat(existingChat);
+            setShowMobileChat(true);
+            // Clear params to avoid loop? Or just leave it.
+            return;
+        }
+
+        // Create new if not found locally
+        // (Double check DB to avoid race conditions/duplicates not yet fetched)
+        try {
+            // Check DB
+            const { data: found } = await supabase.from('conversations')
+                .select('*')
+                .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${sellerId}),and(participant1_id.eq.${sellerId},participant2_id.eq.${user.id})`)
+                .eq('product_id', productId)
+                .maybeSingle();
+
+             if (found) {
+                 await fetchChats(); // Refresh list to get it
+                 // Then select it (find it in new list) - simpler just to reload page or logic
+                 // For now, let's just create it if null
+             }
+
+             if (!found) {
+                const { data: newConv, error } = await supabase.from('conversations').insert({
+                    participant1_id: user.id,
+                    participant2_id: sellerId,
+                    product_id: productId,
+                    last_message: `Interested in ${productTitle}` // Initial Context
+                }).select().single();
+
+                if (error) throw error;
+                await fetchChats(); // Reload to see it
+                // We could optimistically add it, but a refresh is safer
+             }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+
+    const fetchMessages = async (chatId) => {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', chatId)
+            .order('created_at', { ascending: true });
+
+        if (!error && data) {
+            setMessages(data.map(mapMessage));
+        }
+    };
+
+    const mapMessage = (m) => ({
+        id: m.id,
+        sender: m.sender_id === user?.id ? 'me' : 'other',
+        text: m.content,
+        time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: m.type
+    });
+
 
     const handleChatSelect = (chat) => {
         setSelectedChat(chat);
-        setMessages(MOCK_MESSAGES[chat.id] || []);
         setShowMobileChat(true);
     };
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!messageInput.trim()) return;
+        if (!messageInput.trim() || !selectedChat) return;
 
-        const newMessage = {
-            id: Date.now(),
-            sender: 'me',
-            text: messageInput,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
+        const text = messageInput.trim();
+        setMessageInput(''); // Optimistic clear
 
-        setMessages([...messages, newMessage]);
-        setMessageInput('');
-    };
+        // Optimistic UI update
+        // setMessages(prev => [...prev, { id: 'temp', sender: 'me', text, time: 'Now' }]);
 
-    const handleBooking = (item) => {
-        // Add to backend array (simulated)
-        setBookings([...bookings, { ...item, status: 'pending', timestamp: new Date() }]);
-
-        toast({
-            title: "Booking Request Sent",
-            description: `We've received your request for ${item.title}. An agent will confirm shortly.`,
-            variant: "default",
+        const { error } = await supabase.from('messages').insert({
+            conversation_id: selectedChat.id,
+            sender_id: user.id,
+            content: text,
+            type: 'text'
         });
+
+        if (error) {
+            toast({ title: "Failed to send", variant: "destructive" });
+        } else {
+             // Update conversation last_message
+             await supabase.from('conversations')
+                .update({ last_message: text, updated_at: new Date() })
+                .eq('id', selectedChat.id);
+        }
     };
+
+
+
 
     return (
         // Adjusted height to account for Header (~64px) and Bottom Nav/Padding (~80-90px)
@@ -171,93 +257,105 @@ export default function ChatHub() {
 
                 <ScrollArea className="flex-1">
                     <div className="p-2 space-y-1">
-                        {MOCK_CHATS.map(chat => (
-                            <div
-                                key={chat.id}
-                                onClick={() => handleChatSelect(chat)}
-                                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${selectedChat?.id === chat.id ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-white hover:shadow-sm border border-transparent'}`}
-                            >
-                                <div className="relative">
-                                    <Avatar className="w-12 h-12">
-                                        <AvatarImage src={chat.avatar} />
-                                        <AvatarFallback>{chat.name[0]}</AvatarFallback>
-                                    </Avatar>
-                                    {chat.isOnline && <span className="absolute bottom-0 end-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>}
-                                </div>
-                                <div className="flex-1 min-w-0 text-start">
-                                    <div className="flex justify-between items-start mb-0.5">
-                                        <span className={`font-semibold truncate ${selectedChat?.id === chat.id ? 'text-indigo-900' : 'text-slate-900'}`}>{chat.name}</span>
-                                        <span className="text-xs text-slate-400 whitespace-nowrap ms-2">{chat.time}</span>
+                        {loadingChats ? (
+                            <div className="p-4 text-center text-slate-500">Loading chats...</div>
+                        ) : chats.length === 0 ? (
+                            <div className="p-4 text-center text-slate-500">No messages yet</div>
+                        ) : (
+                            chats.map(chat => (
+                                <div
+                                    key={chat.id}
+                                    onClick={() => handleChatSelect(chat)}
+                                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${selectedChat?.id === chat.id ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-white hover:shadow-sm border border-transparent'}`}
+                                >
+                                    <div className="relative">
+                                        <Avatar className="w-12 h-12">
+                                            <AvatarImage src={chat.avatar} />
+                                            <AvatarFallback>{chat.name ? chat.name[0] : 'U'}</AvatarFallback>
+                                        </Avatar>
+                                        {chat.isOnline && <span className="absolute bottom-0 end-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>}
                                     </div>
-                                    <p className={`text-sm truncate ${chat.unread ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>{chat.lastMessage}</p>
+                                    <div className="flex-1 min-w-0 text-start">
+                                        <div className="flex justify-between items-start mb-0.5">
+                                            <span className={`font-semibold truncate ${selectedChat?.id === chat.id ? 'text-indigo-900' : 'text-slate-900'}`}>{chat.name}</span>
+                                            <span className="text-xs text-slate-400 whitespace-nowrap ms-2">{chat.time}</span>
+                                        </div>
+                                        <p className={`text-sm truncate ${chat.unread ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>{chat.lastMessage}</p>
+                                    </div>
+                                    {chat.unread > 0 && (
+                                        <Badge className="bg-indigo-600 h-5 w-5 flex items-center justify-center p-0 rounded-full">{chat.unread}</Badge>
+                                    )}
                                 </div>
-                                {chat.unread > 0 && (
-                                    <Badge className="bg-indigo-600 h-5 w-5 flex items-center justify-center p-0 rounded-full">{chat.unread}</Badge>
-                                )}
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </ScrollArea>
             </div>
 
-            {/* Main Chat Area */}
             <div className={`flex-1 flex-col bg-white relative ${showMobileChat ? 'flex' : 'hidden md:flex'}`}>
                 {/* Chat Header */}
-                <div className="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
-                    <div
-                        className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setIsProfileOpen(true)}
-                    >
-                        {/* Back Button for Mobile */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="md:hidden text-slate-500 mr-1"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setShowMobileChat(false);
-                            }}
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                        <Avatar className="w-10 h-10">
-                            <AvatarImage src={selectedChat.avatar} />
-                            <AvatarFallback>{selectedChat.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h2 className="font-bold text-slate-900 leading-tight text-start">{selectedChat.name}</h2>
-                            <p className="text-xs text-slate-500 flex items-center gap-1">
-                                {selectedChat.isAi ? <span className="text-indigo-500 font-medium">AI Concierge</span> : selectedChat.isOnline ? 'Online' : 'Offline'}
-                            </p>
-                        </div>
+                {!selectedChat ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                        <Smile className="w-16 h-16 mb-4 opacity-20" />
+                        <p>Select a conversation to start chatting</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600" onClick={() => alert("Voice calling coming soon!")}>
-                            <Phone className="w-5 h-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600" onClick={() => alert("Video calling coming soon!")}>
-                            <Video className="w-5 h-5" />
-                        </Button>
-                        <Separator orientation="vertical" className="h-6 mx-1" />
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600">
-                                    <MoreVertical className="w-5 h-5" />
+                ) : (
+                    <>
+                        <div className="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
+                            <div
+                                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => setIsProfileOpen(true)}
+                            >
+                                {/* Back Button for Mobile */}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="md:hidden text-slate-500 mr-1"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowMobileChat(false);
+                                    }}
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
                                 </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
-                                    View Profile
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
-                                <DropdownMenuItem>Search in Conversation</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600">Block User</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
+                                <Avatar className="w-10 h-10">
+                                    <AvatarImage src={selectedChat.avatar} />
+                                    <AvatarFallback>{selectedChat.name ? selectedChat.name[0] : '?'}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <h2 className="font-bold text-slate-900 leading-tight text-start">{selectedChat.name}</h2>
+                                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                                        {selectedChat.subtitle}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600" onClick={() => alert("Voice calling coming soon!")}>
+                                    <Phone className="w-5 h-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600" onClick={() => alert("Video calling coming soon!")}>
+                                    <Video className="w-5 h-5" />
+                                </Button>
+                                <Separator orientation="vertical" className="h-6 mx-1" />
+        
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600">
+                                            <MoreVertical className="w-5 h-5" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
+                                            View Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
+                                        <DropdownMenuItem>Search in Conversation</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-red-600">Block User</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
 
                 {/* Messages Feed */}
                 <ScrollArea className="flex-1 p-6 bg-slate-50/30">
@@ -291,7 +389,7 @@ export default function ChatHub() {
                                                 <Button
                                                     size="sm"
                                                     className="w-full bg-slate-900 hover:bg-black text-white rounded-lg"
-                                                    onClick={() => handleBooking(msg.content)}
+                                                    onClick={() => toast({ title: "Booking Request", description: "This feature is coming soon!" })}
                                                 >
                                                     {msg.content.action}
                                                 </Button>
@@ -305,6 +403,7 @@ export default function ChatHub() {
                                 </div>
                             </div>
                         ))}
+                         <div ref={scrollRef} />
                     </div>
                 </ScrollArea>
 
@@ -336,6 +435,8 @@ export default function ChatHub() {
                         </Button>
                     </div>
                 </div>
+                </>
+                )}
 
                 {/* Profile Dialog */}
                 <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
@@ -345,21 +446,18 @@ export default function ChatHub() {
                         </DialogHeader>
                         <div className="flex flex-col items-center gap-4 py-4">
                             <Avatar className="w-24 h-24">
-                                <AvatarImage src={selectedChat.avatar} />
-                                <AvatarFallback>{selectedChat.name[0]}</AvatarFallback>
+                                <AvatarImage src={selectedChat?.avatar} />
+                                <AvatarFallback>{selectedChat?.name?.[0]}</AvatarFallback>
                             </Avatar>
                             <div className="text-center">
-                                <h3 className="text-xl font-bold">{selectedChat.name}</h3>
-                                <p className="text-sm text-slate-500">{selectedChat.subtitle}</p>
-                                {selectedChat.isOnline && (
-                                    <Badge variant="outline" className="mt-2 border-green-200 text-green-700 bg-green-50">Online Now</Badge>
-                                )}
+                                <h3 className="text-xl font-bold">{selectedChat?.name}</h3>
+                                <p className="text-sm text-slate-500">{selectedChat?.subtitle}</p>
                             </div>
 
                             <div className="w-full space-y-2 mt-4">
                                 <div className="flex justify-between text-sm py-2 border-b">
                                     <span className="text-slate-500">Role</span>
-                                    <span className="font-medium">{selectedChat.subtitle}</span>
+                                    <span className="font-medium">{selectedChat?.subtitle}</span>
                                 </div>
                                 <div className="flex justify-between text-sm py-2 border-b">
                                     <span className="text-slate-500">Location</span>
