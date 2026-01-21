@@ -117,18 +117,26 @@ export default function ProviderDashboard() {
         StripeService.getSubscription().then(setSubscription);
     }, []);
 
-    const fetchProfile = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            // Optimized: Single query with OR condition instead of sequential lookups
-            const { data, error } = await supabase
-                .from('service_providers')
-                .select('*')
-                .or(`id.eq.${user.id},owner_id.eq.${user.id}`)
-                .maybeSingle();
+    const [isLoading, setIsLoading] = useState(true);
 
-            if (data) setProviderProfile(data);
-            if (error) console.error("Error fetching profile:", error);
+    const fetchProfile = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // Optimized: Single query with OR condition instead of sequential lookups
+                const { data, error } = await supabase
+                    .from('service_providers')
+                    .select('*')
+                    .or(`id.eq.${user.id},owner_id.eq.${user.id}`)
+                    .maybeSingle();
+
+                if (data) setProviderProfile(data);
+                if (error) console.error("Error fetching profile:", error);
+            }
+        } catch (error) {
+            console.error("Critical Profile Error:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -323,6 +331,17 @@ export default function ProviderDashboard() {
 
         fetchEarnings();
     }, [providerProfile]);
+
+    if (isLoading) {
+        return (
+            <div className="h-screen w-full flex items-center justify-center bg-slate-950">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-12 h-12 text-slate-500 animate-spin" />
+                    <p className="text-slate-400 text-sm animate-pulse">Loading Dashboard...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-[calc(100vh-60px)] relative flex flex-col bg-slate-900 overflow-hidden">
