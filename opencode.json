@@ -1,0 +1,20 @@
+{
+  "agent": {
+    "prompt": ".opencode/prompts/kosmoi-system.md"
+  },
+  "agents": {
+    "plan": {
+      "model": "claude-3-5-sonnet-latest",
+      "prompt": ".opencode/prompts/plan.md",
+      "tools": ["read_file", "search_files", "list_files", "run_command"]
+    },
+    "audit": {
+      "model": "claude-3-5-sonnet-latest",
+      "prompt": ".opencode/prompts/audit.md",
+      "tools": ["read_file", "search_files", "list_files", "run_command"]
+    },
+    "build": {
+       "prompt": ".opencode/prompts/kosmoi-system.md" 
+    }
+  }
+}
