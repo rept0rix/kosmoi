@@ -30,6 +30,28 @@
       "model": "claude-3-5-sonnet-latest",
       "prompt": ".opencode/prompts/scout.md",
       "tools": ["read_file", "search_files", "run_command"]
+    },
+    "architect": {
+      "model": "claude-3-5-sonnet-latest",
+      "prompt": ".opencode/prompts/architect.md",
+      "tools": ["read_file", "search_files", "run_command"]
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"],
+      "enabled": true
+    },
+    "shadcn": {
+      "type": "local",
+      "command": ["npx", "-y", "shadcn@latest", "mcp", "init"],
+      "enabled": true
+    },
+    "hugeicons": {
+      "type": "local",
+      "command": ["npx", "-y", "hugeicons-mcp"],
+      "enabled": true
     }
   }
 }
