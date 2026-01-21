@@ -104,7 +104,7 @@ export default function BusinessRegistration() {
   const createBusinessMutation = useMutation({
     mutationFn: async (businessData) => {
          return await db.entities.ServiceProvider.create({
-            ...(businessData || {}),
+            ...(businessData ?? {}),
             owner_id: user.id,
             status: 'pending',
             verified: false
