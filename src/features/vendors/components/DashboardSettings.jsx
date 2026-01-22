@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { Globe, Bell, CreditCard, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 export const DashboardSettings = ({ business }) => {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [settings, setSettings] = useState(business.metadata?.settings || {
         email_notifications: true,
@@ -113,7 +115,7 @@ export const DashboardSettings = ({ business }) => {
                             <p className="font-semibold text-blue-900">Current Plan: {business.status || 'Free'}</p>
                             <p className="text-xs text-blue-600">Basic features</p>
                         </div>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Upgrade</Button>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/pricing')}>Upgrade</Button>
                     </div>
                     <Button variant="outline" className="w-full">Manage Payment Methods</Button>
                 </CardContent>
