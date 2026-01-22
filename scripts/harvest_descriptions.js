@@ -148,39 +148,62 @@ async function main() {
         process.exit(0);
     }
 
-    // 2. Launch Browser
-    const browser = await puppeteer.launch({
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-
     let successCount = 0;
     let failCount = 0;
 
-    // 3. Process loop
-    for (const business of candidates) {
-        log(`Processing: ${business.business_name} (${business.id})`);
+    // 2. Process in Batches (Restart browser every N items)
+    const BATCH_SIZE_BROWSER = 50;
+    
+    for (let i = 0; i < candidates.length; i += BATCH_SIZE_BROWSER) {
+        const batch = candidates.slice(i, i + BATCH_SIZE_BROWSER);
+        log(`\n🔄 Starting Batch ${Math.floor(i / BATCH_SIZE_BROWSER) + 1}/${Math.ceil(candidates.length / BATCH_SIZE_BROWSER)} (Items ${i + 1}-${Math.min(i + BATCH_SIZE_BROWSER, candidates.length)})`);
 
-        // Scrape
-        const newDescription = await scrapeDescription(browser, business.business_name);
+        let browser = null;
+        try {
+            browser = await puppeteer.launch({
+                headless: "new",
+                args: [
+                    '--no-sandbox', 
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage', // Prevent crashes in low memory envs
+                    '--disable-gpu'
+                ]
+            });
 
-        if (newDescription) {
-            // Update DB
-            const updated = await updateBusiness(business.id, newDescription);
-            if (updated) successCount++;
-            else failCount++;
-        } else {
-            failCount++;
-            log(`Skipping update for ${business.business_name} - content not found.`);
+            for (const business of batch) {
+                log(`Processing: ${business.business_name} (${business.id})`);
+
+                // Scrape
+                const newDescription = await scrapeDescription(browser, business.business_name);
+
+                if (newDescription) {
+                    // Update DB
+                    const updated = await updateBusiness(business.id, newDescription);
+                    if (updated) successCount++;
+                    else failCount++;
+                } else {
+                    failCount++;
+                    log(`Skipping update for ${business.business_name} - content not found.`);
+                }
+
+                // Polite delay
+                log(`Waiting ${DELAY_BETWEEN_REQUESTS_MS}ms...`);
+                await delay(DELAY_BETWEEN_REQUESTS_MS);
+            }
+
+        } catch (batchError) {
+             log(`❌ Critical Batch Error: ${batchError.message}`, 'ERROR');
+        } finally {
+            if (browser) {
+                log('🔄 Closing browser to free memory...');
+                await browser.close();
+            }
+            // Small cooldown between batches
+            await delay(2000);
         }
-
-        // Polite delay
-        log(`Waiting ${DELAY_BETWEEN_REQUESTS_MS}ms...`);
-        await delay(DELAY_BETWEEN_REQUESTS_MS);
     }
 
-    await browser.close();
-    log(`Harvest complete. Success: ${successCount}, Failed: ${failCount}`);
+    log(`\n🎉 Harvest complete. Success: ${successCount}, Failed: ${failCount}`);
 }
 
 main().catch(console.error);

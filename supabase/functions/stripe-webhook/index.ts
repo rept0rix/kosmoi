@@ -127,6 +127,56 @@ serve(async (req: Request) => {
 
                 console.log(`Claim successful for provider ${providerId}`);
 
+            } else if (session.mode === 'payment' && session.metadata?.planId) {
+                // Plan Purchase Logic (Test Drive / Subscription Start)
+                const { userId, planId } = session.metadata;
+                console.log(`Processing Plan Purchase: ${planId} by User: ${userId}`);
+
+                // 1. Find User's Business (Limit to 1 for now)
+                const { data: businesses, error: fetchError } = await supabase
+                    .from('service_providers')
+                    .select('id, metadata')
+                    .eq('owner_id', userId)
+                    .limit(1);
+
+                if (fetchError || !businesses || businesses.length === 0) {
+                    console.error('No business found for user buying plan:', userId, fetchError);
+                    // Decide: Reject or just log? Just log for now.
+                } else {
+                    const business = businesses[0];
+                    const existingMetadata = business.metadata || {};
+
+                    // 2. Update Business Status
+                    const { error: updateError } = await supabase
+                        .from('service_providers')
+                        .update({
+                            verified: true, // Mark verified on payment
+                            stripe_status: 'paid',
+                            metadata: {
+                                ...existingMetadata,
+                                current_plan: planId,
+                                plan_start_date: new Date().toISOString(),
+                                plan_status: 'active'
+                            }
+                        })
+                        .eq('id', business.id);
+                    
+                     if (updateError) {
+                         console.error('Failed to update business plan status:', updateError);
+                     } else {
+                         console.log(`Successfully upgraded business ${business.id} to plan ${planId}`);
+                     }
+                }
+
+                 // 2.5 Record Transaction (Optional but good for history)
+                await supabase.rpc('process_transaction', {
+                    target_user_id: userId,
+                    amount: session.amount_total ? session.amount_total / 100 : 0,
+                    type: 'payment', // or 'plan_purchase'
+                    reference_id: session.id,
+                    metadata: session
+                });
+
             } else if (session.mode === 'payment' && session.metadata?.type === 'booking_payment') {
                 // Booking Payment Logic (Vibe System Integration)
                 const { userId, bookingId } = session.metadata;

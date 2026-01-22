@@ -1,15 +1,17 @@
 
-import { CreatePaymentLink } from './src/api/integrations.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
 async function testPayment() {
     console.log("💳 Testing Stripe Integration...");
 
+    // Dynamic import to ensure environment variables are loaded FIRST
+    const { CreatePaymentLink } = await import('./src/api/integrations.js');
+
     const result = await CreatePaymentLink({
         name: "Banana AI Premium Service",
-        amount: 1.00, // $1.00
-        currency: "usd"
+        amount: 35.00, // 35 THB
+        currency: "thb"
     });
 
     console.log("Result:", result);
