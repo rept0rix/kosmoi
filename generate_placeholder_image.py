@@ -1,31 +1,44 @@
+import sys
 from PIL import Image, ImageDraw, ImageFont
+import os
 
-# Image dimensions
-width = 800
-height = 600
+def create_placeholder(text="Placeholder", filename="placeholder.png", width=800, height=600):
+    image = Image.new("RGB", (width, height), (240, 240, 240))
+    draw = ImageDraw.Draw(image)
+    
+    # Border
+    draw.rectangle([(0,0), (width-1, height-1)], outline=(200,200,200), width=10)
+    
+    # Cross
+    draw.line([(0,0), (width, height)], fill=(220,220,220), width=5)
+    draw.line([(0,height), (width, 0)], fill=(220,220,220), width=5)
 
-# Create a new image with a white background
-image = Image.new("RGB", (width, height), "white")
-draw = ImageDraw.Draw(image)
+    try:
+        # Try Mac font
+        font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 40)
+    except:
+        try:
+            # Try default
+            font = ImageFont.load_default()
+        except:
+            print("Could not load fonts")
+            return
 
-# Add a blue rectangle as a placeholder for the air conditioner
-air_conditioner_color = (173, 216, 230)  # Light blue
-air_conditioner_x0 = width // 4
-air_conditioner_y0 = height // 4
-air_conditioner_x1 = width * 3 // 4
-air_conditioner_y1 = height // 2
-draw.rectangle([(air_conditioner_x0, air_conditioner_y0), (air_conditioner_x1, air_conditioner_y1)], fill=air_conditioner_color)
+    # Text wrapping (simple)
+    text_color = (50, 50, 50)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    x = (width - text_w) // 2
+    y = (height - text_h) // 2
+    
+    draw.text((x, y), text, fill=text_color, font=font)
+    
+    image.save(filename)
+    print(f"Generated {filename}")
 
-# Add some text indicating 'Technician on the way'
-text = "Technician on the way"
-font_size = 30
-# Use a default font; specify the path if a custom font is needed
-font = ImageFont.truetype(font="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size=font_size)
-text_color = (0, 0, 255)  # Blue
-text_width, text_height = draw.textsize(text, font=font)
-text_x = (width - text_width) // 2
-text_y = height * 3 // 4
-draw.text((text_x, text_y), text, fill=text_color, font=font)
-
-# Save the image
-image.save("repair_ad.png")
+if __name__ == "__main__":
+    txt = sys.argv[1] if len(sys.argv) > 1 else "Placeholder"
+    fname = sys.argv[2] if len(sys.argv) > 2 else "generated_placeholder.png"
+    create_placeholder(txt, fname)

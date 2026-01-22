@@ -1,0 +1,42 @@
+[
+    {
+        "platform": "facebook",
+        "campaign_name": "Kosmoi_Boats_Traffic_Jan26",
+        "objective": "OUTBOUND_CLICKS",
+        "ad_sets": [
+            {
+                "name": "Expats_Locals",
+                "targeting": {
+                    "location": "Koh Samui (+15km)",
+                    "age": "25-50",
+                    "interests": [
+                        "Luxury travel",
+                        "Boating",
+                        "Yachting",
+                        "Snorkeling"
+                    ]
+                },
+                "ads": [
+                    {
+                        "name": "Ad_Price_Comparison",
+                        "headline": "Stop Overpaying for Boats 🚤",
+                        "primary_text": "Why pay hotel markups? Book direct with verified captains on Kosmoi.",
+                        "creative_type": "image",
+                        "asset_id": "boat_rental_ad_1.png"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "platform": "google",
+        "campaign_name": "Kosmoi_Boats_Search_Intent",
+        "objective": "LEADS",
+        "keywords": [
+            "private boat charter samui",
+            "rent speedboat koh samui",
+            "catamaran rental samui price",
+            "longtail boat trip pig island"
+        ]
+    }
+]

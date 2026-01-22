@@ -97,10 +97,21 @@ export const AuthProvider = ({ children }) => {
         console.log("⚡ Optimistic Auth: Found session User -> Unblocking UI");
         setUser(session.user);
         setIsAuthenticated(true);
-        setIsLoadingAuth(false); // Unblock immediately
 
-        // 2. Background Verification (non-blocking)
-        checkUserAuth(true, true);
+        // CRITICAL FIX: For Admin/Protected routes, we MUST wait for the role check (checkUserAuth) 
+        // before unblocking, otherwise RequireRole will redirect immediately because session.user lacks the 'role' field.
+        const isProtectedPath = window.location.pathname.startsWith('/admin') ||
+          window.location.pathname.startsWith('/business') ||
+          window.location.pathname.includes('/provider-dashboard');
+
+        if (isProtectedPath) {
+          console.log("🛡️ Protected Route Detected: Waiting for Role Verification...");
+          await checkUserAuth(true, false); // Run in foreground (blocking)
+        } else {
+          setIsLoadingAuth(false); // Unblock immediately for public/app
+          // 2. Background Verification (non-blocking)
+          checkUserAuth(true, true);
+        }
       } else {
         // No session found or timeout
         if (isPublicRoute) {

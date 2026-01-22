@@ -24,6 +24,8 @@ import PricingModal from '@/components/payments/PricingModal';
 import { StripeService } from '@/services/payments/StripeService';
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { ProductCard } from '@/components/marketplace/ProductCard';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/features/auth/context/AuthContext';
 const CalendarView = React.lazy(() => import('@/pages/vendor/CalendarView')); // Import Calendar Component
 const EditProfileDialog = React.lazy(() => import('@/components/dashboard/EditProfileDialog'));
 const StatsOverview = React.lazy(() => import('@/components/dashboard/StatsOverview'));
@@ -53,7 +55,7 @@ const ServicesView = ({ provider }) => {
     return (
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
             {provider.price_packages.map((pkg, idx) => (
-                <div key={idx} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 relative group hover:border-violet-500/50 transition-all">
+                <div key={idx} className="glass-card-premium p-4 relative group hover:border-violet-500/50 transition-all rounded-lg">
                     <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold text-white text-lg">{pkg.title}</h3>
                         <Badge variant="outline" className="border-green-500/20 text-green-400 bg-green-500/10">
@@ -104,6 +106,7 @@ export default function ProviderDashboard() {
     const [incomingJob, setIncomingJob] = useState(null);
     const [viewMode, setViewMode] = useState('map'); // 'map' | 'services' | 'gallery' | 'calendar' | 'stats'
     const { toast } = useToast();
+    const { user } = useAuth();
     const [providerProfile, setProviderProfile] = useState(null);
 
     // Pricing Modal State
@@ -113,24 +116,36 @@ export default function ProviderDashboard() {
         StripeService.getSubscription().then(setSubscription);
     }, []);
 
-    const fetchProfile = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            // Optimized: Single query with OR condition instead of sequential lookups
-            const { data, error } = await supabase
-                .from('service_providers')
-                .select('*')
-                .or(`id.eq.${user.id},owner_id.eq.${user.id}`)
-                .maybeSingle();
+    // Fetch my linked provider profile
+    const { data: myProvider, isLoading: loadingProvider, refetch: fetchProfile } = useQuery({
+        queryKey: ['myProvider'],
+        queryFn: async () => {
+            const { data } = await supabase.from('service_providers').select('*').eq('created_by', user.email).single();
+            return data;
+        },
+        enabled: !!user?.email
+    });
 
-            if (data) setProviderProfile(data);
-            if (error) console.error("Error fetching profile:", error);
-        }
+    // Use real provider or fallback to mock for now if creating new
+    const provider = myProvider || {
+        business_name: "Loading...",
+        rating: 5.0,
+        total_jobs: 0,
+        is_verified: false,
+        images: []
     };
 
     useEffect(() => {
-        fetchProfile();
-    }, []);
+        if (myProvider) {
+            setProviderProfile(myProvider);
+        }
+    }, [myProvider]);
+
+    useEffect(() => {
+        if (user) {
+            // No need to fetch manually, useQuery handles it
+        }
+    }, [user]);
 
     // 1. Get Location (Existing)
     useEffect(() => {
@@ -321,7 +336,7 @@ export default function ProviderDashboard() {
     }, [providerProfile]);
 
     return (
-        <div className="h-[calc(100vh-60px)] relative flex flex-col bg-slate-900 overflow-hidden">
+        <div className="h-[calc(100vh-60px)] relative flex flex-col bg-midnight-950 overflow-hidden">
 
             {/* --- Top Bar (Status) --- */}
             <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-6 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -474,19 +489,19 @@ export default function ProviderDashboard() {
                 )}
 
                 {viewMode === 'services' && (
-                    <div className="h-full bg-slate-900 overflow-y-auto pt-4">
+                    <div className="h-full bg-midnight-950 overflow-y-auto pt-4">
                         <ServicesView provider={providerProfile} />
                     </div>
                 )}
 
                 {viewMode === 'gallery' && (
-                    <div className="h-full bg-slate-900 overflow-y-auto pt-4">
+                    <div className="h-full bg-midnight-950 overflow-y-auto pt-4">
                         <GalleryView provider={providerProfile} />
                     </div>
                 )}
 
                 {viewMode === 'calendar' && (
-                    <div className="h-full bg-slate-900 overflow-y-auto pt-4">
+                    <div className="h-full bg-midnight-950 overflow-y-auto pt-4">
                         <React.Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}>
                             <CalendarView />
                         </React.Suspense>
@@ -494,7 +509,7 @@ export default function ProviderDashboard() {
                 )}
 
                 {viewMode === 'stats' && (
-                    <div className="h-full bg-slate-900 overflow-y-auto p-6 pt-4">
+                    <div className="h-full bg-midnight-950 overflow-y-auto p-6 pt-4">
                         <h2 className="text-2xl font-bold text-white mb-6">Performance Analytics</h2>
                         <React.Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}>
                             <StatsOverview provider={providerProfile} />

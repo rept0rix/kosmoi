@@ -96,6 +96,7 @@ import AdminHyperloop from './pages/admin/AdminHyperloop';
 import AdminSkills from './pages/admin/AdminSkills';
 import AdminWallet from './pages/admin/AdminWallet';
 import Roadmap from './pages/Roadmap'; // New Public Roadmap
+import AdminRoarCampaign from '@/pages/admin/AdminRoarCampaign';
 import Studio from '@/pages/admin/Studio';
 import BoardRoom from '@/pages/BoardRoom';
 import NotFound from '@/pages/NotFound';
@@ -105,6 +106,8 @@ import LocalBrain from '@/pages/LocalBrain';
 // import SystemMonitor from '@/components/dashboard/SystemMonitor'; // Unused?
 import ProviderProfile from '@/pages/ProviderProfile';
 import LandingPage_SmokeTest from '@/pages/LandingPage_SmokeTest';
+import LandingPage_BoatRentals from '@/pages/LandingPage_BoatRentals';
+import LandingPage_LuxuryVillas from '@/pages/LandingPage_LuxuryVillas';
 
 // Speed Pass Injection
 // import SpeedPassCard from '@/components/SpeedPassCard'; // Disabled
@@ -257,6 +260,7 @@ const AuthenticatedApp = () => {
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="marketing" element={<AdminMarketing />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="campaigns/roar" element={<AdminRoarCampaign />} />
                 <Route path="automations" element={<AdminAutomations />} />
                 <Route path="scheduler" element={<AdminScheduler />} />
                 <Route path="logs" element={<AdminLogs />} />
@@ -302,6 +306,8 @@ const AuthenticatedApp = () => {
             <Route path="use-cases" element={<UseCases />} />
             {/* Campaign Routes */}
             <Route path="r/:category" element={<LandingPage_SmokeTest />} />
+            <Route path="r/boat-rentals" element={<LandingPage_BoatRentals />} />
+            <Route path="r/luxury-villas" element={<LandingPage_LuxuryVillas />} />
 
             <Route path="pricing" element={<Pricing />} />
             <Route path="legal/terms" element={<TermsOfService />} />

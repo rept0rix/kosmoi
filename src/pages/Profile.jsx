@@ -16,7 +16,10 @@ import {
   ChevronRight,
   LogOut,
   CreditCard,
-  Wallet
+  Wallet,
+  Store,
+  LayoutDashboard,
+  Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PushService } from "@/services/PushService";
@@ -81,6 +84,28 @@ export default function Profile() {
       ]
     }
   ];
+
+  // Dynamic Business/Admin Links
+  const isBusiness = user?.role === 'vendor' || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
+
+  if (isBusiness) {
+    const businessItems = [];
+    if (isAdmin) {
+      businessItems.push({ icon: LayoutDashboard, label: "Admin Command Center", path: "/admin/command-center" });
+    }
+    // 1. Management Dashboard (Owner View)
+    businessItems.push({ icon: Store, label: "Business Management", path: "/businessdashboard" });
+
+    // 2. Field App / Driver Mode (Execution View) - Future Monetization
+    businessItems.push({ icon: Smartphone, label: "Field App (Driver Mode)", path: "/provider-dashboard" });
+
+    // Add to TOP of menu
+    menuItems.unshift({
+      title: "Business Center",
+      items: businessItems
+    });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans">

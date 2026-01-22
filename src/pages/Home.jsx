@@ -34,7 +34,7 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen relative font-sans text-white">
+        <div className="min-h-screen relative font-sans text-white bg-midnight-950">
             <SEO
                 title={t('home.seo_title')}
                 description={t('home.seo_desc')}
@@ -44,11 +44,14 @@ export default function Home() {
                 <img
                     src={BG_IMAGE}
                     alt="Samui Background"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover opacity-60"
                 />
-                {/* Dark Gradient Overlay for readability */}
-                <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/50"></div>
+                {/* Midnight Gradient Overlay */}
+                <div className="absolute inset-0 bg-midnight-950/80 backdrop-blur-[2px]"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-midnight-950 via-transparent to-midnight-950/50"></div>
+
+                {/* Ambient Banana Glow (Subtle) */}
+                <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-banana-500/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
             </div>
 
             {/* Header / Logo */}

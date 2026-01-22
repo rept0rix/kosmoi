@@ -70,7 +70,7 @@ export default function BusinessDashboard() {
   });
 
   // RxDB Data Hook
-  const { useRxQuery } = require('@/shared/hooks/useRxQuery');
+  // RxDB Data Hook used from top-level import
   const { data: myBusinesses, loading: isLoading } = useRxQuery(
     'vendors',
     (collection) => collection.find().where('created_by').eq(user?.email || '')
@@ -78,26 +78,27 @@ export default function BusinessDashboard() {
 
   // Fallback to empty array if no data
   // const myBusinesses = rxBusinesses || [];
+  const safeBusinesses = myBusinesses || [];
 
 
   const { data: reviews } = useQuery({
-    queryKey: ["businessReviews", myBusinesses?.[0]?.id],
+    queryKey: ["businessReviews", safeBusinesses?.[0]?.id],
     queryFn: () =>
       db.entities.Review.filter({
-        service_provider_id: myBusinesses[0].id,
+        service_provider_id: safeBusinesses[0].id,
       }),
-    enabled: myBusinesses?.length > 0,
+    enabled: safeBusinesses?.length > 0,
     initialData: [],
   });
 
   // Fetch AI Settings
   const { data: aiSettings, isLoading: isLoadingAI } = useQuery({
-    queryKey: ["businessSettings", myBusinesses?.[0]?.id],
+    queryKey: ["businessSettings", safeBusinesses?.[0]?.id],
     queryFn: async () => {
-      const { data } = await db.from('business_settings').select('*').eq('provider_id', myBusinesses[0].id).single();
+      const { data } = await db.from('business_settings').select('*').eq('provider_id', safeBusinesses[0].id).single();
       return data || { ai_auto_reply: false, ai_tone: 'professional', custom_instructions: '' };
     },
-    enabled: !!myBusinesses?.[0]?.id,
+    enabled: !!safeBusinesses?.[0]?.id,
   });
 
   const updateAIMutation = useMutation({
@@ -106,7 +107,7 @@ export default function BusinessDashboard() {
       // Upsert settings
       const settings = newSettings || {};
       const { error } = await db.from('business_settings').upsert({
-        provider_id: myBusinesses[0].id,
+        provider_id: safeBusinesses[0].id,
         ...settings
       });
       if (error) throw error;
@@ -119,7 +120,7 @@ export default function BusinessDashboard() {
 
   // Fetch Real Analytics Data
   const { data: rawAnalytics } = useQuery({
-    queryKey: ["businessAnalytics", myBusinesses?.[0]?.id],
+    queryKey: ["businessAnalytics", safeBusinesses?.[0]?.id],
     queryFn: async () => {
       // Fetch last 7 days
       const sevenDaysAgo = new Date();
@@ -127,13 +128,13 @@ export default function BusinessDashboard() {
 
       const { data, error } = await db.from('business_analytics')
         .select('event_type, created_at')
-        .eq('provider_id', myBusinesses[0].id)
+        .eq('provider_id', safeBusinesses[0].id)
         .gte('created_at', sevenDaysAgo.toISOString());
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!myBusinesses?.[0]?.id,
+    enabled: !!safeBusinesses?.[0]?.id,
     initialData: []
   });
 
@@ -142,7 +143,7 @@ export default function BusinessDashboard() {
   const updateBusinessMutation = useMutation({
     /** @param {Object} data */
     mutationFn: async (data) => {
-      return await db.entities.ServiceProvider.update(myBusinesses[0].id, data);
+      return await db.entities.ServiceProvider.update(safeBusinesses[0].id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myBusinesses"] });
@@ -163,7 +164,7 @@ export default function BusinessDashboard() {
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
-      const currentImages = myBusinesses[0].images || [];
+      const currentImages = safeBusinesses[0].images || [];
       const newImages = [...currentImages, ...uploadedUrls];
 
       await updateBusinessMutation.mutateAsync({ images: newImages });
@@ -175,16 +176,16 @@ export default function BusinessDashboard() {
   };
 
   const handleDeleteImage = async (indexToDelete) => {
-    const currentImages = myBusinesses[0].images || [];
+    const currentImages = safeBusinesses[0].images || [];
     const newImages = currentImages.filter((_, idx) => idx !== indexToDelete);
     await updateBusinessMutation.mutateAsync({ images: newImages });
   };
 
   const handleEditClick = () => {
     setEditedData({
-      description: myBusinesses[0].description || "",
-      available_hours: myBusinesses[0].available_hours || "",
-      emergency_service: myBusinesses[0].emergency_service || false,
+      description: safeBusinesses[0].description || "",
+      available_hours: safeBusinesses[0].available_hours || "",
+      emergency_service: safeBusinesses[0].emergency_service || false,
     });
     setShowEditDialog(true);
   };
@@ -220,7 +221,7 @@ export default function BusinessDashboard() {
     );
   }
 
-  if (myBusinesses.length === 0) {
+  if (safeBusinesses.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -247,7 +248,7 @@ export default function BusinessDashboard() {
     );
   }
 
-  const business = myBusinesses[0];
+  const business = safeBusinesses[0];
   const recentReviews = reviews.slice(0, 5);
 
   // Process Analytics
