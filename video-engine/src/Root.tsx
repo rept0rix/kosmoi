@@ -1,5 +1,6 @@
 import { Composition } from 'remotion';
 import { Main } from './Main';
+import { PropertyTour } from './PropertyTour';
 import transcript from '../assets/transcript.json';
 
 export const RemotionRoot: React.FC = () => {
@@ -19,6 +20,19 @@ export const RemotionRoot: React.FC = () => {
                 height={1920} // Vertical for TikTok/Reels
                 defaultProps={{
                     transcript: transcript
+                }}
+            />
+            <Composition
+                id="PropertyTour"
+                component={PropertyTour}
+                durationInFrames={30 * 15} // 15 seconds default (5 slides * 3s)
+                fps={30}
+                width={1080}
+                height={1920}
+                defaultProps={{
+                    name: "Luxury Villa",
+                    price: "0",
+                    images: []
                 }}
             />
         </>

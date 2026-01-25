@@ -45,7 +45,7 @@ const TripPlannerChat = () => {
 
         const userText = input;
         setInput('');
-        setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: userText }]);
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: userText }]);
         setIsLoading(true);
 
         try {
@@ -57,7 +57,7 @@ const TripPlannerChat = () => {
             const recommendedId = recommendMatch ? recommendMatch[1] : null;
 
             setMessages(prev => [...prev, {
-                id: Date.now() + 1,
+                id: (Date.now() + 1).toString(),
                 role: 'assistant',
                 content: cleanResponse,
                 recommendedId: recommendedId
@@ -65,7 +65,7 @@ const TripPlannerChat = () => {
 
         } catch (error) {
             console.error(error);
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: "My radio is a bit fuzzy (Connection Error). Please try again." }]);
+            setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: "My radio is a bit fuzzy (Connection Error). Please try again." }]);
         } finally {
             setIsLoading(false);
         }
@@ -97,8 +97,8 @@ const TripPlannerChat = () => {
 
                             <div className={`flex flex-col max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
-                                        ? 'bg-blue-600 text-white rounded-tr-sm'
-                                        : 'bg-white/10 text-slate-200 rounded-tl-sm'
+                                    ? 'bg-blue-600 text-white rounded-tr-sm'
+                                    : 'bg-white/10 text-slate-200 rounded-tl-sm'
                                     }`}>
                                     {/* Simple Markdown Bold Parsing */}
                                     {msg.content.split('**').map((part, i) =>
