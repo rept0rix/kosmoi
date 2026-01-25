@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import LandingNavbar from '@/components/LandingNavbar';
 import Footer from '@/components/Footer';
 import BoatRentalLeadForm from '@/components/forms/BoatRentalLeadForm';
@@ -14,6 +15,7 @@ import { Anchor, Clock, Info, Luggage, MapPin, ShieldCheck, Waves } from 'lucide
 import yachtData from '../data/yacht_listings.json';
 
 const YachtTours = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fleetRef = useRef(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -37,10 +39,10 @@ const YachtTours = () => {
         <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="text-2xl font-heading">
-              {selectedYacht ? `Book ${selectedYacht.name}` : "Request a Private Charter"}
+              {selectedYacht ? `${t('action.book')} ${selectedYacht.name}` : t('experiences.inquiry_title')}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Submit your details and a Kosmoi concierge will contact you via WhatsApp to confirm availability and logistics.
+              {t('experiences.inquiry_success')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -69,28 +71,27 @@ const YachtTours = () => {
           <div className="flex justify-center mb-8">
             <span className="bg-white/5 backdrop-blur-md border border-white/10 text-white/80 px-5 py-1.5 rounded-full text-[10px] md:text-xs font-medium tracking-[0.2em] uppercase flex items-center gap-3">
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
-              Kosmoi Elite Fleet • Verified 2026
+              {t('yachtTours.hero.verified')}
             </span>
           </div>
           <h1 className="text-6xl md:text-8xl font-heading font-medium mb-8 tracking-tight text-white leading-[0.9] italic-serif drop-shadow-2xl">
-            Elite <span className="font-light opacity-60">Kosmoi</span> Charters
+            {t('yachtTours.hero.title', { brand: 'Kosmoi' })}
           </h1>
           <p className="text-base md:text-lg text-slate-200 font-light mb-12 leading-relaxed max-w-xl mx-auto tracking-wide drop-shadow-lg bg-slate-950/20 backdrop-blur-[2px] p-4 rounded-lg border border-white/5">
-            Precision-engineered journeys across the Gulf of Thailand.
-            Curated by <span className="text-amber-400 font-medium">Kosmoi</span> for Koh Samui's most discerning travelers.
+            {t('yachtTours.hero.subtitle', { brand: 'Kosmoi' })}
           </p>
           <div className="flex flex-col md:flex-row gap-5 justify-center mt-4">
             <button
               onClick={scrollToFleet}
               className="bg-white text-slate-950 px-10 py-4 rounded-sm font-semibold hover:bg-amber-400 transition-all duration-300 tracking-tight text-sm uppercase"
             >
-              Explore Fleet
+              {t('yachtTours.hero.explore')}
             </button>
             <button
               onClick={() => openBooking()}
               className="border border-white/20 text-white px-10 py-4 rounded-sm font-medium hover:bg-white/5 transition-all duration-300 tracking-tight text-sm uppercase backdrop-blur-sm"
             >
-              Book Your Day
+              {t('yachtTours.hero.book')}
             </button>
           </div>
         </div>
@@ -100,11 +101,9 @@ const YachtTours = () => {
       <section className="py-24 container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
-            <h2 className="text-4xl font-heading leading-tight">Your Day on the <br /> <span className="text-amber-500">Gulf of Thailand</span></h2>
+            <h2 className="text-4xl font-heading leading-tight">{t('yachtTours.experience.title')} <br /> <span className="text-amber-500">{t('yachtTours.experience.gulf')}</span></h2>
             <p className="text-slate-400 leading-relaxed font-light text-lg">
-              Forget the crowds. A private charter with Kosmoi is about pure autonomy.
-              Our captains navigate to secluded bays while you enjoy gourmet service on deck.
-              From Pig Island's white sands to the emerald lagoons of Ang Thong, the itinerary is yours.
+              {t('yachtTours.experience.desc')}
             </p>
             <div className="grid grid-cols-2 gap-6 pt-4">
               <div className="flex gap-4">
@@ -112,8 +111,8 @@ const YachtTours = () => {
                   <Waves className="text-amber-500 w-6 h-6" />
                 </div>
                 <div>
-                  <h5 className="font-heading mb-1">Snorkeling</h5>
-                  <p className="text-xs text-slate-500 uppercase tracking-tighter">Premium Gear Included</p>
+                  <h5 className="font-heading mb-1">{t('yachtTours.experience.snorkeling')}</h5>
+                  <p className="text-xs text-slate-500 uppercase tracking-tighter">{t('yachtTours.experience.gear')}</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -121,8 +120,8 @@ const YachtTours = () => {
                   <Anchor className="text-amber-500 w-6 h-6" />
                 </div>
                 <div>
-                  <h5 className="font-heading mb-1">Private Piers</h5>
-                  <p className="text-xs text-slate-500 uppercase tracking-tighter">Skip the Main Pier</p>
+                  <h5 className="font-heading mb-1">{t('yachtTours.experience.piers')}</h5>
+                  <p className="text-xs text-slate-500 uppercase tracking-tighter">{t('yachtTours.experience.skipPiers')}</p>
                 </div>
               </div>
             </div>
@@ -135,8 +134,8 @@ const YachtTours = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
             <div className="absolute bottom-6 left-6">
-              <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest block mb-2">Activities</span>
-              <p className="text-sm font-medium">Turquoise Waters & Hidden Caves</p>
+              <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest block mb-2">{t('yachtTours.experience.activities')}</span>
+              <p className="text-sm font-medium">{t('yachtTours.experience.hiddenCaves')}</p>
             </div>
           </div>
         </div>
@@ -146,46 +145,46 @@ const YachtTours = () => {
       <section className="py-24 bg-white/5 border-y border-white/10 w-full relative z-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-heading mb-4">Logistics & Preparation</h2>
-            <p className="text-slate-500 text-sm font-light">Everything you need to know for a seamless departure.</p>
+            <h2 className="text-3xl font-heading mb-4">{t('yachtTours.logistics.title')}</h2>
+            <p className="text-slate-500 text-sm font-light">{t('yachtTours.logistics.subtitle')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="p-8 border border-white/5 bg-slate-950/50 space-y-4">
               <Clock className="w-8 h-8 text-amber-500 mb-2" />
-              <h4 className="font-heading text-lg">Timings</h4>
+              <h4 className="font-heading text-lg">{t('yachtTours.timings.title')}</h4>
               <ul className="text-xs text-slate-400 space-y-2">
-                <li>• Half Day: 09:30 - 13:30 / 14:30 - 18:30</li>
-                <li>• Full Day: 10:00 - 17:00</li>
-                <li>• Custom: Flexible upon request</li>
+                <li>• {t('yachtTours.timings.halfDay')}</li>
+                <li>• {t('yachtTours.timings.fullDay')}</li>
+                <li>• {t('yachtTours.timings.custom')}</li>
               </ul>
             </div>
             <div className="p-8 border border-white/5 bg-slate-950/50 space-y-4">
               <MapPin className="w-8 h-8 text-amber-500 mb-2" />
-              <h4 className="font-heading text-lg">Transfers</h4>
+              <h4 className="font-heading text-lg">{t('yachtTours.transfers.title')}</h4>
               <ul className="text-xs text-slate-400 space-y-2">
-                <li>• Private Car pickup from any Resort</li>
-                <li>• Main Depatures: Bangrak & Petcherat Pier</li>
-                <li>• Full logistics handled by our Team</li>
+                <li>• {t('yachtTours.transfers.pickup')}</li>
+                <li>• {t('yachtTours.transfers.piers')}</li>
+                <li>• {t('yachtTours.transfers.fullLogistics')}</li>
               </ul>
             </div>
             <div className="p-8 border border-white/5 bg-slate-950/50 space-y-4">
               <Luggage className="w-8 h-8 text-amber-500 mb-2" />
-              <h4 className="font-heading text-lg">What to Bring</h4>
+              <h4 className="font-heading text-lg">{t('yachtTours.bring.title')}</h4>
               <ul className="text-xs text-slate-400 space-y-2">
-                <li>• Swimwear & Towel</li>
-                <li>• Sunscreen (Ocean friendly)</li>
-                <li>• Sunglasses & Hat</li>
-                <li>• Camera / GoPro</li>
+                <li>• {t('yachtTours.bring.swimwear')}</li>
+                <li>• {t('yachtTours.bring.sunscreen')}</li>
+                <li>• {t('yachtTours.bring.shades')}</li>
+                <li>• {t('yachtTours.bring.camera')}</li>
               </ul>
             </div>
             <div className="p-8 border border-white/5 bg-slate-950/50 space-y-4">
               <ShieldCheck className="w-8 h-8 text-amber-500 mb-2" />
-              <h4 className="font-heading text-lg">Inclusions</h4>
+              <h4 className="font-heading text-lg">{t('yachtTours.inclusions.title')}</h4>
               <ul className="text-xs text-slate-400 space-y-2">
-                <li>• Full Crew & Captain</li>
-                <li>• Soft Drinks & Drinking Water</li>
-                <li>• Snorkel Equipment</li>
-                <li>• Passenger Insurance</li>
+                <li>• {t('yachtTours.inclusions.crew')}</li>
+                <li>• {t('yachtTours.inclusions.drinks')}</li>
+                <li>• {t('yachtTours.inclusions.snorkel')}</li>
+                <li>• {t('yachtTours.inclusions.insurance')}</li>
               </ul>
             </div>
           </div>
@@ -198,15 +197,15 @@ const YachtTours = () => {
           <div className="w-10 h-10 rounded-full border border-amber-500/50 flex items-center justify-center mb-4">
             <Info className="text-amber-500 w-5 h-5" />
           </div>
-          <h2 className="text-3xl font-heading">Secure Your Date</h2>
+          <h2 className="text-3xl font-heading">{t('yachtTours.secure.title')}</h2>
           <p className="text-slate-400 font-light">
-            Once you request a charter, a Kosmoi concierge checks real-time fleet availability. You will receive a secure payment link (Kosmoi Pay) to confirm the booking. Full pickup details are sent immediately after confirmation.
+            {t('yachtTours.secure.desc')}
           </p>
           <button
             onClick={() => openBooking()}
             className="mt-8 bg-amber-500 text-slate-950 px-12 py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-amber-400 transition-all"
           >
-            Start Request
+            {t('yachtTours.secure.btn')}
           </button>
         </div>
       </section>
@@ -214,16 +213,16 @@ const YachtTours = () => {
       {/* Curated Itineraries Section */}
       <section className="py-32 container mx-auto px-4 relative z-10">
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-heading mb-6 tracking-tight">Curated Itineraries</h2>
-          <p className="text-slate-500 max-w-2xl mx-auto font-light">Explore the most iconic destinations around Koh Samui with our precision-planned daily programs.</p>
+          <h2 className="text-4xl md:text-5xl font-heading mb-6 tracking-tight">{t('yachtTours.itineraries.title')}</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto font-light">{t('yachtTours.itineraries.subtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { title: "Pig Island (Koh Madsum)", desc: "A tropical escape just minutes away. Relax on white sands and meet the famous beach pigs.", duration: "4-6 Hours" },
-            { title: "Ang Thong Marine Park", desc: "42 islands of limestone cliffs, hidden lagoons, and emerald lakes. A true nature masterpiece.", duration: "8 Hours" },
-            { title: "Koh Phangan Explorer", desc: "Crystal clear bays and pristine snorkeling spots along the rugged coastline of our sister island.", duration: "6-8 Hours" },
-            { title: "Sunset Cruise", desc: "Pure luxury as the sky turns gold. The ultimate way to end a day in paradise.", duration: "3-4 Hours" }
+            { title: t('yachtTours.itinerary.pigIsland.title'), desc: t('yachtTours.itinerary.pigIsland.desc'), duration: `4-6 ${t('hours')}` },
+            { title: t('yachtTours.itinerary.angThong.title'), desc: t('yachtTours.itinerary.angThong.desc'), duration: `8 ${t('hours')}` },
+            { title: t('yachtTours.itinerary.phangan.title'), desc: t('yachtTours.itinerary.phangan.desc'), duration: `6-8 ${t('hours')}` },
+            { title: t('yachtTours.itinerary.sunset.title'), desc: t('yachtTours.itinerary.sunset.desc'), duration: `3-4 ${t('hours')}` }
           ].map((item, i) => (
             <div key={i} className="bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition-all group">
               <span className="text-[10px] text-amber-500/50 mb-4 block font-mono">{item.duration}</span>
@@ -259,7 +258,7 @@ const YachtTours = () => {
                 <div className="flex items-center gap-3 mb-6">
                   <span className="text-[9px] font-bold text-white/40 tracking-[0.3em] uppercase">{yacht.category}</span>
                   <div className="w-[1px] h-3 bg-white/10" />
-                  <span className="text-[9px] font-medium text-white/40 uppercase tracking-[0.2em]">{yacht.duration_hours}H ESCAPE</span>
+                  <span className="text-[9px] font-medium text-white/40 uppercase tracking-[0.2em]">{t('yachtTours.fleet.hours', { count: yacht.duration_hours })}</span>
                 </div>
 
                 <h3 className="text-xl md:text-2xl font-heading font-medium mb-3 text-white tracking-tight leading-tight">{yacht.name}</h3>
@@ -279,7 +278,7 @@ const YachtTours = () => {
 
                 <div className="pt-8 border-t border-white/5 flex justify-between items-end">
                   <div>
-                    <p className="text-[8px] text-white/20 uppercase tracking-[0.4em] font-bold mb-2">Price From</p>
+                    <p className="text-[8px] text-white/20 uppercase tracking-[0.4em] font-bold mb-2">{t('yachtTours.fleet.priceFrom')}</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-[10px] text-white/30 font-medium">THB</span>
                       <p className="text-3xl font-heading font-medium text-white">
@@ -291,7 +290,7 @@ const YachtTours = () => {
                     onClick={() => openBooking(yacht)}
                     className="text-white/40 hover:text-white transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
                   >
-                    Check Availability
+                    {t('yachtTours.fleet.checkAvailability')}
                     <span className="text-lg">→</span>
                   </button>
                 </div>
