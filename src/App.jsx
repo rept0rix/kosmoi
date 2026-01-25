@@ -108,6 +108,7 @@ import ProviderProfile from '@/pages/ProviderProfile';
 import LandingPage_SmokeTest from '@/pages/LandingPage_SmokeTest';
 import LandingPage_BoatRentals from '@/pages/LandingPage_BoatRentals';
 import LandingPage_LuxuryVillas from '@/pages/LandingPage_LuxuryVillas';
+import TripPlannerChat from '@/components/planner/TripPlannerChat';
 
 // Speed Pass Injection
 // import SpeedPassCard from '@/components/SpeedPassCard'; // Disabled
@@ -235,6 +236,7 @@ const AuthenticatedApp = () => {
             <Route path="chat/:workflowId" element={<Pages.AgentChat />} />
             <Route path="chat-hub" element={<ChatHub />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="planner" element={<div className="p-8 bg-slate-950 min-h-screen flex items-center justify-center"><TripPlannerChat /></div>} />
 
             {/* Admin & Vendor Routes */}
             <Route path="command-center" element={<CommandCenter />} />
