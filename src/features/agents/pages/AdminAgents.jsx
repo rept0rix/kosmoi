@@ -15,7 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Bot, Sparkles } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Bot, Sparkles, Clock } from 'lucide-react';
 import { agents as initialAgents } from '@/features/agents/services/AgentRegistry';
 
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +59,22 @@ export default function AdminAgents() {
 
             if (error) throw error;
 
+            // Fetch latest logs for heartbeat
+            const { data: logs, error: logsError } = await supabase
+                .from('agent_logs')
+                .select('agent_id, created_at')
+                .order('created_at', { ascending: false });
+
+            // Map latest timestamp per agent
+            const lastActiveMap = {};
+            if (logs) {
+                logs.forEach(log => {
+                    if (!lastActiveMap[log.agent_id]) {
+                        lastActiveMap[log.agent_id] = log.created_at;
+                    }
+                });
+            }
+
             if (data && data.length > 0) {
                 // Merge DB configs with Codebase Registry (for icons/Avatars which are effectively static code assets)
                 const merged = data.map(dbAgent => {
@@ -66,7 +82,8 @@ export default function AdminAgents() {
                     return {
                         ...codeAgent, // Avatar, Code logic
                         ...dbAgent,   // DB Overrides: Name, Prompt, Active Status
-                        id: dbAgent.agent_id // Ensure ID match
+                        id: dbAgent.agent_id, // Ensure ID match
+                        lastActive: lastActiveMap[dbAgent.agent_id] // Attach heartbeat
                     };
                 });
                 setAgents(merged);
@@ -351,9 +368,19 @@ export default function AdminAgents() {
                                         <Sparkles className="w-3 h-3 mr-1" />
                                         GPT-4o
                                     </Badge>
-                                    <Badge className="bg-green-500/15 text-green-700 hover:bg-green-500/25 border-0">
-                                        Active
-                                    </Badge>
+
+                                    {/* Online/Offline Status */}
+                                    {agent.lastActive && (new Date() - new Date(agent.lastActive) < 1000 * 60 * 5) ? (
+                                        <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border-0 gap-1 animate-pulse">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                            Online
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="text-slate-500 gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />
+                                            Offline
+                                        </Badge>
+                                    )}
                                 </div>
                                 {agent.description && (
                                     <p className="text-xs text-muted-foreground line-clamp-2">
@@ -361,7 +388,10 @@ export default function AdminAgents() {
                                     </p>
                                 )}
                                 <div className="pt-2 flex justify-between items-center text-xs text-muted-foreground border-t">
-                                    <span>Tasks: 0</span>
+                                    <span className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {agent.lastActive ? new Date(agent.lastActive).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                                    </span>
                                     <span>Success: 100%</span>
                                 </div>
                             </div>

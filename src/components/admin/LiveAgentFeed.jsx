@@ -87,6 +87,11 @@ const LiveAgentFeed = () => {
     };
 
     const getAgentBadge = (msg) => {
+        const level = msg.level || 'chat';
+        if (level === 'task') return <Badge variant="outline" className="gap-1 border-purple-500/30 text-purple-400 bg-purple-500/10">Task</Badge>;
+        if (level === 'error') return <Badge variant="destructive" className="gap-1">Error</Badge>;
+        if (level === 'system') return <Badge variant="secondary" className="gap-1 bg-slate-800 text-slate-400 border-slate-700">System</Badge>;
+
         const role = msg.metadata?.role || 'system';
         if (role === 'user') return <Badge variant="secondary" className="gap-1 bg-yellow-500/10 text-yellow-500 border-yellow-500/20">User</Badge>;
         if (role === 'assistant') return <Badge variant="secondary" className="gap-1 bg-blue-500/10 text-blue-400 border-blue-500/20">Concierge</Badge>;
@@ -95,6 +100,11 @@ const LiveAgentFeed = () => {
     };
 
     const getAgentAvatar = (msg) => {
+        const level = msg.level || 'chat';
+        if (level === 'task') return <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30"><CheckCircle2 className="w-4 h-4 text-purple-400" /></div>;
+        if (level === 'error') return <div className="h-8 w-8 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30"><XCircle className="w-4 h-4 text-red-400" /></div>;
+        if (level === 'system') return <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700"><Loader2 className="w-4 h-4 text-slate-400" /></div>;
+
         const role = msg.metadata?.role || 'system';
         return (
             <Avatar className="h-8 w-8 border bg-slate-800">

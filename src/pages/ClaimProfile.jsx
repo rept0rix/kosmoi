@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CheckCircle2, MapPin, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/api/supabaseClient';
+import OnboardingChat from '@/components/onboarding/OnboardingChat';
 
 export default function ClaimProfile() {
     const [searchParams] = useSearchParams();
@@ -216,66 +217,31 @@ export default function ClaimProfile() {
                         </div>
                     </div>
 
-                    {/* Right: Business Card Preview */}
-                    <Card className="bg-slate-900 border-white/10 overflow-hidden relative group shadow-2xl shadow-black/50 ring-1 ring-white/5">
-                        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                        <CardHeader className="p-0">
-                            <div className="w-full h-48 bg-slate-800 relative">
+                    {/* Right: Business Card Preview & Chat */}
+                    <div className="space-y-6">
+                        {/* Mini Business Preview */}
+                        <div className="bg-slate-900/50 border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-lg bg-slate-800 overflow-hidden shrink-0">
                                 {provider?.images ? (
-                                    <>
-                                        <img src={provider.images[0]} alt="Business" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
-                                    </>
+                                    <img src={provider.images[0]} alt="Business" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                                        <MapPin className="w-12 h-12 text-slate-600" />
-                                    </div>
+                                    <MapPin className="w-6 h-6 text-slate-600 m-auto mt-5" />
                                 )}
-                                <div className="absolute bottom-4 left-6">
-                                    <CardTitle className="text-white text-3xl font-bold shadow-black drop-shadow-md">{provider?.business_name}</CardTitle>
-                                    <CardDescription className="flex items-center gap-2 mt-2 text-slate-300 font-medium">
-                                        <MapPin className="w-4 h-4 text-teal-400" /> {provider?.location || "Koh Samui, Thailand"}
-                                    </CardDescription>
-                                </div>
                             </div>
-                        </CardHeader>
-
-                        <CardContent className="p-8 space-y-6">
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3 text-slate-300">
-                                    <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                    </div>
-                                    <span>Verified Owner Badge</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-slate-300">
-                                    <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                    </div>
-                                    <span>Respond to Reviews</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-slate-300">
-                                    <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                    </div>
-                                    <span>Accept Direct Bookings</span>
-                                </div>
+                            <div>
+                                <h3 className="text-white font-bold text-lg">{provider?.business_name}</h3>
+                                <p className="text-slate-400 text-sm flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" /> {provider?.location || "Koh Samui"}
+                                </p>
                             </div>
+                        </div>
 
-                            <Button
-                                onClick={handleClaim}
-                                disabled={claiming}
-                                className="w-full h-14 text-lg bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all transform hover:scale-[1.02]"
-                            >
-                                {claiming ? <Loader2 className="animate-spin w-6 h-6 mr-2" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
-                                {claiming ? "Verifying..." : "Claim This Business (1฿)"}
-                            </Button>
-                            <p className="text-xs text-center text-slate-500">
-                                One-time verification fee to prevent fraud.
-                            </p>
-                        </CardContent>
-                    </Card>
+                        {/* Interactive Agent Chat */}
+                        <OnboardingChat
+                            businessName={provider?.business_name}
+                            onComplete={handleClaim}
+                        />
+                    </div>
 
                 </div>
             </div>
