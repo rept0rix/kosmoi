@@ -1,7 +1,7 @@
 // @ts-ignore
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 // @ts-ignore
@@ -16,7 +16,7 @@ export default function GoogleMap({
   userLocation = null,
   userAvatar = null,
   height = "400px",
-  polylines = []
+  polylines = [],
 }) {
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
@@ -40,7 +40,9 @@ export default function GoogleMap({
     if (checkGoogleMaps()) return;
 
     const loadScript = () => {
-      const existingScript = document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`);
+      const existingScript = document.querySelector(
+        `script[src*="maps.googleapis.com/maps/api/js"]`,
+      );
       if (existingScript) {
         // Check periodically if maps is ready, since 'load' event might have passed
         const checkInterval = setInterval(() => {
@@ -52,17 +54,17 @@ export default function GoogleMap({
         // Safety timeout
         setTimeout(() => clearInterval(checkInterval), 5000);
 
-        existingScript.addEventListener('load', () => {
+        existingScript.addEventListener("load", () => {
           setTimeout(() => checkGoogleMaps(), 100);
         });
         return;
       }
 
-      const script = document.createElement('script');
+      const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=he&libraries=places,marker&v=weekly&loading=async`;
       script.async = true;
       script.defer = true;
-      script.id = 'google-maps-script';
+      script.id = "google-maps-script";
 
       script.onload = () => {
         setTimeout(() => {
@@ -72,8 +74,8 @@ export default function GoogleMap({
       };
 
       script.onerror = (e) => {
-        console.error('Failed to load Google Maps script:', e);
-        setError('שגיאה בטעינת Google Maps');
+        console.error("Failed to load Google Maps script:", e);
+        setError("שגיאה בטעינת Google Maps");
         setLoading(false);
       };
 
@@ -88,12 +90,12 @@ export default function GoogleMap({
         markerClustererRef.current.clearMarkers();
         markerClustererRef.current = null;
       }
-      markersRef.current.forEach(marker => {
+      markersRef.current.forEach((marker) => {
         if (marker.setMap) marker.setMap(null);
       });
       markersRef.current = [];
 
-      polylinesRef.current.forEach(polyline => {
+      polylinesRef.current.forEach((polyline) => {
         if (polyline.setMap) polyline.setMap(null);
       });
       polylinesRef.current = [];
@@ -106,7 +108,13 @@ export default function GoogleMap({
 
   useEffect(() => {
     // @ts-ignore
-    if (!loading && !error && mapRef.current && window.google && window.google.maps) {
+    if (
+      !loading &&
+      !error &&
+      mapRef.current &&
+      window.google &&
+      window.google.maps
+    ) {
       if (!googleMapRef.current) {
         initMap();
       } else {
@@ -122,7 +130,7 @@ export default function GoogleMap({
     const observer = new ResizeObserver(() => {
       if (googleMapRef.current && window.google) {
         // @ts-ignore
-        window.google.maps.event.trigger(googleMapRef.current, 'resize');
+        window.google.maps.event.trigger(googleMapRef.current, "resize");
         // Re-center map after resize
         // @ts-ignore
         const currentCenter = googleMapRef.current.getCenter();
@@ -151,26 +159,40 @@ export default function GoogleMap({
         streetViewControl: false,
         fullscreenControl: false,
         keyboardShortcuts: false, // Disable keyboard shortcuts
-        clickableIcons: false, // Disable clickable POIs
-        mapTypeId: 'roadmap',
-        ...options
+        clickableIcons: true, // Enable clickable POIs
+        mapTypeId: "roadmap",
+        ...options,
       });
 
       googleMapRef.current = map;
 
       if (onMapClick) {
-        map.addListener('click', (e) => {
+        map.addListener("click", (e) => {
+          // Check if it's a POI click
+          if (e.placeId) {
+            // It's a Google POI!
+            console.log("Clicked Google POI:", e.placeId);
+            // We pass this special event up
+            onMapClick({
+              placeId: e.placeId,
+              lat: e.latLng.lat(),
+              lng: e.latLng.lng(),
+              name: e.stop?.name || "Unknown Place",
+            });
+            return; // Don't trigger normal map click
+          }
+
           onMapClick({
             lat: e.latLng.lat(),
-            lng: e.latLng.lng()
+            lng: e.latLng.lng(),
           });
         });
       }
 
       updateMapAndMarkers();
     } catch (err) {
-      console.error('Error initializing map:', err);
-      setError('שגיאה באתחול המפה: ' + err.message);
+      console.error("Error initializing map:", err);
+      setError("שגיאה באתחול המפה: " + err.message);
     }
   };
 
@@ -191,7 +213,7 @@ export default function GoogleMap({
       if (markerClustererRef.current) {
         markerClustererRef.current.clearMarkers();
       }
-      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current.forEach((marker) => marker.setMap(null));
       markersRef.current = [];
 
       // Handle User Location Marker
@@ -206,7 +228,9 @@ export default function GoogleMap({
 
           // Define Overlay Class if not exists globally or locally
           if (!window.UserAvatarOverlay) {
-            window.UserAvatarOverlay = class extends window.google.maps.OverlayView {
+            window.UserAvatarOverlay = class extends (
+              window.google.maps.OverlayView
+            ) {
               constructor(position, avatarUrl) {
                 super();
                 this.position = position;
@@ -214,19 +238,19 @@ export default function GoogleMap({
                 this.div = null;
               }
               onAdd() {
-                this.div = document.createElement('div');
-                this.div.style.position = 'absolute';
-                this.div.style.width = '44px';
-                this.div.style.height = '44px';
-                this.div.style.borderRadius = '50%';
-                this.div.style.backgroundColor = 'white';
-                this.div.style.border = '3px solid #EF4444'; // Red border
+                this.div = document.createElement("div");
+                this.div.style.position = "absolute";
+                this.div.style.width = "44px";
+                this.div.style.height = "44px";
+                this.div.style.borderRadius = "50%";
+                this.div.style.backgroundColor = "white";
+                this.div.style.border = "3px solid #EF4444"; // Red border
                 this.div.style.backgroundImage = `url(${this.avatarUrl})`;
-                this.div.style.backgroundSize = 'cover';
-                this.div.style.backgroundPosition = 'center';
-                this.div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-                this.div.style.cursor = 'pointer';
-                this.div.className = 'user-location-pulse'; // Optional hook for CSS animation
+                this.div.style.backgroundSize = "cover";
+                this.div.style.backgroundPosition = "center";
+                this.div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+                this.div.style.cursor = "pointer";
+                this.div.className = "user-location-pulse"; // Optional hook for CSS animation
 
                 const panes = this.getPanes();
                 panes.overlayMouseTarget.appendChild(this.div); // overlayMouseTarget allows clicks
@@ -234,10 +258,12 @@ export default function GoogleMap({
               draw() {
                 const overlayProjection = this.getProjection();
                 if (!overlayProjection || !this.position) return;
-                const coords = overlayProjection.fromLatLngToDivPixel(this.position);
+                const coords = overlayProjection.fromLatLngToDivPixel(
+                  this.position,
+                );
                 if (this.div && coords) {
-                  this.div.style.left = (coords.x - 22) + 'px';
-                  this.div.style.top = (coords.y - 22) + 'px';
+                  this.div.style.left = coords.x - 22 + "px";
+                  this.div.style.top = coords.y - 22 + "px";
                 }
               }
               onRemove() {
@@ -253,16 +279,21 @@ export default function GoogleMap({
             };
           }
 
-          const pos = new window.google.maps.LatLng(userLocation.latitude || userLocation.lat, userLocation.longitude || userLocation.lng);
+          const pos = new window.google.maps.LatLng(
+            userLocation.latitude || userLocation.lat,
+            userLocation.longitude || userLocation.lng,
+          );
 
           if (!userOverlayRef.current) {
             // @ts-ignore
-            userOverlayRef.current = new window.UserAvatarOverlay(pos, userAvatar);
+            userOverlayRef.current = new window.UserAvatarOverlay(
+              pos,
+              userAvatar,
+            );
             userOverlayRef.current.setMap(googleMapRef.current);
           } else {
             userOverlayRef.current.setPosition(pos);
           }
-
         } else {
           // No Avatar - Use standard marker
           // Remove overlay if exists
@@ -272,9 +303,12 @@ export default function GoogleMap({
           }
 
           const markerOptions = {
-            position: { lat: userLocation.latitude || userLocation.lat, lng: userLocation.longitude || userLocation.lng },
+            position: {
+              lat: userLocation.latitude || userLocation.lat,
+              lng: userLocation.longitude || userLocation.lng,
+            },
             map: googleMapRef.current,
-            title: 'המיקום שלי',
+            title: "המיקום שלי",
             icon: {
               // @ts-ignore
               path: window.google.maps.SymbolPath.CIRCLE,
@@ -284,12 +318,14 @@ export default function GoogleMap({
               strokeWeight: 2,
               strokeColor: "#ffffff",
             },
-            zIndex: 999
+            zIndex: 999,
           };
 
           if (!userMarkerRef.current) {
             // @ts-ignore
-            userMarkerRef.current = new window.google.maps.Marker(markerOptions);
+            userMarkerRef.current = new window.google.maps.Marker(
+              markerOptions,
+            );
           } else {
             // @ts-ignore
             userMarkerRef.current.setPosition(markerOptions.position);
@@ -311,11 +347,11 @@ export default function GoogleMap({
       }
 
       // Add new markers
-      markers.forEach(markerData => {
+      markers.forEach((markerData) => {
         const markerOptions = {
           position: { lat: markerData.lat, lng: markerData.lng },
           // map: googleMapRef.current, // Don't set map here, clusterer will handle it
-          title: markerData.title || '',
+          title: markerData.title || "",
         };
 
         if (markerData.icon) {
@@ -328,10 +364,10 @@ export default function GoogleMap({
         if (markerData.infoWindow) {
           // @ts-ignore
           const infoWindow = new window.google.maps.InfoWindow({
-            content: markerData.infoWindow
+            content: markerData.infoWindow,
           });
 
-          marker.addListener('click', () => {
+          marker.addListener("click", () => {
             // Close currently open InfoWindow if exists
             if (activeInfoWindowRef.current) {
               activeInfoWindowRef.current.close();
@@ -344,7 +380,7 @@ export default function GoogleMap({
 
         // Allow handling click events on markers even without info windows
         if (markerData.onClick) {
-          marker.addListener('click', () => {
+          marker.addListener("click", () => {
             markerData.onClick();
           });
         }
@@ -357,7 +393,7 @@ export default function GoogleMap({
         if (!markerClustererRef.current) {
           markerClustererRef.current = new MarkerClusterer({
             map: googleMapRef.current,
-            markers: markersRef.current
+            markers: markersRef.current,
           });
         } else {
           markerClustererRef.current.addMarkers(markersRef.current);
@@ -366,11 +402,11 @@ export default function GoogleMap({
 
       // Handle Polylines
       // Clear old polylines
-      polylinesRef.current.forEach(polyline => polyline.setMap(null));
+      polylinesRef.current.forEach((polyline) => polyline.setMap(null));
       polylinesRef.current = [];
 
       // Add new polylines
-      polylines.forEach(polylineData => {
+      polylines.forEach((polylineData) => {
         // @ts-ignore
         const polyline = new window.google.maps.Polyline({
           path: polylineData.path,
@@ -379,20 +415,19 @@ export default function GoogleMap({
           strokeOpacity: polylineData.strokeOpacity || 1.0,
           strokeWeight: polylineData.strokeWeight || 2,
           map: googleMapRef.current,
-          ...polylineData.options
+          ...polylineData.options,
         });
         polylinesRef.current.push(polyline);
       });
-
     } catch (err) {
-      console.error('Error updating markers:', err);
+      console.error("Error updating markers:", err);
     }
   };
 
   if (loading) {
     return (
       <div
-        style={{ width: '100%', height: height, minHeight: height }}
+        style={{ width: "100%", height: height, minHeight: height }}
         className="rounded-lg bg-gray-100 flex items-center justify-center"
       >
         <div className="text-center">
@@ -406,7 +441,7 @@ export default function GoogleMap({
   if (error) {
     return (
       <div
-        style={{ width: '100%', height: height, minHeight: height }}
+        style={{ width: "100%", height: height, minHeight: height }}
         className="rounded-lg bg-red-50 flex items-center justify-center border-2 border-red-200"
       >
         <div className="text-center p-4 max-w-md">
@@ -418,15 +453,15 @@ export default function GoogleMap({
   }
 
   return (
-    <div style={{ width: '100%', height: height, minHeight: height }}>
+    <div style={{ width: "100%", height: height, minHeight: height }}>
       <div
         ref={mapRef}
         style={{
-          width: '100%',
-          height: '100%',
+          width: "100%",
+          height: "100%",
           minHeight: height,
-          position: 'relative',
-          display: 'block'
+          position: "relative",
+          display: "block",
         }}
         className="rounded-lg overflow-hidden"
       />
@@ -437,29 +472,35 @@ export default function GoogleMap({
 GoogleMap.propTypes = {
   center: PropTypes.shape({
     lat: PropTypes.number,
-    lng: PropTypes.number
+    lng: PropTypes.number,
   }),
   zoom: PropTypes.number,
-  markers: PropTypes.arrayOf(PropTypes.shape({
-    lat: PropTypes.number.isRequired,
-    lng: PropTypes.number.isRequired,
-    title: PropTypes.string,
-    infoWindow: PropTypes.string,
-    icon: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-    onClick: PropTypes.func
-  })),
+  markers: PropTypes.arrayOf(
+    PropTypes.shape({
+      lat: PropTypes.number.isRequired,
+      lng: PropTypes.number.isRequired,
+      title: PropTypes.string,
+      infoWindow: PropTypes.string,
+      icon: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+      onClick: PropTypes.func,
+    }),
+  ),
   onMapClick: PropTypes.func,
   height: PropTypes.string,
   options: PropTypes.object,
   userLocation: PropTypes.object,
-  polylines: PropTypes.arrayOf(PropTypes.shape({
-    path: PropTypes.arrayOf(PropTypes.shape({
-      lat: PropTypes.number.isRequired,
-      lng: PropTypes.number.isRequired
-    })).isRequired,
-    strokeColor: PropTypes.string,
-    strokeOpacity: PropTypes.number,
-    strokeWeight: PropTypes.number,
-    options: PropTypes.object
-  }))
+  polylines: PropTypes.arrayOf(
+    PropTypes.shape({
+      path: PropTypes.arrayOf(
+        PropTypes.shape({
+          lat: PropTypes.number.isRequired,
+          lng: PropTypes.number.isRequired,
+        }),
+      ).isRequired,
+      strokeColor: PropTypes.string,
+      strokeOpacity: PropTypes.number,
+      strokeWeight: PropTypes.number,
+      options: PropTypes.object,
+    }),
+  ),
 };
