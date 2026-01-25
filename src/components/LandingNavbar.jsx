@@ -127,7 +127,7 @@ const LandingNavbar = () => {
                 asChild
                 variant="default"
                 size="sm"
-                className="gap-2 rounded-full"
+                className="gap-2 rounded-full bg-neon-cyan/20 text-neon-cyan hover:bg-neon-cyan/30 border border-neon-cyan/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
               >
                 <Link to="/app">
                   {t("nav.dashboard", "Dashboard")}{" "}
@@ -144,9 +144,9 @@ const LandingNavbar = () => {
                 >
                   <Link
                     to="/one-dollar"
-                    className={`font-semibold ${isTextWhite ? "text-white/90 hover:text-white hover:bg-white/10" : "text-blue-600 hover:text-blue-700"}`}
+                    className={`text-sm font-medium ${isTextWhite ? "text-white hover:text-white/80" : "text-slate-600 hover:text-blue-600"}`}
                   >
-                    Test Drive (35฿)
+                    Pilot Program
                   </Link>
                 </Button>
                 <Button
@@ -161,10 +161,10 @@ const LandingNavbar = () => {
                   asChild
                   variant="default"
                   size="sm"
-                  className="rounded-full px-6"
+                  className="rounded-full px-6 bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/80 hover:to-neon-purple/80 text-white font-bold shadow-[0_0_15px_rgba(168,85,247,0.4)] border-none"
                 >
                   <Link to="/login?signup=true">
-                    {t("nav.get_started", "Get Started")}
+                    {t("nav.get_started", "INITIALIZE")}
                   </Link>
                 </Button>
               </>

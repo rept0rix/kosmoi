@@ -1,125 +1,163 @@
 // @ts-ignore
 import { createClient } from 'npm:@supabase/supabase-js@2';
-// @ts-ignore
-import { Bot, GrammyError, HttpError } from 'npm:grammy@1.21.1'; // Optional if we use Telegram later, but typical for bots. 
-// For now, we stick to pure logic.
 
-// Import maps are managed by functions/deno.json
-// But we need to ensure the shared logic is accessible. 
-// Since we cannot easily import from src/ in Edge Functions without a build step or symlink,
-// we will duplicate the minimalist Orchestrator logic here for reliability.
-// PRO-TIP: Long term, move shared logic to a shared `_shared` folder in `supabase/functions`.
+// --------------------------------------------------------------------------------
+// CONFIGURATION
+// --------------------------------------------------------------------------------
+const GEMINI_MODEL = "gemini-2.0-flash";
 
-console.log("Hello from Agent Worker!");
+// --------------------------------------------------------------------------------
+// MAIN WORKER
+// --------------------------------------------------------------------------------
+console.log("Agent Worker v2.0 (The Synapse) Starting...");
 
 // @ts-ignore
 Deno.serve(async (req: Request) => {
-  try {
-    // 1. Verify Webhook / Request
-    // In production, verify the request comes from Supabase Database Webhook
-    
-    const { record } = await req.json();
-    
-    if (!record || !record.content || !record.meeting_id) {
-        return new Response("No record found in body", { status: 200 }); // Return 200 to acknowledge webhook
+    try {
+        // 1. Parse & Validate Payload
+        const payload = await req.json();
+        const { type, table, record, schema } = payload;
+
+        console.log(`Received Event: ${type} on ${table}`);
+
+        // 2. Initialize Clients
+        // @ts-ignore
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+        // @ts-ignore
+        const supabaseKey = Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // @ts-ignore
+        const geminiKeyRaw = Deno.env.get('GEMINI_API_KEY');
+        if (!geminiKeyRaw) throw new Error("GEMINI_API_KEY not set");
+        const geminiKey = geminiKeyRaw.trim(); // TRIM WHITESPACE just in case
+
+        // --------------------------------------------------------------------------------
+        // ROUTER: Decide which synapse to fire
+        // --------------------------------------------------------------------------------
+
+        // CASE A: NEW BUSINESS FOUND (Scout -> Sales)
+        if (table === 'service_providers' && type === 'INSERT') {
+            return await handleNewBusiness(record, supabase, geminiKey);
+        }
+
+        // CASE B: CHAT MESSAGE (Board Room)
+        if (table === 'board_messages' && type === 'INSERT') {
+            if (record.agent_id !== 'HUMAN_USER') {
+                return new Response("Ignored: Bot message", { status: 200 });
+            }
+            return await handleChatMessage(record, supabase, geminiKey);
+        }
+
+        return new Response("Event ignored", { status: 200 });
+
+    } catch (error: any) {
+        console.error("Worker Error:", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
+});
 
-    // Only respond to HUMAN_USER messages (prevent infinite loops)
-    if (record.agent_id !== 'HUMAN_USER') {
-        return new Response("Ignored: Not from human", { status: 200 });
-    }
+// --------------------------------------------------------------------------------
+// CONTROLLERS
+// --------------------------------------------------------------------------------
 
-    console.log(`Processing message from meeting: ${record.meeting_id}`);
+async function handleNewBusiness(business: any, supabase: any, geminiKey: string) {
+    console.log(`Analyzing new business: ${business.business_name}`);
 
-    // 2. Initialize Supabase Client
-    // @ts-ignore
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    // @ts-ignore
-    const supabaseKey = Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // 3. Fetch Meeting Context (Agents involved)
-    const { data: meeting } = await supabase
-        .from('board_meetings')
-        .select('*')
-        .eq('id', record.meeting_id)
-        .single();
-
-    if (!meeting) {
-        console.error("Meeting not found");
-        return new Response("Meeting not found", { status: 404 });
-    }
-
-    // 4. Determine Agent (Simple Routing based on Meeting Title or Config)
-    // For now, we support 'Receptionist', 'Consultant', 'Scout'
-    let targetAgentId = null; 
-    const title = meeting.title ? meeting.title.toLowerCase() : '';
-
-    if (title.includes('onboarding') || title.includes('register')) targetAgentId = 'receptionist';
-    else if (title.includes('consult') || title.includes('advice')) targetAgentId = 'consultant';
-    else if (title.includes('scout') || title.includes('search')) targetAgentId = 'scout';
-    else targetAgentId = 'receptionist'; // Default
-
-    // 5. Call LLM (We need to implement the Agent Logic here)
-    // To keep it simple and robust, we will call the Gemini API directly here
-    // rather than relying on complex local imports.
-    
-    // @ts-ignore
-    const geminiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiKey) {
-        console.error("GEMINI_API_KEY not set");
-        return new Response("Server Config Error", { status: 500 });
-    }
-
-    // Fetch History
-    const { data: history } = await supabase
-        .from('board_messages')
-        .select('*')
-        .eq('meeting_id', meeting.id)
-        .order('created_at', { ascending: true });
-
-    // Construct Prompt
+    // Trigger Sales Agent
     const prompt = `
-      You are an AI Agent named ${targetAgentId}.
-      Context: ${title}.
-      
-      Chat History:
-      ${history?.map((m: any) => `${m.agent_id}: ${m.content}`).join('\n')}
-      
-      Respond as ${targetAgentId}. Keep it helpful and concise.
+        You are the 'Sales Scout Agent' for Samui Service Hub.
+        A new business has been discovered: "${business.business_name}" (${business.category}).
+        Location: ${business.location || "Samui"}.
+        
+        TASK:
+        Draft a short, friendly, high-energy cold email to this business.
+        Goal: Invite them to claim their profile on Samui Service Hub to get more customers.
+        Tone: Professional, Excited, concise (max 100 words).
+        
+        Output only the email body text.
     `;
 
-    // Call Gemini
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`;
-    console.log("Calling Gemini:", geminiUrl);
+    const aiResponse = await callGemini(prompt, geminiKey);
 
-    const geminiResp = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-        })
+    // Save as LEAD
+    const { error } = await supabase.from('leads').insert({
+        business_id: business.id,
+        status: 'new',
+        type: 'cold_email',
+        email: business.email || 'unknown@example.com',
+        content: aiResponse
     });
 
-    const geminiData = await geminiResp.json();
-    console.log("Gemini Response:", JSON.stringify(geminiData));
+    if (error) {
+        console.error("Failed to save lead:", error);
+        throw error;
+    }
 
-    const replyText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble thinking right now.";
+    return new Response(JSON.stringify({ success: true, action: "lead_created" }), {
+        headers: { "Content-Type": "application/json" }
+    });
+}
 
-    // 6. Save Reply
+async function handleChatMessage(message: any, supabase: any, geminiKey: string) {
+    console.log(`Processing chat for meeting: ${message.meeting_id}`);
+
+    const { data: meeting } = await supabase.from('board_meetings').select('*').eq('id', message.meeting_id).single();
+    if (!meeting) return new Response("Meeting not found", { status: 404 });
+
+    const title = meeting.title ? meeting.title.toLowerCase() : '';
+    let agentId = 'RECEPTIONIST';
+    if (title.includes('sales')) agentId = 'SALES_AGENT';
+    if (title.includes('tech')) agentId = 'CTO';
+
+    const { data: history } = await supabase.from('board_messages').select('*').eq('meeting_id', message.meeting_id).order('created_at', { ascending: true }).limit(10);
+
+    const prompt = `
+        You are ${agentId}. 
+        Context: ${title}.
+        Chat History:
+        ${history?.map((m: any) => `${m.agent_id}: ${m.content}`).join('\n')}
+        
+        Respond to the last message. Be helpful and concise.
+    `;
+
+    const reply = await callGemini(prompt, geminiKey);
+
     await supabase.from('board_messages').insert({
-        meeting_id: meeting.id,
-        agent_id: targetAgentId.toUpperCase(),
-        content: replyText,
+        meeting_id: message.meeting_id,
+        agent_id: agentId,
+        content: reply,
         type: 'text'
     });
 
-    return new Response(JSON.stringify({ success: true, reply: replyText }), {
-        headers: { "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ success: true, reply }), {
+        headers: { "Content-Type": "application/json" }
     });
+}
 
-  } catch (error: any) {
-    console.error("Worker Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-});
+// --------------------------------------------------------------------------------
+// UTILS
+// --------------------------------------------------------------------------------
+
+async function callGemini(text: string, key: string) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
+        });
+
+        const data = await resp.json();
+
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        return `DEBUG_API_FAIL: Code=${resp.status} Body=${JSON.stringify(data)}`;
+
+    } catch (e: any) {
+        return `DEBUG_CRITICAL_FAIL: ${e.message}`;
+    }
+}

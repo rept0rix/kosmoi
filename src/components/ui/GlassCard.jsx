@@ -1,47 +1,56 @@
-import React from 'react';
-import { cn } from '@/shared/lib/utils';
-import { motion } from 'framer-motion';
+import React from "react";
+import { cn } from "@/lib/utils";
 
-/**
- * GlassCard
- * A premium card component with glassmorphism effect.
- * Supports framer-motion props for entrance animations.
- */
 /**
  * @typedef {Object} GlassCardProps
  * @property {React.ReactNode} children
  * @property {string} [className]
+ * @property {'default' | 'premium' | 'flat'} [variant]
  * @property {boolean} [hoverEffect]
+ * @property {React.ElementType} [as]
+ * @property {() => void} [onClick]
+ * @property {React.CSSProperties} [style]
+ * @property {React.ReactNode} [children]
  */
 
 /**
- * @type {React.ForwardRefExoticComponent<GlassCardProps & import('framer-motion').HTMLMotionProps<"div"> & React.RefAttributes<HTMLDivElement>>}
+ * GlassCard - Core component for Cyberpunk UI
+ * @param {GlassCardProps} props
  */
-const GlassCard = React.forwardRef(({ className, children, hoverEffect = false, ...props }, ref) => {
-    return (
-        <motion.div
-            ref={ref}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className={cn(
-                "relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-md shadow-glass",
-                "dark:bg-black/20 dark:border-white/5",
-                hoverEffect && "transition-all duration-300 hover:shadow-glass-hover hover:-translate-y-1 hover:bg-white/10 dark:hover:bg-white/5",
-                className
-            )}
-            {...props}
-        >
-            {/* Mesh Gradient Blob for depth (Optional, minimal) */}
-            <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/20 blur-3xl opacity-20" />
+export const GlassCard = ({
+  children,
+  className,
+  variant = "default",
+  hoverEffect = false,
+  as: Component = "div",
+  ...props
+}) => {
+  const variants = {
+    default: "bg-slate-900/60 backdrop-blur-xl border border-white/5 shadow-xl",
+    premium:
+      "bg-slate-900/80 backdrop-blur-2xl border border-cyan-500/20 shadow-2xl shadow-cyan-900/20 bg-gradient-to-br from-slate-900/90 to-slate-900/50",
+    flat: "bg-slate-800/40 backdrop-blur-md border border-white/5",
+  };
 
-            <div className="relative z-10">
-                {children}
-            </div>
-        </motion.div>
-    );
-});
+  const hoverStyles = hoverEffect
+    ? "transition-all duration-300 hover:border-cyan-500/40 hover:shadow-cyan-500/10 hover:-translate-y-1"
+    : "";
 
-GlassCard.displayName = "GlassCard";
+  return (
+    <Component
+      className={cn(
+        "rounded-2xl relative overflow-hidden",
+        variants[variant],
+        hoverStyles,
+        className,
+      )}
+      {...props}
+    >
+      {/* Subtle Noise Texture Overlay (Optional) */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat mix-blend-overlay" />
 
-export { GlassCard };
+      {/* Content */}
+      <div className="relative z-10">{children}</div>
+    </Component>
+  );
+};

@@ -1,14 +1,18 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 // --- Configuration ---
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const N8N_WEBHOOK_URL = Deno.env.get('VITE_N8N_EMAIL_WEBHOOK')
 const TEST_EMAIL = Deno.env.get('TEST_EMAIL') || 'admin@kosmoi.com'
+// @ts-ignore
+const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 const SENDER_EMAIL = 'Sarah <onboarding@resend.dev>'
 
 // --- Template ---
-const INVITATION_TEMPLATE = (businessName, trackingLinks) => `
+const INVITATION_TEMPLATE = (businessName: string, trackingLinks: any) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,137 +64,350 @@ const INVITATION_TEMPLATE = (businessName, trackingLinks) => `
 </html>
 `;
 
-serve(async (req) => {
+// @ts-ignore
+serve(async (req: Request) => {
     try {
+        const payload = await req.json().catch(() => ({}));
+        const { action = 'invite_leads', lat, lng, radius = 1000, type = 'restaurant' } = payload;
+
+        console.log(`🚀 Sales Scout Action: ${action}`);
+
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
+        );
 
-        console.log("🕵️‍♀️ Sarah (Cloud): Scouting...")
+        // ------------------------------------------------------------------
+        // ACTION: SCOUT LOCATION (Importers Google Data)
+        // ------------------------------------------------------------------
+        if (action === 'scout_location') {
+            if (!lat || !lng) return new Response("Missing lat/lng", { status: 400 });
+            if (!GOOGLE_MAPS_API_KEY) return new Response("Missing Google Maps API Key", { status: 500 });
 
-        // 1. Scout
-        const { data: rawLeads } = await supabaseClient
-            .from('service_providers')
-            .select('id, business_name, phone, category, email')
-            .eq('verified', false)
-            .eq('status', 'active')
-            .neq('category', 'culture')
-            .neq('category', 'temple') // Filter
-            .limit(5)
+            console.log(`🌍 Scouting area: ${lat}, ${lng} (r=${radius}m)`);
 
-        if (!rawLeads || rawLeads.length === 0) return new Response(JSON.stringify({ message: "No leads" }), { headers: { "Content-Type": "application/json" } })
+            // 1. Fetch from Google
+            const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${GOOGLE_MAPS_API_KEY}`;
+            const gResp = await fetch(url);
+            const gData = await gResp.json();
 
-        let targetLead = null;
-        for (const lead of rawLeads) {
-            const { data: existing } = await supabaseClient
-                .from('invitations')
-                .select('id')
-                .eq('service_provider_id', lead.id)
-                .maybeSingle()
-            if (!existing) { targetLead = lead; break; }
-        }
+            if (gData.status !== 'OK') {
+                console.error("Google API Error:", gData);
+                return new Response(JSON.stringify({ error: gData.status, message: gData.error_message }), { status: 500 });
+            }
 
-        if (!targetLead) return new Response(JSON.stringify({ message: "All invited" }), { headers: { "Content-Type": "application/json" } })
+            const results = gData.results || [];
+            console.log(`📍 Found ${results.length} places from Google`);
 
-        console.log(`💌 Target: ${targetLead.business_name}`)
+            let newCount = 0;
+            const imported = [];
 
-        const recipientEmail = TEST_EMAIL || 'admin@kosmoi.com';
+            // 2. Upsert to Supabase
+            for (const place of results) {
+                // Map Google Types to our Categories
+                let category = 'other';
+                if (place.types.includes('restaurant') || place.types.includes('food')) category = 'restaurant';
+                if (place.types.includes('lodging') || place.types.includes('hotel')) category = 'accommodation';
+                if (place.types.includes('spa') || place.types.includes('health')) category = 'wellness';
+                if (place.types.includes('store') || place.types.includes('shopping_mall')) category = 'shopping';
 
-        // 2. INSERT INVITATION (Sending State)
-        const { data: invite, error: dbError } = await supabaseClient
-            .from('invitations')
-            .insert({
-                service_provider_id: targetLead.id,
-                token: crypto.randomUUID(),
-                status: 'pending', // Pending until clicked? Or 'sending' logic. DB default is pending.
-                metadata: {
-                    channel: 'email',
-                    target_email: recipientEmail,
-                    real_business_email: targetLead.email || 'unknown',
-                    sender: 'sales-scout-cloud',
-                    stage: 'sending'
+                const { data, error } = await supabaseClient
+                    .from('service_providers')
+                    .upsert({
+                        google_place_id: place.place_id,
+                        business_name: place.name,
+                        latitude: place.geometry.location.lat,
+                        longitude: place.geometry.location.lng,
+                        location: place.vicinity || place.formatted_address,
+                        average_rating: place.rating || 0,
+                        total_reviews: place.user_ratings_total || 0,
+                        status: 'active', // Active immediately so they appear on map
+                        category: category,
+                        verified: false, // Not claimed yet
+                        images: place.photos ? place.photos.map((p: any) =>
+                            `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${p.photo_reference}&key=${GOOGLE_MAPS_API_KEY}`
+                        ) : [],
+                        // Store raw google data for future use
+                        metadata: {
+                            google_types: place.types,
+                            google_scope: place.scope
+                        }
+                    }, { onConflict: 'google_place_id' })
+                    .select()
+                    .single();
+
+                if (!error) {
+                    newCount++;
+                    // @ts-ignore
+                    imported.push(data);
+                } else {
+                    console.error(`Failed to upsert ${place.name}:`, error);
                 }
-            })
-            .select()
-            .single()
+            }
 
-        if (dbError) throw dbError
-
-        // 3. Generate Tracking Links
-        const baseUrl = Deno.env.get('SUPABASE_URL').replace('.co', '.co/functions/v1')
-        const realClaimLink = `https://kosmoi.site/claim?id=${targetLead.id}`
-
-        const trackingLinks = {
-            open: `${baseUrl}/track-invitation?id=${invite.id}&type=open`,
-            click: `${baseUrl}/track-invitation?id=${invite.id}&type=click&url=${encodeURIComponent(realClaimLink)}`
+            console.log(`✅ Successfully imported/updated ${newCount} businesses`);
+            return new Response(JSON.stringify({
+                success: true,
+                count: newCount,
+                places: imported.map((p: any) => ({ id: p.id, name: p.business_name }))
+            }), { headers: { "Content-Type": "application/json" } });
         }
 
-        // 4. Generate Content
-        const emailHtml = INVITATION_TEMPLATE(targetLead.business_name, trackingLinks)
+        // ------------------------------------------------------------------
+        // ACTION: SCOUT DETAILS (Specific Place ID) - For Clickable POIs
+        // ------------------------------------------------------------------
+        if (action === 'scout_details') {
+            const { place_id } = payload;
+            if (!place_id) return new Response("Missing place_id", { status: 400 });
 
-        // 5. Send (n8n or Resend)
-        let emailSent = false;
-        // ... (n8n logic same as before, updated payload)
-        if (N8N_WEBHOOK_URL && N8N_WEBHOOK_URL.startsWith('http')) {
-            try {
-                const n8nResp = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: recipientEmail,
-                        subject: `Invitation for ${targetLead.business_name} - Kosmoi`,
-                        html: emailHtml,
-                        business_name: targetLead.business_name,
-                        claim_link: trackingLinks.click, // Use tracking link for button text if needed
-                        lead_id: targetLead.id,
-                        phone: targetLead.phone,
-                        from: SENDER_EMAIL
-                    })
+            console.log(`🎯 Scouting specific target: ${place_id}`);
+
+            // 1. Fetch Details from Google
+            const fields = 'place_id,name,formatted_address,geometry,photos,types,website,international_phone_number,rating,user_ratings_total,vicinity';
+            const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=${fields}&key=${GOOGLE_MAPS_API_KEY}`;
+
+            const gResp = await fetch(url);
+            const gData = await gResp.json();
+
+            if (gData.status !== 'OK') {
+                return new Response(JSON.stringify({ error: gData.status, message: gData.error_message }), { status: 500 });
+            }
+
+            const place = gData.result;
+
+            // 2. Map Category
+            let category = 'other';
+            if (place.types?.includes('restaurant') || place.types?.includes('food')) category = 'restaurant';
+            else if (place.types?.includes('lodging') || place.types?.includes('hotel')) category = 'accommodation';
+            else if (place.types?.includes('spa') || place.types?.includes('health')) category = 'wellness';
+            else if (place.types?.includes('store') || place.types?.includes('shopping_mall')) category = 'shopping';
+
+            // 3. Upsert
+            const { data, error } = await supabaseClient
+                .from('service_providers')
+                .upsert({
+                    google_place_id: place.place_id,
+                    business_name: place.name,
+                    latitude: place.geometry.location.lat,
+                    longitude: place.geometry.location.lng,
+                    location: place.formatted_address || place.vicinity,
+                    average_rating: place.rating || 0,
+                    total_reviews: place.user_ratings_total || 0,
+                    status: 'active',
+                    category: category,
+                    verified: false,
+                    phone: place.international_phone_number,
+                    website: place.website,
+                    images: place.photos ? place.photos.map((p: any) =>
+                        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${p.photo_reference}&key=${GOOGLE_MAPS_API_KEY}`
+                    ) : [],
+                    metadata: {
+                        google_types: place.types,
+                        scouted_at: new Date().toISOString(),
+                        method: 'click_scout'
+                    }
+                }, { onConflict: 'google_place_id' })
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Upsert failed:", error);
+                return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+            }
+
+            console.log(`✅ Scouted & Ingested: ${place.name}`);
+            return new Response(JSON.stringify({ success: true, place: data }), { headers: { "Content-Type": "application/json" } });
+        }
+
+        // ------------------------------------------------------------------
+        // ACTION: SEARCH PLACES (Text Search) - For Hybrid Search
+        // ------------------------------------------------------------------
+        if (action === 'search_places') {
+            const { query } = payload;
+            if (!query) return new Response("Missing query", { status: 400 });
+
+            console.log(`🔎 Searching Google Places for: ${query}`);
+
+            // Use Text Search (New)
+            const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`;
+            const gResp = await fetch(url);
+            const gData = await gResp.json();
+
+            if (gData.status !== 'OK' && gData.status !== 'ZERO_RESULTS') {
+                return new Response(JSON.stringify({ error: gData.status, message: gData.error_message }), { status: 500 });
+            }
+
+            const results = gData.results || [];
+            console.log(`📍 Found ${results.length} matches for search`);
+
+            // Ingest Top 3
+            const topMatches = results.slice(0, 3);
+            const ingested = [];
+
+            for (const place of topMatches) {
+                let category = 'other';
+                if (place.types?.includes('restaurant')) category = 'restaurant';
+                else if (place.types?.includes('lodging')) category = 'accommodation';
+
+                const { data, error } = await supabaseClient
+                    .from('service_providers')
+                    .upsert({
+                        google_place_id: place.place_id,
+                        business_name: place.name,
+                        latitude: place.geometry.location.lat,
+                        longitude: place.geometry.location.lng,
+                        location: place.formatted_address,
+                        average_rating: place.rating || 0,
+                        total_reviews: place.user_ratings_total || 0,
+                        status: 'active',
+                        category: category,
+                        verified: false,
+                        images: place.photos ? place.photos.map((p: any) =>
+                            `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${p.photo_reference}&key=${GOOGLE_MAPS_API_KEY}`
+                        ) : [],
+                        metadata: { method: 'hybrid_search', search_query: query }
+                    }, { onConflict: 'google_place_id' })
+                    .select()
+                    .single();
+
+                if (!error) ingested.push(data);
+            }
+
+            return new Response(JSON.stringify({ success: true, results: ingested }), { headers: { "Content-Type": "application/json" } });
+        }
+
+
+        // ------------------------------------------------------------------
+        // ACTION: INVITE LEADS (Original Logic)
+        // ------------------------------------------------------------------
+        if (action === 'invite_leads') {
+            console.log("🕵️‍♀️ Sarah (Cloud): Scouting for leads to invite...");
+
+            // 1. Scout
+            const { data: rawLeads } = await supabaseClient
+                .from('service_providers')
+                .select('id, business_name, phone, category, email')
+                .eq('verified', false)
+                .eq('status', 'active')
+                .neq('category', 'culture')
+                .neq('category', 'temple') // Filter
+                .limit(5);
+
+            if (!rawLeads || rawLeads.length === 0) return new Response(JSON.stringify({ message: "No leads" }), { headers: { "Content-Type": "application/json" } });
+
+            let targetLead = null;
+            for (const lead of rawLeads) {
+                const { data: existing } = await supabaseClient
+                    .from('invitations')
+                    .select('id')
+                    .eq('service_provider_id', lead.id)
+                    .maybeSingle();
+                if (!existing) { targetLead = lead; break; }
+            }
+
+            if (!targetLead) return new Response(JSON.stringify({ message: "All invited" }), { headers: { "Content-Type": "application/json" } });
+
+            console.log(`💌 Target: ${targetLead.business_name}`);
+
+            const recipientEmail = TEST_EMAIL || 'admin@kosmoi.com';
+
+            // 2. INSERT INVITATION (Sending State)
+            const { data: invite, error: dbError } = await supabaseClient
+                .from('invitations')
+                .insert({
+                    service_provider_id: targetLead.id,
+                    token: crypto.randomUUID(),
+                    status: 'pending',
+                    metadata: {
+                        channel: 'email',
+                        target_email: recipientEmail,
+                        real_business_email: targetLead.email || 'unknown',
+                        sender: 'sales-scout-cloud',
+                        stage: 'sending'
+                    }
                 })
-                if (n8nResp.ok) emailSent = true;
-            } catch (e) { console.error("n8n err", e) }
+                .select()
+                .single();
+
+            if (dbError) throw dbError;
+
+            // 3. Generate Tracking Links
+            // @ts-ignore
+            const baseUrl = Deno.env.get('SUPABASE_URL').replace('.co', '.co/functions/v1');
+            const realClaimLink = `https://kosmoi.site/claim?id=${targetLead.id}`;
+
+            const trackingLinks = {
+                open: `${baseUrl}/track-invitation?id=${invite.id}&type=open`,
+                click: `${baseUrl}/track-invitation?id=${invite.id}&type=click&url=${encodeURIComponent(realClaimLink)}`
+            };
+
+            // 4. Generate Content
+            const emailHtml = INVITATION_TEMPLATE(targetLead.business_name, trackingLinks);
+
+            // 5. Send (n8n or Resend)
+            let emailSent = false;
+            if (N8N_WEBHOOK_URL && N8N_WEBHOOK_URL.startsWith('http')) {
+                try {
+                    const n8nResp = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: recipientEmail,
+                            subject: `Invitation for ${targetLead.business_name} - Kosmoi`,
+                            html: emailHtml,
+                            business_name: targetLead.business_name,
+                            claim_link: trackingLinks.click,
+                            lead_id: targetLead.id,
+                            phone: targetLead.phone,
+                            from: SENDER_EMAIL
+                        })
+                    });
+                    if (n8nResp.ok) emailSent = true;
+                } catch (e) { console.error("n8n err", e); }
+            }
+
+            // ... (Resend logic)
+            if (!emailSent && RESEND_API_KEY) {
+                try {
+                    const resendResp = await fetch('https://api.resend.com/emails', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${RESEND_API_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            from: SENDER_EMAIL,
+                            to: recipientEmail,
+                            subject: `Invitation for ${targetLead.business_name} - Kosmoi`,
+                            html: emailHtml
+                        })
+                    });
+                    if (resendResp.ok) emailSent = true;
+                } catch (e) { console.error("Resend err", e); }
+            }
+
+            // 6. Update Status
+            if (emailSent) {
+                await supabaseClient.from('invitations').update({
+                    status: 'pending',
+                    metadata: { ...invite.metadata, stage: 'sent', sent_at: new Date().toISOString() }
+                }).eq('id', invite.id);
+
+                console.log(`✅ Sent & Tracked: ${invite.id}`);
+            } else {
+                await supabaseClient.from('invitations').update({
+                    status: 'failed',
+                    metadata: { ...invite.metadata, stage: 'failed' }
+                }).eq('id', invite.id);
+                return new Response(JSON.stringify({ error: "Send Failed" }), { status: 500 });
+            }
+
+            return new Response(JSON.stringify({ success: true, invite_id: invite.id }), { headers: { "Content-Type": "application/json" } });
         }
 
-        // ... (Resend logic same as before)
-        if (!emailSent && RESEND_API_KEY) {
-            try {
-                const resendResp = await fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${RESEND_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        from: SENDER_EMAIL,
-                        to: recipientEmail,
-                        subject: `Invitation for ${targetLead.business_name} - Kosmoi`,
-                        html: emailHtml
-                    })
-                })
-                if (resendResp.ok) emailSent = true;
-            } catch (e) { console.error("Resend err", e) }
-        }
+        return new Response("Unknown Action", { status: 400 });
 
-        // 6. Update Status (or just log success)
-        if (emailSent) {
-            await supabaseClient.from('invitations').update({
-                status: 'pending', // Remains pending until Clicked/Claimed.
-                metadata: { ...invite.metadata, stage: 'sent', sent_at: new Date().toISOString() }
-            }).eq('id', invite.id)
-
-            console.log(`✅ Sent & Tracked: ${invite.id}`)
-        } else {
-            await supabaseClient.from('invitations').update({
-                status: 'failed',
-                metadata: { ...invite.metadata, stage: 'failed' }
-            }).eq('id', invite.id)
-            return new Response(JSON.stringify({ error: "Send Failed" }), { status: 500 })
-        }
-
-        return new Response(JSON.stringify({ success: true, invite_id: invite.id }), { headers: { "Content-Type": "application/json" } })
-
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } })
+    } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 })

@@ -1,60 +1,88 @@
 // src/components/agents/AgentCard.jsx
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/shared/lib/utils";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/utils";
+import { User, Activity, Zap } from "lucide-react";
 
 export function AgentCard({ agent, isActive, onSelect }) {
-    return (
-        <Card
-            onClick={() => onSelect(agent)}
+  return (
+    <GlassCard
+      onClick={() => onSelect(agent)}
+      variant={isActive ? "premium" : "default"}
+      className={cn(
+        "group relative p-4 cursor-pointer overflow-hidden transition-all duration-300",
+        isActive
+          ? "border-neon-blue/50 shadow-[0_0_30px_rgba(0,243,255,0.15)] ring-1 ring-neon-blue/30 scale-105 z-10"
+          : "hover:border-neon-blue/30 hover:shadow-neon-glow hover:-translate-y-1",
+      )}
+    >
+      {/* Active pulsing gloackground */}
+      {isActive && (
+        <div className="absolute inset-0 bg-neon-blue/5 animate-pulse-slow pointer-events-none" />
+      )}
+
+      <div className="relative flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
+          <div
             className={cn(
-                "group relative p-4 cursor-pointer transition-all duration-300 border backdrop-blur-sm overflow-hidden",
-                isActive
-                    ? "bg-blue-600/20 border-blue-500/50 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-                    : "bg-slate-900/40 border-white/5 hover:border-white/20 hover:bg-slate-800/60 hover:-translate-y-1 hover:shadow-xl"
+              "w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 backdrop-blur-md shadow-inner",
+              isActive
+                ? "bg-neon-blue/20 text-neon-cyan"
+                : "bg-slate-800/50 text-slate-400",
             )}
-        >
-            {/* Ambient Glow */}
-            <div className={cn(
-                "absolute -inset-2 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-purple-500/0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl",
-                isActive && "opacity-30 from-blue-500/20 via-cyan-500/20 to-blue-500/20"
-            )} />
+          >
+            {agent.icon || <User className="w-4 h-4" />}
+          </div>
 
-            <div className="relative flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                    <div className={cn(
-                        "w-2 h-2 rounded-full",
-                        isActive ? "bg-blue-400 animate-pulse" : "bg-slate-600"
-                    )} />
-                    <div className={cn(
-                        "font-bold text-sm tracking-wide",
-                        isActive ? "text-white" : "text-slate-200"
-                    )}>
-                        {agent.role}
-                    </div>
-                </div>
-                {agent.isNew && (
-                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-[10px] px-2 py-0.5 h-auto animate-pulse text-white border-0 shadow-lg shadow-green-500/20">
-                        NEW
-                    </Badge>
-                )}
+          <div>
+            <div
+              className={cn(
+                "font-bold text-sm tracking-wider uppercase font-mono transition-colors",
+                isActive ? "text-neon-cyan drop-shadow-neon" : "text-slate-200",
+              )}
+            >
+              {agent.role}
             </div>
+            <div className="text-[10px] text-slate-500 font-mono mt-0.5 flex items-center gap-1">
+              <span className="w-1. h-1.5 rounded-full bg-slate-600 inline-block" />
+              ID: {agent.id?.substring(0, 8)}
+            </div>
+          </div>
+        </div>
 
-            <div className="relative text-xs text-slate-500 font-mono mb-3 opacity-60 truncate">
-                ID: {agent.id}
-            </div>
+        {agent.isNew && (
+          <Badge className="bg-neon-pink/10 text-neon-pink border border-neon-pink/50 text-[10px] px-2 py-0.5 animate-pulse shadow-neon-pink/20">
+            NEW
+          </Badge>
+        )}
+      </div>
 
-            <div className="relative flex flex-wrap gap-1.5">
-                {agent.allowedTools?.slice(0, 3).map(tool => (
-                    <span key={tool} className="text-[10px] bg-white/5 border border-white/5 text-slate-400 px-2 py-1 rounded-md group-hover:bg-white/10 transition-colors">
-                        {tool}
-                    </span>
-                ))}
-                {(agent.allowedTools?.length || 0) > 3 && (
-                    <span className="text-[10px] text-slate-500 px-1 self-center">+{(agent.allowedTools?.length || 0) - 3}</span>
-                )}
-            </div>
-        </Card>
-    );
+      {/* Tools / Capabilities */}
+      <div className="relative flex flex-wrap gap-1.5 mt-4">
+        {agent.allowedTools?.slice(0, 3).map((tool) => (
+          <span
+            key={tool}
+            className={cn(
+              "text-[10px] px-2 py-1 rounded bg-black/40 border border-white/5 text-slate-400 transition-colors",
+              "group-hover:border-white/10 group-hover:text-slate-300",
+            )}
+          >
+            {tool}
+          </span>
+        ))}
+        {(agent.allowedTools?.length || 0) > 3 && (
+          <span className="text-[10px] text-slate-500 px-1 self-center font-mono">
+            +{(agent.allowedTools?.length || 0) - 3}
+          </span>
+        )}
+      </div>
+
+      {/* Status Indicator (Bottom Right) */}
+      <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <Activity className="w-3 h-3 text-neon-cyan" />
+        <span className="text-[9px] text-neon-cyan font-mono">READY</span>
+      </div>
+    </GlassCard>
+  );
 }
