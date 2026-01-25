@@ -2,10 +2,8 @@ import TelegramBot from 'node-telegram-bot-api';
 
 // Placeholder for the token - will be replaced by environment variable or user input
 const getEnvVar = (key) => {
-    if (typeof import.meta !== 'undefined' && import.meta.env) {
-        return import.meta.env[key] || import.meta.env[`VITE_${key}`];
-    }
-    return process.env[key] || process.env[`VITE_${key}`];
+    return import.meta.env?.[key] || import.meta.env?.[`VITE_${key}`] ||
+        (typeof globalThis !== 'undefined' && globalThis.process?.env ? (globalThis.process.env[key] || globalThis.process.env[`VITE_${key}`]) : null);
 };
 
 const token = getEnvVar('TELEGRAM_BOT_TOKEN') || 'YOUR_TELEGRAM_BOT_TOKEN';
@@ -38,7 +36,7 @@ export const sendTelegramNotification = async (message) => {
         // But for "Push" notifications, we need a hardcoded Chat ID or a way to store it.
 
         // For this MVP: We will assume a hardcoded Admin Chat ID or Env Var.
-        const chatId = process.env.TELEGRAM_CHAT_ID;
+        const chatId = getEnvVar('TELEGRAM_CHAT_ID') || "7224939578";
 
         if (!chatId) {
             console.log(`[Telegram Mock - Missing ChatID] ${message}`);

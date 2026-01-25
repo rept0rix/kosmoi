@@ -7,9 +7,11 @@ export const Core = {
         try {
             const { GoogleGenerativeAI } = await import("@google/generative-ai");
 
+            const getSafeEnv = (key) => import.meta.env?.[key] || (typeof globalThis !== 'undefined' && globalThis.process?.env ? globalThis.process.env[key] : null);
+
             // Get API key from local storage or env
             const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) ||
-                (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GEMINI_API_KEY : process.env.VITE_GEMINI_API_KEY);
+                getSafeEnv('VITE_GEMINI_API_KEY');
 
             if (!apiKey) {
                 throw new Error("API_KEY_MISSING");
@@ -108,7 +110,8 @@ export const Core = {
     SendSMS: async () => { console.warn('SendSMS not implemented'); return {}; },
     SendTelegram: async ({ message, chatId = "7224939578" }) => {
         console.log(`[Integrations] Sending Telegram to ${chatId}...`);
-        const token = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_TELEGRAM_BOT_TOKEN : process.env.VITE_TELEGRAM_BOT_TOKEN) || process.env.TELEGRAM_BOT_TOKEN;
+        const getSafeEnv = (key) => import.meta.env?.[key] || (typeof globalThis !== 'undefined' && globalThis.process?.env ? globalThis.process.env[key] : null);
+        const token = getSafeEnv('VITE_TELEGRAM_BOT_TOKEN') || getSafeEnv('TELEGRAM_BOT_TOKEN');
 
         if (!token) {
             console.warn("Missing Telegram Bot Token.");
@@ -211,8 +214,9 @@ export const Core = {
     GetEmbedding: async ({ text }) => {
         try {
             const { GoogleGenerativeAI } = await import("@google/generative-ai");
+            const getSafeEnv = (key) => import.meta.env?.[key] || (typeof globalThis !== 'undefined' && globalThis.process?.env ? globalThis.process.env[key] : null);
             const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) ||
-                (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GEMINI_API_KEY : process.env.VITE_GEMINI_API_KEY);
+                getSafeEnv('VITE_GEMINI_API_KEY');
 
             if (!apiKey) return null;
 

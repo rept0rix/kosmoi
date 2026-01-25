@@ -307,3 +307,7 @@ button:focus-visible {
     animation: float-gentle 4s ease-in-out infinite;
   }
 }
+.italic-serif {
+  font-family: 'Playfair Display', 'Outfit', sans-serif;
+  font-style: italic;
+}

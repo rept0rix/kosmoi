@@ -1,0 +1,19 @@
+{
+    "words": [
+        {
+            "word": "Welcome",
+            "start": 0.5,
+            "end": 1.0
+        },
+        {
+            "word": "to",
+            "start": 1.1,
+            "end": 1.3
+        },
+        {
+            "word": "Kosmoi",
+            "start": 1.4,
+            "end": 2.2
+        }
+    ]
+}

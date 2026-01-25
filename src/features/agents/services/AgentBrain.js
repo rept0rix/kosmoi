@@ -6,6 +6,7 @@ import { db } from '../../../api/supabaseClient.js';
 import { TranslationService } from '../../../services/TranslationService.js';
 import { KnowledgeService } from '../../../services/ai/KnowledgeService.js';
 import { SkillService } from './SkillService.js';
+import { agents } from './AgentRegistry.js';
 
 // JSON Schema for Agent Output
 const AGENT_RESPONSE_SCHEMA = {
@@ -42,6 +43,7 @@ const AGENT_RESPONSE_SCHEMA = {
  * @param {Object} context - Additional context.
  */
 export async function getAgentReply(agent, messages, context = {}) {
+  console.log(`[AgentBrain] 🧠 Brain activated for agent: ${agent.id}`);
   try {
     // 0. Detect Language logic (Preserved)
     const recentUserMsg = [...messages].reverse().find(m => m.agent_id === 'HUMAN_USER');
@@ -109,6 +111,7 @@ Meeting Title: ${context.meetingTitle || 'General Discussion'}
 System State: ${JSON.stringify(context.config || {})}
 Current Tasks: ${JSON.stringify(context.tasks || [])}
 User Language: ${userLang}
+Available Agents for Task Assignment: ${agents.map(a => a.id).join(', ')}
 activeWorkflow: ${context.workflow ? JSON.stringify(context.workflow) : 'None'}
 activeWorkflowStep: ${context.workflowStep ? JSON.stringify(context.workflowStep) : 'None'}
 Knowledge Base:
@@ -136,37 +139,37 @@ Structure:
 
 If you need to use a tool, populate the "action" field.
 If the user explicitly asks to create a task, generate a "create_task" action.
+Ensure the "assignee" in create_task payloads matches one of the Available Agent IDs listed above.
 Use "thought_process" to reason before you speak.
 `;
 
     // 3. Call Interactions API
+    console.log(`[AgentBrain] Calling callAgentInteraction for ${agent.id}...`);
     let data;
-    const modelConfig = getModelConfig(agent.model);
+    try {
+      const modelConfig = getModelConfig(agent.model);
 
-    if (modelConfig.provider === AI_PROVIDERS.GROQ) {
-      data = await callGroqInteraction({
-        model: agent.model,
-        prompt: prompt,
-        system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
-        jsonSchema: AGENT_RESPONSE_SCHEMA
-      });
-    } else if (agent.provider === 'STRANDS' || modelConfig.provider === 'STRANDS') {
-      data = await callStrandsInteraction({
-        model: agent.model,
-        prompt: prompt
-      });
-    } else {
-      // Google / Default
-      if (agent.id === 'ceo-agent') {
-        console.log(`[AgentBrain] Generating for CEO. System Prompt Start: ${(agent.systemPrompt || '').slice(0, 50)}...`);
+      if (modelConfig.provider === AI_PROVIDERS.GROQ) {
+        data = await callGroqInteraction({
+          model: agent.model,
+          prompt: prompt,
+          system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
+          jsonSchema: AGENT_RESPONSE_SCHEMA
+        });
+      } else {
+        // Google / Default
+        data = await callAgentInteraction({
+          model: agent.model,
+          prompt: prompt,
+          system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
+          jsonMode: true,
+          images: context.images
+        });
       }
-
-      data = await callAgentInteraction({
-        model: agent.model,
-        prompt: prompt,
-        system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
-        jsonMode: true
-      });
+      console.log(`[AgentBrain] callAgentInteraction SUCCESS for ${agent.id}`);
+    } catch (apiErr) {
+      console.error(`[AgentBrain] callAgentInteraction FAILED for ${agent.id}:`, apiErr.message);
+      throw apiErr;
     }
 
     // 4. Auto-Translate Output (Preserved)

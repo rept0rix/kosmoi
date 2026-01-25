@@ -140,12 +140,17 @@ const AuthenticatedApp = () => {
   const { language } = useLanguage();
   usePageDirection();
 
-  // Allow public access to diagnostics
-  // Updated to be rigorous about path matching regardless of language prefix
+  // Allow public access to diagnostics and other public pages
   const isDiagnostics = location.pathname.endsWith('/diagnostics');
-  if (isDiagnostics) {
-    const DiagnosticsPage = Pages['Diagnostics'];
-    return <DiagnosticsPage />;
+  const isYachtTours = location.pathname.includes('/yacht-tours');
+
+  if (isDiagnostics || isYachtTours) {
+    const PublicPage = isDiagnostics ? Pages['Diagnostics'] : Pages['yacht-tours'];
+    return (
+      <Suspense fallback={<KosmoiLoader />}>
+        <PublicPage />
+      </Suspense>
+    );
   }
 
   // Show loading spinner while checking app public settings or auth

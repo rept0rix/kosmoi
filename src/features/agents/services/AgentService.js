@@ -18,6 +18,7 @@ import "../../../services/tools/registry/ServiceTools.js";
 import "../../../services/tools/registry/MetaTools.js";
 import "../../../services/tools/registry/A2UITools.js";
 import "../../../services/tools/registry/ContentTools.js";
+import "../../../services/tools/registry/VideoTools.js";
 import "../../../services/tools/registry/AdminTools.js";
 import { SkillService } from "./SkillService.js";
 

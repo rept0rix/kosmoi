@@ -82,13 +82,14 @@ export const StripeService = {
      */
     createPaymentLink: async (business, product, amount, currency = 'usd') => {
         // Check for Server-Side Environment (Node.js) with Secret Key
-        if (typeof process !== 'undefined' && process.env && process.env.STRIPE_SECRET_KEY) {
+        const secretKey = typeof globalThis !== 'undefined' && globalThis.process?.env?.STRIPE_SECRET_KEY;
+        if (secretKey) {
             try {
                 console.log(`[StripeService] Creating real payment link for '${product}' ($${amount})`);
 
                 // Dynamic import to prevent client-side build errors
                 const { default: Stripe } = await import('stripe');
-                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+                const stripe = new Stripe(secretKey);
 
                 const priceRecord = await stripe.prices.create({
                     currency: currency,

@@ -1,5 +1,7 @@
 import { ToolRegistry } from "../ToolRegistry.js";
 import { AgentTools } from "../../../features/agents/services/AgentTools.js";
+import { StripeService } from "../../../services/payments/StripeService.js";
+import { mimoService } from "../../ai/MimoService.js";
 
 /**
  * Service Tools: Empower agents to interact with the Kosmoi Marketplace.
@@ -17,8 +19,6 @@ ToolRegistry.register("check_availability", "Check if a provider is available on
     // payload: { providerId: string, date: string }
     return await AgentTools.checkAvailability(payload.providerId, payload.date);
 });
-
-import { StripeService } from "../../../services/payments/StripeService.js";
 
 ToolRegistry.register("create_booking", "Create a new service booking.", { userId: "string", providerId: "string", serviceType: "string", date: "string", startTime: "string", endTime: "string" }, async (payload) => {
     // payload: { userId, providerId, serviceType, date, startTime, endTime }
@@ -40,8 +40,6 @@ ToolRegistry.register("create_payment_link", "Generate a Stripe payment link for
 });
 
 console.log("✅ ServiceTools Registered");
-
-import { mimoService } from "../../ai/MimoService.js";
 
 ToolRegistry.register("ask_mimo", "Ask the Mimo V2 Flash LLM for assistance.", { prompt: "string", temperature: "number" }, async (payload) => {
     // payload: { prompt: string, temperature?: number }

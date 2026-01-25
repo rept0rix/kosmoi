@@ -6,7 +6,8 @@ import Groq from "groq-sdk";
  */
 const getClient = () => {
     const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('groq_api_key') : null) ||
-        (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GROQ_API_KEY : process.env.VITE_GROQ_API_KEY);
+        (import.meta.env?.VITE_GROQ_API_KEY) ||
+        (typeof globalThis !== 'undefined' && globalThis.process?.env ? globalThis.process.env.VITE_GROQ_API_KEY : null);
 
     if (!apiKey) {
         throw new Error("API_KEY_MISSING: Please configure VITE_GROQ_API_KEY");

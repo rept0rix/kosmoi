@@ -49,47 +49,61 @@ export default function AdminAgents() {
     const [isGenerating, setIsGenerating] = useState(false);
     const { toast } = useToast();
 
-    const syncWithRegistry = () => {
-        // Master Sync: Merges Registry (Single Source of Truth for Code) with LocalStorage (User Overrides)
-        const stored = localStorage.getItem('kosmoi_admin_agents_v2');
-        const storedAgents = stored ? JSON.parse(stored) : [];
-        const storedMap = new Map(storedAgents.map(a => [a.id, a]));
+    const fetchAgents = async () => {
+        try {
+            // Fetch from DB (Single Source of Truth)
+            const { data, error } = await supabase
+                .from('agent_configs')
+                .select('*')
+                .order('name', { ascending: true });
 
-        // 1. Start with Initial Agents (Codebase)
-        const merged = initialAgents.map(systemAgent => {
-            const userOverride = storedMap.get(systemAgent.id);
-            if (userOverride) {
-                // Merge: Keep system structure but allow user overrides for specific fields
-                return {
-                    ...systemAgent, // Base: System definition
-                    ...userOverride, // Overlay: User config (e.g. customized instructions)
-                    // Ensure critical fields aren't completely lost if userOverride is malformed
-                    name: userOverride.name || systemAgent.name,
-                    role: userOverride.role || systemAgent.role,
-                };
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                // Merge DB configs with Codebase Registry (for icons/Avatars which are effectively static code assets)
+                const merged = data.map(dbAgent => {
+                    const codeAgent = initialAgents.find(a => a.id === dbAgent.agent_id);
+                    return {
+                        ...codeAgent, // Avatar, Code logic
+                        ...dbAgent,   // DB Overrides: Name, Prompt, Active Status
+                        id: dbAgent.agent_id // Ensure ID match
+                    };
+                });
+                setAgents(merged);
+            } else {
+                // Fallback: If DB empty, show code agents (and maybe prompt to sync?)
+                setAgents(initialAgents);
             }
-            return systemAgent;
-        });
-
-        // 2. Add purely local agents (User created)
-        const systemIds = new Set(initialAgents.map(a => a.id));
-        const localOnly = storedAgents.filter(a => !systemIds.has(a.id));
-
-        const finalAgentList = [...merged, ...localOnly];
-        setAgents(finalAgentList);
-        saveAgents(finalAgentList);
+        } catch (e) {
+            console.error("Agent fetch failed:", e);
+            toast({ title: "Error loading agents", description: e.message, variant: "destructive" });
+        }
     };
 
     useEffect(() => {
-        syncWithRegistry();
+        fetchAgents();
     }, []);
 
-    const saveAgents = (updatedAgents) => {
-        setAgents(updatedAgents);
-        localStorage.setItem('kosmoi_admin_agents_v2', JSON.stringify(updatedAgents));
+    const saveAgentToDB = async (agent) => {
+        const payload = {
+            agent_id: agent.id,
+            name: agent.name,
+            role: agent.role,
+            description: agent.description,
+            color: agent.color,
+            system_prompt: agent.systemPrompt,
+            active: true
+        };
+
+        const { error } = await supabase.from('agent_configs').upsert(payload, { onConflict: 'agent_id' });
+        if (error) {
+            toast({ title: "Save Failed", description: error.message, variant: "destructive" });
+            return false;
+        }
+        return true;
     };
 
-    const handleAddAgent = () => {
+    const handleAddAgent = async () => {
         const id = newAgent.name.toLowerCase().replace(/\s+/g, '_');
         const agentToAdd = {
             id,
@@ -97,15 +111,40 @@ export default function AdminAgents() {
             capabilities: ['chat'], // default
             systemPrompt: `You are ${newAgent.name}, a ${newAgent.role}.`
         };
-        saveAgents([...agents, agentToAdd]);
-        setIsAddOpen(false);
-        setNewAgent({ name: '', role: '', description: '', color: 'blue', type: 'assistant' });
+
+        const success = await saveAgentToDB(agentToAdd);
+        if (success) {
+            fetchAgents();
+            setIsAddOpen(false);
+            setNewAgent({ name: '', role: '', description: '', color: 'blue', type: 'assistant' });
+            toast({ title: "Agent Deployed", description: "Configuration saved to database." });
+        }
     };
 
-    const handleDelete = (id) => {
+    const deleteAgent = async (id) => {
         if (confirm('Are you sure you want to decommission this agent?')) {
-            saveAgents(agents.filter(a => a.id !== id));
+            const { error } = await supabase.from('agent_configs').delete().eq('agent_id', id);
+            if (error) {
+                toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+            } else {
+                fetchAgents();
+                toast({ title: "Agent Retired", description: "Agent configuration removed." });
+            }
         }
+    };
+
+    // Replaces syncWithRegistry
+    const fullSync = async () => {
+        const confirmSync = confirm("This will overwrite Database configurations with the default Codebase settings. Continue?");
+        if (!confirmSync) return;
+
+        toast({ title: "Syncing...", description: "Pushing code definitions to database." });
+
+        for (const agent of initialAgents) {
+            await saveAgentToDB(agent);
+        }
+        await fetchAgents();
+        toast({ title: "Sync Complete", description: "Database is now identical to Code Registry." });
     };
 
     const handleGenerateArticle = async () => {
@@ -153,8 +192,8 @@ export default function AdminAgents() {
                     <p className="text-gray-500 mt-2">Manage your AI workforce matrix.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={syncWithRegistry} title="Resync with Code Registry">
-                        <Bot className="w-4 h-4 mr-2" /> Resync
+                    <Button variant="outline" onClick={fullSync} title="Resync with Code Registry">
+                        <Bot className="w-4 h-4 mr-2" /> Resync DB
                     </Button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
@@ -195,7 +234,7 @@ export default function AdminAgents() {
                                     <textarea
                                         className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 col-span-3"
                                         placeholder="Brief description of primary function..."
-                                        value={newAgent.description}
+                                        value={newAgent.description || ''}
                                         onChange={e => setNewAgent({ ...newAgent, description: e.target.value })}
                                     />
                                 </div>
@@ -297,7 +336,7 @@ export default function AdminAgents() {
                                             </DropdownMenuItem>
                                         )}
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onSelect={() => handleDelete(agent.id)} className="text-red-600">
+                                        <DropdownMenuItem onSelect={() => deleteAgent(agent.id)} className="text-red-600">
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             Decommission
                                         </DropdownMenuItem>

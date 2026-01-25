@@ -22,8 +22,11 @@ const LandingNavbar = () => {
     const [isScrolled, setIsScrolled] = React.useState(false);
 
     // Define pages with Dark Hero sections where header text should be white initially
-    const darkHeroPages = ['/', '/about', '/he', '/he/about', '/th', '/th/about', '/ru', '/ru/about']; // Add other langs if needed
-    const isDarkHeroPage = darkHeroPages.includes(location.pathname) || location.pathname === '/' || location.pathname.endsWith('/about'); /* Simple check */
+    const darkHeroPages = ['/', '/about', '/he', '/he/about', '/th', '/th/about', '/ru', '/ru/about', '/yacht-tours']; // Add other langs if needed
+    const isDarkHeroPage = darkHeroPages.includes(location.pathname) ||
+        location.pathname === '/' ||
+        location.pathname.endsWith('/about') ||
+        location.pathname.includes('/yacht-tours'); /* Enhanced check */
 
     React.useEffect(() => {
         const handleScroll = () => {

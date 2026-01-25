@@ -1,0 +1,16 @@
+**Option 1 (Focus on exclusivity):**
+"Unlock exclusive Koh Samui service deals! Limited spots available. Click here to claim your discount: [link]"
+
+**Option 2 (Highlighting convenience):**
+"Skip the hassle! Get instant access to the best services on Koh Samui. Explore now: [link]"
+
+**Option 3 (Problem/Solution):**
+"Tired of unreliable service providers on Koh Samui? Find vetted professionals instantly: [link]"
+
+**Option 4 (Direct offer):**
+"Get [Discount Percentage]% off your first [Service Category] booking on Koh Samui! Claim your offer now: [link]"
+
+**Important Notes:**
+*   Replace `[link]` with the actual link.
+*   Replace `[Discount Percentage]` and `[Service Category]` with specifics.
+*   Test different variations to see what performs best.

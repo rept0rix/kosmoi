@@ -14,9 +14,9 @@
     "test:ui": "vitest --ui",
     "worker:universal": "node scripts/agent_worker.js",
     "cron:crawler": "node scripts/harvest_samuimap.js",
-    "cron:crawler": "node scripts/harvest_samuimap.js",
     "ingest:harvest": "node scripts/ingest_harvested_data.js",
-    "start:notifications": "node scripts/notification_service.js"
+    "start:notifications": "node scripts/notification_service.js",
+    "screenshot": "node scripts/screenshot.js --auto-server"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.4",

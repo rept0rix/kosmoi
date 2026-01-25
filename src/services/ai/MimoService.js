@@ -17,11 +17,10 @@ export class MimoService {
     getApiKey() {
         // Try Vite env first, then Node env
         const key = import.meta.env?.VITE_MIMO_API_KEY ||
-            (typeof process !== 'undefined' ? (process.env?.MIMO_API_KEY || process.env?.VITE_MIMO_API_KEY) : null);
+            (typeof globalThis !== 'undefined' && globalThis.process?.env ? (globalThis.process.env.MIMO_API_KEY || globalThis.process.env.VITE_MIMO_API_KEY) : null);
 
         if (!key) {
             console.warn("MIMO_API_KEY not found in environment variables");
-            // throw new Error("MIMO_API_KEY is not configured"); // Don't throw immediately, let it fail at call time if needed, or return null
         }
         return key;
     }

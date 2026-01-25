@@ -1,97 +1,87 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Initializes the Gemini Interactions Client.
- * Uses the same API key logic as existing integration.
  */
 const getClient = () => {
     const apiKey = (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) ||
-        (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_GEMINI_API_KEY : process.env.VITE_GEMINI_API_KEY);
+        (import.meta.env?.VITE_GEMINI_API_KEY) ||
+        (typeof globalThis !== 'undefined' && globalThis.process?.env ? (globalThis.process.env.VITE_GEMINI_API_KEY || globalThis.process.env.GEMINI_API_KEY) : null);
 
     if (!apiKey) {
         throw new Error("API_KEY_MISSING: Please configure VITE_GEMINI_API_KEY");
     }
 
-    return new GoogleGenAI({ apiKey });
+    return new GoogleGenerativeAI(apiKey);
 };
 
 /**
  * Calls the Gemini Interactions API with Structured Output.
- * @param {Object} params
- * @param {string} params.model - The model to use (e.g., 'gemini-2.0-flash').
- * @param {string} params.prompt - The user prompt.
- * @param {string} [params.system_instruction] - System instructions.
- * @param {Object} [params.jsonSchema] - Optional JSON schema to enforce output.
- * @param {boolean} [params.jsonMode] - Optional flag to enable JSON mode without schema.
- * @returns {Promise<Object>} The parsed JSON response.
  */
-export const callAgentInteraction = async ({ model, prompt, system_instruction, jsonSchema, jsonMode }) => {
+export const callAgentInteraction = async ({ model, prompt, system_instruction, jsonSchema, jsonMode, images = [] }) => {
     try {
-        const client = getClient();
+        const genAI = getClient();
+        const modelName = model || 'gemini-2.0-flash-exp';
 
-        const generateConfig = {
-            model: model || 'gemini-2.0-flash-exp', // Default to stable 2.0 exp
-            contents: [
-                {
-                    role: 'user',
-                    parts: [{ text: prompt }]
-                }
-            ],
-            config: {
-                systemInstruction: { parts: [{ text: system_instruction }] },
-            }
+        const generationConfig = {
+            maxOutputTokens: 2048,
+            temperature: 0.7,
         };
 
-        // Re-enable JSON mode if requested, as generateContent supports it
         if (jsonSchema) {
-            generateConfig.config.responseMimeType = 'application/json';
-            generateConfig.config.responseSchema = jsonSchema;
+            generationConfig.responseMimeType = 'application/json';
+            generationConfig.responseSchema = jsonSchema;
         } else if (jsonMode) {
-            generateConfig.config.responseMimeType = 'application/json';
+            generationConfig.responseMimeType = 'application/json';
         }
 
-        // console.log("DEBUG: Calling generateContent with config:", JSON.stringify(generateConfig, null, 2));
+        const modelInstance = genAI.getGenerativeModel({
+            model: modelName,
+            systemInstruction: system_instruction ? { role: 'system', parts: [{ text: system_instruction }] } : undefined
+        });
+
+        const parts = [
+            { text: prompt },
+            ...(images || []).map(img => ({
+                inlineData: {
+                    data: img.base64.split(',')[1] || img.base64,
+                    mimeType: img.mimeType || 'image/png'
+                }
+            }))
+        ];
 
         // Retry Loop for 429 errors
-        let response;
+        let result;
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
-                response = await client.models.generateContent(generateConfig);
+                result = await modelInstance.generateContent({
+                    contents: [{ role: 'user', parts }],
+                    generationConfig
+                });
                 break; // Success
             } catch (err) {
                 if (err.status === 429 || err.code === 429 || (err.message && err.message.includes('429'))) {
                     console.warn(`⚠️ Gemini Rate Limit Exceeded (Attempt ${attempt + 1}/3). Waiting 65s...`);
-                    await new Promise(resolve => setTimeout(resolve, 65000)); // Wait 65 seconds
+                    await new Promise(resolve => setTimeout(resolve, 65000));
                     continue;
                 }
-                throw err; // Other errors throw immediately
+                throw err;
             }
         }
 
-        if (!response) {
-            throw new Error("Gemini API Request Failed after retries.");
-        }
+        if (!result) throw new Error("Gemini API Request Failed after retries.");
 
-        // console.log("DEBUG: Gemini GenerateContent Response:", JSON.stringify(response, null, 2));
+        const response = await result.response;
+        const outputText = response.text();
 
-        const candidate = response.candidates?.[0];
-        const outputText = candidate?.content?.parts?.[0]?.text;
+        if (!outputText) throw new Error("No text output received from Gemini.");
 
-        if (!outputText) {
-            throw new Error("No text output received from Gemini Candidate.");
-        }
-
-        // Output object structure to match existing downstream logic
-        const output = { text: outputText };
-
-        // If schema was provided, the SDK should guarantee JSON, but we still parse it.
-        // The new SDK might return a parsed object if we used response_format, 
-        // OR a text string fitting the schema. Reading docs implies it returns text that validates.
         try {
-            return JSON.parse(output.text);
+            return JSON.parse(outputText);
         } catch (e) {
-            // Try to extract JSON from markdown
-            const jsonMatch = output.text.match(/```json\s*([\s\S]*?)\s*```/) || output.text.match(/\{[\s\S]*\}/);
+            const jsonMatch = outputText.match(/```json\s*([\s\S]*?)\s*```/) || outputText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 try {
                     return JSON.parse(jsonMatch[1] || jsonMatch[0]);
@@ -99,17 +89,15 @@ export const callAgentInteraction = async ({ model, prompt, system_instruction, 
                     console.warn("Failed to parse extracted JSON:", e2);
                 }
             }
-            // Fallback: Return the text wrapped in an object if no JSON found
-            console.warn("Failed to parse JSON from structured output, returning raw text wrapper.");
-            return { message: output.text, raw: true };
+            console.warn("Returning raw text wrapper.");
+            return { message: outputText, raw: true };
         }
 
     } catch (error) {
-        console.error("Gemini Interaction Error:", error);
-        // If it's a 429 that bubbled up, ensure we don't crash the worker loop instantly
-        if (error.status === 429 || error.code === 429) {
-            await new Promise(resolve => setTimeout(resolve, 10000)); // Extra safety delay
-        }
+        const errorLog = `[${new Date().toISOString()}] Error: ${error.message}\nStack: ${error.stack}\nData: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}\n\n`;
+        fs.appendFileSync(path.resolve(process.cwd(), 'gemini_debug.log'), errorLog);
+        console.error("Gemini Interaction Error (Full):", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        console.error("Gemini Interaction Message:", error.message);
         throw error;
     }
 };

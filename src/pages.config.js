@@ -99,6 +99,7 @@ export const PAGES = {
     "BlogPostDetail": BlogPostDetail,
     "AdminWiki": lazy(() => import('./pages/admin/AdminWiki')),
     "Support": Support, // Added Support Page
+    "yacht-tours": lazy(() => import('./pages/yacht-tours')),
 }
 
 export const pagesConfig = {

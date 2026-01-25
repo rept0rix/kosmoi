@@ -1,0 +1,50 @@
+[
+    {
+        "id": "y-001",
+        "name": "The Samui Sovereign",
+        "description": "A 70ft luxury motor yacht offering unparalleled stability and space. Perfect for large groups and exclusive family gatherings. Featuring a private chef and premium flybridge.",
+        "price_thb": 65000,
+        "duration_hours": 4,
+        "max_guests": 25,
+        "features": [
+            "Private Chef",
+            "Champagne Greeting",
+            "Snorkeling Gear",
+            "Jet Ski Access"
+        ],
+        "category": "Ultra Luxury",
+        "image": "https://images.unsplash.com/photo-1544433330-9485b3bb947b?auto=format&fit=crop&q=80&w=2000"
+    },
+    {
+        "id": "y-002",
+        "name": "Ocean Whisper Catamaran",
+        "description": "Sleek and modern catamaran designed for smooth sailing. Features an expansive sun deck and premium surround sound for a club-like atmosphere at sea.",
+        "price_thb": 32000,
+        "duration_hours": 4,
+        "max_guests": 12,
+        "features": [
+            "Open Bar",
+            "Mediterranean Platter",
+            "SUP Boards",
+            "Sunset Deck"
+        ],
+        "category": "Premium",
+        "image": "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&q=80&w=2000"
+    },
+    {
+        "id": "y-003",
+        "name": "Blue Horizon Sailing",
+        "description": "Authentic sailing experience for those who love the wind. Traditional monohull with modern cabin luxuries, providing an intimate connection with the ocean.",
+        "price_thb": 22500,
+        "duration_hours": 6,
+        "max_guests": 8,
+        "features": [
+            "Traditional Thai Meal",
+            "Fishing Equipment",
+            "Dinghy Access",
+            "Local Guide"
+        ],
+        "category": "Classic",
+        "image": "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?auto=format&fit=crop&q=80&w=2000"
+    }
+]
