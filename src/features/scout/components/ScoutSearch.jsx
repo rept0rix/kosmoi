@@ -26,6 +26,7 @@ const SCOUT_AGENT_CONFIG = {
   name: "The Scout",
   description: "Local Guide & Navigator",
   model: "claude-3-5-sonnet-latest",
+  deepResearchModel: "gemini-pro", // Configuration for Deep Research
   systemPrompt: `You are **The Scout**, Kosmoi's expert Local Guide and Navigator.
 Your goal is to help visitors find the perfect experience, service, or hidden gem in Koh Samui.
 
@@ -67,6 +68,7 @@ export function ScoutSearch({ onMapAction }) {
   const scrollRef = useRef(null);
   const agentService = useRef(null);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [isDeepResearch, setIsDeepResearch] = useState(false); // New Toggle State
 
   useEffect(() => {
     agentService.current = new AgentService(SCOUT_AGENT_CONFIG);
@@ -147,6 +149,62 @@ export function ScoutSearch({ onMapAction }) {
     setInput("");
     setIsTyping(true);
 
+    // --- DEEP RESEARCH MODE ---
+    if (isDeepResearch) {
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "deep-research",
+          {
+            body: {
+              query: input,
+              lat: currentLocation?.lat || 9.512,
+              lng: currentLocation?.lng || 100.058,
+            },
+          },
+        );
+
+        if (error) throw error;
+
+        // Display Plan
+        if (data.plan) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString() + "_plan",
+              role: "assistant",
+              content:
+                `🧠 **Research Plan:**\n` +
+                data.plan.map((q) => `- 🔍 *${q}*`).join("\n"),
+            },
+          ]);
+        }
+
+        // Display Answer
+        const agentMsg = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.answer || "Research complete, but no answer generated.",
+        };
+        setMessages((prev) => [...prev, agentMsg]);
+      } catch (err) {
+        console.error("Deep Search Error:", err);
+        toast.error("Deep Research Failed");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString() + "_error",
+            role: "assistant",
+            content:
+              "⚠️ **Deep Research System Failure.** I could not complete the deep dive. Please try again or switch to standard mode.",
+          },
+        ]);
+      } finally {
+        setIsTyping(false);
+      }
+      return; // Stop here, don't do standard chat
+    }
+
+    // --- STANDARD MODE ---
     try {
       const reply = await agentService.current.sendMessage(input);
 
@@ -236,6 +294,19 @@ export function ScoutSearch({ onMapAction }) {
               ) : (
                 <Send className="w-5 h-5 ml-0.5" />
               )}
+            </Button>
+
+            {/* DEEP RESEARCH TOGGLE */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDeepResearch(!isDeepResearch)}
+              className={`transition-all rounded-full w-10 h-10 ${isDeepResearch ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]" : "text-slate-500 hover:text-slate-300"}`}
+              title="Toggle Deep Research"
+            >
+              <Radar
+                className={`w-5 h-5 ${isDeepResearch ? "animate-pulse" : ""}`}
+              />
             </Button>
           </div>
         </Card>
