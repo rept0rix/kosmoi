@@ -83,7 +83,7 @@ function BoardRoomContent() {
     handleDeleteTask,
     handleStartDailyStandup,
     handleStartOneDollarChallenge,
-    handleStartOneDollarChallenge,
+
     handleStartWorkflow,
     yoloMode,
     setYoloMode,
