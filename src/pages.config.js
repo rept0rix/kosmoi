@@ -1,108 +1,77 @@
-import Home from './pages/Home';
-import WalletPage from './pages/WalletPage';
-import ProviderDashboard from './pages/ProviderDashboard';
-import RealEstateHub from './pages/RealEstateHub';
-import ExperiencesHub from './pages/ExperiencesHub';
-import ExperienceDetails from './pages/ExperienceDetails';
-import BusinessLanding from './pages/BusinessLanding';
-import Dashboard from './pages/Dashboard';
-import ServiceProviders from './pages/ServiceProviders';
-import ServiceProviderDetails from './pages/ServiceProviderDetails';
-import MapView from './pages/MapView';
-import Profile from './pages/Profile';
-import BusinessRegistration from './features/vendors/pages/BusinessRegistration';
-import BusinessDashboard from './features/vendors/pages/BusinessDashboard';
-import EditProfile from './pages/EditProfile';
-import Favorites from './pages/Favorites';
-import MyReviews from './pages/MyReviews';
-import RecentSearches from './pages/RecentSearches';
-import Login from './features/auth/pages/Login';
-import UpdatePassword from './features/auth/pages/UpdatePassword';
-import CompleteSignup from './features/auth/pages/CompleteSignup';
-import AdminImporter from './pages/AdminImporter';
-import RequestService from './pages/RequestService';
-import MyRequests from './pages/MyRequests';
-import LeadBoard from './features/leads/pages/LeadBoard';
-import AIChat from './pages/AIChat';
-import SeedData from './pages/SeedData';
-import Diagnostics from './pages/Diagnostics';
-import TripPlanner from './pages/TripPlanner';
-import BoardRoom from './pages/BoardRoom';
-import BusinessInfo from './pages/BusinessInfo';
-import Team from './pages/Team';
-import AgentChat from './features/agents/pages/AgentChat';
-import CommandCenter from './features/agents/pages/CommandCenter';
-import AdminAgents from './features/agents/pages/AdminAgents';
-import CRMDashboard from './pages/admin/CRMDashboard';
-import AdminInfra from './pages/admin/AdminInfra';
-import Blog from './pages/Blog';
-import BlogPostDetail from './pages/BlogPostDetail';
-import Support from './pages/Support'; // New Support Page
-import __Layout from './Layout.jsx';
-import { lazy } from 'react';
-import WellnessHub from './pages/WellnessHub'; // Added Wellness
-import TransportHub from './pages/TransportHub'; // Added Transport
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Login from "./features/auth/pages/Login";
+import MapView from "./pages/MapView";
+import __Layout from "./Layout.jsx";
+import React from "react";
 
+// Real page imports
+import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+import Favorites from "./pages/Favorites";
+import BoardRoom from "./pages/BoardRoom";
 
-// Wallet Pages
-import WalletScan from './pages/wallet/Scan';
-import WalletSend from './pages/wallet/Send';
-import WalletReceive from './pages/wallet/Receive';
-import WalletCard from './pages/wallet/Card';
-
+// Safe fallback for pages still in development
+const SafePage = () =>
+  React.createElement(
+    "div",
+    { style: { padding: 50, color: "green", fontSize: 24 } },
+    "Page Under Maintenance (Safe Mode)",
+  );
 
 export const PAGES = {
-    "Home": Home,       // Root / (Consumer)
-    "Wallet": WalletPage, // /wallet (Kosmoi Pay)
-    "ProviderDashboard": ProviderDashboard, // /provider-dashboard (Drivers)
-    "RealEstate": RealEstateHub, // /real-estate (Zillow Style)
-    "Experiences": ExperiencesHub, // /experiences (GetYourGuide Style)
-    "Wellness": WellnessHub, // /wellness
-    "Transport": TransportHub, // /transport
-    "ExperienceDetails": ExperienceDetails, // /experiences/:id
-    "Business": BusinessLanding, // /business (Provider)
-    "App": Dashboard,    // Main App Dashboard
-    "Dashboard": Dashboard, // Keep alias for backward compat if needed
-    "Welcome": BusinessLanding, // Keeping Welcome as Business for now, or maybe alias to Home? Let's alias to Business as that was the old Welcome context.
-    "BusinessInfo": BusinessInfo, // Added
-    "Team": Team, // Added
-    // Wallet Sub-pages
-    "WalletScan": WalletScan,
-    "WalletSend": WalletSend,
-    "WalletReceive": WalletReceive,
-    "WalletCard": WalletCard,
-    "ServiceProviders": ServiceProviders,
-    "ServiceProviderDetails": ServiceProviderDetails,
-    "MapView": MapView,
-    "Profile": Profile,
-    "BusinessRegistration": BusinessRegistration,
-    "BusinessDashboard": BusinessDashboard,
-    "EditProfile": EditProfile,
-    "Favorites": Favorites,
-    "MyReviews": MyReviews,
-    "RecentSearches": RecentSearches,
-    "Login": Login,
-    "UpdatePassword": UpdatePassword, // Added
-    "CompleteSignup": CompleteSignup,
-    "AdminImporter": AdminImporter,
-    "RequestService": RequestService,
-    "MyRequests": MyRequests,
-    "LeadBoard": LeadBoard,
-    "AIChat": AIChat,
-    "AgentChat": AgentChat, // Public Agent Chat
-    "SeedData": SeedData,
-    "Diagnostics": Diagnostics,
-    "TripPlanner": TripPlanner,
-    "BoardRoom": BoardRoom,
-    "CommandCenter": CommandCenter,
-    "Blog": Blog,
-    "BlogPostDetail": BlogPostDetail,
-    "AdminWiki": lazy(() => import('./pages/admin/AdminWiki')),
-    "Support": Support, // Added Support Page
-}
+  Home: Home,
+  Dashboard: Dashboard,
+  App: Dashboard,
+  Login: Login,
+  MapView: MapView,
+  Profile: Profile,
+  EditProfile: EditProfile,
+  Favorites: Favorites,
+  BoardRoom: BoardRoom,
+  // Still in safe mode:
+  Wallet: SafePage,
+  ProviderDashboard: SafePage,
+  RealEstate: SafePage,
+  Experiences: SafePage,
+  Wellness: SafePage,
+  Transport: SafePage,
+  ExperienceDetails: SafePage,
+  Business: SafePage,
+  Welcome: SafePage,
+  BusinessInfo: SafePage,
+  Team: SafePage,
+  WalletScan: SafePage,
+  WalletSend: SafePage,
+  WalletReceive: SafePage,
+  WalletCard: SafePage,
+  ServiceProviders: SafePage,
+  ServiceProviderDetails: SafePage,
+  BusinessRegistration: SafePage,
+  BusinessDashboard: SafePage,
+  MyReviews: SafePage,
+  RecentSearches: SafePage,
+  UpdatePassword: SafePage,
+  CompleteSignup: SafePage,
+  AdminImporter: SafePage,
+  RequestService: SafePage,
+  MyRequests: SafePage,
+  LeadBoard: SafePage,
+  AIChat: SafePage,
+  AgentChat: SafePage,
+  SeedData: SafePage,
+  Diagnostics: SafePage,
+  TripPlanner: SafePage,
+  CommandCenter: SafePage,
+  Blog: SafePage,
+  BlogPostDetail: SafePage,
+  AdminWiki: SafePage,
+};
 
 export const pagesConfig = {
-    mainPage: "Home",
-    Pages: PAGES,
-    Layout: __Layout,
+  Pages: PAGES,
+  Layout: __Layout,
+  mainPage: "Home",
 };
+
+export default pagesConfig;

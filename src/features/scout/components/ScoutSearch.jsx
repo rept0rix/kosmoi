@@ -54,7 +54,8 @@ Your goal is to help visitors find the perfect experience, service, or hidden ge
 ## Conversation Style
 - Use emojis 🌴 🥥 🛵.
 - Keep it short and actionable.
-- Don't just list; curate.`,
+- Don't just list; curate.
+- **IMPORTANT:** Use standard Markdown for lists (bullets \`-\` or numbers \`1.\`). DO NOT use XML tags or custom components like \`<list>\` or \`<card>\`.`,
 };
 
 export function ScoutSearch({ onMapAction }) {

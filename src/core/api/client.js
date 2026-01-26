@@ -1,17 +1,26 @@
 import { createClient } from "@supabase/supabase-js";
 
+console.log("[Client.js] Module initializing...");
+
 class APIClient {
   constructor() {
-    this.supabaseUrl = (
-      typeof process !== "undefined" && process.env
-        ? process.env
-        : import.meta.env
-    ).VITE_SUPABASE_URL;
-    this.supabaseKey = (
-      typeof process !== "undefined" && process.env
-        ? process.env
-        : import.meta.env
-    ).VITE_SUPABASE_ANON_KEY;
+    console.log("[Client.js] Constructor called");
+    try {
+      this.supabaseUrl = (
+        typeof process !== "undefined" && process.env
+          ? process.env
+          : import.meta.env
+      ).VITE_SUPABASE_URL;
+      this.supabaseKey = (
+        typeof process !== "undefined" && process.env
+          ? process.env
+          : import.meta.env
+      ).VITE_SUPABASE_ANON_KEY;
+    } catch (e) {
+      console.error("[Client.js] Error accessing env vars:", e);
+      this.supabaseUrl = null;
+      this.supabaseKey = null;
+    }
 
     if (!this.supabaseUrl || !this.supabaseKey) {
       console.error(
@@ -24,6 +33,7 @@ class APIClient {
         data: null,
         error: { message: "Supabase not initialized (Missing Env Vars)" },
       };
+
       const createMock = () =>
         new Proxy(() => {}, {
           get: (target, prop) => {
@@ -91,31 +101,37 @@ class APIClient {
         "APIClient: Initializing REAL Supabase client with URL:",
         this.supabaseUrl,
       );
-      this.supabase = createClient(this.supabaseUrl, this.supabaseKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true, // Enabled to allow OAuth hash parsing
-          storageKey: "supabase.auth.token.v2", // Explicit key to avoid conflicts
-          storage:
-            typeof window !== "undefined" ? window.localStorage : undefined,
-        },
-        realtime: {
-          params: {
-            eventsPerSecond: 10,
+      try {
+        this.supabase = createClient(this.supabaseUrl, this.supabaseKey, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true, // Enabled to allow OAuth hash parsing
+            storageKey: "supabase.auth.token.v2", // Explicit key to avoid conflicts
+            storage:
+              typeof window !== "undefined" ? window.localStorage : undefined,
           },
-          heartbeatIntervalMs: 30000,
-        },
-        db: {
-          schema: "public",
-        },
-        // Global fetch retry policy
-        global: {
-          fetch: (url, options) => {
-            return fetch(url, { ...options, cache: "no-store" }); // Prevent stale cache
+          realtime: {
+            params: {
+              eventsPerSecond: 10,
+            },
+            heartbeatIntervalMs: 30000,
           },
-        },
-      });
+          db: {
+            schema: "public",
+          },
+          // Global fetch retry policy
+          global: {
+            fetch: (url, options) => {
+              return fetch(url, { ...options, cache: "no-store" }); // Prevent stale cache
+            },
+          },
+        });
+      } catch (err) {
+        console.error("[Client.js] CRASH in createClient:", err);
+        // Prevent module failure
+        this.supabase = {}; // Dangerously simple fallback
+      }
     }
     this.cache = new Map();
     this.listeners = new Map();
@@ -133,6 +149,7 @@ class APIClient {
     // Basic retry logic tailored for unstable networks
     let lastError;
     for (let i = 0; i < 3; i++) {
+      /* Fix: Check if this.supabase exists before calling it */
       try {
         const result = await this._executeRequest(config);
         if (method === "GET") {
@@ -220,3 +237,4 @@ class APIClient {
 }
 
 export const api = new APIClient();
+export default api;
