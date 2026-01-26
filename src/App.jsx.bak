@@ -98,8 +98,6 @@ import AdminKanban from "./pages/admin/AdminKanban";
 import AdminRoadmap from "@/pages/admin/AdminRoadmap";
 import AdminCanvas from "./pages/admin/AdminCanvas";
 import AdminInfra from "./pages/admin/AdminInfra";
-import AdminHealth from "./pages/admin/AdminHealth";
-import AdminLiveControl from "./pages/admin/AdminLiveControl";
 import AdminLogs from "./pages/admin/AdminLogs";
 import AdminSchema from "./pages/admin/AdminSchema";
 import AdminMemory from "./pages/admin/AdminMemory";
@@ -205,12 +203,12 @@ const AuthenticatedApp = () => {
       <div className="flex flex-col min-h-screen">
         <div className="flex-1">
           {/* Persistent MapView */}
-          {/* {console.log(
+          {console.log(
             "App Render: isMapView =",
             isMapView,
             "Pages['MapView'] exists?",
             !!MapViewPage,
-          ) || null} */}
+          ) || null}
           <div
             style={{ display: isMapView ? "block" : "none", height: "100%" }}
           >
@@ -330,8 +328,6 @@ const AuthenticatedApp = () => {
                 <Route path="roadmap" element={<AdminRoadmap />} />
                 <Route path="infrastructure" element={<AdminInfra />} />
                 <Route path="canvas" element={<AdminCanvas />} />
-                <Route path="health" element={<AdminHealth />} />
-                <Route path="live" element={<AdminLiveControl />} />
                 <Route path="studio" element={<Studio />} />
                 <Route path="skills" element={<AdminSkills />} />
                 <Route path="wallet" element={<AdminWallet />} />
@@ -413,7 +409,7 @@ const AuthenticatedApp = () => {
 };
 
 const LanguageRoot = ({ lang }) => {
-  // console.log("LanguageRoot Render, lang=", lang);
+  console.log("LanguageRoot Render, lang=", lang);
   const { setLanguage } = useLanguage();
   useEffect(() => {
     if (lang) {
@@ -427,69 +423,24 @@ const LanguageRoot = ({ lang }) => {
 };
 
 function App() {
-  // console.log("ROOT APP RENDER");
+  console.log("ROOT APP RENDER");
   return (
-    <QueryClientProvider client={queryClientInstance}>
-      <AuthProvider>
-        <AppConfigProvider>
-          <UserProfileProvider>
-            <AppModeProvider>
-              <LocationProvider>
-                <RxDBProvider>
-                  <LanguageProvider>
-                    <GlobalErrorBoundary>
-                      <Router>
-                        <ScrollToTop />
-                        <Routes>
-                          <Route
-                            path="/he/*"
-                            element={<LanguageRoot lang="he" />}
-                          />
-                          <Route
-                            path="/th/*"
-                            element={<LanguageRoot lang="th" />}
-                          />
-                          <Route
-                            path="/ru/*"
-                            element={<LanguageRoot lang="ru" />}
-                          />
-                          <Route
-                            path="/fr/*"
-                            element={<LanguageRoot lang="fr" />}
-                          />
-                          <Route
-                            path="/de/*"
-                            element={<LanguageRoot lang="de" />}
-                          />
-                          <Route
-                            path="/es/*"
-                            element={<LanguageRoot lang="es" />}
-                          />
-                          <Route
-                            path="/zh/*"
-                            element={<LanguageRoot lang="zh" />}
-                          />
-                          <Route
-                            path="/en/*"
-                            element={<LanguageRoot lang="en" />}
-                          />
-                          <Route
-                            path="/*"
-                            element={<LanguageRoot lang="en" />}
-                          />
-                        </Routes>
-                        <Toaster />
-                        <SonnerToaster />
-                      </Router>
-                    </GlobalErrorBoundary>
-                  </LanguageProvider>
-                </RxDBProvider>
-              </LocationProvider>
-            </AppModeProvider>
-          </UserProfileProvider>
-        </AppConfigProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <Router>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/he/*" element={<LanguageRoot lang="he" />} />
+          <Route path="/th/*" element={<LanguageRoot lang="th" />} />
+          <Route path="/ru/*" element={<LanguageRoot lang="ru" />} />
+          <Route path="/fr/*" element={<LanguageRoot lang="fr" />} />
+          <Route path="/de/*" element={<LanguageRoot lang="de" />} />
+          <Route path="/es/*" element={<LanguageRoot lang="es" />} />
+          <Route path="/zh/*" element={<LanguageRoot lang="zh" />} />
+          <Route path="/en/*" element={<LanguageRoot lang="en" />} />
+          <Route path="/*" element={<LanguageRoot lang="en" />} />
+        </Routes>
+      </Router>
+    </GlobalErrorBoundary>
   );
 }
 

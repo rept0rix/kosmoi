@@ -183,8 +183,8 @@ export default function GoogleMap({
           }
 
           onMapClick({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
+            lat: e.latLng ? e.latLng.lat() : 0,
+            lng: e.latLng ? e.latLng.lng() : 0,
           });
         });
       }
@@ -423,6 +423,8 @@ export default function GoogleMap({
       console.error("Error updating markers:", err);
     }
   };
+
+  console.log("GoogleMap Render: loading=", loading, "error=", error);
 
   if (loading) {
     return (

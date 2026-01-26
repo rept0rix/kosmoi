@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { db, supabase } from "@/api/supabaseClient";
 import { ActivityLogService } from "@/services/ActivityLogService";
+import { AnalyticsService } from "@/services/AnalyticsService";
 
 export const AuthContext = createContext(null);
 
@@ -39,9 +40,22 @@ export const AuthProvider = ({ children }) => {
 
           setUser({ ...currentUser, role: userRole });
           setIsAuthenticated(true);
+
+          // Track user in analytics
+          AnalyticsService.identify(currentUser.id, {
+            email: currentUser.email,
+            role: userRole,
+            created_at: currentUser.created_at,
+          });
+          AnalyticsService.user.login(
+            currentUser.app_metadata?.provider || "email",
+          );
         } else if (event === "SIGNED_OUT") {
           setUser(null);
           setIsAuthenticated(false);
+          // Reset analytics tracking
+          AnalyticsService.reset();
+          AnalyticsService.user.logout();
         }
         setIsLoadingAuth(false);
       },

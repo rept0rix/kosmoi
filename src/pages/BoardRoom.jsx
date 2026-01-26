@@ -83,7 +83,10 @@ function BoardRoomContent() {
     handleDeleteTask,
     handleStartDailyStandup,
     handleStartOneDollarChallenge,
+    handleStartOneDollarChallenge,
     handleStartWorkflow,
+    yoloMode,
+    setYoloMode,
   } = useBoardRoom();
 
   return (
@@ -199,6 +202,8 @@ function BoardRoomContent() {
             activeAgentsCount={selectedAgentIds.length}
             autonomousMode={autonomousMode}
             setAutonomousMode={setAutonomousMode}
+            yoloMode={yoloMode}
+            setYoloMode={setYoloMode}
             selectedAgentIds={selectedAgentIds}
             onManageTeam={() => setIsManageTeamOpen(true)}
             onOpenMobileMenu={() => setIsMobileLeftOpen(true)}
