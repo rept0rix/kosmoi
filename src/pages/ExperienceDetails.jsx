@@ -546,6 +546,7 @@ export default function ExperienceDetails() {
                       }}
                       mode="inquiry"
                       onSubmit={handleBookingSubmit}
+                      onBookingConfirmed={() => setIsBookingOpen(false)}
                     />
 
                     <div className="mt-4 text-center">

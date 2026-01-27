@@ -38,39 +38,44 @@ const AdminHyperloop = () => {
     fetchDeepData();
 
     // Realtime Subscription
-    const channel = supabase
-      .channel("admin-hyperloop-feed")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "service_providers" },
-        (payload) => {
-          // Instantly add raw payload (or fetch if we needed relations, but here we just need raw fields usually)
-          // For safety, we can just prepend. The payload.new has the data.
-          setCrawlerLogs((prev) => [payload.new, ...prev].slice(0, 50));
-          setLastHeartbeat(new Date());
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "invitations" },
-        async (payload) => {
-          // For invitations, we need the business_name from relations. Realtime payload doesn't have it.
-          // So we fetch this specific item.
-          const { data } = await supabase
-            .from("invitations")
-            .select("*, service_providers(business_name)")
-            .eq("id", payload.new.id)
-            .single();
+    const channel = supabase.channel("admin-hyperloop-feed");
 
-          if (data) {
-            setSalesLogs((prev) => [data, ...prev].slice(0, 50));
-            setLastHeartbeat(new Date());
-          }
-        },
-      )
-      .subscribe();
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "service_providers" },
+      (payload) => {
+        // Instantly add raw payload (or fetch if we needed relations, but here we just need raw fields usually)
+        // For safety, we can just prepend. The payload.new has the data.
+        setCrawlerLogs((prev) => [payload.new, ...prev].slice(0, 50));
+        setLastHeartbeat(new Date());
+      },
+    );
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "invitations" },
+      async (payload) => {
+        // For invitations, we need the business_name from relations. Realtime payload doesn't have it.
+        // So we fetch this specific item.
+        const { data } = await supabase
+          .from("invitations")
+          .select("*, service_providers(business_name)")
+          .eq("id", payload.new.id)
+          .single();
+
+        if (data) {
+          setSalesLogs((prev) => [data, ...prev].slice(0, 50));
+          setLastHeartbeat(new Date());
+        }
+      },
+    );
+
+    channel.subscribe();
 
     return () => {
+      // @ts-ignore
       supabase.removeChannel(channel);
     };
   }, []);

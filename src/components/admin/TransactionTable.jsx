@@ -27,29 +27,41 @@ import {
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 
-export default function TransactionTable() {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function TransactionTable({
+  initialData = null,
+  isLoading: externalLoading = undefined,
+}) {
+  const [internalTransactions, setInternalTransactions] = useState([]);
+  const [internalLoading, setInternalLoading] = useState(true);
   const [filterCurrency, setFilterCurrency] = useState("ALL");
   const [filterType, setFilterType] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Determine source of truth
+  const transactions = initialData || internalTransactions;
+  const loading =
+    externalLoading !== undefined ? externalLoading : internalLoading;
+
   const fetchTransactions = async () => {
-    setLoading(true);
+    if (initialData) return; // Don't fetch if we have external data
+
+    setInternalLoading(true);
     try {
       // Use AdminService to get GLOBAL transactions, not just personal wallet
       const { data } = await AdminService.getAllTransactions();
-      setTransactions(data || []);
+      setInternalTransactions(data || []);
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      setInternalLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTransactions();
-  }, []);
+    if (!initialData) {
+      fetchTransactions();
+    }
+  }, [initialData]);
 
   const filteredTransactions = transactions.filter((tx) => {
     if (filterCurrency !== "ALL" && tx.currency !== filterCurrency)

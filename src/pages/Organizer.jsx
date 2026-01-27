@@ -1,157 +1,148 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-    Calendar,
-    MapPin,
-    Phone,
-    Mail,
-    MessageCircle,
-    Luggage,
-    Sparkles,
-    Plane,
-    CreditCard,
-    AlertTriangle,
-    Ghost
-} from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
+  LayoutDashboard,
+  Calendar,
+  History,
+  Heart,
+  Trophy,
+  Sparkles,
+  Command,
+} from "lucide-react";
+
+// Feature Components
+import OrganizerOverview from "@/features/organizer/components/OrganizerOverview";
+import TripPlanner from "./TripPlanner";
+import MyBookings from "./MyBookings";
+import Favorites from "./Favorites";
+import GoalsTab from "@/features/organizer/components/GoalsTab";
+
+// Hooks
+import { useOrganizer } from "@/shared/hooks/useOrganizer";
 
 export default function Organizer() {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-    const [destination, setDestination] = useState('');
-    const [dates, setDates] = useState({ start: '', end: '' });
-    const [selectedInterests, setSelectedInterests] = useState([]);
+  const { t } = useTranslation();
+  const { activeTrip, loading, actions } = useOrganizer();
+  const [activeTab, setActiveTab] = useState("overview");
 
-    const interests = ["Beaches", "Nightlife", "Culture", "Food", "Adventure", "Relaxation"];
-
-    const toggleInterest = (interest) => {
-        setSelectedInterests(prev =>
-            prev.includes(interest)
-                ? prev.filter(i => i !== interest)
-                : [...prev, interest]
-        );
-    };
-
-    const handleGenerateItinerary = () => {
-        // In a real app, this would send data to the backend or AI service.
-        // For now, we'll navigate to the TripPlanner or AIChat with state.
-        navigate('/AIChat', {
-            state: {
-                context: `Plan a trip to ${destination || 'Koh Samui'} from ${dates.start} to ${dates.end}. Interests: ${selectedInterests.join(', ')}.`
-            }
-        });
-    };
-
-    return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans animate-in fade-in duration-500 pb-24">
-            <h1 className="text-3xl font-bold font-['Outfit'] mb-6 text-slate-900 dark:text-white">{t('organizer.title')}</h1>
-
-            <div className="space-y-8 max-w-2xl mx-auto">
-                {/* Hero Section */}
-                <Card className="border-0 shadow-xl overflow-hidden rounded-3xl">
-                    <div className="h-56 bg-gradient-to-r from-blue-600 to-indigo-600 relative flex items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1537905569824-f89f14cceb68?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
-                        <div className="relative z-10 text-center text-white p-6">
-                            <h2 className="text-4xl font-bold mb-3">{t('organizer.hero_title')}</h2>
-                            <p className="text-blue-100 text-lg">{t('organizer.hero_subtitle')}</p>
-                        </div>
-                    </div>
-                    <CardContent className="p-8 space-y-8 bg-white dark:bg-slate-900">
-                        {/* Destination */}
-                        <div className="space-y-3">
-                            <label className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                <MapPin className="w-5 h-5 text-blue-500" />
-                                {t('organizer.destination_label')}
-                            </label>
-                            <Input
-                                className="h-14 pl-4 text-lg bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 ring-blue-500/20"
-                                placeholder={t('organizer.destination_placeholder')}
-                                value={destination}
-                                onChange={(e) => setDestination(e.target.value)}
-                            />
-                        </div>
-
-                        {/* Dates */}
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                                <label className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <Calendar className="w-5 h-5 text-blue-500" />
-                                    {t('organizer.start_date')}
-                                </label>
-                                <Input
-                                    type="date"
-                                    className="h-14 text-base bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl"
-                                    value={dates.start}
-                                    onChange={(e) => setDates({ ...dates, start: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-base font-semibold text-slate-900 dark:text-white">{t('organizer.end_date')}</label>
-                                <Input
-                                    type="date"
-                                    className="h-14 text-base bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl"
-                                    value={dates.end}
-                                    onChange={(e) => setDates({ ...dates, end: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Interests */}
-                        <div className="space-y-4">
-                            <label className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-blue-500" />
-                                {t('organizer.interests_label')}
-                            </label>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 -mt-2">
-                                {t('organizer.interests_subtitle')}
-                            </p>
-                            <div className="flex flex-wrap gap-3">
-                                {interests.map(interest => (
-                                    <Badge
-                                        key={interest}
-                                        variant={selectedInterests.includes(interest) ? "default" : "outline"}
-                                        className={`h-10 px-5 text-sm cursor-pointer transition-all rounded-full ${selectedInterests.includes(interest)
-                                            ? 'bg-blue-600 hover:bg-blue-700 border-blue-600 shadow-md shadow-blue-500/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-slate-800'
-                                            }`}
-                                        onClick={() => toggleInterest(interest)}
-                                    >
-                                        {interest}
-                                    </Badge>
-                                ))}
-                            </div>
-                        </div>
-
-                        <Button
-                            className="w-full h-16 text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl shadow-blue-500/30 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            onClick={handleGenerateItinerary}
-                        >
-                            <Sparkles className="w-6 h-6 mr-3 animate-pulse" />
-                            {t('organizer.generate_btn')}
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* My Saved Trips (Placeholder) */}
-                <div className="space-y-4 pt-4">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Luggage className="w-5 h-5" /> {t('organizer.saved_trips_title')}
-                    </h3>
-                    <div className="grid gap-4">
-                        {/* Empty State / Placeholder */}
-                        <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center text-slate-400">
-                            <Ghost className="w-8 h-8 mb-2 opacity-50" />
-                            <p>{t('organizer.no_saved_trips')}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans animate-in fade-in duration-500 pb-24">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold font-['Outfit'] text-slate-900 dark:text-white flex items-center gap-3">
+              <Command className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              {t("organizer.title") || "Command Center"}
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              {t("organizer.subtitle") ||
+                "Your central hub for planning your Samui adventure"}
+            </p>
+          </div>
         </div>
-    );
+
+        {/* Main Dashboard Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full space-y-6"
+        >
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl overflow-x-auto">
+            <TabsTrigger
+              value="overview"
+              className="h-12 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="plan"
+              className="h-12 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">My Plan</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="h-12 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+            >
+              <History className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">History</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="collections"
+              className="h-12 data-[state=active]:bg-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Collections</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="goals"
+              className="h-12 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Goals</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab Content Areas */}
+          <div className="min-h-[500px]">
+            {/* Overview Tab */}
+            <TabsContent
+              value="overview"
+              className="mt-0 focus-visible:outline-none"
+            >
+              <OrganizerOverview
+                activeTrip={activeTrip}
+                onNavigate={(tab) => setActiveTab(tab)}
+              />
+            </TabsContent>
+
+            <TabsContent
+              value="plan"
+              className="mt-0 focus-visible:outline-none data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-2 duration-500"
+            >
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+                <TripPlanner
+                  activeTrip={activeTrip}
+                  onAddItem={actions.addItemToTrip}
+                  onRemoveItem={actions.removeItemFromTrip}
+                  onCreateTrip={actions.createTrip}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="history"
+              className="mt-0 focus-visible:outline-none"
+            >
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm min-h-[60vh]">
+                <MyBookings />
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="collections"
+              className="mt-0 focus-visible:outline-none"
+            >
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm min-h-[60vh]">
+                <Favorites onAddToTrip={actions.addItemToTrip} />
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="goals"
+              className="mt-0 focus-visible:outline-none"
+            >
+              <div className="max-w-2xl mx-auto pt-4">
+                <GoalsTab />
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+    </div>
+  );
 }

@@ -12,6 +12,7 @@ import MapIcon from "lucide-react/icons/map";
 import ImageIcon from "lucide-react/icons/image";
 import Loader2 from "lucide-react/icons/loader-2";
 import Bot from "lucide-react/icons/bot";
+import CalendarIcon from "lucide-react/icons/calendar";
 import {
   Card,
   CardHeader,
@@ -34,6 +35,8 @@ const StatsOverview = React.lazy(
 );
 import { FinanceView } from "@/features/vendors/components/FinanceView";
 import { ReceptionistConfig } from "@/features/vendors/components/ReceptionistConfig";
+import { SalesScoutConfig } from "@/features/vendors/components/SalesScoutConfig";
+import { AdvancedMetrics } from "@/features/vendors/components/AdvancedMetrics";
 
 const ServicesView = ({ provider }) => {
   if (!provider?.price_packages || provider.price_packages.length === 0) {
@@ -467,9 +470,9 @@ export default function ProviderDashboard() {
               <StatsOverview provider={providerProfile} />
             </React.Suspense>
 
-            <Card className="p-12 border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 mt-6 md:mt-0 font-mono text-xs shadow-none bg-slate-50">
-              // ADVANCED METRICS MODULE COMING SOON
-            </Card>
+            <div className="mt-8">
+              <AdvancedMetrics provider={providerProfile} />
+            </div>
           </div>
         )}
 
@@ -486,19 +489,7 @@ export default function ProviderDashboard() {
             </h2>
             <div className="space-y-6">
               <ReceptionistConfig provider={providerProfile} />
-
-              <div className="opacity-50 pointer-events-none filter blur-[1px]">
-                <Card className="border-slate-200 bg-white">
-                  <CardHeader>
-                    <CardTitle className="text-slate-400 font-mono">
-                      SALES_SCOUT_UNIT (Coming Soon)
-                    </CardTitle>
-                    <CardDescription className="font-mono text-xs">
-                      Automated lead generation protocol.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
+              <SalesScoutConfig provider={providerProfile} />
             </div>
           </div>
         )}

@@ -22,19 +22,21 @@ export default function AdminLogs() {
     fetchInitialLogs();
 
     // Realtime Subscription
-    const channel = supabase
-      .channel("admin-logs-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "agent_logs" },
-        (payload) => {
-          setLogs((prev) => [payload.new, ...prev].slice(0, 50));
-        },
-      )
-      .subscribe();
+    const channel = supabase.channel("admin-system-logs");
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "logs" },
+      (payload) => {
+        setLogs((prev) => [payload.new, ...prev].slice(0, 100));
+      },
+    );
+
+    channel.subscribe();
 
     return () => {
-      // Cleanup if needed (mock client handles this gracefully)
+      // @ts-ignore
       supabase.removeChannel(channel);
     };
   }, []);

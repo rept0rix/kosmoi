@@ -24,38 +24,43 @@ const AdminOptimizer = () => {
     fetchInsights();
 
     // specific channel for optimizer tasks
-    const channel = supabase
-      .channel("admin-optimizer-tasks")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "agent_tasks" },
-        (payload) => {
-          // Check if it's an optimization task before refreshing everything
-          if (
-            payload.new &&
-            payload.new.tags &&
-            JSON.stringify(payload.new.tags).includes("optimization")
-          ) {
-            fetchInsights();
-          }
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "agent_tasks" },
-        (payload) => {
-          if (
-            payload.new &&
-            payload.new.tags &&
-            JSON.stringify(payload.new.tags).includes("optimization")
-          ) {
-            fetchInsights();
-          }
-        },
-      )
-      .subscribe();
+    const channel = supabase.channel("admin-optimizer-tasks");
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "agent_tasks" },
+      (payload) => {
+        // Check if it's an optimization task before refreshing everything
+        if (
+          payload.new &&
+          payload.new.tags &&
+          JSON.stringify(payload.new.tags).includes("optimization")
+        ) {
+          fetchInsights();
+        }
+      },
+    );
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "agent_tasks" },
+      (payload) => {
+        if (
+          payload.new &&
+          payload.new.tags &&
+          JSON.stringify(payload.new.tags).includes("optimization")
+        ) {
+          fetchInsights();
+        }
+      },
+    );
+
+    channel.subscribe();
 
     return () => {
+      // @ts-ignore
       supabase.removeChannel(channel);
     };
   }, []);
