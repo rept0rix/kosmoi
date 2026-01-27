@@ -47,12 +47,24 @@ async function sendWithMedia(chatId, text, filePath = null) {
     }
 }
 
+// --- DEDUPLICATION ---
+const processedMessages = new Set();
+setInterval(() => processedMessages.clear(), 60000); // Clear memory every minute
+
 // --- INCOMING MESSAGE HANDLER ---
 bot.on('message', async (msg) => {
+    // 1. Anti-Loop: Ignore Bots
+    if (msg.from && msg.from.is_bot) return;
+
+    // 2. Anti-Loop: Deduplicate
+    if (processedMessages.has(msg.message_id)) return;
+    processedMessages.add(msg.message_id);
+
     const chatId = msg.chat.id.toString();
     const text = msg.text || msg.caption || "";
     const photos = msg.photo;
 
+    // 3. Auth Check
     if (chatId !== TELEGRAM_CHAT_ID) {
         console.log(`🚫 Ignore message from unauthorized user: ${chatId}`);
         return;

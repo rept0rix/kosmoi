@@ -12,14 +12,22 @@ ToolRegistry.register("generate_image", "Generate a new image using AI based on 
     });
 });
 
-ToolRegistry.register("nano_banana_api", "Generate premium images in the Nano Banana style.", { prompt: "string", style: "string" }, async (payload) => {
-    const prompt = payload.prompt || "abstract design";
-    const style = payload.style || "modern";
-    const enhancedPrompt = `${prompt}, ${style} style, high quality, professional design, vector art`;
-    const encodedPrompt = encodeURIComponent(enhancedPrompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=600&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
+ToolRegistry.register("nano_banana_api", "Generate premium images in the Nano Banana Pro style (Gemini 3).", { prompt: "string", style: "string", aspectRatio: "string" }, async (payload) => {
+    const prompt = payload.prompt || "luxury abstract design";
+    const style = payload.style || "premium cinematic";
+    const enhancedPrompt = `${prompt}, ${style}, ultra high quality, professional photography, 8k resolution`;
 
-    return `[Nano Banana Pro] Image generated successfully: ![Generated Image](${imageUrl})\nURL: ${imageUrl}`;
+    console.log(`[Nano Banana Pro] Generating high-quality asset...`);
+    const result = await GenerateImage({
+        prompt: enhancedPrompt,
+        aspectRatio: payload.aspectRatio || "16:9"
+    });
+
+    if (result.error) {
+        return `[Error] Nano Banana Pro failed: ${result.error}`;
+    }
+
+    return `[Nano Banana Pro] Asset generated successfully. URL: ${result.url}`;
 });
 
 // --- CALENDAR TOOLS ---

@@ -1,4 +1,4 @@
-import { AbsoluteFill, useVideoConfig, useCurrentFrame, interpolate, Audio, Img, staticFile, Sequence } from 'remotion';
+import { AbsoluteFill, useVideoConfig, useCurrentFrame, interpolate, Audio, Img, staticFile, Sequence, spring } from 'remotion';
 import React from 'react';
 
 export const PropertyTour: React.FC<{
@@ -7,105 +7,139 @@ export const PropertyTour: React.FC<{
     images: string[];
 }> = ({ name, price, images }) => {
     const { fps, durationInFrames } = useVideoConfig();
-    const slideDuration = 90; // 3 seconds at 30fps
+    const slideDuration = 120; // 4 seconds per slide for a slower, premium feel
 
-    // Fallback if no images
-    const safeImages = images && images.length > 0 ? images : [staticFile('assets/placeholder.jpg')];
+    // Force usage of our new Premium Assets if empty
+    // In a real app, 'images' would be passed dynamically.
+    const premiumImages = [
+        staticFile('assets/slide1.jpg'), // Aerial
+        staticFile('assets/slide2.jpg'), // Interior
+        staticFile('assets/slide3.jpg'), // Lifestyle
+    ];
+
+    const safeImages = images && images.length > 0 ? images : premiumImages;
 
     return (
-        <AbsoluteFill style={{ backgroundColor: '#000' }}>
-            {/* Background Music */}
-            <Audio src={staticFile('assets/music.mp3')} volume={0.3} loop />
+        <AbsoluteFill style={{ backgroundColor: '#050505' }}>
+            {/* Background Music - Disabled due to missing asset */}
+            {/* <Audio src={staticFile('assets/music.mp3')} volume={0.3} loop /> */}
 
             {/* Slideshow */}
             {safeImages.map((img, i) => {
-                const startFrame = i * slideDuration;
-
-                // Don't render if out of bounds (optimization)
-                // if (frame < startFrame || frame > startFrame + slideDuration + 30) return null;
-
+                const startFrame = i * (slideDuration - 15); // Slight overlap for crossfade
                 return (
-                    <Sequence key={i} from={startFrame} durationInFrames={slideDuration + 15} layout="none">
-                        <Slide image={img} />
+                    <Sequence key={i} from={startFrame} durationInFrames={slideDuration} layout="none">
+                        <Slide image={img} index={i} />
                     </Sequence>
                 );
             })}
 
-            {/* Global Overlay (Verified Badge) */}
+            {/* Letterbox / Cinematic Bars */}
+            <AbsoluteFill style={{ justifyContent: 'space-between', pointerEvents: 'none' }}>
+                <div style={{ height: '80px', background: 'linear-gradient(to bottom, black, transparent)', opacity: 0.8 }} />
+                <div style={{ height: '150px', background: 'linear-gradient(to top, black, transparent)', opacity: 0.9 }} />
+            </AbsoluteFill>
+
+            {/* Top Badge - Minimalist Gold */}
             <AbsoluteFill>
                 <div style={{
                     position: 'absolute',
-                    top: 50,
-                    left: 40,
-                    background: 'rgba(0, 0, 0, 0.6)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '10px 20px',
-                    borderRadius: '50px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    top: 60,
+                    width: '100%',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
+                    justifyContent: 'center',
                 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#00f2ff', boxShadow: '0 0 10px #00f2ff' }} />
-                    <span style={{ color: 'white', fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 24, textTransform: 'uppercase' }}>
-                        Kosmoi Verified
-                    </span>
+                    <div style={{
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        backdropFilter: 'blur(10px)',
+                        padding: '8px 24px',
+                        borderRadius: '2px',
+                        border: '1px solid rgba(212, 175, 55, 0.3)', // Gold border
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <div style={{ width: 8, height: 8, transform: 'rotate(45deg)', background: '#d4af37' }} /> {/* Gold Diamond */}
+                        <span style={{ color: '#f8f8f8', fontFamily: 'Didot, serif', letterSpacing: '2px', fontSize: 14, textTransform: 'uppercase' }}>
+                            Kosmoi Signature
+                        </span>
+                        <div style={{ width: 8, height: 8, transform: 'rotate(45deg)', background: '#d4af37' }} />
+                    </div>
                 </div>
             </AbsoluteFill>
 
-            {/* Bottom Info Card */}
-            <AbsoluteFill style={{ justifyContent: 'flex-end' }}>
-                <div style={{
-                    height: 500,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.95), transparent)',
-                    display: 'flex',
-                    flexDirection: 'columm',
-                    justifyContent: 'flex-end',
-                    padding: '60px 40px',
-                    fontFamily: 'sans-serif'
-                }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Bottom Info - Luxury Editorial Style */}
+            <AbsoluteFill style={{ justifyContent: 'flex-end', paddingBottom: 100 }}>
+                <Sequence from={20}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                        width: '100%',
+                        gap: 15
+                    }}>
                         <h1 style={{
-                            fontSize: 72,
-                            fontWeight: 900,
+                            fontFamily: 'Didot, serif',
+                            fontSize: 80,
                             color: 'white',
                             margin: 0,
-                            lineHeight: 1,
-                            textShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                            lineHeight: 0.9,
+                            textShadow: '0 10px 30px rgba(0,0,0,0.8)',
+                            letterSpacing: '-2px'
                         }}>
                             {name?.toUpperCase()}
                         </h1>
+
+                        <div style={{ width: 60, height: 2, background: '#d4af37' }} />
+
                         <div style={{
-                            display: 'inline-block',
-                            background: '#eab308',
-                            color: 'black',
-                            padding: '10px 30px',
-                            borderRadius: 15,
-                            fontSize: 32,
-                            fontWeight: 'bold',
-                            alignSelf: 'flex-start' // Flex item alignment
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10
                         }}>
-                            From {Number(price).toLocaleString()} THB
+                            <span style={{
+                                fontFamily: 'sans-serif',
+                                fontWeight: 300,
+                                fontSize: 24,
+                                color: '#aaa',
+                                letterSpacing: '1px'
+                            }}>
+                                STARTING AT
+                            </span>
+                            <span style={{
+                                fontFamily: 'sans-serif',
+                                fontWeight: 700,
+                                fontSize: 32,
+                                color: '#d4af37', // Gold
+                            }}>
+                                {Number(price).toLocaleString()} THB
+                            </span>
                         </div>
                     </div>
-                </div>
+                </Sequence>
             </AbsoluteFill>
         </AbsoluteFill>
     );
 };
 
-const Slide: React.FC<{ image: string }> = ({ image }) => {
+const Slide: React.FC<{ image: string, index: number }> = ({ image, index }) => {
     const frame = useCurrentFrame();
-    const { width, height, durationInFrames } = useVideoConfig();
+    const { durationInFrames } = useVideoConfig();
 
-    // Ken Burns Effect: Zoom In + Pan
-    const scale = interpolate(frame, [0, durationInFrames], [1.1, 1.3]);
-    const translateX = interpolate(frame, [0, durationInFrames], [0, -50]);
+    // Cinematic Move: Pan direction changes per slide
+    const direction = index % 2 === 0 ? 1 : -1;
 
-    // Crossfade Logic (handled by Sequence overlap or simpler opacity fade in/out)
+    // Slower, smoother zoom (1.0 -> 1.15)
+    const scale = interpolate(frame, [0, durationInFrames], [1.0, 1.15]);
+
+    // Gentle Pan
+    const translateX = interpolate(frame, [0, durationInFrames], [0, 30 * direction]);
+
+    // Crossfade Opacity
     const opacity = interpolate(
         frame,
-        [0, 15, durationInFrames - 15, durationInFrames],
+        [0, 20, durationInFrames - 20, durationInFrames],
         [0, 1, 1, 0]
     );
 

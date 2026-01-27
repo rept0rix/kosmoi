@@ -256,22 +256,24 @@ const YachtTours = () => {
 
               <div className="p-10">
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="text-[9px] font-bold text-white/40 tracking-[0.3em] uppercase">{yacht.category}</span>
+                  <span className="text-[9px] font-bold text-white/40 tracking-[0.3em] uppercase">{t(`yachtTours.category.${yacht.category}`)}</span>
                   <div className="w-[1px] h-3 bg-white/10" />
                   <span className="text-[9px] font-medium text-white/40 uppercase tracking-[0.2em]">{t('yachtTours.fleet.hours', { count: yacht.duration_hours })}</span>
                 </div>
 
-                <h3 className="text-xl md:text-2xl font-heading font-medium mb-3 text-white tracking-tight leading-tight">{yacht.name}</h3>
+                <h3 className="text-xl md:text-2xl font-heading font-medium mb-3 text-white tracking-tight leading-tight">
+                  {t(`yachts.${yacht.id}.name`) || yacht.name}
+                </h3>
 
                 <p className="text-slate-400 mb-8 leading-relaxed text-sm font-light min-h-[60px] line-clamp-3">
-                  {yacht.description}
+                  {t(`yachts.${yacht.id}.description`) || yacht.description}
                 </p>
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-10">
-                  {yacht.features.slice(0, 4).map(feature => (
+                  {yacht.features.slice(0, 4).map((feature, fIdx) => (
                     <div key={feature} className="flex items-center gap-2 text-[10px] text-slate-400 group-hover:text-slate-300 transition-colors uppercase tracking-wider">
                       <div className="w-1 h-1 bg-amber-500/50" />
-                      {feature}
+                      {t(`yachts.${yacht.id}.features.${fIdx}`) || feature}
                     </div>
                   ))}
                 </div>

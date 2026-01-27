@@ -12,9 +12,10 @@ if (!token) {
     process.exit(1);
 }
 
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: false }); // Disabled to prevent conflict with telegram_hub.js
 
-console.log("🚀 Telegram Ingress Bot Started (Polling Mode)...");
+console.log("⚠️ This bot script is DEPRECATED in favor of telegram_hub.js. Polling disabled.");
+process.exit(0);
 
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;

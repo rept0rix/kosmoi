@@ -1,6 +1,8 @@
 import { Composition } from 'remotion';
 import { Main } from './Main';
 import { PropertyTour } from './PropertyTour';
+import { CinemaTour } from './CinemaTour';
+import { AppExplainer } from './AppExplainer';
 import transcript from '../assets/transcript.json';
 
 export const RemotionRoot: React.FC = () => {
@@ -30,8 +32,32 @@ export const RemotionRoot: React.FC = () => {
                 width={1080}
                 height={1920}
                 defaultProps={{
-                    name: "Luxury Villa",
-                    price: "0",
+                    name: "THE ROYAL HORIZON",
+                    price: "65000",
+                    images: [],
+                    inc1: "TEST",
+                    inc2: "TEST",
+                    inc3: "TEST"
+                }}
+            />
+            <Composition
+                id="AppExplainer"
+                component={AppExplainer}
+                durationInFrames={1350} // 45 Seconds
+                fps={30}
+                width={1080}
+                height={1920}
+            />
+            <Composition
+                id="CinemaTour"
+                component={CinemaTour}
+                durationInFrames={45 * 4 + 60} // 4 slides * 1.5s + 2s CTA = ~8s total
+                fps={30}
+                width={1080}
+                height={1920}
+                defaultProps={{
+                    name: "CINEMA MODE",
+                    price: "999,999",
                     images: []
                 }}
             />
