@@ -27,20 +27,23 @@ const AdminMarketing = () => {
     loadHistory();
 
     // Realtime Subscription for "Dave's" posts
-    const channel = supabase
-      .channel("admin-marketing-feed")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "marketing_posts" },
-        (payload) => {
-          // Instantly update feed when Dave posts
-          console.log("⚡ Synergy: New Marketing Post detected!");
-          loadHistory();
-        },
-      )
-      .subscribe();
+    const channel = supabase.channel("admin-marketing-feed");
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "marketing_posts" },
+      (payload) => {
+        // Instantly update feed when Dave posts
+        console.log("⚡ Synergy: New Marketing Post detected!");
+        loadHistory();
+      },
+    );
+
+    channel.subscribe();
 
     return () => {
+      // @ts-ignore
       supabase.removeChannel(channel);
     };
   }, []);

@@ -233,7 +233,7 @@ export default function SystemMap() {
         <MiniMap
           className="bg-slate-900 border-slate-700"
           nodeColor={(n) => {
-            if (n.style?.background) return n.style.background;
+            if (n.style?.background) return String(n.style.background);
             return "#fff";
           }}
         />

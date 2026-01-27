@@ -135,6 +135,22 @@ class APIClient {
     }
     this.cache = new Map();
     this.listeners = new Map();
+    this.inFlight = new Map(); // For request deduplication
+  }
+
+  // Cache Management
+  invalidate(table) {
+    console.log(`[APIClient] Invalidating cache for table: ${table}`);
+    for (const [key, value] of this.cache.entries()) {
+      if (key.includes(`"table":"${table}"`)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  clearCache() {
+    console.log("[APIClient] Clearing all cache");
+    this.cache.clear();
   }
 
   // Unified request method
@@ -142,39 +158,77 @@ class APIClient {
     const { method = "GET", table, data, filters, options = {} } = config;
     const cacheKey = this.getCacheKey(config);
 
+    // 1. Cache Check (GET only)
     if (method === "GET" && this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey);
     }
 
-    // Basic retry logic tailored for unstable networks
-    let lastError;
-    for (let i = 0; i < 3; i++) {
-      /* Fix: Check if this.supabase exists before calling it */
-      try {
-        const result = await this._executeRequest(config);
-        if (method === "GET") {
-          this.cache.set(cacheKey, result);
-        }
-        if (method !== "GET") {
-          this.notify(table, "updated", result);
-        }
-        return result;
-      } catch (error) {
-        lastError = error;
-        console.warn(`API attempt ${i + 1} failed:`, error);
-        if (i < 2)
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+    // 2. Request Deduplication (GET only)
+    if (method === "GET" && this.inFlight.has(cacheKey)) {
+      return this.inFlight.get(cacheKey);
+    }
+
+    // 3. Mutation Safety Check
+    if (["PUT", "PATCH", "DELETE"].includes(method.toUpperCase())) {
+      if (!filters || Object.keys(filters).length === 0) {
+        throw new Error(
+          `UNSAFE_MUTATION: ${method} operation on table '${table}' requires filters to prevent full-table impact.`,
+        );
       }
     }
-    throw lastError;
+
+    // 4. Execution with Retry & Timeout
+    const execute = async () => {
+      let lastError;
+      for (let i = 0; i < 3; i++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s Timeout
+
+          const result = await this._executeRequest({
+            ...config,
+            abortSignal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (method === "GET") {
+            this.cache.set(cacheKey, result);
+          } else {
+            // Auto-invalidate table if it was a mutation
+            this.invalidate(table);
+            this.notify(table, "updated", result);
+          }
+          return result;
+        } catch (error) {
+          lastError = error;
+          if (error.name === "AbortError") {
+            console.error(`[APIClient] Request timed out on attempt ${i + 1}`);
+          }
+          console.warn(`[APIClient] Attempt ${i + 1} failed:`, error.message);
+          if (i < 2)
+            await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+        }
+      }
+      throw lastError;
+    };
+
+    if (method === "GET") {
+      const promise = execute().finally(() => this.inFlight.delete(cacheKey));
+      this.inFlight.set(cacheKey, promise);
+      return promise;
+    }
+
+    return execute();
   }
 
   async _executeRequest(config) {
-    const { method, table, data, filters, options } = config;
+    const { method, table, data, filters, options, abortSignal } = config;
 
+    // Ensure we are not using a mock if filters are missing for dangerous ops
     let query = this.supabase.from(table);
 
-    switch (method) {
+    switch (method.toUpperCase()) {
       case "GET":
         query = query.select(options.select || "*");
         if (filters) {
@@ -182,13 +236,17 @@ class APIClient {
             query = query.eq(key, value);
           });
         }
+        if (options.limit) query = query.limit(options.limit);
+        if (options.order)
+          query = query.order(options.order.column, {
+            ascending: options.order.ascending,
+          });
         break;
       case "POST":
         query = query.insert(data).select();
         break;
       case "PUT":
       case "PATCH":
-        // Assuming update requires an Update ID in filters or options
         query = query.update(data).select();
         if (filters) {
           Object.entries(filters).forEach(([key, value]) => {
@@ -207,14 +265,18 @@ class APIClient {
     }
 
     const { data: resultData, error } = await query;
+
     if (error) {
       throw new Error(error.message);
     }
+
     return resultData;
   }
 
   getCacheKey(config) {
-    return JSON.stringify(config);
+    // Avoid circular refs or heavy objects in key
+    const { method, table, filters, options } = config;
+    return JSON.stringify({ method, table, filters, options });
   }
 
   subscribe(table, callback) {

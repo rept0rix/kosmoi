@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { realSupabase as supabase } from "../api/supabaseClient.js";
+import { api } from "../core/api/client.js";
 
 import { SendEmail } from "@/api/integrations";
 import { EmailTemplates } from "./EmailTemplates.js";
@@ -17,15 +18,15 @@ export const AdminService = {
    */
   getUsers: async () => {
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Use APIClient for deduplication and caching
+      const data = await api.request({
+        table: "users",
+        method: "GET",
+        options: {
+          order: { column: "created_at", ascending: false },
+        },
+      });
 
-      if (error) {
-        console.warn("AdminService: Users fetch failed", error);
-        return { data: [], error };
-      }
       return { data, error: null };
     } catch (e) {
       console.error("AdminService Error:", e);
@@ -39,15 +40,15 @@ export const AdminService = {
 
   getBusinesses: async () => {
     try {
-      const { data, error } = await supabase
-        .from("service_providers")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Use APIClient for deduplication and caching
+      const data = await api.request({
+        table: "service_providers",
+        method: "GET",
+        options: {
+          order: { column: "created_at", ascending: false },
+        },
+      });
 
-      if (error) {
-        console.warn("AdminService: Businesses fetch failed", error);
-        return [];
-      }
       return data;
     } catch (e) {
       console.error("AdminService Error:", e);
@@ -383,23 +384,25 @@ export const AdminService = {
   /**
    * Update User Role (Admin -> User or User -> Admin)
    */
+  /**
+   * Update User Role (Admin -> User or User -> Admin)
+   * Calls secure Edge Function 'admin-actions'
+   */
   updateUserRole: async (userId, newRole) => {
     try {
-      console.log(`AdminService: updating role for ${userId} to ${newRole}`);
+      console.log(
+        `AdminService: updating role for ${userId} to ${newRole} via Edge Function`,
+      );
 
-      // 1. Update public.users table
-      const { data, error } = await supabase
-        .from("users")
-        .update({ role: newRole })
-        .eq("id", userId)
-        .select();
+      const { data, error } = await supabase.functions.invoke("admin-actions", {
+        body: {
+          action: "update_user_role",
+          payload: { userId, newRole },
+        },
+      });
 
       if (error) throw error;
-
-      // Note: We cannot update auth.users metadata directly from client-side SDK usually,
-      // unless we have a specific RPC or Edge Function.
-      // However, our AuthContext reads from public.users, so this is sufficient for App-level RBAC.
-      // Attempts to update app_metadata usually require Service Role key in backend.
+      if (!data?.success) throw new Error(data?.error || "Role update failed");
 
       return { data, error: null };
     } catch (e) {
@@ -410,16 +413,23 @@ export const AdminService = {
 
   /**
    * Delete User (Admin Only)
-   * Calls RPC 'admin_delete_user'
+   * Calls secure Edge Function 'admin-actions'
    */
   deleteUser: async (userId) => {
     try {
-      console.log(`AdminService: Deleting user ${userId} via RPC`);
-      const { error } = await supabase.rpc("admin_delete_user", {
-        target_user_id: userId,
+      console.log(`AdminService: Deleting user ${userId} via Edge Function`);
+
+      const { data, error } = await supabase.functions.invoke("admin-actions", {
+        body: {
+          action: "delete_user",
+          payload: { userId },
+        },
       });
 
       if (error) throw error;
+      if (!data?.success)
+        throw new Error(data?.error || "User deletion failed");
+
       return { error: null };
     } catch (e) {
       console.error("Delete User Failed:", e);
@@ -496,29 +506,36 @@ export const AdminService = {
    * Listens to changes in users, bookings, and providers
    */
   subscribeToDashboardEvents: (callback) => {
-    const channel = supabase
-      .channel("admin-dashboard-synergy")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "users" },
-        callback,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        callback,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "service_providers" },
-        callback,
-      )
-      .subscribe();
+    const channel = supabase.channel("admin-dashboard-synergy");
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "users" },
+      callback,
+    );
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "bookings" },
+      callback,
+    );
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "service_providers" },
+      callback,
+    );
+
+    channel.subscribe();
 
     return channel;
   },
 
   unsubscribe: async (channel) => {
+    // @ts-ignore
     if (channel) await supabase.removeChannel(channel);
   },
 };

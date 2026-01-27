@@ -149,131 +149,59 @@ export function ScoutSearch({ onMapAction }) {
     setInput("");
     setIsTyping(true);
 
-    // --- DEEP RESEARCH MODE (STREAMING) ---
+    // --- DEEP RESEARCH MODE ---
     if (isDeepResearch) {
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-        const url = `${supabaseUrl}/functions/v1/deep-research`;
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-          body: JSON.stringify({ query: input }),
-        });
-
-        if (!response.ok) throw new Error("Stream failed");
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        const progressMsgId = Date.now().toString() + "_progress";
-        setMessages((prev) => [
-          ...prev,
+        const { data, error } = await supabase.functions.invoke(
+          "deep-research",
           {
-            id: progressMsgId,
-            role: "assistant",
-            content: "🔄 **Initializing Deep Research...**",
+            body: {
+              query: input,
+              lat: currentLocation?.lat || 9.512,
+              lng: currentLocation?.lng || 100.058,
+            },
           },
-        ]);
+        );
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        if (error) throw error;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (!line.trim()) continue;
-
-            const eventMatch = line.match(/^event: (.+)/);
-            const dataMatch = line.match(/^data: (.+)/);
-
-            if (eventMatch && dataMatch) {
-              const event = eventMatch[1];
-              const data = JSON.parse(dataMatch[1]);
-
-              if (event === "status") {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === progressMsgId
-                      ? { ...m, content: `🔄 **${data.message}**` }
-                      : m,
-                  ),
-                );
-              } else if (event === "search") {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === progressMsgId
-                      ? { ...m, content: `🔍 **Searching:** ${data.query}` }
-                      : m,
-                  ),
-                );
-              } else if (event === "reading") {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === progressMsgId
-                      ? { ...m, content: `📖 **Reading:** ${data.title}` }
-                      : m,
-                  ),
-                );
-              } else if (event === "plan") {
-                setMessages((prev) => [
-                  ...prev.filter((m) => m.id !== progressMsgId),
-                  {
-                    id: Date.now().toString(),
-                    role: "assistant",
-                    content: `🧠 **Research Plan:**\n${data.queries.map((q) => `- 🔍 ${q}`).join("\n")}`,
-                  },
-                ]);
-              } else if (event === "reflection") {
-                if (!data.sufficient) {
-                  setMessages((prev) => [
-                    ...prev,
-                    {
-                      id: Date.now().toString(),
-                      role: "assistant",
-                      content: `💡 **Insight:** ${data.reason}\n🔄 **Expanding search:** ${data.newQuery}`,
-                    },
-                  ]);
-                }
-              } else if (event === "answer") {
-                setMessages((prev) => [
-                  ...prev.filter((m) => m.id !== progressMsgId),
-                  {
-                    id: Date.now().toString(),
-                    role: "assistant",
-                    content:
-                      data.answer +
-                      `\n\n---\n📚 **${data.sourcesRead} sources** • 🔍 **${data.queriesUsed} queries**`,
-                  },
-                ]);
-                setIsTyping(false);
-              }
-            }
-          }
+        // Display Plan
+        if (data.plan) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString() + "_plan",
+              role: "assistant",
+              content:
+                `🧠 **Research Plan:**\n` +
+                data.plan.map((q) => `- 🔍 *${q}*`).join("\n"),
+            },
+          ]);
         }
+
+        // Display Answer
+        const agentMsg = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.answer || "Research complete, but no answer generated.",
+        };
+        setMessages((prev) => [...prev, agentMsg]);
       } catch (err) {
-        console.error("Deep Research Stream Error:", err);
+        console.error("Deep Search Error:", err);
         toast.error("Deep Research Failed");
         setMessages((prev) => [
           ...prev,
           {
-            id: Date.now().toString(),
+            id: Date.now().toString() + "_error",
             role: "assistant",
             content:
-              "⚠️ **Deep Research Failed**\n\nPossible causes:\n- Missing **SERPER_API_KEY** (get free at serper.dev)\n- Network/server issue\n\nTry again or switch to standard mode.",
+              "⚠️ **Deep Research System Failure.** I could not complete the deep dive. Please try again or switch to standard mode.",
           },
         ]);
+      } finally {
         setIsTyping(false);
       }
-      return;
+      return; // Stop here, don't do standard chat
     }
 
     // --- STANDARD MODE ---

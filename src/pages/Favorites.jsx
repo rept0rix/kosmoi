@@ -1,39 +1,53 @@
-
 import React from "react";
-import { db } from '@/api/supabaseClient';
+import { db } from "@/api/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/shared/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Phone, MessageCircle, Heart, Trash2 } from "lucide-react";
+import {
+  Star,
+  MapPin,
+  Phone,
+  MessageCircle,
+  Heart,
+  Trash2,
+  Plus,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
 
-export default function Favorites() {
+export default function Favorites({ onAddToTrip }) {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
 
-  const { user } = useAuth();
+  const { user, isAuthenticated, navigateToLogin } = useAuth();
 
-  const { data: favorites = [], isLoading, refetch } = useQuery({
-    queryKey: ['favorites'],
+  // ... (keep existing query logic) ...
+  const {
+    data: favorites = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["favorites"],
     queryFn: async () => {
       const favs = await db.entities.Favorite.list();
-      const providerIds = favs.map(f => f.service_provider_id);
+      const providerIds = favs.map((f) => f.service_provider_id);
       if (providerIds.length === 0) return [];
 
       const providers = await db.entities.ServiceProvider.list();
-      return providers.filter(p => providerIds.includes(p.id));
+      return providers.filter((p) => providerIds.includes(p.id));
     },
     enabled: !!user,
   });
 
   const handleRemoveFavorite = async (providerId) => {
-    const fav = await db.entities.Favorite.filter({ service_provider_id: providerId });
+    const fav = await db.entities.Favorite.filter({
+      service_provider_id: providerId,
+    });
     if (fav.length > 0) {
       await db.entities.Favorite.delete(fav[0].id);
       refetch();
@@ -42,27 +56,37 @@ export default function Favorites() {
 
   const handleCall = async (phone) => {
     try {
-      const isAuth = await db.auth.isAuthenticated();
-      if (!isAuth) {
-        db.auth.redirectToLogin(window.location.pathname);
+      if (!isAuthenticated) {
+        navigateToLogin();
         return;
       }
       window.location.href = `tel:${phone} `;
     } catch (error) {
-      db.auth.redirectToLogin(window.location.pathname);
+      navigateToLogin();
     }
   };
 
   const handleWhatsApp = async (phone) => {
     try {
-      const isAuth = await db.auth.isAuthenticated();
-      if (!isAuth) {
-        db.auth.redirectToLogin(window.location.pathname);
+      if (!isAuthenticated) {
+        navigateToLogin();
         return;
       }
-      window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`, '_blank');
+      window.open(`https://wa.me/${phone.replace(/[^0-9]/g, "")}`, "_blank");
     } catch (error) {
-      db.auth.redirectToLogin(window.location.pathname);
+      navigateToLogin();
+    }
+  };
+
+  const handleAddToTrip = (provider) => {
+    if (onAddToTrip) {
+      onAddToTrip({
+        title: provider.business_name,
+        type: "place",
+        // location would need to be parsed or standardized
+        description: provider.description,
+        reference_id: provider.id,
+      });
     }
   };
 
@@ -71,10 +95,12 @@ export default function Favorites() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 text-center">
           <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h2 className="text-2xl font-bold mb-2">{t('favorites.loginRequired')}</h2>
-          <p className="text-gray-600 mb-6">{t('favorites.login_desc')}</p>
-          <Button onClick={() => db.auth.redirectToLogin()} className="w-full">
-            {t('login')}
+          <h2 className="text-2xl font-bold mb-2">
+            {t("favorites.loginRequired")}
+          </h2>
+          <p className="text-gray-600 mb-6">{t("favorites.login_desc")}</p>
+          <Button onClick={() => navigateToLogin()} className="w-full">
+            {t("login")}
           </Button>
         </Card>
       </div>
@@ -87,26 +113,31 @@ export default function Favorites() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-            {t('favorites.title')}
+            {t("favorites.title")}
           </h1>
-          <p className="text-gray-600 mt-2">{t('favorites.subtitle')}</p>
+          <p className="text-gray-600 mt-2">{t("favorites.subtitle")}</p>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12 text-gray-500">{t('loading')}</div>
+          <div className="text-center py-12 text-gray-500">{t("loading")}</div>
         ) : favorites.length === 0 ? (
           <Card className="p-12 text-center">
             <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('favorites.empty_title')}</h3>
-            <p className="text-gray-500 mb-6">{t('favorites.empty_desc')}</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {t("favorites.empty_title")}
+            </h3>
+            <p className="text-gray-500 mb-6">{t("favorites.empty_desc")}</p>
             <Button onClick={() => navigate(createPageUrl("ServiceProviders"))}>
-              {t('favorites.search_providers')}
+              {t("favorites.search_providers")}
             </Button>
           </Card>
         ) : (
           <div className="space-y-4">
             {favorites.map((provider) => (
-              <Card key={provider.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={provider.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     {provider.images && provider.images.length > 0 ? (
@@ -144,11 +175,11 @@ export default function Favorites() {
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                           <span className="font-semibold text-sm">
-                            {provider.average_rating?.toFixed(1) || '0.0'}
+                            {provider.average_rating?.toFixed(1) || "0.0"}
                           </span>
                         </div>
                         <span className="text-xs text-gray-500">
-                          ({provider.total_reviews || 0} {t('reviews')})
+                          ({provider.total_reviews || 0} {t("reviews")})
                         </span>
                       </div>
 
@@ -159,7 +190,7 @@ export default function Favorites() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -183,13 +214,29 @@ export default function Favorites() {
                           </Button>
                         )}
                         <Button
-                          onClick={() => navigate(createPageUrl("ServiceProviderDetails") + `?id=${provider.id}`)}
+                          onClick={() =>
+                            navigate(
+                              createPageUrl("ServiceProviderDetails") +
+                                `?id=${provider.id}`,
+                            )
+                          }
                           variant="outline"
                           className="h-9"
                           size="sm"
                         >
-                          {t('action.details')}
+                          {t("action.details")}
                         </Button>
+                        {onAddToTrip && (
+                          <Button
+                            onClick={() => handleAddToTrip(provider)}
+                            variant="secondary"
+                            className="h-9 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200"
+                            size="sm"
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add to Trip
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

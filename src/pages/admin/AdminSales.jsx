@@ -47,21 +47,24 @@ const AdminSales = () => {
     fetchInvitations();
 
     // Realtime Subscription
-    const channel = supabase
-      .channel("admin-sales-feed")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "invitations" },
-        () => {
-          // Refresh list on ANY change (Insert/Update/Delete)
-          // We re-fetch essentially because we need the joined 'service_providers' data
-          // and it's safer/easier than patching the state manually for joined tables.
-          fetchInvitations();
-        },
-      )
-      .subscribe();
+    const channel = supabase.channel("admin-sales-feed");
+
+    // @ts-ignore
+    /** @type {any} */ (channel).on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "invitations" },
+      () => {
+        // Refresh list on ANY change (Insert/Update/Delete)
+        // We re-fetch essentially because we need the joined 'service_providers' data
+        // and it's safer/easier than patching the state manually for joined tables.
+        fetchInvitations();
+      },
+    );
+
+    channel.subscribe();
 
     return () => {
+      // @ts-ignore
       supabase.removeChannel(channel);
     };
   }, []);
