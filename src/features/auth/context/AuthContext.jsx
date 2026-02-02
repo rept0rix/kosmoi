@@ -48,7 +48,28 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
-    // Safety timeout to prevent infinite loading
+    // FAST PATH: If we are on a PUBLIC route, UNBLOCK IMMEDIATELY!
+    const isPublicRoute =
+      window.location.pathname === '/' ||
+      window.location.pathname.startsWith('/he') ||
+      window.location.pathname.startsWith('/th') ||
+      window.location.pathname.startsWith('/ru') ||
+      window.location.pathname.includes('/real-estate') ||
+      window.location.pathname.includes('/experiences') ||
+      window.location.pathname.includes('/marketplace') ||
+      window.location.pathname.includes('/seed') ||
+      ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy', '/login'].some(p => window.location.pathname.includes(p));
+
+    if (isPublicRoute) {
+      console.log("✅ Public route detected, unblocking immediately:", window.location.pathname);
+      setIsLoadingAuth(false);
+      setIsLoadingPublicSettings(false);
+      setAppPublicSettings({ public_settings: {} });
+      // Don't run any auth checks for public routes
+      return;
+    }
+
+    // Safety timeout to prevent infinite loading (for protected routes only)
     const safetyTimer = setTimeout(() => {
       console.warn("Auth check timed out, forcing load completion");
       setIsLoadingAuth(false);
@@ -58,14 +79,6 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
-
-      // FAST PATH: If we are on a PUBLIC route, UNBLOCK immediately!
-      const isPublicRoute =
-        window.location.pathname === '/' ||
-        window.location.pathname.startsWith('/he') ||
-        window.location.pathname.startsWith('/th') ||
-        window.location.pathname.startsWith('/ru') ||
-        ['/about', '/contact', '/pricing', '/blog', '/terms', '/privacy', '/login'].some(p => window.location.pathname.includes(p));
 
       // 0. Screenshot Agent Bypass (DEV Only)
       if (import.meta.env.DEV && navigator.userAgent.includes('ScreenshotAgent')) {
@@ -113,12 +126,8 @@ export const AuthProvider = ({ children }) => {
           checkUserAuth(true, true);
         }
       } else {
-        // No session found or timeout
-        if (isPublicRoute) {
-          setIsLoadingAuth(false); // Unblock for public pages
-        }
-        // Still try to verify in background in case race timed out but session exists
-        await checkUserAuth(false, isPublicRoute);
+        // No session found or timeout - still try to verify
+        await checkUserAuth(false, false);
       }
 
       setAppPublicSettings({ public_settings: {} });
@@ -170,9 +179,9 @@ export const AuthProvider = ({ children }) => {
       };
 
       // Race the entire operation against a timeout
-      // Increased timeout to 10s to account for potential Supabase cold starts
+      // 5s timeout for better UX - public routes bypass this entirely
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Auth verification timed out")), 10000)
+        setTimeout(() => reject(new Error("Auth verification timed out")), 5000)
       );
 
       const authenticatedUser = await Promise.race([

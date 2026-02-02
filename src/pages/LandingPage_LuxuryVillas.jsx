@@ -4,10 +4,19 @@ import { Star, Shield, Lock, Wifi, Coffee, Gem } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LuxuryVillaLeadForm from '@/components/forms/LuxuryVillaLeadForm';
 import SEO from '@/components/SEO';
+import { db } from '@/api/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+
 
 const LandingPage_LuxuryVillas = () => {
     // Unsplash asset for luxury villa
     const HERO_BG = "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2671&auto=format&fit=crop";
+
+    const { data: villas = [], isLoading } = useQuery({
+        queryKey: ['luxury-villas'],
+        queryFn: () => db.entities.Property.list()
+    });
 
     return (
         <div className="min-h-screen bg-midnight-950 font-sans text-white overflow-x-hidden selection:bg-banana-500/30 selection:text-banana-100">
@@ -103,20 +112,22 @@ const LandingPage_LuxuryVillas = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
-                        {[
-                            { title: "The Sky Villa", price: "$1,200/night", img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2670&auto=format&fit=crop" },
-                            { title: "Oceanfront Estate", price: "$2,500/night", img: "https://images.unsplash.com/photo-1600596542815-22b4899975d6?q=80&w=2675&auto=format&fit=crop" },
-                            { title: "Jungle Sanctuary", price: "$850/night", img: "https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?q=80&w=2574&auto=format&fit=crop" }
-                        ].map((villa, idx) => (
-                            <div key={idx} className="group relative h-[600px] overflow-hidden cursor-pointer">
-                                <img src={villa.img} alt={villa.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 saturate-50 group-hover:saturate-100" />
-                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
-                                <div className="absolute bottom-0 left-0 p-10 w-full bg-gradient-to-t from-black via-black/50 to-transparent">
-                                    <h3 className="text-3xl font-serif text-white mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{villa.title}</h3>
-                                    <p className="text-banana-400 font-mono text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">{villa.price}</p>
-                                </div>
+                        {isLoading ? (
+                            <div className="col-span-full flex justify-center py-20">
+                                <Loader2 className="w-12 h-12 text-banana-500 animate-spin" />
                             </div>
-                        ))}
+                        ) : (
+                            villas.map((villa, idx) => (
+                                <div key={villa.id} className="group relative h-[600px] overflow-hidden cursor-pointer">
+                                    <img src={villa.images?.[0]?.url || 'https://via.placeholder.com/800x600'} alt={villa.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 saturate-50 group-hover:saturate-100" />
+                                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+                                    <div className="absolute bottom-0 left-0 p-10 w-full bg-gradient-to-t from-black via-black/50 to-transparent">
+                                        <h3 className="text-3xl font-serif text-white mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{villa.title}</h3>
+                                        <p className="text-banana-400 font-mono text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">฿{villa.price.toLocaleString()}/night</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

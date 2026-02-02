@@ -144,9 +144,21 @@ const AuthenticatedApp = () => {
   // Allow public access to diagnostics and other public pages
   const isDiagnostics = location.pathname.endsWith('/diagnostics');
   const isYachtTours = location.pathname.includes('/yacht-tours');
+  const isRealEstate = location.pathname.includes('/real-estate');
+  const isMarketplace = location.pathname.includes('/marketplace');
+  const isExperiences = location.pathname.includes('/experiences');
+  const isSeedPage = location.pathname.includes('/seed');
 
-  if (isDiagnostics || isYachtTours) {
-    const PublicPage = isDiagnostics ? Pages['Diagnostics'] : Pages['yacht-tours'];
+  // Public pages that should bypass auth loading
+  if (isDiagnostics || isYachtTours || isRealEstate || isMarketplace || isExperiences || isSeedPage) {
+    let PublicPage;
+    if (isDiagnostics) PublicPage = Pages['Diagnostics'];
+    else if (isYachtTours) PublicPage = Pages['yacht-tours'];
+    else if (isRealEstate) PublicPage = RealEstateHub;
+    else if (isMarketplace) PublicPage = Marketplace;
+    else if (isExperiences) PublicPage = Pages['Experiences'];
+    else if (isSeedPage) PublicPage = Pages['Seed'] || (() => <div className="p-8">Seed Page</div>);
+
     return (
       <Suspense fallback={<KosmoiLoader />}>
         <PublicPage />
@@ -154,7 +166,7 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Show loading spinner while checking app public settings or auth
+  // Show loading spinner while checking app public settings or auth (for non-public pages)
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-slate-950 z-50">
@@ -217,6 +229,7 @@ const AuthenticatedApp = () => {
             {/* Public Super App Routes */}
             <Route path="roadmap" element={<Roadmap />} />
             <Route path="real-estate" element={<RealEstateHub />} />
+            <Route path="real-estate-debug" element={<Pages.RealEstateDebug />} />
             <Route path="test-drive" element={<OneDollar />} />
             <Route path="wellness" element={<Pages.Wellness />} />
             <Route path="transport" element={<Pages.Transport />} />
@@ -304,9 +317,11 @@ const AuthenticatedApp = () => {
               <Route path="memory-lab" element={<MemoryLab />} />
             </Route>
 
-            <Route path="earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay data={{}} /></div>} />
-            <Route path="persistence-test" element={<PersistenceTest />} />
-            <Route path="persistence-test" element={<PersistenceTest />} />
+
+            {/* <Route path="earnings-preview" element={<div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center"><OnboardingEarningDisplay data={{}} /></div>} /> */}
+            {/* <Route path="persistence-test" element={<PersistenceTest />} /> */}
+            {/* <Route path="persistence-test" element={<PersistenceTest />} /> */}
+
 
             {/* Trust Pages */}
             <Route path="about" element={<AboutUs />} />

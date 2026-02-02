@@ -60,6 +60,75 @@ export const supabaseHelpers = {
                 return data;
             }
         },
+        Property: {
+            async filter(filters = {}) {
+                let query = supabase.from('properties').select('*, images:property_images(url)');
+                if (filters.type) query = query.eq('type', filters.type);
+                if (filters.status) query = query.eq('status', filters.status);
+                if (filters.id) query = query.eq('id', filters.id);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
+            },
+            async list(orderBy = '-created_at', limit) {
+                let query = supabase.from('properties').select('*, images:property_images(url)');
+                if (orderBy) {
+                    const desc = orderBy.startsWith('-');
+                    const field = desc ? orderBy.slice(1) : orderBy;
+                    query = query.order(field, { ascending: !desc });
+                }
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
+            },
+            async create(data) {
+                const { images, ...propertyData } = data;
+                const { data: res, error } = await supabase.from('properties').insert(propertyData).select().single();
+                if (error) throw error;
+
+                if (images && images.length > 0) {
+                    const imageRows = images.map(url => ({ property_id: res.id, url }));
+                    await supabase.from('property_images').insert(imageRows);
+                }
+                return res;
+            },
+            async delete(id) {
+                const { error } = await supabase.from('properties').delete().eq('id', id);
+                if (error) throw error;
+            }
+        },
+        Experience: {
+            async filter(filters = {}) {
+                let query = supabase.from('experiences').select('*');
+                if (filters.category) query = query.eq('category', filters.category);
+                if (filters.id) query = query.eq('id', filters.id);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
+            },
+            async list(orderBy = '-created_at', limit) {
+                let query = supabase.from('experiences').select('*');
+                if (orderBy) {
+                    const desc = orderBy.startsWith('-');
+                    const field = desc ? orderBy.slice(1) : orderBy;
+                    query = query.order(field, { ascending: !desc });
+                }
+                if (limit) query = query.limit(limit);
+                const { data, error } = await query;
+                if (error) throw error;
+                return data;
+            },
+            async create(data) {
+                const { data: res, error } = await supabase.from('experiences').insert(data).select().single();
+                if (error) throw error;
+                return res;
+            },
+            async delete(id) {
+                const { error } = await supabase.from('experiences').delete().eq('id', id);
+                if (error) throw error;
+            }
+        },
 
         Review: {
             async filter(filters = {}) {
@@ -554,8 +623,95 @@ export const db = {
     auth: supabaseHelpers.auth // Use wrapper to match previous structure
 };
 
+// Create a version of helpers that uses the admin client
+const createAdminHelpers = (helpers, adminClient) => {
+    const adminHelpers = {};
+    Object.keys(helpers).forEach(key => {
+        if (typeof helpers[key] === 'object' && helpers[key] !== null) {
+            adminHelpers[key] = {};
+            Object.keys(helpers[key]).forEach(method => {
+                if (typeof helpers[key][method] === 'function') {
+                    // Wrap the method to use adminClient instead of supabase
+                    adminHelpers[key][method] = (...args) => {
+                        // This is a bit hacky but if the method uses 'supabase' from the scope, 
+                        // we'd need to re-implement or use a bind trick if the helpers were classes.
+                        // Since they are literal objects using 'supabase' from the outer scope,
+                        // we will just define a special 'dbAdmin' that calls the raw 'from' on admin client.
+                        return adminClient.from(key.toLowerCase() + 's').insert(...args); // simplified
+                    };
+                }
+            });
+        }
+    });
+    return adminHelpers;
+};
+
+// More robust: define dbAdmin explicitly for seeding needs
+export const dbAdmin = {
+    ...db,
+    from: (table) => api.admin.from(table), // Use the admin client
+    entities: {
+        ServiceProvider: {
+            create: async (data) => {
+                const { data: res, error } = await api.admin.from('service_providers').insert(data).select().single();
+                if (error) throw error;
+                return res;
+            },
+            delete: async (id) => {
+                const { error } = await api.admin.from('service_providers').delete().eq('id', id);
+                if (error) throw error;
+            },
+            truncate: async () => {
+                const { error } = await api.admin.from('service_providers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) throw error;
+            }
+        },
+        Property: {
+            create: async (data) => {
+                const { images, ...propertyData } = data;
+                const { data: res, error } = await api.admin.from('properties').insert(propertyData).select().single();
+                if (error) throw error;
+                if (images && images.length > 0) {
+                    const imageRows = images.map(url => ({ property_id: res.id, url }));
+                    await api.admin.from('property_images').insert(imageRows);
+                }
+                return res;
+            },
+            truncate: async () => {
+                await api.admin.from('property_images').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                const { error } = await api.admin.from('properties').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) throw error;
+            }
+        },
+        Experience: {
+            create: async (data) => {
+                const { data: res, error } = await api.admin.from('experiences').insert(data).select().single();
+                if (error) throw error;
+                return res;
+            },
+            truncate: async () => {
+                const { error } = await api.admin.from('experiences').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) throw error;
+            }
+        },
+        Review: {
+            truncate: async () => {
+                const { error } = await api.admin.from('reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) throw error;
+            }
+        },
+        Favorite: {
+            truncate: async () => {
+                const { error } = await api.admin.from('favorites').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) throw error;
+            }
+        }
+    }
+};
+
 // Export supabaseAdmin for AdminImporter
-export const supabaseAdmin = supabaseHelpers.asServiceRole;
+export const supabaseAdmin = api.admin;
+
 
 // Backward compatibility for files importing realSupabase
 export const realSupabase = supabase;

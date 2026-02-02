@@ -42,6 +42,7 @@ import __Layout from './Layout.jsx';
 import { lazy } from 'react';
 import WellnessHub from './pages/WellnessHub'; // Added Wellness
 import TransportHub from './pages/TransportHub'; // Added Transport
+import RealEstateDebug from './pages/RealEstateDebug'; // Debug version
 
 
 // Wallet Pages
@@ -99,6 +100,7 @@ export const PAGES = {
     "BlogPostDetail": BlogPostDetail,
     "AdminWiki": lazy(() => import('./pages/admin/AdminWiki')),
     "Support": Support, // Added Support Page
+    "RealEstateDebug": RealEstateDebug, // Debug version
     "yacht-tours": lazy(() => import('./pages/yacht-tours')),
 }
 

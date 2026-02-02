@@ -2,13 +2,22 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Anchor, ShieldCheck, Sun, Users, Star, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import BoatRentalLeadForm from '@/components/forms/BoatRentalLeadForm'; // Ensure this is imported correctly
+import BoatRentalLeadForm from '@/components/forms/BoatRentalLeadForm';
 import SEO from '@/components/SEO';
+import { db } from '@/api/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+
 
 const LandingPage_BoatRentals = () => {
     // Assets (Placeholders for now, normally we'd generated them)
     // Using a reliable Unsplash image for boats
     const HERO_BG = "https://images.unsplash.com/photo-1540206395-688085723adb?q=80&w=2788&auto=format&fit=crop";
+
+    const { data: fleet = [], isLoading } = useQuery({
+        queryKey: ['boat-fleet'],
+        queryFn: () => db.entities.Experience.list()
+    });
 
     return (
         <div className="min-h-screen bg-midnight-950 font-sans text-white overflow-hidden">
@@ -76,66 +85,32 @@ const LandingPage_BoatRentals = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Card 1: Longtail */}
-                    <div className="glass-card-premium overflow-hidden rounded-3xl group cursor-pointer hover:border-banana-500/30 transition-all">
-                        <div className="h-64 overflow-hidden relative">
-                            <img src="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=2832&auto=format&fit=crop" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Longtail" />
-                            <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-white/10">
-                                Authentic
-                            </div>
+                    {isLoading ? (
+                        <div className="col-span-full flex justify-center py-20">
+                            <Loader2 className="w-12 h-12 text-banana-500 animate-spin" />
                         </div>
-                        <div className="p-6">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold">Classic Longtail</h3>
-                                <span className="text-banana-400 font-bold">฿3,500</span>
+                    ) : (
+                        fleet.map((vessel, idx) => (
+                            <div key={vessel.id} className={`glass-card-premium overflow-hidden rounded-3xl group cursor-pointer transition-all ${idx === 1 ? 'border-banana-500/40 shadow-gold-glow relative' : 'hover:border-banana-500/30'}`}>
+                                {idx === 1 && <div className="absolute top-0 right-0 bg-banana-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl z-20">MOST POPULAR</div>}
+                                <div className="h-64 overflow-hidden relative">
+                                    <img src={vessel.image_url || vessel.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={vessel.title || vessel.name} />
+                                </div>
+                                <div className="p-6">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="text-xl font-bold">{vessel.title || vessel.name}</h3>
+                                        <span className="text-banana-400 font-bold">฿{(vessel.price || vessel.price_thb).toLocaleString()}</span>
+                                    </div>
+                                    <p className="text-slate-400 text-sm mb-4 line-clamp-2">{vessel.description}</p>
+                                    <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
+                                        <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Up to {vessel.guests || 15}</span>
+                                        <span className="flex items-center gap-1"><Anchor className="w-3 h-3" /> {vessel.duration}</span>
+                                    </div>
+                                    <Button className={`w-full ${idx === 1 ? 'bg-banana-500 text-black hover:bg-banana-400 font-bold' : 'border-white/10 hover:bg-white/5'}`} variant={idx === 1 ? 'default' : 'outline'}>Details</Button>
+                                </div>
                             </div>
-                            <p className="text-slate-400 text-sm mb-4">Perfect for Pig Island trips and snorkeling. The true Thai experience.</p>
-                            <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
-                                <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Up to 6</span>
-                                <span className="flex items-center gap-1"><Anchor className="w-3 h-3" /> 4 Hours</span>
-                            </div>
-                            <Button variant="outline" className="w-full border-white/10 hover:bg-white/5">Details</Button>
-                        </div>
-                    </div>
-
-                    {/* Card 2: Private Speedboat */}
-                    <div className="glass-card-premium overflow-hidden rounded-3xl group cursor-pointer border-banana-500/40 shadow-gold-glow relative">
-                        <div className="absolute top-0 right-0 bg-banana-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-xl z-20">MOST POPULAR</div>
-                        <div className="h-64 overflow-hidden relative">
-                            <img src="https://images.unsplash.com/photo-1563296291-14f26f616585?q=80&w=2753&auto=format&fit=crop" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Speedboat" />
-                        </div>
-                        <div className="p-6">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold text-banana-100">VIP Speedboat</h3>
-                                <span className="text-banana-400 font-bold">฿12,000</span>
-                            </div>
-                            <p className="text-slate-400 text-sm mb-4">Fast, private, and comfortable. Visit Ang Thong Marine Park in style.</p>
-                            <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
-                                <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Up to 15</span>
-                                <span className="flex items-center gap-1"><Anchor className="w-3 h-3" /> Full Day</span>
-                            </div>
-                            <Button className="w-full bg-banana-500 text-black hover:bg-banana-400 font-bold">Details</Button>
-                        </div>
-                    </div>
-
-                    {/* Card 3: Catamaran */}
-                    <div className="glass-card-premium overflow-hidden rounded-3xl group cursor-pointer hover:border-purple-500/30 transition-all">
-                        <div className="h-64 overflow-hidden relative">
-                            <img src="https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?q=80&w=2874&auto=format&fit=crop" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Catamaran" />
-                        </div>
-                        <div className="p-6">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold">Luxury Catamaran</h3>
-                                <span className="text-purple-400 font-bold">฿25,500</span>
-                            </div>
-                            <p className="text-slate-400 text-sm mb-4">Stable sailing, nets for lounging, and sunset dinner options.</p>
-                            <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
-                                <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Up to 30</span>
-                                <span className="flex items-center gap-1"><Anchor className="w-3 h-3" /> Sunset / Day</span>
-                            </div>
-                            <Button variant="outline" className="w-full border-white/10 hover:bg-white/5">Details</Button>
-                        </div>
-                    </div>
+                        ))
+                    )}
                 </div>
             </div>
 

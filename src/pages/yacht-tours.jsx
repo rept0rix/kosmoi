@@ -11,8 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Anchor, Clock, Info, Luggage, MapPin, ShieldCheck, Waves } from 'lucide-react';
-import yachtData from '../data/yacht_listings.json';
+import { Anchor, Clock, Info, Luggage, MapPin, ShieldCheck, Waves, Loader2 } from 'lucide-react';
+import { db } from '@/api/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+
 
 const YachtTours = () => {
   const { t } = useTranslation();
@@ -29,6 +31,11 @@ const YachtTours = () => {
     setSelectedYacht(yacht);
     setIsBookingOpen(true);
   };
+
+  const { data: yachts = [], isLoading } = useQuery({
+    queryKey: ['yachts'],
+    queryFn: () => db.entities.Experience.list()
+  });
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col items-center grainy-noise text-sm md:text-base selection:bg-amber-500/30">
@@ -235,72 +242,72 @@ const YachtTours = () => {
 
       {/* Dynamic Cards Section */}
       <main ref={fleetRef} className="container mx-auto px-4 -mt-20 relative z-20 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {yachtData.map((yacht, idx) => (
-            <div
-              key={yacht.id}
-              className={`bg-white/5 border border-white/10 p-0 rounded-none overflow-hidden transition-all duration-500 hover:border-white/30 group relative ${idx === 1 ? 'lg:translate-y-[-10px]' : ''}`}
-            >
-              <div className="aspect-[16/10] overflow-hidden grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0">
-                <img
-                  src={
-                    idx === 0 ? '/assets/yachts/motor_yacht_nano_banana_1769244800082.png' :
-                      idx === 1 ? '/assets/yachts/catamaran_nano_banana_1769244815572.png' :
-                        '/assets/yachts/sailing_yacht_nano_banana_1769244830523.png'
-                  }
-                  alt={yacht.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-              </div>
-
-              <div className="p-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-[9px] font-bold text-white/40 tracking-[0.3em] uppercase">{t(`yachtTours.category.${yacht.category}`)}</span>
-                  <div className="w-[1px] h-3 bg-white/10" />
-                  <span className="text-[9px] font-medium text-white/40 uppercase tracking-[0.2em]">{t('yachtTours.fleet.hours', { count: yacht.duration_hours })}</span>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-12 h-12 text-amber-500 animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {yachts.map((yacht, idx) => (
+              <div
+                key={yacht.id}
+                className={`bg-white/5 border border-white/10 p-0 rounded-none overflow-hidden transition-all duration-500 hover:border-white/30 group relative ${idx === 1 ? 'lg:translate-y-[-10px]' : ''}`}
+              >
+                <div className="aspect-[16/10] overflow-hidden grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0">
+                  <img
+                    src={yacht.image_url || yacht.image}
+                    alt={yacht.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
                 </div>
 
-                <h3 className="text-xl md:text-2xl font-heading font-medium mb-3 text-white tracking-tight leading-tight">
-                  {t(`yachts.${yacht.id}.name`) || yacht.name}
-                </h3>
-
-                <p className="text-slate-400 mb-8 leading-relaxed text-sm font-light min-h-[60px] line-clamp-3">
-                  {t(`yachts.${yacht.id}.description`) || yacht.description}
-                </p>
-
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-10">
-                  {yacht.features.slice(0, 4).map((feature, fIdx) => (
-                    <div key={feature} className="flex items-center gap-2 text-[10px] text-slate-400 group-hover:text-slate-300 transition-colors uppercase tracking-wider">
-                      <div className="w-1 h-1 bg-amber-500/50" />
-                      {t(`yachts.${yacht.id}.features.${fIdx}`) || feature}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-8 border-t border-white/5 flex justify-between items-end">
-                  <div>
-                    <p className="text-[8px] text-white/20 uppercase tracking-[0.4em] font-bold mb-2">{t('yachtTours.fleet.priceFrom')}</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[10px] text-white/30 font-medium">THB</span>
-                      <p className="text-3xl font-heading font-medium text-white">
-                        {yacht.price_thb.toLocaleString()}
-                      </p>
-                    </div>
+                <div className="p-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-[9px] font-bold text-white/40 tracking-[0.3em] uppercase">{t(`yachtTours.category.${yacht.category}`)}</span>
+                    <div className="w-[1px] h-3 bg-white/10" />
+                    <span className="text-[9px] font-medium text-white/40 uppercase tracking-[0.2em]">{t('yachtTours.fleet.hours', { count: yacht.duration_hours || yacht.duration })}</span>
                   </div>
-                  <button
-                    onClick={() => openBooking(yacht)}
-                    className="text-white/40 hover:text-white transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
-                  >
-                    {t('yachtTours.fleet.checkAvailability')}
-                    <span className="text-lg">→</span>
-                  </button>
+
+                  <h3 className="text-xl md:text-2xl font-heading font-medium mb-3 text-white tracking-tight leading-tight">
+                    {t(`yachts.${yacht.id}.name`) || yacht.name}
+                  </h3>
+
+                  <p className="text-slate-400 mb-8 leading-relaxed text-sm font-light min-h-[60px] line-clamp-3">
+                    {t(`yachts.${yacht.id}.description`) || yacht.description}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-10">
+                    {(yacht.features || []).slice(0, 4).map((feature, fIdx) => (
+                      <div key={feature} className="flex items-center gap-2 text-[10px] text-slate-400 group-hover:text-slate-300 transition-colors uppercase tracking-wider">
+                        <div className="w-1 h-1 bg-amber-500/50" />
+                        {t(`yachts.${yacht.id}.features.${fIdx}`) || feature}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-8 border-t border-white/5 flex justify-between items-end">
+                    <div>
+                      <p className="text-[8px] text-white/20 uppercase tracking-[0.4em] font-bold mb-2">{t('yachtTours.fleet.priceFrom')}</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[10px] text-white/30 font-medium">THB</span>
+                        <p className="text-3xl font-heading font-medium text-white">
+                          {(yacht.price_thb || yacht.price).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openBooking(yacht)}
+                      className="text-white/40 hover:text-white transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
+                    >
+                      {t('yachtTours.fleet.checkAvailability')}
+                      <span className="text-lg">→</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Authenticity Footer */}

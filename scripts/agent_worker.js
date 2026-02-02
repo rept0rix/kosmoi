@@ -140,6 +140,8 @@ import { clearMemory } from '../src/features/agents/services/memorySupabase.js';
 import { StripeService } from '../src/services/payments/StripeService.js'; // Import StripeService
 import './WorkflowTools.js'; // Register Workflow Tools (Node only)
 import { MCPClientManager } from './mcp_client.js'; // Import MCP Manager
+import { seedDatabase, clearDatabase } from './db_seeder.js'; // Import Seeder
+import '../src/services/tools/registry/DatabaseAdminTools.js'; // Register Admin Tools
 
 // Config loaded
 import { createClient } from '@supabase/supabase-js';
@@ -487,6 +489,14 @@ async function executeTool(toolName, payload) {
                 // But if it asks for a helper:
                 return `Subject: Hello from Kosmoi\n\nDear Lead,\n\nWe saw you are interested in... [Generated Content Stub]`;
 
+            case 'seed_db':
+                await seedDatabase(workerSupabase, payload.agentId);
+                return "Database seeded successfully.";
+
+            case 'clear_db':
+                await clearDatabase(workerSupabase);
+                return "Database cleared successfully.";
+
             default:
                 // 1. Check if tool is in the ToolRegistry (via Router)
                 try {
@@ -520,6 +530,7 @@ async function executeTool(toolName, payload) {
         }
     } catch (e) { return `Tool Execution Failed: ${e.message}`; }
 }
+
 
 async function processTask(task, agentService, agentConfigOverride) {
     console.log(`\n📋 Processing Task: ${task.title}`);

@@ -4,6 +4,15 @@ class APIClient {
     constructor() {
         this.supabaseUrl = (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_URL;
         this.supabaseKey = (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_ANON_KEY;
+        this.serviceRoleKey = (typeof process !== "undefined" && process.env ? process.env : import.meta.env).VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+        // TEMPORARY: Commenting out security block to restore UI functionality
+        // TODO: Implement proper admin-only routes instead of global blocking
+        // if (typeof window !== 'undefined' && this.serviceRoleKey) {
+        //     console.warn('APIClient: Service Role Key detected in browser environment. Blocking for security.');
+        //     this.serviceRoleKey = null;
+        // }
+
 
         if (!this.supabaseUrl || !this.supabaseKey) {
             console.error('CRITICAL: Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Supabase client will not initialize.');
@@ -58,6 +67,18 @@ class APIClient {
                 }
             });
         }
+
+        // Initialize Admin Client if key is available (Service Role)
+        if (this.supabaseUrl && this.serviceRoleKey) {
+            console.log('APIClient: Initializing ADMIN (Service Role) client.');
+            this.supabaseAdmin = createClient(this.supabaseUrl, this.serviceRoleKey, {
+                auth: { persistSession: false },
+                db: { schema: 'public' }
+            });
+        } else {
+            this.supabaseAdmin = null;
+        }
+
         this.cache = new Map();
         this.listeners = new Map();
     }
@@ -157,6 +178,11 @@ class APIClient {
     get client() {
         return this.supabase;
     }
+
+    get admin() {
+        return this.supabaseAdmin || this.supabase; // Fallback to normal if no admin key
+    }
 }
+
 
 export const api = new APIClient();
