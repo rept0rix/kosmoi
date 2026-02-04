@@ -142,6 +142,7 @@ import './WorkflowTools.js'; // Register Workflow Tools (Node only)
 import { MCPClientManager } from './mcp_client.js'; // Import MCP Manager
 import { seedDatabase, clearDatabase } from './db_seeder.js'; // Import Seeder
 import '../src/services/tools/registry/DatabaseAdminTools.js'; // Register Admin Tools
+import '../src/services/tools/registry/NodeCommunicationTools.js'; // Register Node/Telegram Tools
 
 // Config loaded
 import { createClient } from '@supabase/supabase-js';

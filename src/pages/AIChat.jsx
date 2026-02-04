@@ -263,7 +263,15 @@ export default function AIChat() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    const lat = parseFloat(pos.coords.latitude);
+                    const lng = parseFloat(pos.coords.longitude);
+
+                    if (isNaN(lat) || isNaN(lng)) {
+                        console.warn("Invalid geolocation coordinates:", pos.coords);
+                        return;
+                    }
+
+                    const loc = { lat, lng };
                     setUserLocation(loc);
                     // Shift center South (-0.0025) so the user location dot appears higher on screen
                     setMapCenter({ lat: loc.lat - 0.0025, lng: loc.lng });
@@ -381,16 +389,26 @@ export default function AIChat() {
     };
 
     const allMarkers = [
-        ...providers.map(p => ({
-            lat: p.latitude,
-            lng: p.longitude,
-            title: p.business_name,
-            icon: getCategoryIcon(p.category),
-            onClick: () => {
-                setSelectedProvider(p);
-                setMapCenter({ lat: p.latitude - 0.0025, lng: p.longitude });
-            }
-        }))
+        ...providers
+            .filter(p => {
+                const lat = parseFloat(p.latitude);
+                const lng = parseFloat(p.longitude);
+                return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0; // Filter out 0,0 too if needed
+            })
+            .map(p => ({
+                lat: parseFloat(p.latitude),
+                lng: parseFloat(p.longitude),
+                title: p.business_name,
+                icon: getCategoryIcon(p.category),
+                onClick: () => {
+                    setSelectedProvider(p);
+                    const lat = parseFloat(p.latitude);
+                    const lng = parseFloat(p.longitude);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        setMapCenter({ lat: lat - 0.0025, lng: lng });
+                    }
+                }
+            }))
     ];
 
     return (
@@ -738,8 +756,8 @@ export default function AIChat() {
                                             type="button"
                                             onClick={toggleVoiceCall}
                                             className={`h-11 w-11 rounded-full shadow-sm p-0 flex items-center justify-center transition-all ${isCallActive
-                                                    ? 'bg-red-500 hover:bg-red-600 animate-pulse text-white'
-                                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                                                ? 'bg-red-500 hover:bg-red-600 animate-pulse text-white'
+                                                : 'bg-green-500 hover:bg-green-600 text-white'
                                                 }`}
                                             title={isCallActive ? "End Call" : "Start Voice Call"}
                                         >

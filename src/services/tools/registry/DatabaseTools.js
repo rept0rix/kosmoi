@@ -152,3 +152,40 @@ Tables:
             return `[Error] Schema fetch failed: ${e.message}`;
         }
     });
+
+ToolRegistry.register(
+    "get_new_listings",
+    "Get the newest business or product listings from the database.",
+    {
+        limit: "number (Optional) - Number of listings to retrieve (default 5)",
+        type: "string (Optional) - 'business' or 'product' (default both/mixed)"
+    },
+    async (payload) => {
+        try {
+            const limit = payload.limit || 5;
+            // Fetch from service_providers
+            const { data: providers, error: pError } = await supabase
+                .from('service_providers')
+                .select('id, business_name, description, category, created_at, images')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (pError) throw pError;
+
+            // Format for agent
+            const formatted = providers.map(p => ({
+                type: 'Business',
+                name: p.business_name,
+                description: p.description,
+                category: p.category,
+                image: p.images && p.images[0] ? p.images[0] : null,
+                is_new: true
+            }));
+
+            if (formatted.length === 0) return "No new listings found.";
+
+            return JSON.stringify(formatted, null, 2);
+        } catch (e) {
+            return `[Error] Failed to fetch new listings: ${e.message}`;
+        }
+    });

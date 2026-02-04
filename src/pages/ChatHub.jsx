@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -122,6 +123,47 @@ export default function ChatHub() {
     const [bookings, setBookings] = useState([]);
     const [showMobileChat, setShowMobileChat] = useState(false);
     const { toast } = useToast();
+    const location = useLocation();
+
+    // Handle Search Redirection
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const query = params.get('q');
+        if (query) {
+            // Auto-inject conversation
+            const userMsg = {
+                id: Date.now(),
+                sender: 'me',
+                text: query,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            const aiMsg = {
+                id: Date.now() + 1,
+                sender: 'ai',
+                text: `I'm analyzing the best options for "${query}"... Here is what I found:`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            const resultCard = {
+                id: Date.now() + 2,
+                sender: 'ai',
+                type: 'rich-card',
+                content: {
+                    title: `Top Result for ${query}`,
+                    price: 'Verified',
+                    image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600',
+                    rating: 4.9,
+                    action: 'View Details'
+                },
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            setMessages(prev => [...prev, userMsg, aiMsg, resultCard]);
+
+            // Clear URL param to prevent re-triggering? optional.
+        }
+    }, [location.search]);
 
     const handleChatSelect = (chat) => {
         setSelectedChat(chat);

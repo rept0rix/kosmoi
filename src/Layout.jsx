@@ -25,6 +25,7 @@ import {
 import { DirectionProvider } from '@radix-ui/react-direction';
 import QuickActionsFab from "@/components/QuickActionsFab";
 import LandingNavbar from "@/components/LandingNavbar";
+import GlobalChatFab from "@/components/GlobalChatFab";
 
 // --- Configuration ---
 // Define which paths belong to which zone
@@ -252,6 +253,9 @@ const LayoutContent = ({ children }) => {
 
         {/* role switcher debug tool */}
         <DebugRoleSwitcher />
+
+        {/* Global Chat Access */}
+        <GlobalChatFab />
 
         {/* Bottom Navigation - ONLY FOR APP ZONE */}
         {isAppZone && (

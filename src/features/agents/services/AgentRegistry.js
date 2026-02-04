@@ -47,6 +47,7 @@ import { VIDEO_AGENT } from "./registry/VideoAgent.js";
 import { VECTOR_SEARCH_AGENT } from "./registry/VectorSearchAgent.js";
 import { CODE_REFACTOR_AGENT } from "./registry/CodeRefactorAgent.js";
 import { PRODUCT_VISION_AGENT } from "./registry/ProductVisionAgent.js";
+import { SOCIAL_MEDIA_AGENT } from "./registry/SocialMediaAgent.js";
 
 import { SYSTEM_MAPPING_AGENT } from "./registry/SystemMappingAgent.js";
 import { UI_UX_DOCS_AGENT } from "./registry/UiUxDocsAgent.js";
@@ -116,6 +117,7 @@ export const agents = [
     VIDEO_AGENT,
     VECTOR_SEARCH_AGENT,
     CODE_REFACTOR_AGENT,
+    SOCIAL_MEDIA_AGENT,
 
     // --- DOCUMENTATION LAYER ---
     SYSTEM_MAPPING_AGENT,

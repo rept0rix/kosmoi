@@ -33,6 +33,13 @@ export default function Home() {
         { id: 'ai', label: t('categories.ai'), icon: Sparkles, color: 'text-purple-400' },
     ];
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearch = () => {
+        if (!searchQuery.trim()) return;
+        navigate(`/chat-hub?q=${encodeURIComponent(searchQuery)}`);
+    };
+
     return (
         <div className="min-h-screen relative font-sans text-white bg-midnight-950">
             <SEO
@@ -102,15 +109,17 @@ export default function Home() {
                         <Search className="w-6 h-6 text-slate-300 ml-4" />
                         <input
                             type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder={t('home.search_placeholder', "Search for villas, food, drivers...")}
                             className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-slate-400 h-12 px-4 text-lg outline-none"
-                            onKeyDown={(e) => e.key === 'Enter' && navigate('/marketplace')}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                         />
                         <Button
-                            onClick={() => navigate('/marketplace')}
+                            onClick={handleSearch}
                             className="rounded-full px-8 bg-white text-slate-900 hover:bg-slate-200 font-bold"
                         >
-                            {t('common.search', "Find")}
+                            {t('common.chat_search', "Ask AI")}
                         </Button>
                     </div>
                 </motion.div>

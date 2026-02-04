@@ -9,7 +9,7 @@ import { Check, CheckCircle, Smartphone, Building, Zap, Star } from 'lucide-reac
  */
 const Pricing = () => {
     return (
-        <div className="min-h-screen bg-midnight-950 text-white py-20 font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-slate-950 text-white py-20 font-sans relative overflow-hidden">
             {/* Background Ambient Glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-banana-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -122,7 +122,7 @@ const Pricing = () => {
                     </div>
 
                     {/* 3500 THB Scale / Premium */}
-                    <div className="glass-card-premium p-6 md:p-8 rounded-3xl flex flex-col relative transform md:-translate-y-4 border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20 transition-all">
+                    <div className="glass-card-premium p-6 md:p-8 rounded-3xl flex flex-col relative transform md:-translate-y-4 border-purple-500/30 bg-purple-900/40 hover:bg-purple-900/50 transition-all">
                         <div className="absolute top-0 right-0 bg-purple-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
                             MOST POWERFUL
                         </div>
@@ -132,7 +132,7 @@ const Pricing = () => {
                                 <span className="text-4xl font-extrabold text-white">฿3,500</span>
                                 <span className="text-slate-400">/ mo</span>
                             </div>
-                            <p className="text-slate-400 mt-4">Dominate your niche with AI power.</p>
+                            <p className="text-slate-300 mt-4">Dominate your niche with AI power.</p>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             {[

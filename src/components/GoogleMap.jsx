@@ -182,10 +182,14 @@ export default function GoogleMap({
 
     try {
       // Update center
-      // @ts-ignore
-      const newCenter = new window.google.maps.LatLng(center.lat, center.lng);
-      googleMapRef.current.setCenter(newCenter);
-      googleMapRef.current.setZoom(zoom);
+      if (center && !isNaN(center.lat) && !isNaN(center.lng)) {
+        // @ts-ignore
+        const newCenter = new window.google.maps.LatLng(center.lat, center.lng);
+        googleMapRef.current.setCenter(newCenter);
+        googleMapRef.current.setZoom(zoom);
+      } else {
+        console.warn('Invalid map center provided:', center);
+      }
 
       // Clear old markers and clusterer
       if (markerClustererRef.current) {
@@ -312,8 +316,13 @@ export default function GoogleMap({
 
       // Add new markers
       markers.forEach(markerData => {
+        if (!markerData.lat || !markerData.lng || isNaN(markerData.lat) || isNaN(markerData.lng)) {
+          console.warn('Skipping invalid marker:', markerData);
+          return;
+        }
+
         const markerOptions = {
-          position: { lat: markerData.lat, lng: markerData.lng },
+          position: { lat: Number(markerData.lat), lng: Number(markerData.lng) },
           // map: googleMapRef.current, // Don't set map here, clusterer will handle it
           title: markerData.title || '',
         };
