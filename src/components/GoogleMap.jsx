@@ -200,110 +200,121 @@ export default function GoogleMap({
 
       // Handle User Location Marker
       // Handle User Location Marker
-      if (userLocation) {
-        if (userAvatar) {
-          // Remove standard marker if exists
-          if (userMarkerRef.current) {
-            userMarkerRef.current.setMap(null);
-            userMarkerRef.current = null;
-          }
+      if (userLocation && !isNaN(parseFloat(userLocation.lat || userLocation.latitude)) && !isNaN(parseFloat(userLocation.lng || userLocation.longitude))) {
 
-          // Define Overlay Class if not exists globally or locally
-          if (!window.UserAvatarOverlay) {
-            window.UserAvatarOverlay = class extends window.google.maps.OverlayView {
-              constructor(position, avatarUrl) {
-                super();
-                this.position = position;
-                this.avatarUrl = avatarUrl;
-                this.div = null;
-              }
-              onAdd() {
-                this.div = document.createElement('div');
-                this.div.style.position = 'absolute';
-                this.div.style.width = '44px';
-                this.div.style.height = '44px';
-                this.div.style.borderRadius = '50%';
-                this.div.style.backgroundColor = 'white';
-                this.div.style.border = '3px solid #EF4444'; // Red border
-                this.div.style.backgroundImage = `url(${this.avatarUrl})`;
-                this.div.style.backgroundSize = 'cover';
-                this.div.style.backgroundPosition = 'center';
-                this.div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-                this.div.style.cursor = 'pointer';
-                this.div.className = 'user-location-pulse'; // Optional hook for CSS animation
+        const lat = parseFloat(userLocation.lat || userLocation.latitude);
+        const lng = parseFloat(userLocation.lng || userLocation.longitude);
 
-                const panes = this.getPanes();
-                panes.overlayMouseTarget.appendChild(this.div); // overlayMouseTarget allows clicks
-              }
-              draw() {
-                const overlayProjection = this.getProjection();
-                if (!overlayProjection || !this.position) return;
-                const coords = overlayProjection.fromLatLngToDivPixel(this.position);
-                if (this.div && coords) {
-                  this.div.style.left = (coords.x - 22) + 'px';
-                  this.div.style.top = (coords.y - 22) + 'px';
-                }
-              }
-              onRemove() {
-                if (this.div) {
-                  this.div.parentNode.removeChild(this.div);
+        // Final sanity check
+        if (isNaN(lat) || isNaN(lng)) {
+          console.warn("Invalid user location derived:", userLocation);
+          if (userMarkerRef.current) userMarkerRef.current.setMap(null);
+          if (userOverlayRef.current) userOverlayRef.current.setMap(null);
+        } else {
+          if (userAvatar) {
+            // Remove standard marker if exists
+            if (userMarkerRef.current) {
+              userMarkerRef.current.setMap(null);
+              userMarkerRef.current = null;
+            }
+
+            // Define Overlay Class if not exists globally or locally
+            if (!window.UserAvatarOverlay) {
+              window.UserAvatarOverlay = class extends window.google.maps.OverlayView {
+                constructor(position, avatarUrl) {
+                  super();
+                  this.position = position;
+                  this.avatarUrl = avatarUrl;
                   this.div = null;
                 }
-              }
-              setPosition(position) {
-                this.position = position;
-                this.draw();
-              }
-            };
-          }
+                onAdd() {
+                  this.div = document.createElement('div');
+                  this.div.style.position = 'absolute';
+                  this.div.style.width = '44px';
+                  this.div.style.height = '44px';
+                  this.div.style.borderRadius = '50%';
+                  this.div.style.backgroundColor = 'white';
+                  this.div.style.border = '3px solid #EF4444'; // Red border
+                  this.div.style.backgroundImage = `url(${this.avatarUrl})`;
+                  this.div.style.backgroundSize = 'cover';
+                  this.div.style.backgroundPosition = 'center';
+                  this.div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                  this.div.style.cursor = 'pointer';
+                  this.div.className = 'user-location-pulse'; // Optional hook for CSS animation
 
-          const pos = new window.google.maps.LatLng(userLocation.latitude || userLocation.lat, userLocation.longitude || userLocation.lng);
+                  const panes = this.getPanes();
+                  panes.overlayMouseTarget.appendChild(this.div); // overlayMouseTarget allows clicks
+                }
+                draw() {
+                  const overlayProjection = this.getProjection();
+                  if (!overlayProjection || !this.position) return;
+                  const coords = overlayProjection.fromLatLngToDivPixel(this.position);
+                  if (this.div && coords) {
+                    this.div.style.left = (coords.x - 22) + 'px';
+                    this.div.style.top = (coords.y - 22) + 'px';
+                  }
+                }
+                onRemove() {
+                  if (this.div) {
+                    this.div.parentNode.removeChild(this.div);
+                    this.div = null;
+                  }
+                }
+                setPosition(position) {
+                  this.position = position;
+                  this.draw();
+                }
+              };
+            }
 
-          if (!userOverlayRef.current) {
-            // @ts-ignore
-            userOverlayRef.current = new window.UserAvatarOverlay(pos, userAvatar);
-            userOverlayRef.current.setMap(googleMapRef.current);
-          } else {
-            userOverlayRef.current.setPosition(pos);
-          }
+            const pos = new window.google.maps.LatLng(lat, lng);
 
-        } else {
-          // No Avatar - Use standard marker
-          // Remove overlay if exists
-          if (userOverlayRef.current) {
-            userOverlayRef.current.setMap(null);
-            userOverlayRef.current = null;
-          }
-
-          const markerOptions = {
-            position: { lat: userLocation.latitude || userLocation.lat, lng: userLocation.longitude || userLocation.lng },
-            map: googleMapRef.current,
-            title: 'המיקום שלי',
-            icon: {
+            if (!userOverlayRef.current) {
               // @ts-ignore
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: "#4285F4",
-              fillOpacity: 1,
-              strokeWeight: 2,
-              strokeColor: "#ffffff",
-            },
-            zIndex: 999
-          };
+              userOverlayRef.current = new window.UserAvatarOverlay(pos, userAvatar);
+              userOverlayRef.current.setMap(googleMapRef.current);
+            } else {
+              userOverlayRef.current.setPosition(pos);
+            }
 
-          if (!userMarkerRef.current) {
-            // @ts-ignore
-            userMarkerRef.current = new window.google.maps.Marker(markerOptions);
           } else {
-            // @ts-ignore
-            userMarkerRef.current.setPosition(markerOptions.position);
-            // @ts-ignore
-            userMarkerRef.current.setIcon(markerOptions.icon);
-            userMarkerRef.current.setMap(googleMapRef.current);
+            // No Avatar - Use standard marker
+            // Remove overlay if exists
+            if (userOverlayRef.current) {
+              userOverlayRef.current.setMap(null);
+              userOverlayRef.current = null;
+            }
+
+            const markerOptions = {
+              position: { lat: lat, lng: lng },
+              map: googleMapRef.current,
+              title: 'המיקום שלי',
+              icon: {
+                // @ts-ignore
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#4285F4",
+                fillOpacity: 1,
+                strokeWeight: 2,
+                strokeColor: "#ffffff",
+              },
+              zIndex: 999
+            };
+
+            if (!userMarkerRef.current) {
+              // @ts-ignore
+              userMarkerRef.current = new window.google.maps.Marker(markerOptions);
+            } else {
+              // @ts-ignore
+              userMarkerRef.current.setPosition(markerOptions.position);
+              // @ts-ignore
+              userMarkerRef.current.setIcon(markerOptions.icon);
+              userMarkerRef.current.setMap(googleMapRef.current);
+            }
           }
         }
       } else {
-        // No location
+        // No valid location
         if (userMarkerRef.current) {
           userMarkerRef.current.setMap(null);
           userMarkerRef.current = null;
