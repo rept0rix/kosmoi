@@ -48,6 +48,7 @@ import { VECTOR_SEARCH_AGENT } from "./registry/VectorSearchAgent.js";
 import { CODE_REFACTOR_AGENT } from "./registry/CodeRefactorAgent.js";
 import { PRODUCT_VISION_AGENT } from "./registry/ProductVisionAgent.js";
 import { SOCIAL_MEDIA_AGENT } from "./registry/SocialMediaAgent.js";
+import { UNIVERSAL_DATA_AGENT } from "./registry/UniversalDataAgent.js";
 
 import { SYSTEM_MAPPING_AGENT } from "./registry/SystemMappingAgent.js";
 import { UI_UX_DOCS_AGENT } from "./registry/UiUxDocsAgent.js";
@@ -70,6 +71,7 @@ export const agents = [
     SUPABASE_SPECIALIST_AGENT,
     GITHUB_SPECIALIST_AGENT,
     QA_SPECIALIST_AGENT,
+    UNIVERSAL_DATA_AGENT,
 
     // --- BOARD LAYER ---
     BOARD_CHAIRMAN_AGENT,
