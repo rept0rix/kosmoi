@@ -1,0 +1,35 @@
+
+> kosmoi-app@0.0.0 lint
+> eslint .
+
+
+/Users/naoryanko/Downloads/samui-service-hub-main/src/components/AIChatWidget.jsx
+   19:22  error  React Hook "useAuth" is called conditionally. React Hooks must be called in the exact same order in every component render     react-hooks/rules-of-hooks
+   22:37  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+   28:53  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+   33:37  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+   34:43  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+   35:43  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+   39:5   error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+   89:5   error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+  126:31  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+  127:37  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+  128:28  error  React Hook "useRef" is called conditionally. React Hooks must be called in the exact same order in every component render      react-hooks/rules-of-hooks
+  129:45  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+  131:33  error  React Hook "useQuery" is called conditionally. React Hooks must be called in the exact same order in every component render    react-hooks/rules-of-hooks
+  137:35  error  React Hook "useWeather" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+  143:5   error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+  163:5   error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+
+/Users/naoryanko/Downloads/samui-service-hub-main/src/pages/AdminImporter.jsx
+  23:40  error  'process' is not defined  no-undef
+  23:54  error  'process' is not defined  no-undef
+  24:40  error  'process' is not defined  no-undef
+  24:54  error  'process' is not defined  no-undef
+
+/Users/naoryanko/Downloads/samui-service-hub-main/src/pages/ServiceProviders.jsx
+  164:21  error  Empty block statement  no-empty
+  231:17  error  Empty block statement  no-empty
+
+✖ 22 problems (22 errors, 0 warnings)
+

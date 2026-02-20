@@ -1,0 +1,22 @@
+[
+    {
+        "business_name": "Master Electrician",
+        "category": "electrician"
+    },
+    {
+        "business_name": "Siam Dreams - Home of German Cuisine & Bundesliga",
+        "category": "restaurant"
+    },
+    {
+        "business_name": "Sala Thai Art Gallery & Restaurant",
+        "category": "restaurant"
+    },
+    {
+        "business_name": "Samui Clean Team",
+        "category": "cleaning"
+    },
+    {
+        "business_name": "Island Taxi Service",
+        "category": "taxi"
+    }
+]

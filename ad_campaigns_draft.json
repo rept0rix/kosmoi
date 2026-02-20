@@ -1,0 +1,269 @@
+[
+  {
+    "platform": "Facebook",
+    "target_audience": ["Tourists", "Expats"],
+    "campaign_name": "Samui Experiences - Tourists & Expats",
+    "budget_per_day": 5000,
+    "currency": "THB",
+    "ads": [
+      {
+        "ad_type": "Banner",
+        "category": "Restaurant",
+        "location": "Chaweng",
+        "content": "[Banner] Enjoy authentic Thai cuisine at Example Restaurant 1 in Chaweng. Fresh ingredients, stunning views!",
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Banner",
+        "category": "Bike Rental",
+        "location": "Bophut",
+        "content": "[Banner] Explore Koh Samui on two wheels with Example Bike Rental 1 in Bophut. Reliable bikes, island adventures!",
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Banner",
+        "category": "Tour",
+        "location": "Maenam",
+        "content": "[Banner] Discover the hidden gems of Koh Samui with Example Tour Company 1 in Maenam. Unforgettable experiences await!",
+        "landing_page": ""
+      },
+       {
+        "ad_type": "Banner",
+        "category": "Restaurant",
+        "location": "Lamai",
+        "content": "[Banner] Enjoy authentic Thai cuisine at Example Restaurant 2 in Lamai. Fresh ingredients, stunning views!",
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Banner",
+        "category": "Bike Rental",
+        "location": "Choeng Mon",
+        "content": "[Banner] Explore Koh Samui on two wheels with Example Bike Rental 2 in Choeng Mon. Reliable bikes, island adventures!",
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Banner",
+        "category": "Tour",
+        "location": "Nathon",
+        "content": "[Banner] Discover the hidden gems of Koh Samui with Example Tour Company 2 in Nathon. Unforgettable experiences await!",
+        "landing_page": ""
+      },
+       {
+        "ad_type": "Banner",
+        "category": "Restaurant",
+        "location": "Bang Rak",
+        "content": "[Banner] Enjoy authentic Thai cuisine at Example Restaurant 3 in Bang Rak. Fresh ingredients, stunning views!",
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Banner",
+        "category": "Bike Rental",
+        "location": "Hua Thanon",
+        "content": "[Banner] Explore Koh Samui on two wheels with Example Bike Rental 3 in Hua Thanon. Reliable bikes, island adventures!",
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Banner",
+        "category": "Tour",
+        "location": "Taling Ngam",
+        "content": "[Banner] Discover the hidden gems of Koh Samui with Example Tour Company 3 in Taling Ngam. Unforgettable experiences await!",
+        "landing_page": ""
+      },
+       {
+        "ad_type": "Banner",
+        "category": "Restaurant",
+        "location": "Lipa Noi",
+        "content": "[Banner] Enjoy authentic Thai cuisine at Example Restaurant 4 in Lipa Noi. Fresh ingredients, stunning views!",
+        "landing_page": ""
+      }
+    ]
+  },
+  {
+    "platform": "Google",
+    "target_audience": ["Tourists", "Expats"],
+    "campaign_name": "Samui Adventures - Tourists & Expats",
+    "budget_per_day": 4000,
+    "currency": "THB",
+    "ads": [
+      {
+        "ad_type": "Text Ad",
+        "category": "Restaurant",
+        "location": "Chaweng",
+        "headline": "Authentic Thai Cuisine in Chaweng",
+        "description": "Enjoy fresh ingredients and stunning views at Example Restaurant 1.",
+        "keywords": ["Thai restaurant Chaweng", "best food Chaweng", "local cuisine Koh Samui"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Bike Rental",
+        "location": "Bophut",
+        "headline": "Explore Samui on Two Wheels",
+        "description": "Reliable bike rentals for island adventures. Example Bike Rental 1 in Bophut.",
+        "keywords": ["bike rental Koh Samui", "scooter rental Bophut", "motorbike hire Samui"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Tour",
+        "location": "Maenam",
+        "headline": "Discover Hidden Gems of Koh Samui",
+        "description": "Unforgettable experiences await with Example Tour Company 1 in Maenam.",
+        "keywords": ["Koh Samui tours", "Samui excursions", "island sightseeing"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Restaurant",
+        "location": "Lamai",
+        "headline": "Authentic Thai Cuisine in Lamai",
+        "description": "Enjoy fresh ingredients and stunning views at Example Restaurant 2.",
+        "keywords": ["Thai restaurant Lamai", "best food Lamai", "local cuisine Koh Samui"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Bike Rental",
+        "location": "Choeng Mon",
+        "headline": "Explore Samui on Two Wheels",
+        "description": "Reliable bike rentals for island adventures. Example Bike Rental 2 in Choeng Mon.",
+        "keywords": ["bike rental Koh Samui", "scooter rental Choeng Mon", "motorbike hire Samui"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Tour",
+        "location": "Nathon",
+        "headline": "Discover Hidden Gems of Koh Samui",
+        "description": "Unforgettable experiences await with Example Tour Company 2 in Nathon.",
+        "keywords": ["Koh Samui tours", "Samui excursions", "island sightseeing"],
+        "landing_page": ""
+      },
+            {
+        "ad_type": "Text Ad",
+        "category": "Restaurant",
+        "location": "Bang Rak",
+        "headline": "Authentic Thai Cuisine in Bang Rak",
+        "description": "Enjoy fresh ingredients and stunning views at Example Restaurant 3.",
+        "keywords": ["Thai restaurant Bang Rak", "best food Bang Rak", "local cuisine Koh Samui"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Bike Rental",
+        "location": "Hua Thanon",
+        "headline": "Explore Samui on Two Wheels",
+        "description": "Reliable bike rentals for island adventures. Example Bike Rental 3 in Hua Thanon.",
+        "keywords": ["bike rental Koh Samui", "scooter rental Hua Thanon", "motorbike hire Samui"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Text Ad",
+        "category": "Tour",
+        "location": "Taling Ngam",
+        "headline": "Discover Hidden Gems of Koh Samui",
+        "description": "Unforgettable experiences await with Example Tour Company 3 in Taling Ngam.",
+        "keywords": ["Koh Samui tours", "Samui excursions", "island sightseeing"],
+        "landing_page": ""
+      },
+       {
+        "ad_type": "Text Ad",
+        "category": "Restaurant",
+        "location": "Lipa Noi",
+        "headline": "Authentic Thai Cuisine in Lipa Noi",
+        "description": "Enjoy fresh ingredients and stunning views at Example Restaurant 4.",
+        "keywords": ["Thai restaurant Lipa Noi", "best food Lipa Noi", "local cuisine Koh Samui"],
+        "landing_page": ""
+      }
+    ]
+  },
+  {
+    "platform": "TikTok",
+    "target_audience": ["Tourists", "Expats"],
+    "campaign_name": "Samui Vibes - Tourists & Expats",
+    "budget_per_day": 3000,
+    "currency": "THB",
+    "ads": [
+      {
+        "ad_type": "Video Ad",
+        "category": "Restaurant",
+        "location": "Chaweng",
+        "content": "[Video] Showcase the vibrant atmosphere and delicious food at Example Restaurant 1 in Chaweng. Use trending audio!",
+        "hashtags": ["#thaifood", "#kohsamui", "#chaweng", "#foodie", "#travelthailand"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Bike Rental",
+        "location": "Bophut",
+        "content": "[Video] Show exciting shots of people exploring Koh Samui on bikes from Example Bike Rental 1 in Bophut. Use upbeat music!",
+        "hashtags": ["#bikerental", "#kohsamui", "#bophut", "#islandlife", "#explore"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Tour",
+        "location": "Maenam",
+        "content": "[Video] Highlight the unforgettable experiences offered by Example Tour Company 1 in Maenam. Show stunning scenery!",
+        "hashtags": ["#tours", "#kohsamui", "#maenam", "#travel", "#adventure"],
+        "landing_page": ""
+      },
+       {
+        "ad_type": "Video Ad",
+        "category": "Restaurant",
+        "location": "Lamai",
+        "content": "[Video] Showcase the vibrant atmosphere and delicious food at Example Restaurant 2 in Lamai. Use trending audio!",
+        "hashtags": ["#thaifood", "#kohsamui", "#Lamai", "#foodie", "#travelthailand"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Bike Rental",
+        "location": "Choeng Mon",
+        "content": "[Video] Show exciting shots of people exploring Koh Samui on bikes from Example Bike Rental 2 in Choeng Mon. Use upbeat music!",
+        "hashtags": ["#bikerental", "#kohsamui", "#ChoengMon", "#islandlife", "#explore"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Tour",
+        "location": "Nathon",
+        "content": "[Video] Highlight the unforgettable experiences offered by Example Tour Company 2 in Nathon. Show stunning scenery!",
+        "hashtags": ["#tours", "#kohsamui", "#Nathon", "#travel", "#adventure"],
+        "landing_page": ""
+      },
+       {
+        "ad_type": "Video Ad",
+        "category": "Restaurant",
+        "location": "Bang Rak",
+        "content": "[Video] Showcase the vibrant atmosphere and delicious food at Example Restaurant 3 in Bang Rak. Use trending audio!",
+        "hashtags": ["#thaifood", "#kohsamui", "#BangRak", "#foodie", "#travelthailand"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Bike Rental",
+        "location": "Hua Thanon",
+        "content": "[Video] Show exciting shots of people exploring Koh Samui on bikes from Example Bike Rental 3 in Hua Thanon. Use upbeat music!",
+        "hashtags": ["#bikerental", "#kohsamui", "#HuaThanon", "#islandlife", "#explore"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Tour",
+        "location": "Taling Ngam",
+        "content": "[Video] Highlight the unforgettable experiences offered by Example Tour Company 3 in Taling Ngam. Show stunning scenery!",
+        "hashtags": ["#tours", "#kohsamui", "#TalingNgam", "#travel", "#adventure"],
+        "landing_page": ""
+      },
+      {
+        "ad_type": "Video Ad",
+        "category": "Restaurant",
+        "location": "Lipa Noi",
+        "content": "[Video] Showcase the vibrant atmosphere and delicious food at Example Restaurant 4 in Lipa Noi. Use trending audio!",
+        "hashtags": ["#thaifood", "#kohsamui", "#LipaNoi", "#foodie", "#travelthailand"],
+        "landing_page": ""
+      }
+    ]
+  }
+]

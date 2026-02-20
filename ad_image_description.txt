@@ -1,0 +1,29 @@
+## Taxi Ad Image Description
+
+**Concept:** Split-screen ad showcasing the contrast between a stressful traditional taxi experience and the ease of using a modern taxi app.
+
+**Left Side: The Problem (Stressful Tourist)**
+*   Setting: A busy, chaotic tropical airport (Koh Samui preferred).
+*   Character: A stressed tourist, looking overwhelmed.
+*   Visuals: Sweaty, frustrated expression. Surrounded by luggage. Long taxi queue in the background. Unclear signage.
+*   Color Palette: Muted, warm, slightly desaturated colors to convey discomfort and heat.
+
+**Right Side: The Solution (Happy Tourist with App)**
+*   Setting: Comfortable, modern taxi interior or a relaxed scene near a beach.
+*   Character: A happy, relaxed tourist showing a phone screen.
+*   Visuals: Smiling, confident expression. Holding a smartphone with a clean, modern taxi app UI. Taxi is clean and comfortable. Clear view of tropical scenery.
+*   Color Palette: Vibrant, cool, saturated colors to convey ease and satisfaction.
+
+**App UI Elements:**
+*   Clean, modern design.
+*   Easy-to-read map with GPS tracking.
+*   Clear fare information.
+*   Prominent "Book Taxi" button.
+*   App icon should be visible and recognizable.
+
+**Overall Style:**
+*   Modern, clean, and visually appealing.
+*   Vibrant colors to attract attention.
+*   Clear contrast between the two sides to highlight the benefits of the taxi app.
+
+**Target Audience:** Tourists visiting Koh Samui.
