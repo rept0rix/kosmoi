@@ -1,0 +1,260 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e13]: KOSMOI_OS
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - heading "Command Protocol" [level=3] [ref=e16]: Command Protocol
+          - generic [ref=e18]:
+            - link "Command Center" [ref=e19] [cursor=pointer]:
+              - /url: /admin/command-center
+              - img [ref=e20]
+              - generic [ref=e25]: Command Center
+            - link "Mission Control" [ref=e26] [cursor=pointer]:
+              - /url: /admin/hyperloop
+              - img [ref=e27]
+              - generic [ref=e29]: Mission Control
+            - link "Board Room" [ref=e30] [cursor=pointer]:
+              - /url: /admin/board-room
+              - img [ref=e31]
+              - generic [ref=e34]: Board Room
+        - generic [ref=e35]:
+          - heading "Neural Network" [level=3] [ref=e36]: Neural Network
+          - generic [ref=e38]:
+            - link "Optimizer" [ref=e39] [cursor=pointer]:
+              - /url: /admin/optimizer
+              - img [ref=e40]
+              - generic [ref=e52]: Optimizer
+            - link "Dave (Marketing)" [ref=e53] [cursor=pointer]:
+              - /url: /admin/marketing
+              - img [ref=e54]
+              - generic [ref=e57]: Dave (Marketing)
+            - link "Sarah (Sales)" [ref=e58] [cursor=pointer]:
+              - /url: /admin/sales
+              - img [ref=e59]
+              - generic [ref=e63]: Sarah (Sales)
+            - link "Claude (Scheduler)" [ref=e64] [cursor=pointer]:
+              - /url: /admin/scheduler
+              - img [ref=e65]
+              - generic [ref=e68]: Claude (Scheduler)
+            - link "Engine Room" [ref=e69] [cursor=pointer]:
+              - /url: /admin/automations
+              - img [ref=e70]
+              - generic [ref=e76]: Engine Room
+            - link "Long-term Memory" [ref=e77] [cursor=pointer]:
+              - /url: /admin/memory
+              - img [ref=e78]
+              - generic [ref=e80]: Long-term Memory
+            - link "Agent Studio" [ref=e81] [cursor=pointer]:
+              - /url: /admin/studio
+              - img [ref=e82]
+              - generic [ref=e86]: Agent Studio
+        - generic [ref=e87]:
+          - heading "Data Grid" [level=3] [ref=e88]: Data Grid
+          - generic [ref=e90]:
+            - link "Users" [ref=e91] [cursor=pointer]:
+              - /url: /admin/users
+              - img [ref=e92]
+              - generic [ref=e97]: Users
+            - link "Businesses" [ref=e98] [cursor=pointer]:
+              - /url: /admin/businesses
+              - img [ref=e99]
+              - generic [ref=e104]: Businesses
+            - link "Bookings" [ref=e105] [cursor=pointer]:
+              - /url: /admin/bookings
+              - img [ref=e106]
+              - generic [ref=e108]: Bookings
+            - link "Claims" [ref=e109] [cursor=pointer]:
+              - /url: /admin/claims
+              - img [ref=e110]
+              - generic [ref=e113]: Claims
+            - link "System Wallet" [ref=e114] [cursor=pointer]:
+              - /url: /admin/wallet
+              - img [ref=e115]
+              - generic [ref=e119]: System Wallet
+            - link "Kanban Tasks" [ref=e120] [cursor=pointer]:
+              - /url: /admin/tasks
+              - img [ref=e121]
+              - generic [ref=e124]: Kanban Tasks
+        - generic [ref=e125]:
+          - heading "System Core" [level=3] [ref=e126]: System Core
+          - generic [ref=e128]:
+            - link "System Logs" [ref=e129] [cursor=pointer]:
+              - /url: /admin/logs
+              - img [ref=e130]
+              - generic [ref=e133]: System Logs
+            - link "Monitoring" [ref=e134] [cursor=pointer]:
+              - /url: /admin/monitoring
+              - img [ref=e135]
+              - generic [ref=e137]: Monitoring
+            - link "Infrastructure" [ref=e138] [cursor=pointer]:
+              - /url: /admin/infrastructure
+              - img [ref=e139]
+              - generic [ref=e144]: Infrastructure
+      - generic [ref=e146] [cursor=pointer]:
+        - generic [ref=e148]: AG
+        - generic [ref=e149]:
+          - paragraph [ref=e150]: agent@kosmoi.site
+          - paragraph [ref=e151]: agent@kosmoi.site
+        - img [ref=e152]
+    - main [ref=e155]:
+      - generic [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159] [cursor=pointer]: ADMIN
+          - generic [ref=e160]: //
+          - generic [ref=e161]: DASHBOARD
+        - button [ref=e163] [cursor=pointer]:
+          - img
+      - generic [ref=e165]:
+        - generic: "HUB: Kosmoi | SYS: blue | MODE: MANUAL"
+        - generic [ref=e166]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - generic [ref=e170]:
+                - generic [ref=e171]: Board Room
+                - heading "Sessions" [level=2] [ref=e172]:
+                  - img [ref=e173]
+                  - text: Sessions
+              - button [ref=e175] [cursor=pointer]:
+                - img
+            - button "Strategy Session Mar 9 3/9/2026" [ref=e372] [cursor=pointer]:
+              - img [ref=e374]
+              - generic [ref=e379]:
+                - generic [ref=e380]: Strategy Session Mar 9
+                - generic [ref=e381]: 3/9/2026
+            - generic [ref=e187]:
+              - generic [ref=e188]:
+                - generic [ref=e189]: Sessions
+                - generic [ref=e190]: "1"
+              - generic [ref=e191]:
+                - generic [ref=e192]: Agents
+                - generic [ref=e193]:
+                  - img [ref=e194]
+                  - text: "8"
+            - generic [ref=e202]: Active Team
+            - generic [ref=e204]:
+              - generic [ref=e205]: Active Matrix
+              - button "O" [ref=e206] [cursor=pointer]:
+                - generic [ref=e208]: O
+              - button "H" [ref=e212] [cursor=pointer]:
+                - generic [ref=e214]: H
+              - button "W" [ref=e218] [cursor=pointer]:
+                - generic [ref=e220]: W
+              - button "?" [ref=e224] [cursor=pointer]:
+                - generic [ref=e226]: "?"
+              - button "?" [ref=e230] [cursor=pointer]:
+                - generic [ref=e232]: "?"
+              - button "?" [ref=e236] [cursor=pointer]:
+                - generic [ref=e238]: "?"
+              - button "?" [ref=e242] [cursor=pointer]:
+                - generic [ref=e244]: "?"
+              - button "?" [ref=e248] [cursor=pointer]:
+                - generic [ref=e250]: "?"
+          - generic [ref=e254]:
+            - generic [ref=e255]:
+              - generic:
+                - generic [ref=e257]: K
+                - combobox [ref=e258] [cursor=pointer]:
+                  - generic:
+                    - generic:
+                      - generic: Strategy Session Mar 9
+                      - generic:
+                        - generic: 3/9/2026
+                  - img [ref=e259]
+              - generic [ref=e261]:
+                - button "Daily" [ref=e262] [cursor=pointer]:
+                  - img
+                  - generic [ref=e263]: Daily
+                - button "$1 Challenge" [ref=e264] [cursor=pointer]:
+                  - img
+                  - generic [ref=e265]: $1 Challenge
+                - button "Linear" [ref=e266] [cursor=pointer]:
+                  - img
+                  - generic [ref=e267]: Linear
+                - combobox [ref=e268] [cursor=pointer]:
+                  - generic: Workflow
+                  - img [ref=e269]
+              - generic [ref=e271]:
+                - button "8 Agents" [ref=e272] [cursor=pointer]:
+                  - img
+                  - generic [ref=e273]: 8 Agents
+                - button "Cloud AI" [ref=e274] [cursor=pointer]:
+                  - generic [ref=e276]: Cloud AI
+                - button "Auto Pilot" [ref=e277] [cursor=pointer]:
+                  - img
+                  - generic [ref=e278]: Auto Pilot
+                - button [ref=e279] [cursor=pointer]:
+                  - img
+                - button "User Menu" [ref=e281] [cursor=pointer]:
+                  - generic [ref=e283]: NY
+            - generic [ref=e383]:
+              - generic [ref=e384]:
+                - generic [ref=e385]:
+                  - img [ref=e386]
+                  - heading "Live KPIs" [level=3] [ref=e388]
+                - generic [ref=e389]:
+                  - generic [ref=e390]:
+                    - generic [ref=e391]: Budget
+                    - generic [ref=e392]:
+                      - img
+                      - generic [ref=e394]: 10,000
+                  - generic [ref=e395]:
+                    - generic [ref=e396]: Users
+                    - generic [ref=e397]:
+                      - img [ref=e398]
+                      - generic [ref=e403]: "120"
+              - generic [ref=e404]:
+                - generic [ref=e405]:
+                  - img [ref=e406]
+                  - heading "Company News Feed" [level=3] [ref=e409]
+                - generic [ref=e414]:
+                  - generic [ref=e415]: 10:00 AM
+                  - generic [ref=e416]: Kosmoi Plus autonomous system initialization complete.
+            - generic [ref=e465]:
+              - generic [ref=e466]:
+                - img [ref=e468]
+                - generic [ref=e473]:
+                  - generic [ref=e474]:
+                    - generic [ref=e475]: You
+                    - generic [ref=e476]: 02:49 PM
+                  - paragraph [ref=e478]: Give me a 3-step launch plan
+              - generic [ref=e479]:
+                - img [ref=e481]
+                - generic [ref=e485]:
+                  - generic [ref=e486]: planner
+                  - generic [ref=e487]: Typing...
+            - generic [ref=e420]:
+              - textbox "Type a message to the board..." [ref=e421]
+              - button [ref=e422] [cursor=pointer]:
+                - img [ref=e423]
+              - button [active] [ref=e427] [cursor=pointer]:
+                - img [ref=e428]
+          - generic [ref=e433]:
+            - tablist [ref=e435]:
+              - tab "Tasks 0" [selected] [ref=e436] [cursor=pointer]:
+                - img [ref=e437]
+                - text: Tasks
+                - generic [ref=e440]: "0"
+              - tab "Knowledge 0" [ref=e441] [cursor=pointer]:
+                - img [ref=e442]
+                - text: Knowledge
+                - generic [ref=e444]: "0"
+              - tab "Preview" [ref=e445] [cursor=pointer]:
+                - img [ref=e446]
+                - text: Preview
+            - tabpanel "Tasks 0" [ref=e450]:
+              - generic [ref=e454]:
+                - button "Add New Task" [ref=e455] [cursor=pointer]:
+                  - img
+                  - text: Add New Task
+                - button "Board View" [ref=e456] [cursor=pointer]:
+                  - img
+                  - text: Board View
+                - generic [ref=e457]:
+                  - img [ref=e459]
+                  - paragraph [ref=e462]: No active tasks
+    - button [ref=e369] [cursor=pointer]:
+      - img
+  - region "Notifications alt+T"

@@ -1,0 +1,626 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Kosmoi" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - generic [ref=e12]: 0 Vibes
+          - generic [ref=e13]:
+            - button [ref=e14] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+            - button "Koh Samui 26°" [ref=e157] [cursor=pointer]:
+              - img [ref=e158]
+              - generic [ref=e160]: Koh Samui
+              - generic [ref=e161]: 26°
+          - button "🇺🇸 EN" [ref=e18] [cursor=pointer]:
+            - img
+            - generic [ref=e19]: 🇺🇸 EN
+          - link [ref=e20] [cursor=pointer]:
+            - /url: /login
+            - button [ref=e21]:
+              - generic [ref=e23]:
+                - img
+    - main [ref=e24]:
+      - generic [ref=e28]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - button "Local Businesses" [ref=e32] [cursor=pointer]
+            - button "Global Hotels" [ref=e33] [cursor=pointer]:
+              - generic [ref=e34]:
+                - img [ref=e35]
+                - text: Global Hotels
+          - generic [ref=e37]:
+            - combobox [ref=e39] [cursor=pointer]:
+              - generic: All Categories
+              - img [ref=e40]
+            - generic [ref=e43]:
+              - textbox "Search service, business, category..." [ref=e44]
+              - img [ref=e45]
+        - generic [ref=e49]:
+          - generic [ref=e54]:
+            - region "Map" [ref=e162]
+            - generic [ref=e163]:
+              - generic [ref=e318]:
+                - generic:
+                  - generic:
+                    - button "Make Space Co-working" [ref=e320] [cursor=pointer]
+                    - button "Samui Tropical Garden" [ref=e321] [cursor=pointer]
+                    - button "Azur Gym" [ref=e322] [cursor=pointer]
+                    - button "ABOUT KOH SAMUI" [ref=e323] [cursor=pointer]
+                    - button "ShaSa Resort" [ref=e324] [cursor=pointer]
+                    - button "Treetop Tour Zipline" [ref=e325] [cursor=pointer]
+                    - button "LAMAI" [ref=e326] [cursor=pointer]
+                    - button "Sambaitao Garden Shop" [ref=e327] [cursor=pointer]
+                    - button "Jetski" [ref=e328] [cursor=pointer]
+                    - button "Silavadee Resort" [ref=e329] [cursor=pointer]
+                    - button "MILLION SHOT Self-Portrait Studio" [ref=e330] [cursor=pointer]
+                    - button "HUA THANON BEACH" [ref=e331] [cursor=pointer]
+                    - button "Tida Lawyer and Property / RISG International" [ref=e332] [cursor=pointer]
+                    - button "Raja Ferry Pier, Don Sak" [ref=e333] [cursor=pointer]
+                    - button "Khanom Hospital" [ref=e334] [cursor=pointer]
+                    - button "Taxi Suratthani And Donsak pier แท๊กซี่" [ref=e335] [cursor=pointer]
+                    - button "ซ่อมไฟเบอร์กลาส ผลิตสระว่ายนำ้ถัง" [ref=e336] [cursor=pointer]
+                    - button "Good Time Studio" [ref=e337] [cursor=pointer]
+                    - button "PAPA WEED cannabis marijuana" [ref=e338] [cursor=pointer]
+                    - button "Currency Exchange ! Money Changer ! Paarth Forex" [ref=e339] [cursor=pointer]
+                    - button "Mr. Dam's" [ref=e340] [cursor=pointer]
+                    - button "Organic Farm & Coffee Shop" [ref=e341] [cursor=pointer]
+                    - button "Koh Taen temple" [ref=e342] [cursor=pointer]
+                    - button "bnb learning studio" [ref=e343] [cursor=pointer]
+                    - button "Somrom Space" [ref=e344] [cursor=pointer]
+                    - button "Proud Home Cooking Class" [ref=e345] [cursor=pointer]
+                    - button "ขายที่ดินเกาะสมุย" [ref=e346] [cursor=pointer]
+                    - button "Tour Explore" [ref=e347] [cursor=pointer]
+                    - button "Cluster of 10 markers" [ref=e348] [cursor=pointer]
+                    - button "Cluster of 10 markers" [ref=e349] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e350] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e351] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e352] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e353] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e354] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e355] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e356] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e357] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e358] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e359] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e360] [cursor=pointer]
+                    - button "Cluster of 2 markers" [ref=e361] [cursor=pointer]
+                    - button "Cluster of 5 markers" [ref=e362] [cursor=pointer]
+                    - button "Cluster of 5 markers" [ref=e363] [cursor=pointer]
+                    - button "Cluster of 7 markers" [ref=e364] [cursor=pointer]
+                    - button "Cluster of 7 markers" [ref=e365] [cursor=pointer]
+                    - button "Cluster of 7 markers" [ref=e366] [cursor=pointer]
+                    - button "Cluster of 7 markers" [ref=e367] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e368] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e369] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e370] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e371] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e372] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e373] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e374] [cursor=pointer]
+                    - button "Cluster of 3 markers" [ref=e375] [cursor=pointer]
+                    - button "Cluster of 60 markers" [ref=e376] [cursor=pointer]
+                    - button "Cluster of 12 markers" [ref=e377] [cursor=pointer]
+                    - button "Cluster of 12 markers" [ref=e378] [cursor=pointer]
+                    - button "Cluster of 8 markers" [ref=e379] [cursor=pointer]
+                    - button "Cluster of 8 markers" [ref=e380] [cursor=pointer]
+                    - button "Cluster of 8 markers" [ref=e381] [cursor=pointer]
+                    - button "Cluster of 8 markers" [ref=e382] [cursor=pointer]
+                    - button "Cluster of 4 markers" [ref=e383] [cursor=pointer]
+                    - button "Cluster of 4 markers" [ref=e384] [cursor=pointer]
+                    - button "Cluster of 4 markers" [ref=e385] [cursor=pointer]
+                    - button "Cluster of 4 markers" [ref=e386] [cursor=pointer]
+                    - button "Cluster of 58 markers" [ref=e387] [cursor=pointer]
+                    - button "Cluster of 9 markers" [ref=e388] [cursor=pointer]
+                    - button "Cluster of 36 markers" [ref=e389] [cursor=pointer]
+                    - button "Cluster of 59 markers" [ref=e390] [cursor=pointer]
+                    - button "Cluster of 43 markers" [ref=e391] [cursor=pointer]
+                    - button "Cluster of 48 markers" [ref=e392] [cursor=pointer]
+                    - button "Cluster of 15 markers" [ref=e393] [cursor=pointer]
+                    - button "Cluster of 15 markers" [ref=e394] [cursor=pointer]
+                    - button "Cluster of 15 markers" [ref=e395] [cursor=pointer]
+                    - button "Cluster of 71 markers" [ref=e396] [cursor=pointer]
+                    - button "Cluster of 51 markers" [ref=e397] [cursor=pointer]
+                    - button "Cluster of 35 markers" [ref=e398] [cursor=pointer]
+                    - button "Cluster of 80 markers" [ref=e399] [cursor=pointer]
+                    - button "Cluster of 6 markers" [ref=e400] [cursor=pointer]
+                    - button "Cluster of 6 markers" [ref=e401] [cursor=pointer]
+                    - button "Cluster of 11 markers" [ref=e402] [cursor=pointer]
+                    - button "Cluster of 57 markers" [ref=e403] [cursor=pointer]
+                    - button "Cluster of 22 markers" [ref=e404] [cursor=pointer]
+                    - button "Cluster of 25 markers" [ref=e405] [cursor=pointer]
+                    - button "Cluster of 13 markers" [ref=e406] [cursor=pointer]
+                    - button "Cluster of 13 markers" [ref=e407] [cursor=pointer]
+                    - button "Cluster of 28 markers" [ref=e408] [cursor=pointer]
+              - iframe [ref=e409]:
+                
+              - link "Open this area in Google Maps (opens a new window)" [ref=e411] [cursor=pointer]:
+                - /url: https://maps.google.com/maps?ll=9.512,100.0136&z=12&t=m&hl=en&gl=US&mapclient=apiv3
+                - img "Google" [ref=e413]
+              - generic [ref=e414]:
+                - generic [ref=e419]: Map data ©2026 Google
+                - link "Terms (opens in new tab)" [ref=e424] [cursor=pointer]:
+                  - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+                  - text: Terms
+                - link "Report a map error" [ref=e429] [cursor=pointer]:
+                  - /url: https://www.google.com/maps/@9.512,100.0136,12z/data=!10m1!1e1!12b1?source=apiv3&rapsrc=apiv3
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - 'heading "Found 1000 service providers (Raw: 1000)" [level=2] [ref=e430]':
+                - img [ref=e59]
+                - text: Found 1000 service providers
+                - generic [ref=e61]: "(Raw: 1000)"
+              - generic [ref=e62]:
+                - generic [ref=e63] [cursor=pointer]: Rating
+                - generic [ref=e64] [cursor=pointer]: Distance
+            - generic [ref=e431]:
+              - generic [ref=e434] [cursor=pointer]:
+                - img "ชนแก้ว คอพับ" [ref=e436]
+                - generic [ref=e437]:
+                  - generic [ref=e438]:
+                    - generic [ref=e439]:
+                      - generic [ref=e440]:
+                        - heading "ชนแก้ว คอพับ" [level=3] [ref=e442]
+                        - generic [ref=e444]: bars
+                      - generic [ref=e445]:
+                        - generic [ref=e446]:
+                          - img [ref=e447]
+                          - generic [ref=e449]: "5.0"
+                        - generic [ref=e450]: 0 reviews
+                    - paragraph [ref=e451]: ชนแก้ว คอพับ offers sensational and authentic Thai cuisine crafted with a unique twist by a friendly chef with a hotel background. Enjoy delicious dishes in a welcoming atmosphere with super-friendly service and great prices.
+                  - generic [ref=e452]:
+                    - button "Call" [ref=e453]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e454]:
+                      - img
+                      - text: Book
+              - generic [ref=e457] [cursor=pointer]:
+                - img "Panama Hill" [ref=e459]
+                - generic [ref=e460]:
+                  - generic [ref=e461]:
+                    - generic [ref=e462]:
+                      - generic [ref=e463]:
+                        - heading "Panama Hill" [level=3] [ref=e465]
+                        - generic [ref=e467]: Delivery
+                      - generic [ref=e468]:
+                        - generic [ref=e469]:
+                          - img [ref=e470]
+                          - generic [ref=e472]: "5.0"
+                        - generic [ref=e473]: 0 reviews
+                    - paragraph [ref=e474]: Panama Hill offers delicious, authentic Thai cuisine in a warm and inviting atmosphere, creating a memorable dining experience thanks to the genuine hospitality of the family owners. Beyond the food, guests appreciate the welcoming service and family-friendly environment that make Panama Hill a true Koh Samui gem.
+                  - generic [ref=e475]:
+                    - button "Call" [ref=e476]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e477]:
+                      - img
+                      - text: Book
+              - generic [ref=e480] [cursor=pointer]:
+                - img "ด้ายเซอร์วิส" [ref=e482]
+                - generic [ref=e483]:
+                  - generic [ref=e484]:
+                    - generic [ref=e485]:
+                      - generic [ref=e486]:
+                        - heading "ด้ายเซอร์วิส" [level=3] [ref=e488]
+                        - generic [ref=e490]: AC Repair
+                      - generic [ref=e491]:
+                        - generic [ref=e492]:
+                          - img [ref=e493]
+                          - generic [ref=e495]: "5.0"
+                        - generic [ref=e496]: 0 reviews
+                    - paragraph [ref=e497]: ด้ายเซอร์วิส is a premier Ac repair located in Ang Thong. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e498]:
+                    - button "Call" [ref=e499]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e500]:
+                      - img
+                      - text: Book
+              - generic [ref=e503] [cursor=pointer]:
+                - img "Evolution" [ref=e505]
+                - generic [ref=e506]:
+                  - generic [ref=e507]:
+                    - generic [ref=e508]:
+                      - generic [ref=e509]:
+                        - heading "Evolution" [level=3] [ref=e511]
+                        - generic [ref=e513]: muay_thai
+                      - generic [ref=e514]:
+                        - generic [ref=e515]:
+                          - img [ref=e516]
+                          - generic [ref=e518]: "5.0"
+                        - generic [ref=e519]: 0 reviews
+                    - paragraph [ref=e520]: Evolution in Koh Samui offers an unforgettable fitness experience with expert trainers, top-notch facilities, and a welcoming atmosphere, ensuring effective workouts and lasting memories. With a wide range of classes and personalized training options, plus convenient amenities like ice baths and healthy dining, Evolution is the ultimate destination for achieving your fitness goals in paradise.
+                  - generic [ref=e521]:
+                    - button "Call" [ref=e522]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e523]:
+                      - img
+                      - text: Book
+              - generic [ref=e526] [cursor=pointer]:
+                - img [ref=e529]
+                - generic [ref=e531]:
+                  - generic [ref=e532]:
+                    - generic [ref=e533]:
+                      - generic [ref=e534]:
+                        - heading "KPG GLEAM TEAM" [level=3] [ref=e536]
+                        - generic [ref=e538]: Gardener
+                      - generic [ref=e539]:
+                        - generic [ref=e540]:
+                          - img [ref=e541]
+                          - generic [ref=e543]: "5.0"
+                        - generic [ref=e544]: 0 reviews
+                    - paragraph [ref=e545]: KPG GLEAM TEAM delivers immaculate cleaning services in Koh Samui, specializing in thorough deep cleans, including steam bedding and window treatments, with a focus on exceptional customer service. Transform your home with their team and experience a sparkling clean you'll love.
+                  - generic [ref=e546]:
+                    - button "Call" [ref=e547]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e548]:
+                      - img
+                      - text: Book
+              - generic [ref=e551] [cursor=pointer]:
+                - img "Nong night car&motorbike for rent" [ref=e553]
+                - generic [ref=e554]:
+                  - generic [ref=e555]:
+                    - generic [ref=e556]:
+                      - generic [ref=e557]:
+                        - heading "Nong night car&motorbike for rent" [level=3] [ref=e559]
+                        - generic [ref=e561]: motorbike_rental
+                      - generic [ref=e562]:
+                        - generic [ref=e563]:
+                          - img [ref=e564]
+                          - generic [ref=e566]: "5.0"
+                        - generic [ref=e567]: 0 reviews
+                    - paragraph [ref=e568]: Nong night car&motorbike for rent is a premier Motorbike rental located in Ko Samui District. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e569]:
+                    - button "Call" [ref=e570]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e571]:
+                      - img
+                      - text: Book
+              - generic [ref=e574] [cursor=pointer]:
+                - img "Ann hair salon koh samui" [ref=e576]
+                - generic [ref=e577]:
+                  - generic [ref=e578]:
+                    - generic [ref=e579]:
+                      - generic [ref=e580]:
+                        - heading "Ann hair salon koh samui" [level=3] [ref=e582]
+                        - generic [ref=e584]: Beauty
+                      - generic [ref=e585]:
+                        - generic [ref=e586]:
+                          - img [ref=e587]
+                          - generic [ref=e589]: "5.0"
+                        - generic [ref=e590]: 0 reviews
+                    - paragraph [ref=e591]: Experience exceptional hair care at Ann hair salon koh samui, where gentle, attentive service and meticulous detail combine to create stunning results. Enjoy a pampering experience in a warm and friendly atmosphere, leaving you feeling refreshed and looking your best.
+                  - generic [ref=e592]:
+                    - button "Call" [ref=e593]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e594]:
+                      - img
+                      - text: Book
+              - generic [ref=e597] [cursor=pointer]:
+                - img "Fisherman pool villa samui (ฟิชเชอร์แมน พูลวิลล่า สมุย)" [ref=e599]
+                - generic [ref=e600]:
+                  - generic [ref=e601]:
+                    - generic [ref=e602]:
+                      - generic [ref=e603]:
+                        - heading "Fisherman pool villa samui (ฟิชเชอร์แมน พูลวิลล่า สมุย)" [level=3] [ref=e605]
+                        - generic [ref=e607]: pool_maintenance
+                      - generic [ref=e608]:
+                        - generic [ref=e609]:
+                          - img [ref=e610]
+                          - generic [ref=e612]: "5.0"
+                        - generic [ref=e613]: 0 reviews
+                    - paragraph [ref=e614]: Fisherman pool villa samui (ฟิชเชอร์แมน พูลวิลล่า สมุย) is a premier Pool maintenance located in Surat Thani 84320. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e615]:
+                    - button "Call" [ref=e616]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e617]:
+                      - img
+                      - text: Book
+              - generic [ref=e620] [cursor=pointer]:
+                - img "The F4 PadThai" [ref=e622]
+                - generic [ref=e623]:
+                  - generic [ref=e624]:
+                    - generic [ref=e625]:
+                      - generic [ref=e626]:
+                        - heading "The F4 PadThai" [level=3] [ref=e628]
+                        - generic [ref=e630]: street_food
+                      - generic [ref=e631]:
+                        - generic [ref=e632]:
+                          - img [ref=e633]
+                          - generic [ref=e635]: "5.0"
+                        - generic [ref=e636]: 0 reviews
+                    - paragraph [ref=e637]: F4 PadThai delivers an authentic and unforgettable Thai culinary experience, serving up the best Pad Thai and a variety of other exceptional dishes at affordable prices in a vibrant night market setting. With rave reviews and a loyal following, it's a must-try destination for anyone seeking delicious local flavors in Koh Samui.
+                  - generic [ref=e638]:
+                    - button "Call" [ref=e639]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e640]:
+                      - img
+                      - text: Book
+              - generic [ref=e643] [cursor=pointer]:
+                - img "บริษัท เฟื่องฟู แอร์ สมุย แอนด์ ซัพพลาย จำกัด" [ref=e645]
+                - generic [ref=e646]:
+                  - generic [ref=e647]:
+                    - generic [ref=e648]:
+                      - generic [ref=e649]:
+                        - heading "บริษัท เฟื่องฟู แอร์ สมุย แอนด์ ซัพพลาย จำกัด" [level=3] [ref=e651]
+                        - generic [ref=e653]: AC Repair
+                      - generic [ref=e654]:
+                        - generic [ref=e655]:
+                          - img [ref=e656]
+                          - generic [ref=e658]: "5.0"
+                        - generic [ref=e659]: 0 reviews
+                    - paragraph [ref=e660]: บริษัท เฟื่องฟู แอร์ สมุย แอนด์ ซัพพลาย จำกัด is a premier Ac repair located in ตำบลมะเร็ต อำเภอเกาะสมุย สุราษฎร์ธานี. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e661]:
+                    - button "Call" [ref=e662]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e663]:
+                      - img
+                      - text: Book
+              - generic [ref=e666] [cursor=pointer]:
+                - img "ช่างหมก ร้านซ่อมรถมอเตอร์ไซค์" [ref=e668]
+                - generic [ref=e669]:
+                  - generic [ref=e670]:
+                    - generic [ref=e671]:
+                      - generic [ref=e672]:
+                        - heading "ช่างหมก ร้านซ่อมรถมอเตอร์ไซค์" [level=3] [ref=e674]
+                        - generic [ref=e676]: motorcycle_mechanic
+                      - generic [ref=e677]:
+                        - generic [ref=e678]:
+                          - img [ref=e679]
+                          - generic [ref=e681]: "5.0"
+                        - generic [ref=e682]: 0 reviews
+                    - paragraph [ref=e683]: ช่างหมก ร้านซ่อมรถมอเตอร์ไซค์ in Koh Samui delivers excellent and detailed motorcycle repairs with friendly service, ensuring your ride is back on the road quickly and running smoothly. Experience the cool and meticulous workmanship of this small but highly skilled shop.
+                  - generic [ref=e684]:
+                    - button "Call" [ref=e685]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e686]:
+                      - img
+                      - text: Book
+              - generic [ref=e689] [cursor=pointer]:
+                - img "Pornnapat thai massage" [ref=e691]
+                - generic [ref=e692]:
+                  - generic [ref=e693]:
+                    - generic [ref=e694]:
+                      - generic [ref=e695]:
+                        - heading "Pornnapat thai massage" [level=3] [ref=e697]
+                        - generic [ref=e699]: massage_spa
+                      - generic [ref=e700]:
+                        - generic [ref=e701]:
+                          - img [ref=e702]
+                          - generic [ref=e704]: "5.0"
+                        - generic [ref=e705]: 0 reviews
+                    - paragraph [ref=e706]: Pornnapat Thai Massage offers rejuvenating and expertly delivered massages in a clean, peaceful environment, ensuring a relaxing and pain-relieving experience. With friendly staff and skilled masseuses, you'll leave feeling refreshed and eager to return on your next Koh Samui visit.
+                  - generic [ref=e707]:
+                    - button "Call" [ref=e708]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e709]:
+                      - img
+                      - text: Book
+              - generic [ref=e712] [cursor=pointer]:
+                - img "จำเริญทราเวล Chamreon Travel" [ref=e714]
+                - generic [ref=e715]:
+                  - generic [ref=e716]:
+                    - generic [ref=e717]:
+                      - generic [ref=e718]:
+                        - heading "จำเริญทราเวล Chamreon Travel" [level=3] [ref=e720]
+                        - generic [ref=e722]: island_tours
+                      - generic [ref=e723]:
+                        - generic [ref=e724]:
+                          - img [ref=e725]
+                          - generic [ref=e727]: "5.0"
+                        - generic [ref=e728]: 0 reviews
+                    - paragraph [ref=e729]: จำเริญทราเวล Chamreon Travel is a premier Island tours located in Ko Samui District. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e730]:
+                    - button "Call" [ref=e731]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e732]:
+                      - img
+                      - text: Book
+              - generic [ref=e735] [cursor=pointer]:
+                - img "Yobye Rooftop samui" [ref=e737]
+                - generic [ref=e738]:
+                  - generic [ref=e739]:
+                    - generic [ref=e740]:
+                      - generic [ref=e741]:
+                        - heading "Yobye Rooftop samui" [level=3] [ref=e743]
+                        - generic [ref=e745]: bars
+                      - generic [ref=e746]:
+                        - generic [ref=e747]:
+                          - img [ref=e748]
+                          - generic [ref=e750]: "5.0"
+                        - generic [ref=e751]: 0 reviews
+                    - paragraph [ref=e752]: Yobye Rooftop samui is a premier Bars located in Ko Samui District. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e753]:
+                    - button "Call" [ref=e754]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e755]:
+                      - img
+                      - text: Book
+              - generic [ref=e758] [cursor=pointer]:
+                - img "ปัญญวัฒน์การช่าง (ช่างหนุ่ม)" [ref=e760]
+                - generic [ref=e761]:
+                  - generic [ref=e762]:
+                    - generic [ref=e763]:
+                      - generic [ref=e764]:
+                        - heading "ปัญญวัฒน์การช่าง (ช่างหนุ่ม)" [level=3] [ref=e766]
+                        - generic [ref=e768]: car_mechanic
+                      - generic [ref=e769]:
+                        - generic [ref=e770]:
+                          - img [ref=e771]
+                          - generic [ref=e773]: "5.0"
+                        - generic [ref=e774]: 0 reviews
+                    - paragraph [ref=e775]: ปัญญวัฒน์การช่าง (ช่างหนุ่ม) in Koh Samui offers reliable and affordable auto repair with friendly service technicians dedicated to fixing your car problems efficiently. They provide budget-conscious solutions and ensure customer satisfaction.
+                  - generic [ref=e776]:
+                    - button "Call" [ref=e777]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e778]:
+                      - img
+                      - text: Book
+              - generic [ref=e781] [cursor=pointer]:
+                - img "Longlae Samui Tour and Villa" [ref=e783]
+                - generic [ref=e784]:
+                  - generic [ref=e785]:
+                    - generic [ref=e786]:
+                      - generic [ref=e787]:
+                        - heading "Longlae Samui Tour and Villa" [level=3] [ref=e789]
+                        - generic [ref=e791]: island_tours
+                      - generic [ref=e792]:
+                        - generic [ref=e793]:
+                          - img [ref=e794]
+                          - generic [ref=e796]: "5.0"
+                        - generic [ref=e797]: 0 reviews
+                    - paragraph [ref=e798]: Longlae Samui Tour and Villa is a premier Island tours located in Amphoe Ko Samui. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e799]:
+                    - button "Call" [ref=e800]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e801]:
+                      - img
+                      - text: Book
+              - generic [ref=e804] [cursor=pointer]:
+                - img "B.K.Smile Laundry" [ref=e806]
+                - generic [ref=e807]:
+                  - generic [ref=e808]:
+                    - generic [ref=e809]:
+                      - generic [ref=e810]:
+                        - heading "B.K.Smile Laundry" [level=3] [ref=e812]
+                        - generic [ref=e814]: Cleaning
+                      - generic [ref=e815]:
+                        - generic [ref=e816]:
+                          - img [ref=e817]
+                          - generic [ref=e819]: "5.0"
+                        - generic [ref=e820]: 0 reviews
+                    - paragraph [ref=e821]: B.K.Smile Laundry is a premier Cleaning located in Mae Nam. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e822]:
+                    - button "Call" [ref=e823]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e824]:
+                      - img
+                      - text: Book
+              - generic [ref=e827] [cursor=pointer]:
+                - img "Soul Samui Shop" [ref=e829]
+                - generic [ref=e830]:
+                  - generic [ref=e831]:
+                    - generic [ref=e832]:
+                      - generic [ref=e833]:
+                        - heading "Soul Samui Shop" [level=3] [ref=e835]
+                        - generic [ref=e837]: clothing
+                      - generic [ref=e838]:
+                        - generic [ref=e839]:
+                          - img [ref=e840]
+                          - generic [ref=e842]: "5.0"
+                        - generic [ref=e843]: 0 reviews
+                    - paragraph [ref=e844]: Soul Samui Shop offers a curated collection of unique jewelry, handcrafted items, and stylish clothing in a charming atmosphere. With its friendly owner and diverse selection, it's a must-visit destination for those seeking beautiful, affordable treasures.
+                  - generic [ref=e845]:
+                    - button "Call" [ref=e846]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e847]:
+                      - img
+                      - text: Book
+              - generic [ref=e850] [cursor=pointer]:
+                - img [ref=e853]
+                - generic [ref=e855]:
+                  - generic [ref=e856]:
+                    - generic [ref=e857]:
+                      - generic [ref=e858]:
+                        - heading "Tantawan Laundry House" [level=3] [ref=e860]
+                        - generic [ref=e862]: Cleaning
+                      - generic [ref=e863]:
+                        - generic [ref=e864]:
+                          - img [ref=e865]
+                          - generic [ref=e867]: "5.0"
+                        - generic [ref=e868]: 0 reviews
+                    - paragraph [ref=e869]: Tantawan Laundry House is a premier Cleaning located in Ko Samui District. Visit us for a great local experience in Koh Samui.
+                  - generic [ref=e870]:
+                    - button "Call" [ref=e871]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e872]:
+                      - img
+                      - text: Book
+              - generic [ref=e875] [cursor=pointer]:
+                - img "Muai's Thai Traditional Cooking Academy" [ref=e877]
+                - generic [ref=e878]:
+                  - generic [ref=e879]:
+                    - generic [ref=e880]:
+                      - generic [ref=e881]:
+                        - heading "Muai's Thai Traditional Cooking Academy" [level=3] [ref=e883]
+                        - generic [ref=e885]: cooking_classes
+                      - generic [ref=e886]:
+                        - generic [ref=e887]:
+                          - img [ref=e888]
+                          - generic [ref=e890]: "5.0"
+                        - generic [ref=e891]: 0 reviews
+                    - paragraph [ref=e892]: Immerse yourself in authentic Thai flavors at Muai's, where you'll enjoy a vibrant market tour, hands-on cooking in a welcoming atmosphere, and savor delicious, freshly prepared dishes. Experience exceptional hospitality with expert guidance, generous portions, and a truly memorable culinary journey.
+                  - generic [ref=e893]:
+                    - button "Call" [ref=e894]:
+                      - img
+                      - text: Call
+                    - button "Book" [ref=e895]:
+                      - img
+                      - text: Book
+        - button [ref=e76] [cursor=pointer]:
+          - img
+    - button "Open Debug Role Switcher" [ref=e77] [cursor=pointer]:
+      - img [ref=e78]
+    - navigation [ref=e87]:
+      - generic [ref=e89]:
+        - link "Home" [ref=e90] [cursor=pointer]:
+          - /url: /App
+          - img [ref=e92]
+          - generic [ref=e95]: Home
+        - link "AI" [ref=e96] [cursor=pointer]:
+          - /url: /AIChat
+          - img [ref=e98]
+          - generic [ref=e100]: AI
+        - generic [ref=e102]:
+          - generic:
+            - generic:
+              - link "Scan" [ref=e104] [cursor=pointer]:
+                - /url: /wallet/scan
+                - img [ref=e106]
+                - generic [ref=e111]: Scan
+              - link "Send" [ref=e113] [cursor=pointer]:
+                - /url: /wallet/send
+                - img [ref=e115]
+                - generic [ref=e118]: Send
+              - link "Receive" [ref=e120] [cursor=pointer]:
+                - /url: /wallet/receive
+                - img [ref=e122]
+                - generic [ref=e125]: Receive
+              - link "Card" [ref=e127] [cursor=pointer]:
+                - /url: /wallet/card
+                - img [ref=e129]
+                - generic [ref=e131]: Card
+          - button [ref=e133] [cursor=pointer]:
+            - img [ref=e135]
+        - link "Market" [ref=e141] [cursor=pointer]:
+          - /url: /marketplace
+          - img [ref=e143]
+          - generic [ref=e148]: Market
+        - link "Organizer" [ref=e149] [cursor=pointer]:
+          - /url: /organizer
+          - img [ref=e151]
+          - generic [ref=e153]: Organizer
+  - region "Notifications alt+T"

@@ -1,0 +1,346 @@
+[
+  {
+    "id": "172037b5-764e-4486-a894-68743c9484ce",
+    "title": "Check Status of Task ID 7f570898-fcc9-4fda-8d7b-cf9060a28d61 (Locate Social Media Agent Python File)",
+    "status": "pending",
+    "assigned_to": "project-manager-agent",
+    "created_at": "2026-03-09T09:12:35.435866+00:00",
+    "updated_at": "2026-03-09T09:12:35.435866+00:00"
+  },
+  {
+    "id": "e220e8be-c2c0-4ebd-b0ab-62aa6ff06c9a",
+    "title": "Escalate Task ID 7f570898-fcc9-4fda-8d7b-cf9060a28d61 (Locate Social Media Agent Python File) to Tech-Lead-Agent",
+    "status": "pending",
+    "assigned_to": "project-manager-agent",
+    "created_at": "2026-03-09T09:13:02.575743+00:00",
+    "updated_at": "2026-03-09T09:13:02.575743+00:00"
+  },
+  {
+    "id": "32f08296-9e27-4ee7-a0e7-a861f02a7a18",
+    "title": "Provide file path for Social Media Agent Python file",
+    "status": "in_progress",
+    "assigned_to": "tech-lead-agent",
+    "created_at": "2026-03-09T09:13:27.698326+00:00",
+    "updated_at": "2026-03-09T10:22:09.59855+00:00"
+  },
+  {
+    "id": "222aa341-4f11-4ef8-9af5-61f48737e79a",
+    "title": "Provide file path for Social Media Agent Python file",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T09:13:54.31488+00:00",
+    "updated_at": "2026-03-09T09:13:54.31488+00:00"
+  },
+  {
+    "id": "8c3113ea-5ef4-40f9-acc6-6686b89da751",
+    "title": "Strategize Revenue Generation - 6008 Uncontacted Businesses",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T09:19:22.696939+00:00",
+    "updated_at": "2026-03-09T09:19:22.696939+00:00"
+  },
+  {
+    "id": "13beb454-1883-4c3f-9b64-3feabcaa7b0c",
+    "title": "Content: Enrich Service Provider Profiles",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T09:19:27.978332+00:00",
+    "updated_at": "2026-03-09T09:19:27.978332+00:00"
+  },
+  {
+    "id": "91af98b4-6e09-41f7-87b6-dd9d4ce4c4b9",
+    "title": "Investigate sanitize_json tool failure",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_at": "2026-03-09T09:33:35.962108+00:00",
+    "updated_at": "2026-03-09T09:33:35.962108+00:00"
+  },
+  {
+    "id": "0edd7e9b-4a2d-439f-bd07-0e52f7677cd2",
+    "title": "Investigate missing map-api and scraper tools",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_at": "2026-03-09T09:33:57.449047+00:00",
+    "updated_at": "2026-03-09T09:33:57.449047+00:00"
+  },
+  {
+    "id": "856cf518-cd7a-4624-a0e2-348c3336fe9d",
+    "title": "Retrieve logs for MarketingService.js from Supabase",
+    "status": "pending",
+    "assigned_to": "supabase-specialist-agent",
+    "created_at": "2026-03-09T09:34:01.652861+00:00",
+    "updated_at": "2026-03-09T09:34:01.652861+00:00"
+  },
+  {
+    "id": "16a5af05-dcaa-4f5f-aa66-b7abaa5f3af8",
+    "title": "Improve MarketingService.js: Implement proper logging, dynamic trending topics, and dynamic image assets",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_at": "2026-03-09T09:34:10.728265+00:00",
+    "updated_at": "2026-03-09T09:34:10.728265+00:00"
+  },
+  {
+    "id": "27a1e718-ad24-4010-8b24-f948145a53ab",
+    "title": "Provide the correct file path for the Social Media Agent Python file.",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_at": "2026-03-09T09:43:55.913988+00:00",
+    "updated_at": "2026-03-09T09:43:55.913988+00:00"
+  },
+  {
+    "id": "6d806dcf-bf48-4aa8-a511-fd3641be2354",
+    "title": "Investigate logs and bug reports for MarketingService.js related to social media and content generation aspects.",
+    "status": "pending",
+    "assigned_to": "qa-agent",
+    "created_at": "2026-03-09T09:43:57.675258+00:00",
+    "updated_at": "2026-03-09T09:43:57.675258+00:00"
+  },
+  {
+    "id": "5ce7c522-002a-4fe2-83e8-078822eb25e1",
+    "title": "Investigate sanitize_json tool failure.",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_at": "2026-03-09T09:43:58.446435+00:00",
+    "updated_at": "2026-03-09T09:43:58.446435+00:00"
+  },
+  {
+    "id": "31ae4161-6307-4c80-ba82-1659f249ee81",
+    "title": "Begin initial analysis of 6008 uncontacted businesses for segmentation and outreach strategy.",
+    "status": "pending",
+    "assigned_to": "cmo-agent",
+    "created_at": "2026-03-09T09:43:58.835345+00:00",
+    "updated_at": "2026-03-09T09:43:58.835345+00:00"
+  },
+  {
+    "id": "aac12945-0d4c-4252-a1f3-2783fc665217",
+    "title": "Fix Notification Setup for CEO Escalation",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:04:26.301633+00:00",
+    "updated_at": "2026-03-09T10:04:26.301633+00:00"
+  },
+  {
+    "id": "50b238cd-1d12-484b-a025-3a9895932a5d",
+    "title": "Re-run find command and save output to file",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:04:44.870786+00:00",
+    "updated_at": "2026-03-09T10:04:44.870786+00:00"
+  },
+  {
+    "id": "19c06ae4-f9c2-4ec5-88e0-673de0656529",
+    "title": "Verify find command output redirection",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:05:00.64702+00:00",
+    "updated_at": "2026-03-09T10:05:00.64702+00:00"
+  },
+  {
+    "id": "40298628-705b-46de-9e49-3a9eee99bdda",
+    "title": "Analyze /var/log listing for Supabase logs",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:05:43.36523+00:00",
+    "updated_at": "2026-03-09T10:05:43.36523+00:00"
+  },
+  {
+    "id": "7b7da3e2-04eb-4624-9cf6-ee774b67607b",
+    "title": "Filter /var/log listing for Supabase logs",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:05:48.850547+00:00",
+    "updated_at": "2026-03-09T10:05:48.850547+00:00"
+  },
+  {
+    "id": "392350a8-c86a-4c2f-ace3-2d9394c60a32",
+    "title": "Improve MarketingService.js: Implement proper logging",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:07:08.603544+00:00",
+    "updated_at": "2026-03-09T10:07:08.603544+00:00"
+  },
+  {
+    "id": "bebd3308-7c04-4089-bcde-71ad715b62f6",
+    "title": "Improve MarketingService.js: Implement dynamic trending topics",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:08:20.718477+00:00",
+    "updated_at": "2026-03-09T10:08:20.718477+00:00"
+  },
+  {
+    "id": "f3f6bb9c-c4a3-4d44-a100-ef07958e2100",
+    "title": "Define Target Audience for Ad Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:12:30.207471+00:00",
+    "updated_at": "2026-03-09T10:12:30.207471+00:00"
+  },
+  {
+    "id": "25d11643-cef4-4f81-9d60-ab94375495db",
+    "title": "Craft Ad Copy for Service Provider Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:12:57.669447+00:00",
+    "updated_at": "2026-03-09T10:12:57.669447+00:00"
+  },
+  {
+    "id": "d1d8cf4a-b661-4d96-bc55-f0cebec66d1b",
+    "title": "Select Ad Platforms for Service Provider Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:13:00.254162+00:00",
+    "updated_at": "2026-03-09T10:13:00.254162+00:00"
+  },
+  {
+    "id": "136744ab-2573-4c30-8717-9f3ae44cbfc7",
+    "title": "Set Up Ad Performance Tracking for Service Provider Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:14:04.67352+00:00",
+    "updated_at": "2026-03-09T10:14:04.67352+00:00"
+  },
+  {
+    "id": "f96ad08f-ed26-4a59-bd1a-6e28382ce66c",
+    "title": "Oversee Service Provider Ad Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:14:08.391943+00:00",
+    "updated_at": "2026-03-09T10:14:08.391943+00:00"
+  },
+  {
+    "id": "89e0ff57-bc00-40a3-aecf-894407e4e77d",
+    "title": "Define Target Audience for Ad Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:15:06.047102+00:00",
+    "updated_at": "2026-03-09T10:15:06.047102+00:00"
+  },
+  {
+    "id": "19ad0c16-dc89-4480-88fc-4a489a42a0c4",
+    "title": "Craft Ad Copy for Service Provider Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:15:08.514777+00:00",
+    "updated_at": "2026-03-09T10:15:08.514777+00:00"
+  },
+  {
+    "id": "91f0cca1-d39b-4190-9f82-5b4862a9c498",
+    "title": "Oversee Service Provider Ad Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:15:41.830924+00:00",
+    "updated_at": "2026-03-09T10:15:41.830924+00:00"
+  },
+  {
+    "id": "a7b501b7-552e-4941-bbb9-62e392839402",
+    "title": "Investigate Task Master Issues",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:07.070751+00:00",
+    "updated_at": "2026-03-09T10:19:07.070751+00:00"
+  },
+  {
+    "id": "1b0552d7-b385-41b0-9b54-794c068cc4e4",
+    "title": "Report Task Master Issues and Investigate Alternatives",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:22.33174+00:00",
+    "updated_at": "2026-03-09T10:19:22.33174+00:00"
+  },
+  {
+    "id": "8ed8b407-1592-4457-b6e1-86c3e503c1e1",
+    "title": "Report Task Master Issues and Investigate Alternatives",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:28.913693+00:00",
+    "updated_at": "2026-03-09T10:19:28.913693+00:00"
+  },
+  {
+    "id": "d8f34173-1861-4646-902e-24ae54980c8d",
+    "title": "Research Local Thai Advertising Platforms",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:51.06495+00:00",
+    "updated_at": "2026-03-09T10:19:51.06495+00:00"
+  },
+  {
+    "id": "888e8f26-d2bb-4210-a020-0360830fb7fc",
+    "title": "Define Target Audience and Create Ad Copy for Facebook/Instagram",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:53.646106+00:00",
+    "updated_at": "2026-03-09T10:19:53.646106+00:00"
+  },
+  {
+    "id": "549263ce-a8bd-4433-8436-1e77f91fa8b1",
+    "title": "Optimize Landing Page for Ad Campaign Conversions",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:56.522998+00:00",
+    "updated_at": "2026-03-09T10:19:56.522998+00:00"
+  },
+  {
+    "id": "3437855f-90be-4e8f-ac0e-b503c758fe0d",
+    "title": "Set up Conversion Tracking for Ad Campaigns",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:19:58.818524+00:00",
+    "updated_at": "2026-03-09T10:19:58.818524+00:00"
+  },
+  {
+    "id": "c43370e3-87ff-45af-b5eb-4eacfe6fbe99",
+    "title": "Launch Facebook/Instagram Ad Campaigns with Initial Budget",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:01.419239+00:00",
+    "updated_at": "2026-03-09T10:20:01.419239+00:00"
+  },
+  {
+    "id": "20a24b49-e5e5-436d-a2d7-8e0cfe8871a8",
+    "title": "Monitor and Optimize Facebook/Instagram Ad Campaigns",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:04.156213+00:00",
+    "updated_at": "2026-03-09T10:20:04.156213+00:00"
+  },
+  {
+    "id": "6581b24d-88f3-446b-80d8-42e37ba4c7c6",
+    "title": "Analyze Initial Campaign Data and Performance Metrics",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:19.548887+00:00",
+    "updated_at": "2026-03-09T10:20:19.548887+00:00"
+  },
+  {
+    "id": "d494ae25-2cf2-4085-8109-edf7fad10bb0",
+    "title": "Define KPIs and Tracking Strategy for Ad Campaign",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:32.262532+00:00",
+    "updated_at": "2026-03-09T10:20:32.262532+00:00"
+  },
+  {
+    "id": "8b9f1629-605a-4854-a49e-8434b3024d96",
+    "title": "Implement Ad Tracking Based on Defined Strategy",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:34.703589+00:00",
+    "updated_at": "2026-03-09T10:20:34.703589+00:00"
+  },
+  {
+    "id": "a4163198-dbc1-4fbc-96cc-1bcca7b03e17",
+    "title": "Build Ad Performance Dashboard",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:37.093737+00:00",
+    "updated_at": "2026-03-09T10:20:37.093737+00:00"
+  },
+  {
+    "id": "58a6f0f6-9ba5-48f6-899a-69301ec18a3b",
+    "title": "Analyze Ad Performance Data and Identify Optimization Opportunities (Weekly)",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T10:20:39.634746+00:00",
+    "updated_at": "2026-03-09T10:20:39.634746+00:00"
+  }
+]

@@ -662,6 +662,6 @@ export const subCategoryTranslations = {
   }
 };
 
-export const getSubCategoryLabel = (subCategoryId, language = 'he') => {
+export const getSubCategoryLabel = (subCategoryId, language = 'en') => {
   return subCategoryTranslations[language]?.[subCategoryId] || subCategoryId;
 };

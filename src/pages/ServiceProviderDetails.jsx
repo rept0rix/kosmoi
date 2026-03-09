@@ -207,7 +207,7 @@ export default function ServiceProviderDetails() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">טוען...</div>
+        <div className="text-gray-500">Loading...</div>
       </div>
     );
   }
@@ -215,7 +215,7 @@ export default function ServiceProviderDetails() {
   if (!provider) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">ספק השירות לא נמצא</div>
+        <div className="text-gray-500">Service provider not found.</div>
       </div>
     );
   }
@@ -287,7 +287,7 @@ export default function ServiceProviderDetails() {
               {provider.verified && (
                 <Badge className="bg-green-500 hover:bg-green-600 border-none text-white gap-1">
                   <CheckCircle className="w-3 h-3" />
-                  מוסמך
+                  Verified
                 </Badge>
               )}
               {provider.emergency_service && (
@@ -299,11 +299,11 @@ export default function ServiceProviderDetails() {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">{provider.business_name}</h1>
             <div className="flex items-center gap-4 text-sm md:text-base text-gray-200">
-              <div className="flex items-center gap-1">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold text-white">{provider.average_rating?.toFixed(1) || "0.0"}</span>
-                <span>({provider.total_reviews || 0} ביקורות)</span>
-              </div>
+                <div className="flex items-center gap-1">
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <span className="font-bold text-white">{provider.average_rating?.toFixed(1) || "0.0"}</span>
+                  <span>({provider.total_reviews || 0} reviews)</span>
+                </div>
               {provider.location && (
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
@@ -335,10 +335,10 @@ export default function ServiceProviderDetails() {
                 <div id="about" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5 text-blue-600" />
-                    אודות העסק
+                    About this business
                   </h3>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line text-lg">
-                    {provider.description || "אין תיאור זמין לעסק זה."}
+                    {provider.description || "No description is available for this business yet."}
                   </p>
                 </div>
 
@@ -347,7 +347,7 @@ export default function ServiceProviderDetails() {
                   <div id="gallery" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
                     <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <ImageIcon className="w-5 h-5 text-purple-600" />
-                      גלריה
+                      Gallery
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {provider.images.slice(1).map((img, idx) => (
@@ -367,42 +367,42 @@ export default function ServiceProviderDetails() {
                 <div id="info" className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <Zap className="w-5 h-5 text-yellow-500" />
-                    מידע וזמינות
+                    Info and availability
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                       <div className="flex items-center gap-3 mb-2">
                         <Clock className="w-5 h-5 text-blue-600" />
-                        <h4 className="font-semibold text-gray-900">שעות פעילות</h4>
+                        <h4 className="font-semibold text-gray-900">Opening hours</h4>
                       </div>
                       <p className="text-gray-600 text-sm">
                         {(() => {
                           const hours = provider.opening_hours || provider.available_hours;
-                          if (!hours) return "שעות פתיחה לא זמינות";
+                          if (!hours) return "Opening hours unavailable";
                           if (typeof hours === 'string') return hours;
-                          return "לפרטים נוספים צור קשר";
+                          return "Contact the business for more details";
                         })()}
                       </p>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                       <div className="flex items-center gap-3 mb-2">
                         <Globe className="w-5 h-5 text-blue-600" />
-                        <h4 className="font-semibold text-gray-900">אתר אינטרנט</h4>
+                        <h4 className="font-semibold text-gray-900">Website</h4>
                       </div>
                       {provider.website ? (
                         <a href={provider.website} target="_blank" rel="noreferrer" className="text-blue-600 text-sm hover:underline truncate block">
                           {provider.website}
                         </a>
                       ) : (
-                        <p className="text-gray-600 text-sm">לא צויין</p>
+                        <p className="text-gray-600 text-sm">Not provided</p>
                       )}
                     </div>
                     <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                       <div className="flex items-center gap-3 mb-2">
                         <Mail className="w-5 h-5 text-blue-600" />
-                        <h4 className="font-semibold text-gray-900">אימייל</h4>
+                        <h4 className="font-semibold text-gray-900">Email</h4>
                       </div>
-                      <p className="text-gray-600 text-sm">{provider.email || "לא צויין"}</p>
+                      <p className="text-gray-600 text-sm">{provider.email || "Not provided"}</p>
                     </div>
                     {provider.line_id && (
                       <div className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
@@ -416,7 +416,7 @@ export default function ServiceProviderDetails() {
                     <div className="p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors sm:col-span-2">
                       <div className="flex items-center gap-3 mb-2">
                         <Languages className="w-5 h-5 text-blue-600" />
-                        <h4 className="font-semibold text-gray-900">שפות שירות</h4>
+                        <h4 className="font-semibold text-gray-900">Service languages</h4>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {provider.languages && provider.languages.length > 0 ? (
@@ -426,7 +426,7 @@ export default function ServiceProviderDetails() {
                             </Badge>
                           ))
                         ) : (
-                          <p className="text-gray-600 text-sm">לא צויין</p>
+                          <p className="text-gray-600 text-sm">Not provided</p>
                         )}
                       </div>
                     </div>
@@ -439,26 +439,26 @@ export default function ServiceProviderDetails() {
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
                         <Star className="w-5 h-5 text-yellow-400" />
-                        ביקורות לקוחות
+                        Customer reviews
                       </h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
-                        מבוסס על {provider.total_reviews || 0} ביקורות מאומתות
+                        Based on {provider.total_reviews || 0} verified reviews
                       </div>
                     </div>
                     <Button onClick={() => setShowReviewForm(!showReviewForm)} className="shadow-sm">
-                      כתוב ביקורת
+                      Write a review
                     </Button>
                   </div>
 
                   <div className="flex items-center gap-6 mb-8 p-6 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="flex flex-col items-center justify-center p-4 border-l border-slate-200 pl-8">
+                    <div className="flex flex-col items-center justify-center p-4 border-r border-slate-200 pr-8">
                       <span className="text-5xl font-bold text-gray-900">{provider.average_rating?.toFixed(1) || "0.0"}</span>
                       <div className="flex text-yellow-400 my-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star key={star} className={`w-5 h-5 ${star <= (provider.average_rating || 0) ? "fill-current" : "text-gray-300"}`} />
                         ))}
                       </div>
-                      <span className="text-sm text-gray-500">ציון ממוצע</span>
+                      <span className="text-sm text-gray-500">Average score</span>
                     </div>
                     <div className="flex-1 space-y-2">
                       {/* Mock Bars just for visual */}
@@ -478,16 +478,16 @@ export default function ServiceProviderDetails() {
                   {/* Review Form */}
                   {showReviewForm && (
                     <div className="mb-8 p-6 bg-blue-50/50 rounded-xl border border-blue-100 animate-in fade-in slide-in-from-top-4">
-                      <h4 className="font-semibold mb-4">כתוב את הביקורת שלך</h4>
+                      <h4 className="font-semibold mb-4">Write your review</h4>
                       <div className="space-y-4">
                         <Input
                           value={newReview.reviewer_name}
                           onChange={(e) => setNewReview({ ...newReview, reviewer_name: e.target.value })}
-                          placeholder="שמך המלא"
+                          placeholder="Your full name"
                           className="bg-white"
                         />
                         <div className="flex flex-col gap-2">
-                          <span className="text-sm text-gray-600">דרג את החוויה שלך:</span>
+                          <span className="text-sm text-gray-600">Rate your experience:</span>
                           <div className="flex gap-2">
                             {[1, 2, 3, 4, 5].map((rating) => (
                               <button key={rating} onClick={() => setNewReview({ ...newReview, rating })} className="transition-transform hover:scale-110 focus:outline-none">
@@ -499,12 +499,12 @@ export default function ServiceProviderDetails() {
                         <Textarea
                           value={newReview.comment}
                           onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                          placeholder="שתף את החוויה שלך עם ספק זה..."
+                          placeholder="Share your experience with this provider..."
                           className="bg-white min-h-[100px]"
                         />
                         <div className="flex gap-3 pt-2">
-                          <Button onClick={handleSubmitReview} className="flex-1 bg-blue-600 hover:bg-blue-700">פרסם ביקורת</Button>
-                          <Button onClick={() => setShowReviewForm(false)} variant="outline" className="flex-1">ביטול</Button>
+                          <Button onClick={handleSubmitReview} className="flex-1 bg-blue-600 hover:bg-blue-700">Publish review</Button>
+                          <Button onClick={() => setShowReviewForm(false)} variant="outline" className="flex-1">Cancel</Button>
                         </div>
                       </div>
                     </div>
@@ -515,8 +515,8 @@ export default function ServiceProviderDetails() {
                     {reviews.length === 0 ? (
                       <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                         <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-gray-500 font-medium">אין עדיין ביקורות</p>
-                        <p className="text-gray-400 text-sm">היה הראשון לשתף את דעתך על עסק זה</p>
+                        <p className="text-gray-500 font-medium">No reviews yet</p>
+                        <p className="text-gray-400 text-sm">Be the first to share feedback about this business</p>
                       </div>
                     ) : (
                       reviews.map((review) => (
@@ -532,7 +532,7 @@ export default function ServiceProviderDetails() {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <Star key={star} className={`w-3 h-3 ${star <= review.rating ? "fill-current" : "text-gray-300"}`} />
                                   ))}
-                                  <span className="text-gray-400 ml-2">• לפני 2 ימים</span>
+                                  <span className="text-gray-400 ml-2">• 2 days ago</span>
                                 </div>
                               </div>
                             </div>
@@ -540,7 +540,7 @@ export default function ServiceProviderDetails() {
                               App Review
                             </Badge>
                           </div>
-                          <p className="text-gray-600 text-sm leading-relaxed mt-2 mr-14">{review.comment}</p>
+                          <p className="text-gray-600 text-sm leading-relaxed mt-2 ml-14">{review.comment}</p>
                         </div>
                       ))
                     )}
@@ -563,25 +563,25 @@ export default function ServiceProviderDetails() {
                 <TabsContent value="contact" className="mt-0">
                   <CardContent className="p-6 space-y-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-lg">יצירת קשר</h3>
+                      <h3 className="font-bold text-lg">Get in touch</h3>
                       <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
                         <Share2 className="w-5 h-5 text-gray-500" />
                       </Button>
                     </div>
 
                     <Button onClick={() => setBookingOpen(true)} className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md">
-                      <Calendar className="w-5 h-5 ml-2" />
-                      הזמן תור
+                      <Calendar className="w-5 h-5 mr-2" />
+                      Book appointment
                     </Button>
 
                     <Button onClick={() => handleCall(provider.phone)} className="w-full h-12 text-lg bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm">
-                      <Phone className="w-5 h-5 ml-2" />
-                      התקשר עכשיו
+                      <Phone className="w-5 h-5 mr-2" />
+                      Call now
                     </Button>
 
                     {provider.whatsapp && (
                       <Button onClick={() => handleWhatsApp(provider.whatsapp)} className="w-full h-12 text-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 shadow-sm">
-                        <MessageCircle className="w-5 h-5 ml-2" />
+                        <MessageCircle className="w-5 h-5 mr-2" />
                         WhatsApp
                       </Button>
                     )}
@@ -595,14 +595,14 @@ export default function ServiceProviderDetails() {
                       variant="outline"
                       className={`w-full ${isFavorite ? 'text-red-500 border-red-200 bg-red-50' : ''}`}
                     >
-                      <Heart className={`w-5 h-5 ml-2 ${isFavorite ? 'fill-current' : ''}`} />
-                      {isFavorite ? 'הסר ממועדפים' : 'שמור במועדפים'}
+                      <Heart className={`w-5 h-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                      {isFavorite ? 'Remove from saved' : 'Save for later'}
                     </Button>
 
                     <div className="pt-4 border-t">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-gray-500" />
-                        מיקום
+                        Location
                       </h4>
                       <div className="rounded-xl overflow-hidden h-48 mb-3 border border-gray-200">
                         <GoogleMap
@@ -620,8 +620,8 @@ export default function ServiceProviderDetails() {
                         />
                       </div>
                       <Button onClick={handleNavigate} variant="secondary" className="w-full">
-                        <Navigation className="w-4 h-4 ml-2" />
-                        נווט לעסק
+                        <Navigation className="w-4 h-4 mr-2" />
+                        Navigate to business
                       </Button>
                     </div>
                   </CardContent>

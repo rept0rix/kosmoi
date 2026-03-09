@@ -117,6 +117,7 @@ export function useBoardRoom(options = {}) {
   const [newMeetingTitle, setNewMeetingTitle] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedAgentIds, setSelectedAgentIds] = useState([]);
+  const processedHumanMessageIdsRef = useRef(new Set());
 
   // Logic Refs & State
   const messagesEndRef = useRef(null);
@@ -225,6 +226,11 @@ export function useBoardRoom(options = {}) {
   useEffect(() => {
     if (!selectedMeeting) return;
 
+    if (selectedMeeting.id.startsWith("local-")) {
+      setMessages([]);
+      return;
+    }
+
     const fetchDetails = async () => {
       const { data: msgs } = await supabase
         .from("board_messages")
@@ -307,6 +313,36 @@ export function useBoardRoom(options = {}) {
         /** @type {any} */ (supabase).removeChannel(subscription);
     };
   }, []);
+
+  const appendLocalMessage = (message) => {
+    const localMessage = {
+      id:
+        message.id ||
+        `local-msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      created_at: message.created_at || new Date().toISOString(),
+      ...message,
+    };
+
+    setMessages((prev) => [...prev, localMessage]);
+    return localMessage;
+  };
+
+  const persistBoardMessage = async (message) => {
+    if (!selectedMeeting) {
+      return { data: null, error: new Error("No meeting selected") };
+    }
+
+    const payload = {
+      meeting_id: selectedMeeting.id,
+      ...message,
+    };
+
+    if (selectedMeeting.id.startsWith("local-")) {
+      return { data: [appendLocalMessage(payload)], error: null, local: true };
+    }
+
+    return supabase.from("board_messages").insert([payload]);
+  };
 
   // --- AGENT LOGIC ---
   const triggerAgentReply = async (forcedAgent = null) => {
@@ -395,14 +431,11 @@ export function useBoardRoom(options = {}) {
         { role: "system", content: selectedAgent.systemPrompt },
         ...history,
       ]);
-      await supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: selectedAgent.id,
-          content: replyText,
-          type: "text_local",
-        },
-      ]);
+      await persistBoardMessage({
+        agent_id: selectedAgent.id,
+        content: replyText,
+        type: "text_local",
+      });
 
       if (activeWorkflowState) {
         const nextState = workflowService.nextStep();
@@ -433,16 +466,11 @@ export function useBoardRoom(options = {}) {
         // ... (Logic for creating task, write code, update ui, tool call - duplicated from original)
         // We keep the core logic here.
         if (response.action.type === "create_task") {
-          await supabase.from("agent_tasks").insert([
-            {
-              meeting_id: selectedMeeting.id,
-              title: response.action.title,
-              description: response.action.description,
-              assigned_to: response.action.assignee || "Unassigned",
-              priority: response.action.priority || "medium",
-              status: "in_progress",
-            },
-          ]);
+          await handleCreateTask({
+            title: response.action.title,
+            description: response.action.description,
+            priority: response.action.priority || "medium",
+          });
         } else if (response.action.type === "write_code") {
           response.message += `\n\n\`\`\`${response.action.language}\n${response.action.code}\n\`\`\``;
           toolRouter(
@@ -462,49 +490,37 @@ export function useBoardRoom(options = {}) {
               },
               "*",
             );
-            await supabase.from("board_messages").insert([
-              {
-                meeting_id: selectedMeeting.id,
-                agent_id: "SYSTEM",
-                content: `**Visual Agent**: Applying layout '${response.action.payload.layoutType}' to ${response.action.payload.visualSelectorId}...`,
-                type: "system",
-              },
-            ]);
+            await persistBoardMessage({
+              agent_id: "SYSTEM",
+              content: `**Visual Agent**: Applying layout '${response.action.payload.layoutType}' to ${response.action.payload.visualSelectorId}...`,
+              type: "system",
+            });
           } else {
-            await supabase.from("board_messages").insert([
-              {
-                meeting_id: selectedMeeting.id,
-                agent_id: "SYSTEM",
-                content: `**Tool**: ${response.action.name}...`,
-                type: "system",
-              },
-            ]);
+            await persistBoardMessage({
+              agent_id: "SYSTEM",
+              content: `**Tool**: ${response.action.name}...`,
+              type: "system",
+            });
             toolRouter(response.action.name, response.action.payload, {
               userId: user?.id,
               agentId: selectedAgent.id,
               approved: yoloMode,
             }).then((result) => {
-              supabase.from("board_messages").insert([
-                {
-                  meeting_id: selectedMeeting.id,
-                  agent_id: "SYSTEM",
-                  content: `**Result**:\n\`\`\`\n${result}\n\`\`\``,
-                  type: "system",
-                },
-              ]);
+              persistBoardMessage({
+                agent_id: "SYSTEM",
+                content: `**Result**:\n\`\`\`\n${result}\n\`\`\``,
+                type: "system",
+              });
             });
           }
         }
       }
 
-      await supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: selectedAgent.id,
-          content: response.message,
-          type: "text",
-        },
-      ]);
+      await persistBoardMessage({
+        agent_id: selectedAgent.id,
+        content: response.message,
+        type: "text",
+      });
 
       // Workflow Advance
       if (activeWorkflowState) {
@@ -522,14 +538,11 @@ export function useBoardRoom(options = {}) {
       // Verify if error is from Supabase or Network
       if (error.status === 401)
         console.error("BOARD: Supabase Auth Error (401) - Check RLS or keys");
-      await supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: "SYSTEM",
-          content: `**Error**: ${error.message || "Unknown agent error"}`,
-          type: "system",
-        },
-      ]);
+      await persistBoardMessage({
+        agent_id: "SYSTEM",
+        content: `**Error**: ${error.message || "Unknown agent error"}`,
+        type: "system",
+      });
       setTypingAgent(null);
     }
   };
@@ -544,6 +557,21 @@ export function useBoardRoom(options = {}) {
       return () => clearTimeout(timeout);
     }
   }, [messages, selectedMeeting, autoDiscuss, typingAgent]);
+
+  useEffect(() => {
+    if (!messages.length || !selectedMeeting || typingAgent) return;
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.agent_id !== "HUMAN_USER") return;
+    if (processedHumanMessageIdsRef.current.has(lastMsg.id)) return;
+
+    processedHumanMessageIdsRef.current.add(lastMsg.id);
+    handlePitchMode(lastMsg.content);
+
+    const activeAgents = agents.filter((a) => selectedAgentIds.includes(a.id));
+    const mentioned = findMentionedAgent(lastMsg.content, activeAgents);
+    triggerAgentReply(mentioned || null);
+  }, [messages, selectedMeeting, typingAgent, selectedAgentIds]);
 
   // Autonomous Heartbeat
   const stateRef = useRef({ companyState, selectedMeeting, messages });
@@ -620,34 +648,24 @@ export function useBoardRoom(options = {}) {
     if (!input.trim() || !selectedMeeting) return;
 
     const msgContent = input;
-    const tempId = `msg-${Date.now()}`;
-
-    // Optimistic / Local Message
     const newMsg = {
-      id: tempId,
-      meeting_id: selectedMeeting.id,
       agent_id: "HUMAN_USER",
       content: msgContent,
       type: "text",
-      created_at: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, newMsg]);
     setInput("");
     setSelectedImage(null);
 
-    // If Local Meeting, STOP HERE (No backend)
+    // Local meetings are fully client-side.
     if (selectedMeeting.id.startsWith("local-")) {
-      handlePitchMode(msgContent);
-      const activeAgents = agents.filter((a) =>
-        selectedAgentIds.includes(a.id),
-      );
-      const mentioned = findMentionedAgent(msgContent, activeAgents);
-      if (mentioned) triggerAgentReply(mentioned);
+      appendLocalMessage({
+        meeting_id: selectedMeeting.id,
+        ...newMsg,
+      });
       return;
     }
 
-    // Backend Sync
     try {
       const { error } = await supabase.from("board_messages").insert([
         {
@@ -662,37 +680,42 @@ export function useBoardRoom(options = {}) {
         console.error("Failed to sync message to DB:", error);
         toast({
           title: "Sync Failed",
-          description: "Message saved locally only.",
+          description: "Connection failed. Working locally for this session.",
           variant: "warning",
         });
-      } else {
-        handlePitchMode(msgContent);
-        const activeAgents = agents.filter((a) =>
-          selectedAgentIds.includes(a.id),
-        );
-        const mentioned = findMentionedAgent(msgContent, activeAgents);
-        if (mentioned) triggerAgentReply(mentioned);
+        appendLocalMessage({
+          meeting_id: selectedMeeting.id,
+          ...newMsg,
+        });
       }
     } catch (err) {
       console.error("Unexpected error sending message:", err);
+      appendLocalMessage({
+        meeting_id: selectedMeeting.id,
+        ...newMsg,
+      });
     }
   };
 
   const handleCreateMeeting = () => setIsCreateMeetingOpen(true);
-  const confirmCreateMeeting = async () => {
-    if (!newMeetingTitle.trim()) return;
+  const confirmCreateMeeting = async (titleOverride = "") => {
+    const meetingTitle =
+      titleOverride.trim() ||
+      newMeetingTitle.trim() ||
+      `Strategy Session ${new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}`;
     const userId = user?.id || "admin-bypass"; // Allow creation even if auth context is imperfect in dev
 
     console.log(
       "Attempting to create meeting with title:",
-      newMeetingTitle,
+      meetingTitle,
       "for user:",
       userId,
     );
 
-    const payload = { title: newMeetingTitle, status: "active" };
-    if (user?.id) payload.created_by = user.id; // Only add if user exists and schema supports it (checked: schema does NOT, so removing for safety)
-    // Actually, previous check showed schema has NO created_by. So keeping it simple.
+    const payload = { title: meetingTitle, status: "active" };
 
     let meetingData = null;
 
@@ -722,7 +745,7 @@ export function useBoardRoom(options = {}) {
 
       meetingData = {
         id: `local-${Date.now()}`,
-        title: newMeetingTitle,
+        title: meetingTitle,
         status: "active",
         created_at: new Date().toISOString(),
         is_local: true,
@@ -824,23 +847,17 @@ export function useBoardRoom(options = {}) {
         user?.id,
       );
 
-      await supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: "SYSTEM",
-          content: `[DIRECTIVE TO CEO]: ${reportPrompt}`,
-          type: "system_hidden",
-        },
-      ]);
+      await persistBoardMessage({
+        agent_id: "SYSTEM",
+        content: `[DIRECTIVE TO CEO]: ${reportPrompt}`,
+        type: "system_hidden",
+      });
 
-      await supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: "SYSTEM",
-          content: `**SYSTEM**: 🌅 Initiating Daily Standup with Morning Report...`,
-          type: "system",
-        },
-      ]);
+      await persistBoardMessage({
+        agent_id: "SYSTEM",
+        content: `**SYSTEM**: 🌅 Initiating Daily Standup with Morning Report...`,
+        type: "system",
+      });
 
       const ceo = agents.find((a) => a.id === "ceo-agent");
       if (ceo) {
@@ -870,14 +887,11 @@ export function useBoardRoom(options = {}) {
       if (missing.length > 0)
         setSelectedAgentIds((prev) => [...new Set([...prev, ...missing])]);
 
-      const { error } = await supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: "HUMAN_USER",
-          content: "Start the One Dollar Challenge.",
-          type: "text",
-        },
-      ]);
+      const { error } = await persistBoardMessage({
+        agent_id: "HUMAN_USER",
+        content: "Start the One Dollar Challenge.",
+        type: "text",
+      });
 
       if (error) throw error;
 
@@ -907,14 +921,11 @@ export function useBoardRoom(options = {}) {
       ];
 
     if (wf) {
-      supabase.from("board_messages").insert([
-        {
-          meeting_id: selectedMeeting.id,
-          agent_id: "SYSTEM",
-          content: `**WORKFLOW STARTED**: ${wf.name}`,
-          type: "system",
-        },
-      ]);
+      persistBoardMessage({
+        agent_id: "SYSTEM",
+        content: `**WORKFLOW STARTED**: ${wf.name}`,
+        type: "system",
+      });
       toast({ title: "Workflow Started", description: wf.name });
     }
   };

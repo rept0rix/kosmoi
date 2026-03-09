@@ -2,7 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { subCategoriesBySuperCategory, getSubCategoryLabel } from "./subCategories";
 
-export default function SubCategorySelector({ superCategory, selectedSubCategory, onSelectSubCategory, language = 'he', compact = false, limit, onViewMore }) {
+export default function SubCategorySelector({ superCategory, selectedSubCategory, onSelectSubCategory, language = 'en', compact = false, limit, onViewMore }) {
   if (!superCategory || superCategory === 'all') return null;
 
   const subCategories = subCategoriesBySuperCategory[superCategory] || [];
@@ -34,7 +34,7 @@ export default function SubCategorySelector({ superCategory, selectedSubCategory
             onClick={onViewMore}
             className="cursor-pointer transition-all text-xs py-1 px-3 rounded-full bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 hover:border-slate-400"
           >
-            +{remainingCount} {language === 'he' ? 'נוספים' : 'More'}
+            +{remainingCount} More
           </Badge>
         )}
       </div>

@@ -3,10 +3,20 @@ import { useBoardRoom } from "@/shared/hooks/useBoardRoom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { motion } from "framer-motion";
-import { Layout, TriangleAlert, Command, Cpu } from "lucide-react";
+import {
+  Layout,
+  TriangleAlert,
+  Command,
+  Cpu,
+  Sparkles,
+  Workflow,
+  RadioTower,
+  ArrowRight,
+} from "lucide-react";
 
 import BoardRoomHeader from "./board/BoardRoomHeader";
 import BoardRoomLeftSidebar from "./board/BoardRoomLeftSidebar";
@@ -165,7 +175,7 @@ function BoardRoomContent() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col relative bg-transparent">
+        <div className="flex-1 flex flex-col relative bg-transparent min-w-0">
           {/* Worker Alert */}
           {isWorkerStopped && (
             <div className="p-4 bg-red-950/30 border-b border-red-500/30 backdrop-blur-sm">
@@ -259,7 +269,7 @@ function BoardRoomContent() {
               />
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-8 p-4 relative overflow-hidden">
+            <div className="flex-1 overflow-auto px-6 py-8 md:px-8 lg:px-10">
               {/* Floating Elements for Empty State */}
               <motion.div
                 animate={{ y: [0, -20, 0] }}
@@ -281,58 +291,208 @@ function BoardRoomContent() {
                 className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-pink-500/10 rounded-full blur-3xl"
               />
 
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="relative z-10"
-              >
-                <div className="absolute inset-0 bg-neon-cyan/20 blur-3xl rounded-full" />
-                <GlassCard
-                  variant="premium"
-                  className="w-48 h-48 flex items-center justify-center relative z-10 border-neon-cyan/30 ring-1 ring-neon-cyan/20"
+              <div className="relative z-10 mx-auto grid min-h-full w-full max-w-7xl items-center gap-6 xl:grid-cols-[minmax(0,1.4fr)_360px]">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.45 }}
                 >
-                  <Cpu className="w-24 h-24 text-neon-cyan drop-shadow-neon animate-pulse-slow" />
-                </GlassCard>
-              </motion.div>
+                  <GlassCard
+                    variant="premium"
+                    className="overflow-hidden border-white/10 bg-slate-950/60 p-8 shadow-[0_30px_80px_rgba(2,6,23,0.55)] md:p-10"
+                  >
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.12),transparent_28%)]" />
+                    <div className="relative flex flex-col gap-8">
+                      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="max-w-3xl space-y-4">
+                          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200">
+                            <Sparkles className="h-4 w-4" />
+                            Neural strategy workspace
+                          </div>
+                          <h2 className="text-5xl font-black tracking-tight text-white md:text-6xl xl:text-7xl">
+                            {isRTL ? "חדר הישיבות" : "BOARD ROOM"}
+                          </h2>
+                          <p className="max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
+                            {isRTL
+                              ? "בחר או צור פגישה כדי להתחיל לעבוד עם הצוות"
+                              : "Create a live session, pick a strategy track, and start orchestrating your agents from one place."}
+                          </p>
+                        </div>
+                        <div className="grid w-full gap-3 sm:grid-cols-3 lg:w-[320px] lg:grid-cols-1">
+                          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                              Sessions
+                            </div>
+                            <div className="mt-2 text-3xl font-bold text-white">
+                              {meetings.length}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                              Active agents
+                            </div>
+                            <div className="mt-2 text-3xl font-bold text-white">
+                              {selectedAgentIds.length}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                              Mode
+                            </div>
+                            <div className="mt-2 text-3xl font-bold text-cyan-300">
+                              {autonomousMode ? "AUTO" : "MANUAL"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-center space-y-4 z-10 max-w-lg"
-              >
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                  {isRTL ? "חדר הישיבות" : "BOARD ROOM"}
-                </h2>
-                <p className="text-lg text-slate-400 max-w-md mx-auto leading-relaxed font-light">
-                  {isRTL
-                    ? "בחר או צור פגישה כדי להתחיל לעבוד עם הצוות"
-                    : "Initialize a session to activate the Neural Link with your AI agents."}
-                </p>
-              </motion.div>
+                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-5 md:p-6">
+                          <div className="mb-4 flex items-center gap-3">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+                              <Cpu className="h-7 w-7" />
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                Quick start
+                              </div>
+                              <div className="text-xl font-bold text-white">
+                                Create a board session
+                              </div>
+                            </div>
+                          </div>
 
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <NeonButton
-                  size="lg"
-                  variant="cyan"
-                  className="px-8 py-6 text-lg tracking-wide font-bold"
-                  onClick={() => setIsCreateMeetingOpen(true)}
-                >
-                  <Command className="w-5 h-5 mr-3" />
-                  {isRTL ? "צור פגישה חדשה" : "INITIALIZE SESSION"}
-                </NeonButton>
-              </motion.div>
+                          <div className="flex flex-col gap-3 lg:flex-row">
+                            <Input
+                              value={newMeetingTitle}
+                              onChange={(e) => setNewMeetingTitle(e.target.value)}
+                              onKeyDown={(e) =>
+                                e.key === "Enter" && confirmCreateMeeting()
+                              }
+                              placeholder="Name this session or use a template below"
+                              className="h-14 border-white/10 bg-slate-950/70 text-base text-white placeholder:text-slate-500"
+                            />
+                            <NeonButton
+                              size="lg"
+                              variant="cyan"
+                              className="h-14 min-w-[220px] justify-center px-8 text-base font-bold"
+                              onClick={() => confirmCreateMeeting()}
+                            >
+                              <Command className="mr-3 h-5 w-5" />
+                              {newMeetingTitle.trim()
+                                ? "Create session"
+                                : "Initialize session"}
+                            </NeonButton>
+                          </div>
+
+                          <div className="mt-6 grid gap-3 md:grid-cols-3">
+                            {[
+                              {
+                                title: "Daily Standup",
+                                description:
+                                  "Open a fast execution sync for product, growth, and engineering.",
+                                icon: Sparkles,
+                              },
+                              {
+                                title: "Growth Sprint",
+                                description:
+                                  "Coordinate campaign, CRM, and optimization agents around one target.",
+                                icon: Workflow,
+                              },
+                              {
+                                title: "Incident Review",
+                                description:
+                                  "Spin up a troubleshooting board and route action items immediately.",
+                                icon: RadioTower,
+                              },
+                            ].map(({ title, description, icon: Icon }) => (
+                              <button
+                                key={title}
+                                type="button"
+                                onClick={() => confirmCreateMeeting(title)}
+                                className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-slate-900/80"
+                              >
+                                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300">
+                                  <Icon className="h-5 w-5" />
+                                </div>
+                                <div className="text-base font-semibold text-white">
+                                  {title}
+                                </div>
+                                <div className="mt-2 text-sm leading-6 text-slate-400">
+                                  {description}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <GlassCard
+                            variant="premium"
+                            className="border-white/10 bg-slate-950/55 p-5"
+                          >
+                            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                              How it works
+                            </div>
+                            <div className="mt-4 space-y-4">
+                              {[
+                                "Create a session or launch a quick template.",
+                                "Select the active agents you want in the room.",
+                                "Send a directive and let the board coordinate the next speaker.",
+                              ].map((step, index) => (
+                                <div
+                                  key={step}
+                                  className="flex items-start gap-3 text-sm leading-6 text-slate-300"
+                                >
+                                  <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-xs font-bold text-cyan-300">
+                                    {index + 1}
+                                  </div>
+                                  <span>{step}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </GlassCard>
+
+                          <GlassCard
+                            variant="premium"
+                            className="border-white/10 bg-slate-950/55 p-5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                  Current team
+                                </div>
+                                <div className="mt-2 text-xl font-bold text-white">
+                                  {selectedAgentIds.length} agents selected
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-200"
+                                onClick={() => setIsManageTeamOpen(true)}
+                              >
+                                Manage
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-slate-400">
+                              The team you choose here becomes the default brain trust for every new board session.
+                            </p>
+                          </GlassCard>
+                        </div>
+                      </div>
+                    </div>
+                  </GlassCard>
+                </motion.div>
+              </div>
             </div>
           )}
         </div>
 
         {/* Right Sidebar - Tasks & Knowledge */}
         <div className="hidden lg:flex lg:flex-shrink-0">
+          {selectedMeeting && (
           <BoardRoomRightSidebar
             activeRightTab={activeRightTab}
             setActiveRightTab={setActiveRightTab}
@@ -345,6 +505,7 @@ function BoardRoomContent() {
             isSplitView={isSplitView}
             onSplitViewToggle={() => setIsSplitView(!isSplitView)}
           />
+          )}
         </div>
 
         {/* Dialogs */}

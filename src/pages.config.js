@@ -10,6 +10,10 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Favorites from "./pages/Favorites";
 import BoardRoom from "./pages/BoardRoom";
+import ServiceProviders from "./pages/ServiceProviders";
+import ServiceProviderDetails from "./pages/ServiceProviderDetails";
+import RequestService from "./pages/RequestService";
+import CompleteSignup from "./features/auth/pages/CompleteSignup";
 
 // Safe fallback for pages still in development
 const SafePage = () =>
@@ -45,16 +49,16 @@ export const PAGES = {
   WalletSend: SafePage,
   WalletReceive: SafePage,
   WalletCard: SafePage,
-  ServiceProviders: SafePage,
-  ServiceProviderDetails: SafePage,
+  ServiceProviders: ServiceProviders,
+  ServiceProviderDetails: ServiceProviderDetails,
   BusinessRegistration: SafePage,
   BusinessDashboard: SafePage,
   MyReviews: SafePage,
   RecentSearches: SafePage,
   UpdatePassword: SafePage,
-  CompleteSignup: SafePage,
+  CompleteSignup: CompleteSignup,
   AdminImporter: SafePage,
-  RequestService: SafePage,
+  RequestService: RequestService,
   MyRequests: SafePage,
   LeadBoard: SafePage,
   AIChat: SafePage,

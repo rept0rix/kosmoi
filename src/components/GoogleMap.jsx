@@ -61,7 +61,7 @@ export default function GoogleMap({
       }
 
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=he&libraries=places,marker&v=weekly&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&language=en&libraries=places,marker&v=weekly&loading=async`;
       script.async = true;
       script.defer = true;
       script.id = "google-maps-script";
@@ -75,7 +75,7 @@ export default function GoogleMap({
 
       script.onerror = (e) => {
         console.error("Failed to load Google Maps script:", e);
-        setError("שגיאה בטעינת Google Maps");
+        setError("Failed to load Google Maps");
         setLoading(false);
       };
 
@@ -192,7 +192,7 @@ export default function GoogleMap({
       updateMapAndMarkers();
     } catch (err) {
       console.error("Error initializing map:", err);
-      setError("שגיאה באתחול המפה: " + err.message);
+      setError("Map initialization failed: " + err.message);
     }
   };
 
@@ -308,7 +308,7 @@ export default function GoogleMap({
               lng: userLocation.longitude || userLocation.lng,
             },
             map: googleMapRef.current,
-            title: "המיקום שלי",
+            title: "My location",
             icon: {
               // @ts-ignore
               path: window.google.maps.SymbolPath.CIRCLE,
@@ -434,7 +434,7 @@ export default function GoogleMap({
       >
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">טוען מפה...</p>
+          <p className="text-sm text-gray-600">Loading map...</p>
         </div>
       </div>
     );
@@ -447,7 +447,7 @@ export default function GoogleMap({
         className="rounded-lg bg-red-50 flex items-center justify-center border-2 border-red-200"
       >
         <div className="text-center p-4 max-w-md">
-          <p className="text-red-600 font-semibold mb-2">⚠️ שגיאה</p>
+          <p className="text-red-600 font-semibold mb-2">Error</p>
           <p className="text-sm text-red-600 mb-3">{error}</p>
         </div>
       </div>

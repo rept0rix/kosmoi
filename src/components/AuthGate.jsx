@@ -65,13 +65,13 @@ export default function AuthGate({ children, actionName = "continue", onAuthSucc
                         </div>
 
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                            כשמחוברים, הכל איזי :)
+                            Sign in to unlock the full experience
                         </h2>
 
                         <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-                            מתחברים כדי לראות מספרי טלפון, לכתוב ביקורות ולשמור את המקומות שאהבתם.
+                            Sign in to view phone numbers, write reviews, and save the places you like.
                             <br />
-                            זה לוקח בדיוק רגע.
+                            It only takes a moment.
                         </p>
 
                         <div className="space-y-3">
@@ -79,11 +79,11 @@ export default function AuthGate({ children, actionName = "continue", onAuthSucc
                                 onClick={handleLogin}
                                 className="w-full bg-gray-900 hover:bg-black text-white rounded-full py-6 font-medium text-lg shadow-lg hover:shadow-xl transition-all"
                             >
-                                התחברות / הרשמה
+                                Sign in / Create account
                             </Button>
 
                             <p className="text-xs text-gray-400 mt-4">
-                                אנחנו שומרים על המידע שלך בבטחה. לא נפרסם שום דבר בשמך.
+                                Your information stays secure. We will not post anything on your behalf.
                             </p>
                         </div>
                     </div>

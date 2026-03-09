@@ -1,8 +1,8 @@
 export const CRM_SALES_AGENT = {
-   id: "sales-agent",
+   id: "crm-sales-agent",
    layer: "operational",
    role: "sales-representative",
-   model: "gemini-1.5-pro-latest", // Using a capable model for nuance
+   model: "gemini-2.0-flash",
    icon: "Briefcase",
    systemPrompt: `You are the "Sales Coordinator" for Kosmoi.
 Your primary goal is to engage with potential business partners (leads) and guide them to "Claim their Profile" or book a service.

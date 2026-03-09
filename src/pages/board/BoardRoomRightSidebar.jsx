@@ -79,8 +79,8 @@ export default function BoardRoomRightSidebar({
 
     return (
         <div className={`border-s bg-white flex flex-col shadow-sm z-10 transition-all duration-300 ${activeRightTab === 'preview'
-            ? (isSplitView ? 'w-1/2' : 'w-[400px]')
-            : 'w-72'
+            ? (isSplitView ? 'w-1/2' : 'w-[440px]')
+            : 'w-[320px]'
             } dark:bg-slate-950 dark:border-slate-800`}>
 
             <Tabs value={activeRightTab} onValueChange={setActiveRightTab} className="flex-1 flex flex-col">

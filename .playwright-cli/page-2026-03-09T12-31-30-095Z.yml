@@ -1,0 +1,203 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Kosmoi" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - generic [ref=e12]: 0 Vibes
+          - generic [ref=e13]:
+            - button [ref=e14] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+            - button "Koh Samui 26°" [ref=e19] [cursor=pointer]:
+              - img [ref=e20]
+              - generic [ref=e22]: Koh Samui
+              - generic [ref=e23]: 26°
+          - button "🇺🇸 EN" [ref=e24] [cursor=pointer]:
+            - img
+            - generic [ref=e25]: 🇺🇸 EN
+          - link [ref=e26] [cursor=pointer]:
+            - /url: /login
+            - button [ref=e27]:
+              - generic [ref=e29]:
+                - img
+    - main [ref=e30]:
+      - generic [ref=e899]:
+        - generic [ref=e900]:
+          - img "ชนแก้ว คอพับ" [ref=e901]
+          - generic [ref=e904]:
+            - generic [ref=e905]:
+              - generic [ref=e906]: bars
+              - generic [ref=e907]:
+                - img [ref=e908]
+                - text: Verified
+            - heading "ชนแก้ว คอพับ" [level=1] [ref=e911]
+            - generic [ref=e912]:
+              - generic [ref=e913]:
+                - img [ref=e914]
+                - generic [ref=e916]: "5.0"
+                - generic [ref=e917]: (0 reviews)
+              - generic [ref=e918]:
+                - img [ref=e919]
+                - text: H3CH+8MR Choengmon Tambon Bo Put, Amphoe Ko Samui, Chang Wat Surat Thani 84320, Thailand
+          - button [ref=e922] [cursor=pointer]:
+            - img
+        - generic [ref=e924]:
+          - generic [ref=e927]:
+            - generic [ref=e928]:
+              - heading "About this business" [level=3] [ref=e929]:
+                - img [ref=e930]
+                - text: About this business
+              - paragraph [ref=e933]: ชนแก้ว คอพับ offers sensational and authentic Thai cuisine crafted with a unique twist by a friendly chef with a hotel background. Enjoy delicious dishes in a welcoming atmosphere with super-friendly service and great prices.
+            - generic [ref=e934]:
+              - heading "Info and availability" [level=3] [ref=e935]:
+                - img [ref=e936]
+                - text: Info and availability
+              - generic [ref=e938]:
+                - generic [ref=e939]:
+                  - generic [ref=e940]:
+                    - img [ref=e941]
+                    - heading "Opening hours" [level=4] [ref=e944]
+                  - paragraph [ref=e945]: Contact the business for more details
+                - generic [ref=e946]:
+                  - generic [ref=e947]:
+                    - img [ref=e948]
+                    - heading "Website" [level=4] [ref=e951]
+                  - paragraph [ref=e952]: Not provided
+                - generic [ref=e953]:
+                  - generic [ref=e954]:
+                    - img [ref=e955]
+                    - heading "Email" [level=4] [ref=e958]
+                  - paragraph [ref=e959]: Not provided
+                - generic [ref=e960]:
+                  - generic [ref=e961]:
+                    - img [ref=e962]
+                    - heading "Service languages" [level=4] [ref=e966]
+                  - paragraph [ref=e968]: Not provided
+            - generic [ref=e969]:
+              - generic [ref=e970]:
+                - generic [ref=e971]:
+                  - heading "Customer reviews" [level=3] [ref=e972]:
+                    - img [ref=e973]
+                    - text: Customer reviews
+                  - generic [ref=e975]: Based on 0 verified reviews
+                - button "Write a review" [ref=e976] [cursor=pointer]
+              - generic [ref=e977]:
+                - generic [ref=e978]:
+                  - generic [ref=e979]: "5.0"
+                  - generic [ref=e980]:
+                    - img [ref=e981]
+                    - img [ref=e983]
+                    - img [ref=e985]
+                    - img [ref=e987]
+                    - img [ref=e989]
+                  - generic [ref=e991]: Average score
+                - generic [ref=e992]:
+                  - generic [ref=e993]:
+                    - generic [ref=e994]: "5"
+                    - img [ref=e995]
+                  - generic [ref=e999]:
+                    - generic [ref=e1000]: "4"
+                    - img [ref=e1001]
+                  - generic [ref=e1005]:
+                    - generic [ref=e1006]: "3"
+                    - img [ref=e1007]
+                  - generic [ref=e1011]:
+                    - generic [ref=e1012]: "2"
+                    - img [ref=e1013]
+                  - generic [ref=e1017]:
+                    - generic [ref=e1018]: "1"
+                    - img [ref=e1019]
+              - generic [ref=e1024]:
+                - img [ref=e1025]
+                - paragraph [ref=e1027]: No reviews yet
+                - paragraph [ref=e1028]: Be the first to share feedback about this business
+          - generic [ref=e1031]:
+            - tablist [ref=e1032]:
+              - tab "Contact" [selected] [ref=e1033] [cursor=pointer]
+              - tab "Live Chat" [ref=e1034] [cursor=pointer]
+            - tabpanel "Contact" [ref=e1035]:
+              - generic [ref=e1036]:
+                - generic [ref=e1037]:
+                  - heading "Get in touch" [level=3] [ref=e1038]
+                  - button [ref=e1039] [cursor=pointer]:
+                    - img
+                - button "Book appointment" [ref=e1040] [cursor=pointer]:
+                  - img
+                  - text: Book appointment
+                - button "Call now" [ref=e1041] [cursor=pointer]:
+                  - img
+                  - text: Call now
+                - button "Save for later" [ref=e1042] [cursor=pointer]:
+                  - img
+                  - text: Save for later
+                - generic [ref=e1043]:
+                  - heading "Location" [level=4] [ref=e1044]:
+                    - img [ref=e1045]
+                    - text: Location
+                  - generic [ref=e1051]:
+                    - region "Map" [ref=e1052]
+                    - generic [ref=e1053]:
+                      - img "ชนแก้ว คอพับ" [ref=e1075] [cursor=pointer]
+                      - iframe [ref=e1076]:
+                        
+                      - link "Open this area in Google Maps (opens a new window)" [ref=e1078] [cursor=pointer]:
+                        - /url: https://maps.google.com/maps?ll=9.570863,100.079141&z=15&t=m&hl=en&gl=US&mapclient=apiv3
+                        - img "Google" [ref=e1080]
+                      - generic [ref=e1081]:
+                        - generic [ref=e1086]: Map data ©2026
+                        - link "Terms (opens in new tab)" [ref=e1091] [cursor=pointer]:
+                          - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+                          - text: Terms
+                        - link "Report errors in the road map or imagery to Google" [ref=e1096] [cursor=pointer]:
+                          - /url: https://www.google.com/maps/@9.5708625,100.0791406,15z/data=!10m1!1e1!12b1?source=apiv3&rapsrc=apiv3
+                  - button "Navigate to business" [ref=e1097] [cursor=pointer]:
+                    - img
+                    - text: Navigate to business
+    - button "Open Debug Role Switcher" [ref=e116] [cursor=pointer]:
+      - img [ref=e117]
+    - navigation [ref=e126]:
+      - generic [ref=e128]:
+        - link "Home" [ref=e129] [cursor=pointer]:
+          - /url: /App
+          - img [ref=e131]
+          - generic [ref=e134]: Home
+        - link "AI" [ref=e135] [cursor=pointer]:
+          - /url: /AIChat
+          - img [ref=e137]
+          - generic [ref=e139]: AI
+        - generic [ref=e141]:
+          - generic:
+            - generic:
+              - link "Scan" [ref=e143] [cursor=pointer]:
+                - /url: /wallet/scan
+                - img [ref=e145]
+                - generic [ref=e150]: Scan
+              - link "Send" [ref=e152] [cursor=pointer]:
+                - /url: /wallet/send
+                - img [ref=e154]
+                - generic [ref=e157]: Send
+              - link "Receive" [ref=e159] [cursor=pointer]:
+                - /url: /wallet/receive
+                - img [ref=e161]
+                - generic [ref=e164]: Receive
+              - link "Card" [ref=e166] [cursor=pointer]:
+                - /url: /wallet/card
+                - img [ref=e168]
+                - generic [ref=e170]: Card
+          - button [ref=e172] [cursor=pointer]:
+            - img [ref=e174]
+        - link "Market" [ref=e180] [cursor=pointer]:
+          - /url: /marketplace
+          - img [ref=e182]
+          - generic [ref=e187]: Market
+        - link "Organizer" [ref=e188] [cursor=pointer]:
+          - /url: /organizer
+          - img [ref=e190]
+          - generic [ref=e192]: Organizer
+  - region "Notifications alt+T"

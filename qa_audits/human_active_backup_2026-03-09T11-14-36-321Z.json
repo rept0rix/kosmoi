@@ -1,0 +1,130 @@
+[
+  {
+    "id": "7cc4d39d-04f5-4f47-b74e-b92091feac93",
+    "title": "BLOCKED: Configure Email Credentials for CRM Outreach",
+    "status": "in_progress",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:05:16.981407+00:00",
+    "updated_at": "2026-03-09T11:09:55.109275+00:00"
+  },
+  {
+    "id": "a0e06e33-be09-4a1f-8022-3ee4c9c41b4d",
+    "title": "Verify Resend and IMAP usage in codebase",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:05:33.09149+00:00",
+    "updated_at": "2026-03-09T11:05:33.09149+00:00"
+  },
+  {
+    "id": "1b15158f-d890-4011-a017-9a956ce8f0d1",
+    "title": "Read files related to email functionality",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:08:31.904517+00:00",
+    "updated_at": "2026-03-09T11:08:31.904517+00:00"
+  },
+  {
+    "id": "c390e472-be2b-4be6-a47a-2a3609a5fe75",
+    "title": "Read common email related files",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:08:38.690479+00:00",
+    "updated_at": "2026-03-09T11:08:38.690479+00:00"
+  },
+  {
+    "id": "e3033923-b399-472a-a334-ee8569ab1919",
+    "title": "Re-request email file contents for analysis",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:09:00.078372+00:00",
+    "updated_at": "2026-03-09T11:09:00.078372+00:00"
+  },
+  {
+    "id": "a7d16e03-ca96-41e3-9f15-7076ff159019",
+    "title": "Re-request specific email files for analysis",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:09:14.04035+00:00",
+    "updated_at": "2026-03-09T11:09:14.04035+00:00"
+  },
+  {
+    "id": "d1231d62-a3c8-474f-9714-5afcfa0e435c",
+    "title": "Re-request specific email files with urgency for analysis",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:09:45.559648+00:00",
+    "updated_at": "2026-03-09T11:09:45.559648+00:00"
+  },
+  {
+    "id": "1f6fbcd5-8fea-497e-aee6-2f38baa7cf7c",
+    "title": "Re-request specific email files *WITH EXPLICIT FILEPATHS AND URGENCY* for analysis",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:09:53.36363+00:00",
+    "updated_at": "2026-03-09T11:09:53.36363+00:00"
+  },
+  {
+    "id": "6289724a-e426-43a3-85bb-fb509565046e",
+    "title": "List relevant files",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:00.293187+00:00",
+    "updated_at": "2026-03-09T11:10:00.293187+00:00"
+  },
+  {
+    "id": "df51503a-7ee9-4079-b564-e94e3e8b61e0",
+    "title": "Find all relevant files",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:12.19304+00:00",
+    "updated_at": "2026-03-09T11:10:12.19304+00:00"
+  },
+  {
+    "id": "91e41565-091d-46d5-b995-7203676cf2ff",
+    "title": "Search for email credential usage in src directory",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:17.466681+00:00",
+    "updated_at": "2026-03-09T11:10:17.466681+00:00"
+  },
+  {
+    "id": "21ee71a9-4d3e-4cb3-95b8-844966f798c1",
+    "title": "List files in src directory",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:27.180933+00:00",
+    "updated_at": "2026-03-09T11:10:27.180933+00:00"
+  },
+  {
+    "id": "74c668d5-a10f-44a7-b419-6b8abedaa0e3",
+    "title": "Search for email credentials in src files",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:34.697369+00:00",
+    "updated_at": "2026-03-09T11:10:34.697369+00:00"
+  },
+  {
+    "id": "537b9cf6-ff2e-4f5c-b18b-03ec6de16213",
+    "title": "Create tasks to search each file in src for email credentials",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:41.830274+00:00",
+    "updated_at": "2026-03-09T11:10:41.830274+00:00"
+  },
+  {
+    "id": "02f22460-2c13-431a-85a7-391d58711a88",
+    "title": "Search files in 'services' and 'core' directories for email credentials",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:49.989925+00:00",
+    "updated_at": "2026-03-09T11:10:49.989925+00:00"
+  },
+  {
+    "id": "8e371f41-8349-42e1-908e-ade5196a947a",
+    "title": "Search email-related files in 'services' directory for credentials",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:10:55.926549+00:00",
+    "updated_at": "2026-03-09T11:10:55.926549+00:00"
+  }
+]

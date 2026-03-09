@@ -1,0 +1,256 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e13]: KOSMOI_OS
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - heading "Command Protocol" [level=3] [ref=e16]: Command Protocol
+          - generic [ref=e18]:
+            - link "Command Center" [ref=e19] [cursor=pointer]:
+              - /url: /admin/command-center
+              - img [ref=e20]
+              - generic [ref=e25]: Command Center
+            - link "Mission Control" [ref=e26] [cursor=pointer]:
+              - /url: /admin/hyperloop
+              - img [ref=e27]
+              - generic [ref=e29]: Mission Control
+            - link "Board Room" [ref=e30] [cursor=pointer]:
+              - /url: /admin/board-room
+              - img [ref=e31]
+              - generic [ref=e34]: Board Room
+        - generic [ref=e35]:
+          - heading "Neural Network" [level=3] [ref=e36]: Neural Network
+          - generic [ref=e38]:
+            - link "Optimizer" [ref=e39] [cursor=pointer]:
+              - /url: /admin/optimizer
+              - img [ref=e40]
+              - generic [ref=e52]: Optimizer
+            - link "Dave (Marketing)" [ref=e53] [cursor=pointer]:
+              - /url: /admin/marketing
+              - img [ref=e54]
+              - generic [ref=e57]: Dave (Marketing)
+            - link "Sarah (Sales)" [ref=e58] [cursor=pointer]:
+              - /url: /admin/sales
+              - img [ref=e59]
+              - generic [ref=e63]: Sarah (Sales)
+            - link "Claude (Scheduler)" [ref=e64] [cursor=pointer]:
+              - /url: /admin/scheduler
+              - img [ref=e65]
+              - generic [ref=e68]: Claude (Scheduler)
+            - link "Engine Room" [ref=e69] [cursor=pointer]:
+              - /url: /admin/automations
+              - img [ref=e70]
+              - generic [ref=e76]: Engine Room
+            - link "Long-term Memory" [ref=e77] [cursor=pointer]:
+              - /url: /admin/memory
+              - img [ref=e78]
+              - generic [ref=e80]: Long-term Memory
+            - link "Agent Studio" [ref=e81] [cursor=pointer]:
+              - /url: /admin/studio
+              - img [ref=e82]
+              - generic [ref=e86]: Agent Studio
+        - generic [ref=e87]:
+          - heading "Data Grid" [level=3] [ref=e88]: Data Grid
+          - generic [ref=e90]:
+            - link "Users" [ref=e91] [cursor=pointer]:
+              - /url: /admin/users
+              - img [ref=e92]
+              - generic [ref=e97]: Users
+            - link "Businesses" [ref=e98] [cursor=pointer]:
+              - /url: /admin/businesses
+              - img [ref=e99]
+              - generic [ref=e104]: Businesses
+            - link "Bookings" [ref=e105] [cursor=pointer]:
+              - /url: /admin/bookings
+              - img [ref=e106]
+              - generic [ref=e108]: Bookings
+            - link "Claims" [ref=e109] [cursor=pointer]:
+              - /url: /admin/claims
+              - img [ref=e110]
+              - generic [ref=e113]: Claims
+            - link "System Wallet" [ref=e114] [cursor=pointer]:
+              - /url: /admin/wallet
+              - img [ref=e115]
+              - generic [ref=e119]: System Wallet
+            - link "Kanban Tasks" [ref=e120] [cursor=pointer]:
+              - /url: /admin/tasks
+              - img [ref=e121]
+              - generic [ref=e124]: Kanban Tasks
+        - generic [ref=e125]:
+          - heading "System Core" [level=3] [ref=e126]: System Core
+          - generic [ref=e128]:
+            - link "System Logs" [ref=e129] [cursor=pointer]:
+              - /url: /admin/logs
+              - img [ref=e130]
+              - generic [ref=e133]: System Logs
+            - link "Monitoring" [ref=e134] [cursor=pointer]:
+              - /url: /admin/monitoring
+              - img [ref=e135]
+              - generic [ref=e137]: Monitoring
+            - link "Infrastructure" [ref=e138] [cursor=pointer]:
+              - /url: /admin/infrastructure
+              - img [ref=e139]
+              - generic [ref=e144]: Infrastructure
+      - generic [ref=e146] [cursor=pointer]:
+        - generic [ref=e148]: AG
+        - generic [ref=e149]:
+          - paragraph [ref=e150]: agent@kosmoi.site
+          - paragraph [ref=e151]: agent@kosmoi.site
+        - img [ref=e152]
+    - main [ref=e155]:
+      - generic [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159] [cursor=pointer]: ADMIN
+          - generic [ref=e160]: //
+          - generic [ref=e161]: DASHBOARD
+        - button [ref=e163] [cursor=pointer]:
+          - img
+      - generic [ref=e165]:
+        - generic: "HUB: Kosmoi | SYS: blue | MODE: MANUAL"
+        - generic [ref=e166]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - generic [ref=e170]:
+                - generic [ref=e171]: Board Room
+                - heading "Sessions" [level=2] [ref=e172]:
+                  - img [ref=e173]
+                  - text: Sessions
+              - button [ref=e175] [cursor=pointer]:
+                - img
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - img [ref=e182]
+                - generic [ref=e184]: No sessions yet
+              - paragraph [ref=e185]: Create a board session from the main canvas to start a strategy discussion.
+            - generic [ref=e187]:
+              - generic [ref=e188]:
+                - generic [ref=e189]: Sessions
+                - generic [ref=e190]: "0"
+              - generic [ref=e191]:
+                - generic [ref=e192]: Agents
+                - generic [ref=e193]:
+                  - img [ref=e194]
+                  - text: "8"
+            - generic [ref=e202]: Active Team
+            - generic [ref=e204]:
+              - generic [ref=e205]: Active Matrix
+              - button "O" [ref=e206] [cursor=pointer]:
+                - generic [ref=e208]: O
+              - button "H" [ref=e212] [cursor=pointer]:
+                - generic [ref=e214]: H
+              - button "W" [ref=e218] [cursor=pointer]:
+                - generic [ref=e220]: W
+              - button "?" [ref=e224] [cursor=pointer]:
+                - generic [ref=e226]: "?"
+              - button "?" [ref=e230] [cursor=pointer]:
+                - generic [ref=e232]: "?"
+              - button "?" [ref=e236] [cursor=pointer]:
+                - generic [ref=e238]: "?"
+              - button "?" [ref=e242] [cursor=pointer]:
+                - generic [ref=e244]: "?"
+              - button "?" [ref=e248] [cursor=pointer]:
+                - generic [ref=e250]: "?"
+          - generic [ref=e254]:
+            - generic [ref=e255]:
+              - generic:
+                - generic [ref=e257]: K
+                - combobox [ref=e258] [cursor=pointer]:
+                  - generic: Select Meeting Strategy...
+                  - img [ref=e259]
+              - generic [ref=e261]:
+                - button "Daily" [ref=e262] [cursor=pointer]:
+                  - img
+                  - generic [ref=e263]: Daily
+                - button "$1 Challenge" [ref=e264] [cursor=pointer]:
+                  - img
+                  - generic [ref=e265]: $1 Challenge
+                - button "Linear" [ref=e266] [cursor=pointer]:
+                  - img
+                  - generic [ref=e267]: Linear
+                - combobox [ref=e268] [cursor=pointer]:
+                  - generic: Workflow
+                  - img [ref=e269]
+              - generic [ref=e271]:
+                - button "8 Agents" [ref=e272] [cursor=pointer]:
+                  - img
+                  - generic [ref=e273]: 8 Agents
+                - button "Cloud AI" [ref=e274] [cursor=pointer]:
+                  - generic [ref=e276]: Cloud AI
+                - button "Auto Pilot" [ref=e277] [cursor=pointer]:
+                  - img
+                  - generic [ref=e278]: Auto Pilot
+                - button [ref=e279] [cursor=pointer]:
+                  - img
+                - button "User Menu" [ref=e281] [cursor=pointer]:
+                  - generic [ref=e283]: NY
+            - generic [ref=e292]:
+              - generic [ref=e293]:
+                - generic [ref=e294]:
+                  - generic [ref=e295]:
+                    - img [ref=e296]
+                    - text: Neural strategy workspace
+                  - heading "BOARD ROOM" [level=2] [ref=e298]
+                  - paragraph [ref=e299]: Create a live session, pick a strategy track, and start orchestrating your agents from one place.
+                - generic [ref=e300]:
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: Sessions
+                    - generic [ref=e303]: "0"
+                  - generic [ref=e304]:
+                    - generic [ref=e305]: Active agents
+                    - generic [ref=e306]: "8"
+                  - generic [ref=e307]:
+                    - generic [ref=e308]: Mode
+                    - generic [ref=e309]: MANUAL
+              - generic [ref=e310]:
+                - generic [ref=e311]:
+                  - generic [ref=e312]:
+                    - img [ref=e314]
+                    - generic [ref=e317]:
+                      - generic [ref=e318]: Quick start
+                      - generic [ref=e319]: Create a board session
+                  - generic [ref=e320]:
+                    - textbox "Name this session or use a template below" [ref=e321]
+                    - button "Initialize session" [ref=e322] [cursor=pointer]:
+                      - generic [ref=e323]:
+                        - img [ref=e324]
+                        - text: Initialize session
+                  - generic [ref=e327]:
+                    - button "Daily Standup Open a fast execution sync for product, growth, and engineering." [ref=e328] [cursor=pointer]:
+                      - img [ref=e330]
+                      - generic: Daily Standup
+                      - generic: Open a fast execution sync for product, growth, and engineering.
+                    - button "Growth Sprint Coordinate campaign, CRM, and optimization agents around one target." [ref=e332] [cursor=pointer]:
+                      - img [ref=e334]
+                      - generic: Growth Sprint
+                      - generic: Coordinate campaign, CRM, and optimization agents around one target.
+                    - button "Incident Review Spin up a troubleshooting board and route action items immediately." [ref=e338] [cursor=pointer]:
+                      - img [ref=e340]
+                      - generic: Incident Review
+                      - generic: Spin up a troubleshooting board and route action items immediately.
+                - generic [ref=e347]:
+                  - generic [ref=e349]:
+                    - generic [ref=e350]: How it works
+                    - generic [ref=e351]:
+                      - generic [ref=e352]:
+                        - generic [ref=e353]: "1"
+                        - generic [ref=e354]: Create a session or launch a quick template.
+                      - generic [ref=e355]:
+                        - generic [ref=e356]: "2"
+                        - generic [ref=e357]: Select the active agents you want in the room.
+                      - generic [ref=e358]:
+                        - generic [ref=e359]: "3"
+                        - generic [ref=e360]: Send a directive and let the board coordinate the next speaker.
+                  - generic [ref=e362]:
+                    - generic [ref=e363]:
+                      - generic [ref=e364]:
+                        - generic [ref=e365]: Current team
+                        - generic [ref=e366]: 8 agents selected
+                      - button "Manage" [ref=e367] [cursor=pointer]:
+                        - text: Manage
+                        - img
+                    - paragraph [ref=e368]: The team you choose here becomes the default brain trust for every new board session.
+    - button [ref=e369] [cursor=pointer]:
+      - img
+  - region "Notifications alt+T"

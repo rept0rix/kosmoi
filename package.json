@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "worker": "tsx scripts/agent_worker.js",
+    "leads:list": "node server/tools/list_leads.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "worker:universal": "tsx scripts/agent_worker.js",

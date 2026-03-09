@@ -1,0 +1,141 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e13]: KOSMOI_OS
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - heading "Command Protocol" [level=3] [ref=e16]: Command Protocol
+          - generic [ref=e18]:
+            - link "Command Center" [ref=e19] [cursor=pointer]:
+              - /url: /admin/command-center
+              - img [ref=e20]
+              - generic [ref=e25]: Command Center
+            - link "Mission Control" [ref=e26] [cursor=pointer]:
+              - /url: /admin/hyperloop
+              - img [ref=e27]
+              - generic [ref=e29]: Mission Control
+            - link "Board Room" [ref=e30] [cursor=pointer]:
+              - /url: /admin/board-room
+              - img [ref=e31]
+              - generic [ref=e34]: Board Room
+        - generic [ref=e35]:
+          - heading "Neural Network" [level=3] [ref=e36]: Neural Network
+          - generic [ref=e38]:
+            - link "Optimizer" [ref=e39] [cursor=pointer]:
+              - /url: /admin/optimizer
+              - img [ref=e40]
+              - generic [ref=e52]: Optimizer
+            - link "Dave (Marketing)" [ref=e53] [cursor=pointer]:
+              - /url: /admin/marketing
+              - img [ref=e54]
+              - generic [ref=e57]: Dave (Marketing)
+            - link "Sarah (Sales)" [ref=e58] [cursor=pointer]:
+              - /url: /admin/sales
+              - img [ref=e59]
+              - generic [ref=e63]: Sarah (Sales)
+            - link "Claude (Scheduler)" [ref=e64] [cursor=pointer]:
+              - /url: /admin/scheduler
+              - img [ref=e65]
+              - generic [ref=e68]: Claude (Scheduler)
+            - link "Engine Room" [ref=e69] [cursor=pointer]:
+              - /url: /admin/automations
+              - img [ref=e70]
+              - generic [ref=e76]: Engine Room
+            - link "Long-term Memory" [ref=e77] [cursor=pointer]:
+              - /url: /admin/memory
+              - img [ref=e78]
+              - generic [ref=e80]: Long-term Memory
+            - link "Agent Studio" [ref=e81] [cursor=pointer]:
+              - /url: /admin/studio
+              - img [ref=e82]
+              - generic [ref=e86]: Agent Studio
+        - generic [ref=e87]:
+          - heading "Data Grid" [level=3] [ref=e88]: Data Grid
+          - generic [ref=e90]:
+            - link "Users" [ref=e91] [cursor=pointer]:
+              - /url: /admin/users
+              - img [ref=e92]
+              - generic [ref=e97]: Users
+            - link "Businesses" [ref=e98] [cursor=pointer]:
+              - /url: /admin/businesses
+              - img [ref=e99]
+              - generic [ref=e104]: Businesses
+            - link "Bookings" [ref=e105] [cursor=pointer]:
+              - /url: /admin/bookings
+              - img [ref=e106]
+              - generic [ref=e108]: Bookings
+            - link "Claims" [ref=e109] [cursor=pointer]:
+              - /url: /admin/claims
+              - img [ref=e110]
+              - generic [ref=e113]: Claims
+            - link "System Wallet" [ref=e114] [cursor=pointer]:
+              - /url: /admin/wallet
+              - img [ref=e115]
+              - generic [ref=e119]: System Wallet
+            - link "Kanban Tasks" [ref=e120] [cursor=pointer]:
+              - /url: /admin/tasks
+              - img [ref=e121]
+              - generic [ref=e124]: Kanban Tasks
+        - generic [ref=e125]:
+          - heading "System Core" [level=3] [ref=e126]: System Core
+          - generic [ref=e128]:
+            - link "System Logs" [ref=e129] [cursor=pointer]:
+              - /url: /admin/logs
+              - img [ref=e130]
+              - generic [ref=e133]: System Logs
+            - link "Monitoring" [ref=e134] [cursor=pointer]:
+              - /url: /admin/monitoring
+              - img [ref=e135]
+              - generic [ref=e137]: Monitoring
+            - link "Infrastructure" [ref=e138] [cursor=pointer]:
+              - /url: /admin/infrastructure
+              - img [ref=e139]
+              - generic [ref=e144]: Infrastructure
+      - generic [ref=e146] [cursor=pointer]:
+        - generic [ref=e148]: AG
+        - generic [ref=e149]:
+          - paragraph [ref=e150]: agent@kosmoi.site
+          - paragraph [ref=e151]: agent@kosmoi.site
+        - img [ref=e152]
+    - main [ref=e155]:
+      - generic [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159] [cursor=pointer]: ADMIN
+          - generic [ref=e160]: //
+          - generic [ref=e161]: DASHBOARD
+        - button [ref=e163] [cursor=pointer]:
+          - img
+      - generic [ref=e165]:
+        - generic [ref=e166]:
+          - generic [ref=e167]:
+            - heading "Task Board" [level=1] [ref=e168]
+            - paragraph [ref=e169]: Manage ongoing operations
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - button "Tasks" [ref=e172] [cursor=pointer]:
+                - img [ref=e173]
+                - text: Tasks
+              - button "CRM" [ref=e178] [cursor=pointer]:
+                - img [ref=e179]
+                - text: CRM
+            - button "New Task" [ref=e184] [cursor=pointer]:
+              - img
+              - text: New Task
+        - generic [ref=e186]:
+          - generic [ref=e189]:
+            - heading "To Do" [level=3] [ref=e190]
+            - generic [ref=e191]: "0"
+          - generic [ref=e195]:
+            - heading "In Progress" [level=3] [ref=e196]
+            - generic [ref=e197]: "0"
+          - generic [ref=e201]:
+            - heading "In Review" [level=3] [ref=e202]
+            - generic [ref=e203]: "0"
+          - generic [ref=e207]:
+            - heading "Done" [level=3] [ref=e208]
+            - generic [ref=e209]: "0"
+    - button [ref=e211] [cursor=pointer]:
+      - img
+  - region "Notifications alt+T"

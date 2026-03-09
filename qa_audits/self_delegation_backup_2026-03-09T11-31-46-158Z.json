@@ -1,0 +1,66 @@
+[
+  {
+    "id": "2c0957b7-4fb8-4003-afbc-b228691a3854",
+    "title": "Update API Documentation for /api/leads",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:25:26.144729+00:00"
+  },
+  {
+    "id": "cf2bb0d6-2aab-42d5-b517-0ba7b5b09b7f",
+    "title": "Create data format file",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:26:50.322453+00:00"
+  },
+  {
+    "id": "bcf2ab5f-e359-4866-b62d-0aae081defbf",
+    "title": "Document Lead Listing Tool Specifications",
+    "status": "in_progress",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:24:56.133329+00:00"
+  },
+  {
+    "id": "08040c59-c9f3-48a6-b7db-462980514c4e",
+    "title": "Write Lead Listing API Specifications to File",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:25:12.764536+00:00"
+  },
+  {
+    "id": "9141f562-4977-41c1-a5a7-4f8d27fbd8b9",
+    "title": "Implement /api/leads endpoint",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:25:23.58286+00:00"
+  },
+  {
+    "id": "3696afbf-b22b-4f30-b9d5-b46d9188e9b3",
+    "title": "Test Task",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:25:45.004336+00:00"
+  },
+  {
+    "id": "76d904a4-a59a-4bcf-9dcc-c31319c1d464",
+    "title": "List Files",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:26:02.684473+00:00"
+  },
+  {
+    "id": "512268da-c701-40bb-90b2-f2029bd35118",
+    "title": "Create data format file",
+    "status": "pending",
+    "assigned_to": "tech-lead-agent",
+    "created_by": "tech-lead-agent",
+    "created_at": "2026-03-09T11:26:37.684554+00:00"
+  }
+]

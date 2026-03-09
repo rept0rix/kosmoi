@@ -14,7 +14,7 @@ import {
 export default function SearchFiltersPanel({
   filters,
   onFiltersChange,
-  language = 'he',
+  language = 'en',
   compact = false
 }) {
   const [openPopover, setOpenPopover] = useState(null);
@@ -64,15 +64,15 @@ export default function SearchFiltersPanel({
               variant={filters.minRating > 0 ? "default" : "outline"}
               className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
             >
-              <Star className="w-3.5 h-3.5 ml-1" />
-              {filters.minRating > 0 ? `${filters.minRating}+` : 'דירוג'}
-              <ChevronDown className="w-3 h-3 mr-1" />
+              <Star className="w-3.5 h-3.5 mr-1" />
+              {filters.minRating > 0 ? `${filters.minRating}+` : 'Rating'}
+              <ChevronDown className="w-3 h-3 ml-1" />
             </Badge>
           </PopoverTrigger>
           <PopoverContent className="w-64" align="start">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">דירוג מינימלי</Label>
+                <Label className="text-sm font-semibold">Minimum rating</Label>
                 <span className="text-sm font-bold text-blue-600">
                   {(filters.minRating || 0).toFixed(1)}+
                 </span>
@@ -98,17 +98,17 @@ export default function SearchFiltersPanel({
               variant={filters.maxDistance < 50 ? "default" : "outline"}
               className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
             >
-              <MapPin className="w-3.5 h-3.5 ml-1" />
-              {filters.maxDistance < 50 ? `${filters.maxDistance} ק"מ` : 'מרחק'}
-              <ChevronDown className="w-3 h-3 mr-1" />
+              <MapPin className="w-3.5 h-3.5 mr-1" />
+              {filters.maxDistance < 50 ? `${filters.maxDistance} km` : 'Distance'}
+              <ChevronDown className="w-3 h-3 ml-1" />
             </Badge>
           </PopoverTrigger>
           <PopoverContent className="w-64" align="start">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">מרחק מקסימלי</Label>
+                <Label className="text-sm font-semibold">Maximum distance</Label>
                 <span className="text-sm font-bold text-blue-600">
-                  {filters.maxDistance || 50} ק"מ
+                  {filters.maxDistance || 50} km
                 </span>
               </div>
               <Slider
@@ -119,8 +119,8 @@ export default function SearchFiltersPanel({
                 min={5}
               />
               <div className="flex justify-between text-xs text-gray-500">
-                <span>5 ק"מ</span>
-                <span>50 ק"מ</span>
+                <span>5 km</span>
+                <span>50 km</span>
               </div>
             </div>
           </PopoverContent>
@@ -133,14 +133,14 @@ export default function SearchFiltersPanel({
               variant={(filters.priceRanges || []).length > 0 ? "default" : "outline"}
               className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
             >
-              <DollarSign className="w-3.5 h-3.5 ml-1" />
-              מחיר
-              <ChevronDown className="w-3 h-3 mr-1" />
+              <DollarSign className="w-3.5 h-3.5 mr-1" />
+              Price
+              <ChevronDown className="w-3 h-3 ml-1" />
             </Badge>
           </PopoverTrigger>
           <PopoverContent className="w-56" align="start">
             <div className="space-y-3">
-              <Label className="text-sm font-semibold">טווח מחירים</Label>
+              <Label className="text-sm font-semibold">Price range</Label>
               <div className="space-y-2">
                 {['budget', 'moderate', 'premium'].map(range => (
                   <div key={range} className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function SearchFiltersPanel({
                       onCheckedChange={() => togglePriceRange(range)}
                     />
                     <Label htmlFor={`price-${range}`} className="cursor-pointer text-sm">
-                      {range === 'budget' ? '💰 תקציבי' : range === 'moderate' ? '💰💰 בינוני' : '💰💰💰 פרמיום'}
+                      {range === 'budget' ? '💰 Budget' : range === 'moderate' ? '💰💰 Moderate' : '💰💰💰 Premium'}
                     </Label>
                   </div>
                 ))}
@@ -165,7 +165,7 @@ export default function SearchFiltersPanel({
           className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
           onClick={() => updateFilter('verifiedOnly', !filters.verifiedOnly)}
         >
-          ✓ מאומתים
+          ✓ Verified
         </Badge>
 
         {/* Emergency */}
@@ -174,8 +174,8 @@ export default function SearchFiltersPanel({
           className="cursor-pointer px-3 py-1.5 text-sm hover:opacity-80"
           onClick={() => updateFilter('emergencyService', !filters.emergencyService)}
         >
-          <Zap className="w-3.5 h-3.5 ml-1" />
-          חירום 24/7
+          <Zap className="w-3.5 h-3.5 mr-1" />
+          Emergency 24/7
         </Badge>
 
         {/* Clear All */}
@@ -186,8 +186,8 @@ export default function SearchFiltersPanel({
             onClick={clearAllFilters}
             className="h-8 px-3 text-sm hover:bg-gray-100"
           >
-            <X className="w-3.5 h-3.5 ml-1" />
-            נקה ({activeFiltersCount})
+            <X className="w-3.5 h-3.5 mr-1" />
+            Clear ({activeFiltersCount})
           </Button>
         )}
       </div>

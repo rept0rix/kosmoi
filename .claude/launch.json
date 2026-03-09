@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "Agent Worker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "worker:universal"],
+      "port": 8080
+    },
+    {
+      "name": "Backend Agents API",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "port": 8000
+    },
+    {
+      "name": "Map Crawler",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "cron:crawler"],
+      "port": 3100
+    },
+    {
+      "name": "Data Ingester",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "ingest:harvest"],
+      "port": 3101
+    }
+  ]
+}
