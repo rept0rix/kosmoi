@@ -26,8 +26,12 @@ Deno.serve(async (req: Request) => {
 
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const supabaseKey = Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
         const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+
+        // Helper: write signal non-fatally
+        const sig = (eventType: string, entityType: string, entityId: string | null, data: object) =>
+            supabase.rpc('write_signal', { p_event_type: eventType, p_entity_type: entityType, p_entity_id: entityId, p_source: 'payment-recovery', p_data: data }).catch(() => {});
 
         const supabase = createClient(supabaseUrl, supabaseKey);
         const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
@@ -85,7 +89,13 @@ Deno.serve(async (req: Request) => {
                 to: subscription.users.email,
                 name: subscription.users.full_name || subscription.users.email,
                 customer_id: customer_id,
-                attempt: 1
+                attempt: 1,
+            });
+
+            await sig('booking.payment_failed', 'user', subscription.users.id, {
+                customer_id,
+                attempt: 1,
+                email: subscription.users.email,
             });
 
             results.success = true;
@@ -200,16 +210,17 @@ Deno.serve(async (req: Request) => {
                 // Trigger retry
                 await fetch(`${supabaseUrl}/functions/v1/payment-recovery`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${supabaseKey}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
                     body: JSON.stringify({
                         action: 'RETRY_PAYMENT',
                         customer_id: attempt.subscriptions.stripe_customer_id,
                         subscription_id: attempt.subscription_id,
-                        attempt_number: attempt.attempt_number
-                    })
+                        attempt_number: attempt.attempt_number,
+                    }),
+                });
+                await sig('payment.retry_scheduled', 'subscription', attempt.subscription_id, {
+                    attempt_number: attempt.attempt_number,
+                    customer_id: attempt.subscriptions.stripe_customer_id,
                 });
                 processed++;
             }
