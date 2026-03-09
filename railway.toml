@@ -1,0 +1,15 @@
+# Railway deployment configuration for Kosmoi Agent Worker
+# Docs: https://docs.railway.app/reference/config-as-code
+
+[build]
+# Use the dedicated worker Dockerfile
+dockerfile = "Dockerfile.worker"
+
+[deploy]
+# Auto-restart on crash (up to 10 times)
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 10
+
+# Health check endpoint (served by worker_start.js)
+healthcheckPath = "/health"
+healthcheckTimeout = 30
