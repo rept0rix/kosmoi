@@ -275,7 +275,7 @@ export const Core = {
       if (!apiKey) return null;
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+      const model = genAI.getGenerativeModel({ model: "embedding-001" });
       const result = await model.embedContent(text);
       return result.embedding.values;
     } catch (error) {
