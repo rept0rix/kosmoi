@@ -526,10 +526,87 @@ async function executeTool(toolName, payload) {
         }
 
       case "generate_email":
-        // Simple deterministic generation for now, or use LLM logic if we had access here.
-        // Since the agent IS an LLM, it should generate the content itself and just use 'insert_interaction'.
-        // But if it asks for a helper:
         return `Subject: Hello from Kosmoi\n\nDear Lead,\n\nWe saw you are interested in... [Generated Content Stub]`;
+
+      // --- KNOWLEDGE BASE ---
+      case "read_knowledge": {
+        const knowledgeKey = payload.key;
+        if (!knowledgeKey) return "Error: key is required for read_knowledge";
+        const { data: kbData, error: kbError } = await workerSupabase
+          .from("company_knowledge")
+          .select("key, value, updated_at")
+          .eq("key", knowledgeKey)
+          .single();
+        if (kbError || !kbData) return `Knowledge key '${knowledgeKey}' not found.`;
+        return JSON.stringify(kbData);
+      }
+
+      case "write_knowledge": {
+        const { key: wKey, value: wValue, source, category: wCat } = payload;
+        if (!wKey || !wValue) return "Error: key and value are required for write_knowledge";
+        // value must be valid JSON (string, number, object, or array)
+        const jsonValue = typeof wValue === "string" ? wValue : JSON.stringify(wValue);
+        const { error: wError } = await workerSupabase
+          .from("company_knowledge")
+          .upsert({
+            key: wKey,
+            value: jsonValue,
+            category: wCat || "agent",
+            updated_by: source || "agent",
+            updated_at: new Date().toISOString()
+          }, { onConflict: "key" });
+        if (wError) return `Error writing knowledge: ${wError.message}`;
+        return `Knowledge '${wKey}' saved successfully.`;
+      }
+
+      case "list_knowledge": {
+        const { data: listData, error: listError } = await workerSupabase
+          .from("company_knowledge")
+          .select("key, updated_at, updated_by")
+          .order("updated_at", { ascending: false })
+          .limit(50);
+        if (listError) return `Error listing knowledge: ${listError.message}`;
+        return JSON.stringify(listData);
+      }
+
+      // --- WEB SEARCH ---
+      case "search_web": {
+        const searchQuery = payload.query || payload.q;
+        if (!searchQuery) return "Error: query is required for search_web";
+        try {
+          const ddgRes = await fetch(
+            `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`
+          );
+          const ddgData = await ddgRes.json();
+          const results = [];
+          if (ddgData.AbstractText) results.push({ title: ddgData.Heading, snippet: ddgData.AbstractText, url: ddgData.AbstractURL });
+          if (ddgData.RelatedTopics) {
+            ddgData.RelatedTopics.slice(0, 5).forEach(t => {
+              if (t.Text) results.push({ snippet: t.Text, url: t.FirstURL });
+            });
+          }
+          if (results.length === 0) return `Search for "${searchQuery}" returned no results. Try a different query.`;
+          return JSON.stringify({ query: searchQuery, results });
+        } catch (searchErr) {
+          return `Search error: ${searchErr.message}`;
+        }
+      }
+
+      // --- TELEGRAM NOTIFICATIONS ---
+      case "notify_admin":
+      case "send_telegram": {
+        const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+        const tgChat = process.env.TELEGRAM_CHAT_ID;
+        if (!tgToken || !tgChat) return "Error: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set";
+        const message = payload.message || payload.text || JSON.stringify(payload);
+        const tgRes = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: tgChat, text: `🤖 ${message}`, parse_mode: "Markdown" })
+        });
+        const tgData = await tgRes.json();
+        return tgData.ok ? "Telegram notification sent." : `Telegram error: ${JSON.stringify(tgData)}`;
+      }
 
       default:
         // Check if it's an MCP Tool
@@ -1039,5 +1116,57 @@ You are running as a WORKER on the target machine.
   }
 }
 
+// ============================================================
+// CRON SCHEDULER — Triggers time-based agents automatically
+// ============================================================
+const scheduledAgents = [
+  { agentId: "planner-agent",    cron: { hour: 8,  minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Daily Planning Session" },
+  { agentId: "tech-scout-agent", cron: { hour: 9,  minute: 0,  days: [1] },              title: "Weekly Tech Landscape Scan" },
+  { agentId: "optimizer-agent",  cron: { hour: 10, minute: 0,  days: [1,4] },            title: "Bi-Weekly Business Health Check" },
+  { agentId: "crm-sales-agent",  cron: { hour: 9,  minute: 30, days: [1,2,3,4,5] },      title: "Morning Lead Follow-Up" },
+];
+
+const firedToday = new Set(); // key: "agentId-YYYY-MM-DD-HH" to prevent double-fire
+
+function startCronScheduler() {
+  console.log("⏰ Cron Scheduler started");
+  setInterval(async () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon... 6=Sat
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+
+    for (const sched of scheduledAgents) {
+      if (!sched.cron.days.includes(dayOfWeek)) continue;
+      if (sched.cron.hour !== hour) continue;
+      if (Math.abs(sched.cron.minute - minute) > 1) continue; // within 1 min window
+
+      const fireKey = `${sched.agentId}-${now.toISOString().slice(0, 13)}`;
+      if (firedToday.has(fireKey)) continue;
+      firedToday.add(fireKey);
+
+      console.log(`⏰ Cron firing: ${sched.agentId} → "${sched.title}"`);
+      const { error } = await workerSupabase.from("agent_tasks").insert([{
+        title: sched.title,
+        description: `Scheduled task triggered automatically at ${now.toISOString()}`,
+        assigned_to: sched.agentId,
+        priority: "high",
+        status: "pending",
+        created_by: "cron-scheduler",
+      }]);
+      if (error) console.error(`Cron insert error for ${sched.agentId}:`, error.message);
+    }
+
+    // Clean old fire keys every hour
+    if (minute === 0) {
+      const cutoff = new Date(now - 25 * 60 * 60 * 1000).toISOString().slice(0, 13);
+      for (const key of firedToday) {
+        if (key.slice(-13) < cutoff) firedToday.delete(key);
+      }
+    }
+  }, 60_000); // check every minute
+}
+
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
+startCronScheduler();
