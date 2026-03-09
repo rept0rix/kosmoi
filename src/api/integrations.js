@@ -262,7 +262,7 @@ export const Core = {
   },
   GetEmbedding: async ({ text }) => {
     try {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const { GoogleGenAI } = await import("@google/genai");
       const apiKey =
         (typeof localStorage !== "undefined"
           ? localStorage.getItem("gemini_api_key")
@@ -273,10 +273,12 @@ export const Core = {
 
       if (!apiKey) return null;
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
-      const result = await model.embedContent(text);
-      return result.embedding.values;
+      const ai = new GoogleGenAI({ apiKey });
+      const result = await ai.models.embedContent({
+        model: "text-embedding-004",
+        contents: text,
+      });
+      return result.embeddings?.[0]?.values ?? null;
     } catch (error) {
       console.error("Embedding Error:", error);
       return null;
