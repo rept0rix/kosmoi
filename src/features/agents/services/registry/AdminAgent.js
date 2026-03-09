@@ -5,7 +5,7 @@ export const ADMIN_AGENT = {
     id: "admin-agent",
     layer: "strategic",
     role: "coo",
-    model: "gemini-1.5-pro",
+    model: "gemini-2.0-flash",
     icon: "ShieldAlert", // Requires valid Lucide icon name, or handle in UI
     systemPrompt: `${KOSMOI_MANIFESTO}
 

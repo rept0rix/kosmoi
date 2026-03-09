@@ -31,12 +31,12 @@ export default function CompleteSignup() {
         setError(null);
 
         if (password !== confirmPassword) {
-            setError("סיסמאות לא תואמות");
+            setError("Passwords do not match.");
             return;
         }
 
         if (password.length < 6) {
-            setError("הסיסמה חייבת להכיל לפחות 6 תווים");
+            setError("Password must be at least 6 characters.");
             return;
         }
 
@@ -96,51 +96,51 @@ export default function CompleteSignup() {
 
     if (status === 'success') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans" dir="rtl">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans" dir="ltr">
                 <div className="text-center space-y-4 animate-in fade-in zoom-in">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600">
                         <CheckCircle2 className="w-8 h-8" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900">החשבון הוגדר בהצלחה!</h2>
-                    <p className="text-slate-500">מעביר אותך ללוח הבקרה...</p>
+                    <h2 className="text-2xl font-bold text-slate-900">Account setup complete.</h2>
+                    <p className="text-slate-500">Taking you to the dashboard...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 font-sans" dir="rtl">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 font-sans" dir="ltr">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-xl mb-4">
                         <Lock className="w-6 h-6" />
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900">קביעת סיסמה</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">Set your password</h1>
                     <p className="text-slate-500 mt-2">
-                        ברוכים הבאים! כדי להשלים את ההרשמה, אנא בחר סיסמה לחשבון שלך.
+                        Welcome. To finish signup, choose a password for your account.
                     </p>
                 </div>
 
                 <form onSubmit={handleSetPassword} className="space-y-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">סיסמה חדשה</label>
+                            <label className="text-sm font-medium text-slate-700">New password</label>
                             <input
                                 type="password"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder="לפחות 6 תווים"
+                                placeholder="At least 6 characters"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">אישור סיסמה</label>
+                            <label className="text-sm font-medium text-slate-700">Confirm password</label>
                             <input
                                 type="password"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder="הקלד שוב את הסיסמה"
+                                placeholder="Enter the password again"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                             />
@@ -162,9 +162,9 @@ export default function CompleteSignup() {
                         {loading ? (
                             <span className="flex items-center gap-2">
                                 <Loader2 className="animate-spin w-5 h-5" />
-                                {status === 'creating_business' ? 'מקים את העסק שלך...' : 'שומר סיסמה...'}
+                                {status === 'creating_business' ? 'Creating your business...' : 'Saving password...'}
                             </span>
-                        ) : 'שמור והתחל'}
+                        ) : 'Save and continue'}
                     </Button>
                 </form>
             </div>

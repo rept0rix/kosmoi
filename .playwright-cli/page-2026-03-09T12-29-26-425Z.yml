@@ -1,0 +1,99 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Kosmoi" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - generic [ref=e12]: 0 Vibes
+          - generic [ref=e13]:
+            - button [ref=e14] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+          - button "🇺🇸 EN" [ref=e18] [cursor=pointer]:
+            - img
+            - generic [ref=e19]: 🇺🇸 EN
+          - link [ref=e20] [cursor=pointer]:
+            - /url: /login
+            - button [ref=e21]:
+              - generic [ref=e23]:
+                - img
+    - main [ref=e24]:
+      - generic [ref=e28]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - button "Local Businesses" [ref=e32] [cursor=pointer]
+            - button "Global Hotels" [ref=e33] [cursor=pointer]:
+              - generic [ref=e34]:
+                - img [ref=e35]
+                - text: Global Hotels
+          - generic [ref=e37]:
+            - combobox [ref=e39] [cursor=pointer]:
+              - generic: All Categories
+              - img [ref=e40]
+            - generic [ref=e43]:
+              - textbox "Search service, business, category..." [ref=e44]
+              - img [ref=e45]
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - 'heading "Found 0 service providers (Raw: 0)" [level=2] [ref=e58]':
+              - img [ref=e59]
+              - text: Found 0 service providers
+              - generic [ref=e61]: "(Raw: 0)"
+            - generic [ref=e62]:
+              - generic [ref=e63] [cursor=pointer]: Rating
+              - generic [ref=e64] [cursor=pointer]: Distance
+          - generic [ref=e66]:
+            - img [ref=e68]
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: Try changing filters, expanding search range, or searching for different terms
+              - paragraph [ref=e73]: Try adjusting your filters or search query.
+            - button "Clear all filters" [ref=e74] [cursor=pointer]
+        - button [ref=e76] [cursor=pointer]:
+          - img
+    - button "Open Debug Role Switcher" [ref=e77] [cursor=pointer]:
+      - img [ref=e78]
+    - navigation [ref=e87]:
+      - generic [ref=e89]:
+        - link "Home" [ref=e90] [cursor=pointer]:
+          - /url: /App
+          - img [ref=e92]
+          - generic [ref=e95]: Home
+        - link "AI" [ref=e96] [cursor=pointer]:
+          - /url: /AIChat
+          - img [ref=e98]
+          - generic [ref=e100]: AI
+        - generic [ref=e102]:
+          - generic:
+            - generic:
+              - link "Scan" [ref=e104] [cursor=pointer]:
+                - /url: /wallet/scan
+                - img [ref=e106]
+                - generic [ref=e111]: Scan
+              - link "Send" [ref=e113] [cursor=pointer]:
+                - /url: /wallet/send
+                - img [ref=e115]
+                - generic [ref=e118]: Send
+              - link "Receive" [ref=e120] [cursor=pointer]:
+                - /url: /wallet/receive
+                - img [ref=e122]
+                - generic [ref=e125]: Receive
+              - link "Card" [ref=e127] [cursor=pointer]:
+                - /url: /wallet/card
+                - img [ref=e129]
+                - generic [ref=e131]: Card
+          - button [ref=e133] [cursor=pointer]:
+            - img [ref=e135]
+        - link "Market" [ref=e141] [cursor=pointer]:
+          - /url: /marketplace
+          - img [ref=e143]
+          - generic [ref=e148]: Market
+        - link "Organizer" [ref=e149] [cursor=pointer]:
+          - /url: /organizer
+          - img [ref=e151]
+          - generic [ref=e153]: Organizer
+  - region "Notifications alt+T"

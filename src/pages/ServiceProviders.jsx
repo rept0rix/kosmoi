@@ -446,9 +446,7 @@ export default function ServiceProviders() {
                     {SUPER_CATEGORIES.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.id === "wallet"
-                          ? language === "he"
-                            ? "ארנק"
-                            : "Wallet"
+                          ? "Wallet"
                           : t(cat.name_key)}
                       </SelectItem>
                     ))}

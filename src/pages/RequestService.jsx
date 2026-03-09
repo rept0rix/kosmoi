@@ -35,10 +35,10 @@ import { getSubCategoryLabel, subCategoriesBySuperCategory } from "../components
 import { getTranslation } from "@/components/translations";
 
 const urgencyLevels = [
-    { value: "low", label: "לא דחוף (בשבוע הקרוב)", color: "bg-blue-100 text-blue-800" },
-    { value: "medium", label: "רגיל (בימים הקרובים)", color: "bg-yellow-100 text-yellow-800" },
-    { value: "high", label: "דחוף (היום/מחר)", color: "bg-orange-100 text-orange-800" },
-    { value: "emergency", label: "חירום (מיידי!)", color: "bg-red-100 text-red-800" },
+    { value: "low", label: "Low priority (this week)", color: "bg-blue-100 text-blue-800" },
+    { value: "medium", label: "Standard (next few days)", color: "bg-yellow-100 text-yellow-800" },
+    { value: "high", label: "Urgent (today or tomorrow)", color: "bg-orange-100 text-orange-800" },
+    { value: "emergency", label: "Emergency (immediate)", color: "bg-red-100 text-red-800" },
 ];
 
 export default function RequestService() {
@@ -142,12 +142,12 @@ export default function RequestService() {
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle className="w-10 h-10 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">הבקשה נשלחה בהצלחה!</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Request sent successfully.</h2>
                     <p className="text-gray-600 mb-8">
-                        הבקשה שלך הועברה לבעלי מקצוע מתאימים באזור. הם יצרו איתך קשר בהקדם.
+                        Your request has been shared with matching local providers. They will contact you soon.
                     </p>
                     <Button onClick={() => navigate('/')} className="w-full">
-                        חזרה לדף הבית
+                        Back to home
                     </Button>
                 </Card>
             </div>
@@ -160,9 +160,9 @@ export default function RequestService() {
                 {/* Header */}
                 <div className="mb-8 text-center">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        בקש שירות
+                        Request a service
                     </h1>
-                    <p className="text-gray-600">ספר לנו מה אתה צריך, ואנחנו נמצא לך את המקצוען המתאים</p>
+                    <p className="text-gray-600">Tell us what you need and we will match you with the right local pro.</p>
                 </div>
 
                 {/* Progress Steps */}
@@ -173,9 +173,9 @@ export default function RequestService() {
                         ))}
                     </div>
                     <div className="flex justify-between mt-2 text-xs text-gray-500 px-1">
-                        <span>סוג השירות</span>
-                        <span>פרטים</span>
-                        <span>פרטי קשר</span>
+                        <span>Service type</span>
+                        <span>Details</span>
+                        <span>Contact</span>
                     </div>
                 </div>
 
@@ -186,17 +186,17 @@ export default function RequestService() {
                             <div className="space-y-6">
                                 <h3 className="text-xl font-bold flex items-center gap-2">
                                     <Wrench className="w-5 h-5 text-blue-600" />
-                                    איזה שירות אתה צריך?
+                                    What service do you need?
                                 </h3>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">קטגוריה</label>
+                                    <label className="block text-sm font-medium mb-2">Category</label>
                                     <Select
                                         value={formData.category}
                                         onValueChange={(value) => setFormData({ ...formData, category: value })}
                                     >
                                         <SelectTrigger className="h-12 text-lg">
-                                            <SelectValue placeholder="בחר קטגוריה..." />
+                                            <SelectValue placeholder="Choose a category..." />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-80">
                                             {Object.entries(subCategoriesBySuperCategory).map(([superCat, subCats]) => (
@@ -214,7 +214,7 @@ export default function RequestService() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-3">דחיפות</label>
+                                    <label className="block text-sm font-medium mb-3">Urgency</label>
                                     <div className="grid grid-cols-1 gap-3">
                                         {urgencyLevels.map((level) => (
                                             <div
@@ -237,8 +237,8 @@ export default function RequestService() {
                                     disabled={!isStep1Valid()}
                                     className="w-full h-12 text-lg mt-4"
                                 >
-                                    המשך
-                                    <ArrowRight className="w-5 h-5 mr-2" />
+                                    Continue
+                                    <ArrowRight className="w-5 h-5 ml-2" />
                                 </Button>
                             </div>
                         )}
@@ -248,23 +248,23 @@ export default function RequestService() {
                             <div className="space-y-6">
                                 <h3 className="text-xl font-bold flex items-center gap-2">
                                     <Camera className="w-5 h-5 text-blue-600" />
-                                    פרטים נוספים
+                                    Add more details
                                 </h3>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">תאר את הבעיה / הצורך</label>
+                                    <label className="block text-sm font-medium mb-2">Describe the issue or request</label>
                                     <Textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="לדוגמה: המזגן בחדר השינה מטפטף ולא מקרר..."
+                                        placeholder="Example: The bedroom AC is leaking and not cooling properly..."
                                         rows={5}
                                         className="text-base"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">מינימום 10 תווים</p>
+                                    <p className="text-xs text-gray-500 mt-1">Minimum 10 characters</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">תמונות (אופציונלי)</label>
+                                    <label className="block text-sm font-medium mb-2">Photos (optional)</label>
                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                                         <input
                                             type="file"
@@ -284,7 +284,7 @@ export default function RequestService() {
                                                 <Upload className="w-8 h-8 text-gray-400" />
                                             )}
                                             <span className="text-sm text-gray-600">
-                                                {uploadingImages ? "מעלה..." : "לחץ להוספת תמונות"}
+                                                {uploadingImages ? "Uploading..." : "Click to add photos"}
                                             </span>
                                         </label>
                                     </div>
@@ -308,15 +308,15 @@ export default function RequestService() {
 
                                 <div className="flex gap-3">
                                     <Button onClick={() => setStep(1)} variant="outline" className="flex-1 h-12">
-                                        חזור
+                                        Back
                                     </Button>
                                     <Button
                                         onClick={() => setStep(3)}
                                         disabled={!isStep2Valid()}
                                         className="flex-1 h-12"
                                     >
-                                        המשך
-                                        <ArrowRight className="w-5 h-5 mr-2" />
+                                        Continue
+                                        <ArrowRight className="w-5 h-5 ml-2" />
                                     </Button>
                                 </div>
                             </div>
@@ -327,15 +327,15 @@ export default function RequestService() {
                             <div className="space-y-6">
                                 <h3 className="text-xl font-bold flex items-center gap-2">
                                     <MapPin className="w-5 h-5 text-blue-600" />
-                                    איפה ומתי?
+                                    Where and when?
                                 </h3>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">מיקום השירות</label>
+                                    <label className="block text-sm font-medium mb-2">Service location</label>
                                     <Input
                                         value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        placeholder="לדוגמה: צ'אוונג, רחוב ראשי..."
+                                        placeholder="Example: Chaweng, main road..."
                                         className="mb-2"
                                     />
                                     <div className="h-48 rounded-lg overflow-hidden border border-gray-200">
@@ -347,20 +347,20 @@ export default function RequestService() {
                                             onMapClick={(pos) => setMapPosition(pos)}
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">לחץ על המפה למיקום מדויק (אופציונלי)</p>
+                                    <p className="text-xs text-gray-500 mt-1">Click the map to pin an exact location (optional)</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">שם מלא</label>
+                                        <label className="block text-sm font-medium mb-2">Full name</label>
                                         <Input
                                             value={formData.contact_name}
                                             onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                                            placeholder="שמך"
+                                            placeholder="Your name"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">טלפון</label>
+                                        <label className="block text-sm font-medium mb-2">Phone</label>
                                         <Input
                                             value={formData.contact_phone}
                                             onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
@@ -373,13 +373,13 @@ export default function RequestService() {
                                 {!user && (
                                     <div className="bg-yellow-50 p-3 rounded-md flex items-start gap-2 text-sm text-yellow-800">
                                         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                        <p>מומלץ להתחבר כדי לעקוב אחרי הבקשה שלך, אבל אפשר להמשיך גם כאורח.</p>
+                                        <p>Signing in is recommended so you can track the request, but you can continue as a guest.</p>
                                     </div>
                                 )}
 
                                 <div className="flex gap-3 mt-6">
                                     <Button onClick={() => setStep(2)} variant="outline" className="flex-1 h-12">
-                                        חזור
+                                        Back
                                     </Button>
                                     <Button
                                         onClick={handleSubmit}
@@ -390,8 +390,8 @@ export default function RequestService() {
                                             <Loader2 className="w-5 h-5 animate-spin" />
                                         ) : (
                                             <>
-                                                שלח בקשה
-                                                <CheckCircle className="w-5 h-5 mr-2" />
+                                                Send request
+                                                <CheckCircle className="w-5 h-5 ml-2" />
                                             </>
                                         )}
                                     </Button>

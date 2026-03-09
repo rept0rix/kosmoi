@@ -39,9 +39,15 @@ export const callAgentInteraction = async ({
 }) => {
   try {
     const client = getClient();
+    const normalizedModel =
+      model === "gemini-1.5-pro" ||
+      model === "gemini-1.5-pro-latest" ||
+      model === "gemini-1.5-flash"
+        ? "gemini-2.0-flash"
+        : model || "gemini-2.0-flash";
 
     const generateConfig = {
-      model: model || "gemini-2.0-flash",
+      model: normalizedModel,
       contents: [
         {
           role: "user",

@@ -1,0 +1,96 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Kosmoi" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - generic [ref=e12]: 0 Vibes
+          - generic [ref=e13]:
+            - button [ref=e14] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+          - button "🇺🇸 EN" [ref=e18] [cursor=pointer]:
+            - img
+            - generic [ref=e19]: 🇺🇸 EN
+          - link [ref=e20] [cursor=pointer]:
+            - /url: /login
+            - button [ref=e21]:
+              - generic [ref=e23]:
+                - img
+    - main [ref=e24]:
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - heading "Request a service" [level=1] [ref=e31]
+          - paragraph [ref=e32]: Tell us what you need and we will match you with the right local pro.
+        - generic [ref=e38]:
+          - generic [ref=e39]: Service type
+          - generic [ref=e40]: Details
+          - generic [ref=e41]: Contact
+        - generic [ref=e44]:
+          - heading "What service do you need?" [level=3] [ref=e45]:
+            - img [ref=e46]
+            - text: What service do you need?
+          - generic [ref=e48]:
+            - generic [ref=e49]: Category
+            - combobox [ref=e50] [cursor=pointer]:
+              - generic: Choose a category...
+              - img [ref=e51]
+          - generic [ref=e53]:
+            - generic [ref=e54]: Urgency
+            - generic [ref=e55]:
+              - generic [ref=e57] [cursor=pointer]: Low priority (this week)
+              - generic [ref=e58] [cursor=pointer]:
+                - generic [ref=e59]: Standard (next few days)
+                - img [ref=e60]
+              - generic [ref=e64] [cursor=pointer]: Urgent (today or tomorrow)
+              - generic [ref=e66] [cursor=pointer]: Emergency (immediate)
+          - button "Continue" [disabled]:
+            - text: Continue
+            - img
+    - button "Open Debug Role Switcher" [ref=e67] [cursor=pointer]:
+      - img [ref=e68]
+    - navigation [ref=e77]:
+      - generic [ref=e79]:
+        - link "Home" [ref=e80] [cursor=pointer]:
+          - /url: /App
+          - img [ref=e82]
+          - generic [ref=e85]: Home
+        - link "AI" [ref=e86] [cursor=pointer]:
+          - /url: /AIChat
+          - img [ref=e88]
+          - generic [ref=e90]: AI
+        - generic [ref=e92]:
+          - generic:
+            - generic:
+              - link "Scan" [ref=e94] [cursor=pointer]:
+                - /url: /wallet/scan
+                - img [ref=e96]
+                - generic [ref=e101]: Scan
+              - link "Send" [ref=e103] [cursor=pointer]:
+                - /url: /wallet/send
+                - img [ref=e105]
+                - generic [ref=e108]: Send
+              - link "Receive" [ref=e110] [cursor=pointer]:
+                - /url: /wallet/receive
+                - img [ref=e112]
+                - generic [ref=e115]: Receive
+              - link "Card" [ref=e117] [cursor=pointer]:
+                - /url: /wallet/card
+                - img [ref=e119]
+                - generic [ref=e121]: Card
+          - button [ref=e123] [cursor=pointer]:
+            - img [ref=e125]
+        - link "Market" [ref=e131] [cursor=pointer]:
+          - /url: /marketplace
+          - img [ref=e133]
+          - generic [ref=e138]: Market
+        - link "Organizer" [ref=e139] [cursor=pointer]:
+          - /url: /organizer
+          - img [ref=e141]
+          - generic [ref=e143]: Organizer
+  - region "Notifications alt+T"

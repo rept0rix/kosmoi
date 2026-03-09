@@ -1,0 +1,160 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e6]:
+        - link "Kosmoi" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e9]
+        - generic [ref=e10]:
+          - button "Explore" [ref=e11] [cursor=pointer]:
+            - text: Explore
+            - img [ref=e12]
+          - link "About" [ref=e14] [cursor=pointer]:
+            - /url: /about
+          - link "Business" [ref=e15] [cursor=pointer]:
+            - /url: /business-info
+          - link "Pricing" [ref=e16] [cursor=pointer]:
+            - /url: /pricing
+          - link "Blog" [ref=e17] [cursor=pointer]:
+            - /url: /blog
+          - link "Contact" [ref=e18] [cursor=pointer]:
+            - /url: /contact
+        - generic [ref=e19]:
+          - button "🇺🇸 EN" [ref=e20] [cursor=pointer]:
+            - img
+            - generic [ref=e21]: 🇺🇸 EN
+          - link "Pilot Program" [ref=e22] [cursor=pointer]:
+            - /url: /one-dollar
+          - link "Login" [ref=e23] [cursor=pointer]:
+            - /url: /login
+          - link "INITIALIZE" [ref=e24] [cursor=pointer]:
+            - /url: /login?signup=true
+    - main [ref=e25]:
+      - generic [ref=e29]:
+        - img "Samui Background" [ref=e31]
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e37]:
+              - img [ref=e38]
+              - generic [ref=e41]: Samui's Intelligent City Guide
+            - heading "What are you looking for right now?" [level=1] [ref=e42]:
+              - text: What are you looking for
+              - text: right now?
+            - paragraph [ref=e43]: Everything in one place. Hotels, food, pros, and marketplace. Powered by AI.
+          - generic [ref=e46]:
+            - img [ref=e47]
+            - textbox "I need help with..." [ref=e50]
+            - button "Find" [ref=e51] [cursor=pointer]
+          - generic [ref=e52]:
+            - button "Hotels & Villas" [ref=e53] [cursor=pointer]:
+              - img [ref=e54]
+              - generic [ref=e57]: Hotels & Villas
+            - button "Food & Dining" [ref=e58] [cursor=pointer]:
+              - img [ref=e59]
+              - generic [ref=e62]: Food & Dining
+            - button "Taxis & Rentals" [ref=e63] [cursor=pointer]:
+              - img [ref=e64]
+              - generic [ref=e68]: Taxis & Rentals
+            - button "Professionals" [ref=e69] [cursor=pointer]:
+              - img [ref=e70]
+              - generic [ref=e74]: Professionals
+            - button "Second Hand" [ref=e75] [cursor=pointer]:
+              - img [ref=e76]
+              - generic [ref=e79]: Second Hand
+            - button "Ask AI Anything" [ref=e80] [cursor=pointer]:
+              - img [ref=e81]
+              - generic [ref=e83]: Ask AI Anything
+          - generic [ref=e84]:
+            - generic [ref=e85]:
+              - heading "Unlock the Island's Full Potential" [level=2] [ref=e86]
+              - paragraph [ref=e87]: Kosmoi isn't just a map. It's your unfair advantage on Koh Samui.
+            - generic [ref=e88]:
+              - generic [ref=e89]:
+                - img [ref=e91]
+                - heading "AI Concierge" [level=3] [ref=e101]
+                - paragraph [ref=e102]: Ask "Where's the best Pad Thai?" and get a real answer, not a sponsored list.
+              - generic [ref=e103]:
+                - img [ref=e105]
+                - heading "Instant Booking" [level=3] [ref=e107]
+                - paragraph [ref=e108]: Skip the WhatsApp tag. Book bikes, tables, and tours directly.
+              - generic [ref=e109]:
+                - img [ref=e111]
+                - heading "Verified Listings" [level=3] [ref=e113]
+                - paragraph [ref=e114]: No more closed businesses or fake reviews. We verify every spot.
+          - generic [ref=e115]:
+            - paragraph [ref=e116]: Do you run a business in Samui?
+            - button "Join the City OS" [ref=e117] [cursor=pointer]:
+              - img
+              - text: Join the City OS
+    - button "Open Debug Role Switcher" [ref=e118] [cursor=pointer]:
+      - img [ref=e119]
+    - contentinfo [ref=e128]:
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - generic [ref=e131]:
+            - img "Kosmoi" [ref=e133]
+            - paragraph [ref=e134]: Connecting Koh Samui with Intelligent Action. We build the digital heartbeat of the island, streamlining operations and driving growth.
+            - generic [ref=e135]:
+              - generic [ref=e136] [cursor=pointer]: OK
+              - generic [ref=e137] [cursor=pointer]: LI
+          - generic [ref=e138]:
+            - heading "Information" [level=3] [ref=e139]
+            - list [ref=e140]:
+              - listitem [ref=e141]:
+                - link "Enter App" [ref=e142] [cursor=pointer]:
+                  - /url: /app
+                  - img [ref=e143]
+                  - text: Enter App
+              - listitem [ref=e145]:
+                - link "Team" [ref=e146] [cursor=pointer]:
+                  - /url: /team
+              - listitem [ref=e147]:
+                - link "About Us" [ref=e148] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e149]:
+                - link "Partner With Us" [ref=e150] [cursor=pointer]:
+                  - /url: /business-info
+              - listitem [ref=e151]:
+                - link "Plans & Pricing" [ref=e152] [cursor=pointer]:
+                  - /url: /pricing
+          - generic [ref=e153]:
+            - heading "Legal" [level=3] [ref=e154]
+            - list [ref=e155]:
+              - listitem [ref=e156]:
+                - link "Terms of Service" [ref=e157] [cursor=pointer]:
+                  - /url: /legal/terms
+              - listitem [ref=e158]:
+                - link "Privacy Policy" [ref=e159] [cursor=pointer]:
+                  - /url: /legal/privacy
+              - listitem [ref=e160]:
+                - link "Security" [ref=e161] [cursor=pointer]:
+                  - /url: /legal/security
+              - listitem [ref=e162]:
+                - link "Accessibility Statement" [ref=e163] [cursor=pointer]:
+                  - /url: /legal/accessibility
+          - generic [ref=e164]:
+            - heading "Support" [level=3] [ref=e165]
+            - list [ref=e166]:
+              - listitem [ref=e167]:
+                - link "Contact Us" [ref=e168] [cursor=pointer]:
+                  - /url: /contact
+              - listitem [ref=e169]:
+                - link "support@kosmoi.site" [ref=e170] [cursor=pointer]:
+                  - /url: mailto:support@kosmoi.site
+              - listitem [ref=e171]:
+                - link "Admin Login" [ref=e172] [cursor=pointer]:
+                  - /url: /admin
+                  - img [ref=e173]
+                  - text: Admin Login
+        - generic [ref=e176]:
+          - paragraph [ref=e177]: © 2026 Kosmoi. All rights reserved.
+          - generic [ref=e178]:
+            - link "Secure & Private" [ref=e179] [cursor=pointer]:
+              - /url: /legal/security
+              - img [ref=e180]
+              - text: Secure & Private
+            - generic [ref=e183]: "|"
+            - generic [ref=e184]:
+              - img [ref=e185]
+              - text: GDPR & SOC2 Compliant
+  - region "Notifications alt+T"

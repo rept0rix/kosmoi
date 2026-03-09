@@ -119,6 +119,6 @@ describe('VendorSignup Page', () => {
         })
 
         // Verify success message
-        expect(await screen.findByText(/נרשמת בהצלחה/i)).toBeVisible()
+        expect(await screen.findByText(/you're in\./i)).toBeVisible()
     })
 })

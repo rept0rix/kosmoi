@@ -1,0 +1,164 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Kosmoi" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - generic [ref=e12]: 0 Vibes
+          - generic [ref=e13]:
+            - button [ref=e14] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+          - button "🇺🇸 EN" [ref=e18] [cursor=pointer]:
+            - img
+            - generic [ref=e19]: 🇺🇸 EN
+          - link [ref=e20] [cursor=pointer]:
+            - /url: /login
+            - button [ref=e21]:
+              - generic [ref=e23]:
+                - img
+    - main [ref=e24]:
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - text: Business onboarding
+          - generic [ref=e34]:
+            - generic [ref=e35]: K
+            - heading "Partner with Kosmoi" [level=1] [ref=e36]
+            - paragraph [ref=e37]: הצטרף למערכת שמחברת עסקים, לקוחות וסוכנים חכמים. בחר אם לפתוח עסק חדש או לדרוש בעלות על עסק שכבר קיים אצלנו.
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - img [ref=e41]
+              - heading "Onboarding מהיר" [level=2] [ref=e43]
+              - paragraph [ref=e44]: מסלול פתיחה מסודר לעסק חדש או דרישת בעלות על עסק קיים.
+            - generic [ref=e45]:
+              - img [ref=e47]
+              - heading "אימות חכם" [level=2] [ref=e50]
+              - paragraph [ref=e51]: בדיקת בעלות בשילוב AI ותיעוד כדי לצמצם חיכוך ולמנוע טעויות.
+            - generic [ref=e52]:
+              - img [ref=e54]
+              - heading "הפעלה בתוך המערכת" [level=2] [ref=e58]
+              - paragraph [ref=e59]: ברגע שהרישום מאושר, העסק מוכן להופיע ולפעול בתוך Kosmoi.
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - img [ref=e63]
+              - generic [ref=e70]:
+                - generic [ref=e71]: Two paths
+                - generic [ref=e72]: בחר את המסלול הנכון
+            - generic [ref=e73]:
+              - generic [ref=e74]: "`רשום עסק חדש` אם אתה עדיין לא מופיע במערכת."
+              - generic [ref=e75]: "`תבע בעלות` אם העסק כבר קיים וצריך שיוך אליך."
+        - generic [ref=e76]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]:
+                - generic [ref=e81]: Start here
+                - heading "נרשום את העסק שלך למערכת" [level=2] [ref=e82]
+                - paragraph [ref=e83]: הזן את פרטי העסק ונשלח קישור אימות להשלמת הפתיחה.
+              - generic [ref=e84]:
+                - img [ref=e85]
+                - text: OTP onboarding
+            - generic [ref=e89]:
+              - button "רשום עסק חדש פתיחת עסק חדש בתוך Kosmoi" [ref=e90] [cursor=pointer]:
+                - img [ref=e92]
+                - generic [ref=e97]:
+                  - generic [ref=e98]: רשום עסק חדש
+                  - generic [ref=e99]: פתיחת עסק חדש בתוך Kosmoi
+              - button "תבע בעלות על עסק קיים שיוך ואימות לעסק שכבר קיים במערכת" [ref=e100] [cursor=pointer]:
+                - img [ref=e102]
+                - generic [ref=e105]:
+                  - generic [ref=e106]: תבע בעלות על עסק קיים
+                  - generic [ref=e107]: שיוך ואימות לעסק שכבר קיים במערכת
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - generic [ref=e111]:
+                - generic [ref=e112]: שם העסק
+                - textbox "שם העסק" [ref=e113]:
+                  - /placeholder: "לדוגמה: קפה בוקר טוב"
+              - generic [ref=e114]:
+                - generic [ref=e115]: קטגוריה
+                - generic [ref=e116]:
+                  - combobox "קטגוריה" [ref=e117]:
+                    - option "מסעדה / Restaurant" [selected]
+                    - option "אטרקציה / Activity"
+                    - option "שירותים / Services"
+                    - option "מלון / Hotel"
+                    - option "תחבורה / Transport"
+                  - img
+            - generic [ref=e118]:
+              - generic [ref=e119]: תיאור העסק
+              - textbox "תיאור העסק" [ref=e120]:
+                - /placeholder: ספר לנו בכמה מילים על העסק, הייחוד שלו, וקהל היעד.
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - generic [ref=e123]: מיקום
+                - generic [ref=e124]:
+                  - img [ref=e125]
+                  - textbox "מיקום" [ref=e128]:
+                    - /placeholder: כתובת או אזור
+              - generic [ref=e129]:
+                - generic [ref=e130]: שם בעל העסק
+                - generic [ref=e131]:
+                  - img [ref=e132]
+                  - textbox "שם בעל העסק" [ref=e135]:
+                    - /placeholder: השם המלא שלך
+            - generic [ref=e136]:
+              - generic [ref=e137]: אימייל
+              - generic [ref=e138]:
+                - img [ref=e139]
+                - textbox "אימייל" [ref=e142]:
+                  - /placeholder: your@email.com
+            - generic [ref=e144]:
+              - img [ref=e146]
+              - generic [ref=e148]:
+                - heading "מה יקרה אחרי השליחה?" [level=3] [ref=e149]
+                - paragraph [ref=e150]: נשלח מייל אימות, נשלים בדיקת פתיחה, ולאחר מכן העסק שלך יוכל להמשיך לתהליך setup מלא בתוך המערכת.
+            - button "הגש בקשה להצטרפות" [ref=e151] [cursor=pointer]
+    - button "Open Debug Role Switcher" [ref=e152] [cursor=pointer]:
+      - img [ref=e153]
+    - navigation [ref=e162]:
+      - generic [ref=e164]:
+        - link "Home" [ref=e165] [cursor=pointer]:
+          - /url: /App
+          - img [ref=e167]
+          - generic [ref=e170]: Home
+        - link "AI" [ref=e171] [cursor=pointer]:
+          - /url: /AIChat
+          - img [ref=e173]
+          - generic [ref=e175]: AI
+        - generic [ref=e177]:
+          - generic:
+            - generic:
+              - link "Scan" [ref=e179] [cursor=pointer]:
+                - /url: /wallet/scan
+                - img [ref=e181]
+                - generic [ref=e186]: Scan
+              - link "Send" [ref=e188] [cursor=pointer]:
+                - /url: /wallet/send
+                - img [ref=e190]
+                - generic [ref=e193]: Send
+              - link "Receive" [ref=e195] [cursor=pointer]:
+                - /url: /wallet/receive
+                - img [ref=e197]
+                - generic [ref=e200]: Receive
+              - link "Card" [ref=e202] [cursor=pointer]:
+                - /url: /wallet/card
+                - img [ref=e204]
+                - generic [ref=e206]: Card
+          - button [ref=e208] [cursor=pointer]:
+            - img [ref=e210]
+        - link "Market" [ref=e216] [cursor=pointer]:
+          - /url: /marketplace
+          - img [ref=e218]
+          - generic [ref=e223]: Market
+        - link "Organizer" [ref=e224] [cursor=pointer]:
+          - /url: /organizer
+          - img [ref=e226]
+          - generic [ref=e228]: Organizer
+  - region "Notifications alt+T"

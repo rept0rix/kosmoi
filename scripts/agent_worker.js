@@ -260,9 +260,18 @@ You are running as a WORKER on the target machine.
   console.log("🌍 Universal Mode: Agent initialized dynamically per task.");
 }
 
-async function executeTool(toolName, payload) {
+async function executeTool(toolName, payload, context = {}) {
   console.log(`🛠️ Executing Tool: ${toolName}`, payload);
   if (!toolName) return "Error: No tool name provided.";
+
+  const normalizeWorkspacePath = (rawPath) => {
+    if (!rawPath || typeof rawPath !== "string") return null;
+    if (path.isAbsolute(rawPath)) {
+      if (rawPath.startsWith(PROJECT_ROOT)) return rawPath;
+      return path.join(PROJECT_ROOT, rawPath.replace(/^\/+/, ""));
+    }
+    return path.resolve(PROJECT_ROOT, rawPath);
+  };
 
   try {
     switch (toolName) {
@@ -300,11 +309,21 @@ async function executeTool(toolName, payload) {
         });
       case "write_file":
       case "write_code":
-        const filePath = path.resolve(
-          PROJECT_ROOT,
-          payload.path || payload.title,
-        );
-        const content = payload.content || payload.code;
+        const targetPath =
+          payload.path ||
+          payload.filename ||
+          payload.filepath ||
+          payload.file ||
+          payload.target_file ||
+          payload.title;
+        if (!targetPath) {
+          return "Error: path/filename is required for write_file/write_code.";
+        }
+        const filePath = normalizeWorkspacePath(targetPath);
+        const content = payload.content || payload.code || payload.text || payload.body;
+        if (typeof content !== "string") {
+          return "Error: content/code must be a string for write_file/write_code.";
+        }
         const dir = path.dirname(filePath);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(filePath, content);
@@ -316,7 +335,7 @@ async function executeTool(toolName, payload) {
           payload.target_file ||
           payload.file;
         if (!rawPath) return "Error: No path provided for read_file.";
-        const readPath = path.resolve(PROJECT_ROOT, rawPath);
+        const readPath = normalizeWorkspacePath(rawPath);
         return fs.existsSync(readPath)
           ? fs.readFileSync(readPath, "utf-8")
           : `Error: File not found at ${readPath}`;
@@ -351,13 +370,24 @@ async function executeTool(toolName, payload) {
         if (!issueRes.ok) return `Error: ${JSON.stringify(issueData)}`;
         return `Issue Created: ${issueData.html_url}`;
       case "create_task":
+        const assignedTo =
+          payload.assigned_to ||
+          payload.assignee ||
+          payload.assignedAgent ||
+          "tech-lead-agent";
+        const actorId = context.actorId || "worker";
+        if (
+          String(assignedTo).toLowerCase() === String(actorId).toLowerCase()
+        ) {
+          return `Error: Self-assignment blocked for '${actorId}'. Execute directly with tools instead.`;
+        }
         const taskData = {
           title: payload.title,
           description: payload.description,
-          assigned_to: payload.assignee || "human",
+          assigned_to: assignedTo,
           priority: payload.priority || "medium",
           status: "pending",
-          created_by: "tech-lead-agent",
+          created_by: actorId,
         };
         const { data: newTask, error: taskError } = await workerSupabase
           .from("agent_tasks")
@@ -487,15 +517,111 @@ async function executeTool(toolName, payload) {
           return "Error logging interaction: " + interactRes.error.message;
         return "Interaction logged successfully.";
 
-      case "get_lead":
-        const leadRes = await workerSupabase
+      case "list_leads": {
+        const limit = Math.min(Number(payload.limit || payload.max || 10), 100);
+        let leadsQuery = workerSupabase
           .from("crm_leads")
           .select("*")
-          .eq("id", payload.id || payload.lead_id)
-          .single();
-        if (leadRes.error)
-          return "Error fetching lead: " + leadRes.error.message;
-        return JSON.stringify(leadRes.data);
+          .order("updated_at", { ascending: false })
+          .limit(limit);
+
+        if (payload.status) {
+          leadsQuery = leadsQuery.eq("status", payload.status);
+        }
+
+        if (payload.email) {
+          leadsQuery = leadsQuery.ilike("email", `%${payload.email}%`);
+        }
+
+        if (payload.name) {
+          const name = String(payload.name).trim();
+          if (name) {
+            leadsQuery = leadsQuery.or(
+              `first_name.ilike.%${name}%,last_name.ilike.%${name}%`,
+            );
+          }
+        }
+
+        if (payload.company) {
+          leadsQuery = leadsQuery.ilike("company", `%${payload.company}%`);
+        }
+
+        if (payload.q || payload.query) {
+          const q = String(payload.q || payload.query).trim();
+          if (q) {
+            leadsQuery = leadsQuery.or(
+              `first_name.ilike.%${q}%,last_name.ilike.%${q}%,company.ilike.%${q}%,email.ilike.%${q}%`,
+            );
+          }
+        }
+
+        if (payload.stale_days) {
+          const cutoff = new Date(
+            Date.now() - Number(payload.stale_days) * 24 * 60 * 60 * 1000,
+          ).toISOString();
+          leadsQuery = leadsQuery.lt("updated_at", cutoff);
+        }
+
+        const leadsRes = await leadsQuery;
+        if (leadsRes.error) {
+          return "Error listing leads: " + leadsRes.error.message;
+        }
+        return JSON.stringify(leadsRes.data || []);
+      }
+
+      case "get_lead":
+        const leadId = payload.id || payload.lead_id;
+        if (leadId) {
+          const leadRes = await workerSupabase
+            .from("crm_leads")
+            .select("*")
+            .eq("id", leadId)
+            .single();
+          if (leadRes.error)
+            return "Error fetching lead: " + leadRes.error.message;
+          return JSON.stringify(leadRes.data);
+        }
+
+        let fallbackLeadQuery = workerSupabase
+          .from("crm_leads")
+          .select("*")
+          .order("updated_at", { ascending: false })
+          .limit(1);
+
+        if (payload.status) {
+          fallbackLeadQuery = fallbackLeadQuery.eq("status", payload.status);
+        }
+        if (payload.email) {
+          fallbackLeadQuery = fallbackLeadQuery.ilike("email", `%${payload.email}%`);
+        }
+        if (payload.name) {
+          const name = String(payload.name).trim();
+          if (name) {
+            fallbackLeadQuery = fallbackLeadQuery.or(
+              `first_name.ilike.%${name}%,last_name.ilike.%${name}%`,
+            );
+          }
+        }
+        if (payload.company) {
+          fallbackLeadQuery = fallbackLeadQuery.ilike("company", `%${payload.company}%`);
+        }
+        if (payload.q || payload.query) {
+          const q = String(payload.q || payload.query).trim();
+          if (q) {
+            fallbackLeadQuery = fallbackLeadQuery.or(
+              `first_name.ilike.%${q}%,last_name.ilike.%${q}%,company.ilike.%${q}%,email.ilike.%${q}%`,
+            );
+          }
+        }
+
+        const fallbackLeadRes = await fallbackLeadQuery.maybeSingle();
+        if (fallbackLeadRes.error) {
+          return "Error fetching lead: " + fallbackLeadRes.error.message;
+        }
+        if (!fallbackLeadRes.data) {
+          return "No matching lead found.";
+        }
+        return JSON.stringify(fallbackLeadRes.data);
 
       // --- STRIPE / SALES TOOLS ---
       case "create_payment_link":
@@ -530,19 +656,45 @@ async function executeTool(toolName, payload) {
 
       // --- KNOWLEDGE BASE ---
       case "read_knowledge": {
-        const knowledgeKey = payload.key;
-        if (!knowledgeKey) return "Error: key is required for read_knowledge";
+        const requestedKeys = Array.isArray(payload.keys)
+          ? payload.keys.filter(Boolean)
+          : [payload.key].filter(Boolean);
+
+        if (requestedKeys.length === 0) {
+          return "Error: key or keys[] is required for read_knowledge";
+        }
+
+        if (requestedKeys.length === 1) {
+          const knowledgeKey = requestedKeys[0];
+          const { data: kbData, error: kbError } = await workerSupabase
+            .from("company_knowledge")
+            .select("key, value, updated_at")
+            .eq("key", knowledgeKey)
+            .single();
+          if (kbError || !kbData) return `Knowledge key '${knowledgeKey}' not found.`;
+          return JSON.stringify(kbData);
+        }
+
         const { data: kbData, error: kbError } = await workerSupabase
           .from("company_knowledge")
           .select("key, value, updated_at")
-          .eq("key", knowledgeKey)
-          .single();
-        if (kbError || !kbData) return `Knowledge key '${knowledgeKey}' not found.`;
-        return JSON.stringify(kbData);
+          .in("key", requestedKeys);
+
+        if (kbError) return `Error reading knowledge: ${kbError.message}`;
+
+        const found = kbData || [];
+        const foundKeys = new Set(found.map((item) => item.key));
+        const missing = requestedKeys.filter((k) => !foundKeys.has(k));
+
+        return JSON.stringify({
+          found,
+          missing,
+        });
       }
 
       case "write_knowledge": {
-        const { key: wKey, value: wValue, source, category: wCat } = payload;
+        const { key: wKey, source, category: wCat } = payload;
+        const wValue = payload.value ?? payload.content;
         if (!wKey || !wValue) return "Error: key and value are required for write_knowledge";
         // value must be valid JSON (string, number, object, or array)
         const jsonValue = typeof wValue === "string" ? wValue : JSON.stringify(wValue);
@@ -569,27 +721,144 @@ async function executeTool(toolName, payload) {
         return JSON.stringify(listData);
       }
 
+      case "search_knowledge_base": {
+        const query = (payload.query || payload.q || "").trim();
+        if (!query) return "Error: query is required for search_knowledge_base";
+
+        // 1) Try key-based DB search first (fast)
+        const { data: keyHits, error: keyErr } = await workerSupabase
+          .from("company_knowledge")
+          .select("key, value, updated_at")
+          .ilike("key", `%${query}%`)
+          .order("updated_at", { ascending: false })
+          .limit(20);
+
+        if (keyErr) return `Error searching knowledge base: ${keyErr.message}`;
+        if (keyHits && keyHits.length > 0) return JSON.stringify(keyHits);
+
+        // 2) Fallback: fetch recent rows and filter by serialized value text
+        const { data: recent, error: recentErr } = await workerSupabase
+          .from("company_knowledge")
+          .select("key, value, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(200);
+        if (recentErr) return `Error searching knowledge base: ${recentErr.message}`;
+
+        const lowered = query.toLowerCase();
+        const filtered = (recent || []).filter((row) => {
+          const keyText = String(row.key || "").toLowerCase();
+          const valueText = JSON.stringify(row.value || "").toLowerCase();
+          return keyText.includes(lowered) || valueText.includes(lowered);
+        });
+
+        return JSON.stringify(filtered.slice(0, 20));
+      }
+
       // --- WEB SEARCH ---
       case "search_web": {
-        const searchQuery = payload.query || payload.q;
-        if (!searchQuery) return "Error: query is required for search_web";
-        try {
-          const ddgRes = await fetch(
-            `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`
-          );
-          const ddgData = await ddgRes.json();
+        const requestedQueries = Array.isArray(payload.queries)
+          ? payload.queries.filter(Boolean)
+          : [payload.query || payload.q].filter(Boolean);
+
+        if (requestedQueries.length === 0) return "Error: query or queries[] is required for search_web";
+
+        const stripHtml = (value = "") =>
+          value
+            .replace(/<[^>]*>/g, "")
+            .replace(/&amp;/g, "&")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#x27;/g, "'")
+            .trim();
+
+        const runSingleQuery = async (searchQuery) => {
           const results = [];
-          if (ddgData.AbstractText) results.push({ title: ddgData.Heading, snippet: ddgData.AbstractText, url: ddgData.AbstractURL });
-          if (ddgData.RelatedTopics) {
-            ddgData.RelatedTopics.slice(0, 5).forEach(t => {
-              if (t.Text) results.push({ snippet: t.Text, url: t.FirstURL });
-            });
+
+          // First pass: DuckDuckGo Instant Answer API
+          try {
+            const ddgRes = await fetch(
+              `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`,
+            );
+            const raw = await ddgRes.text();
+            const ddgData = raw ? JSON.parse(raw) : {};
+
+            if (ddgData.AbstractText) {
+              results.push({
+                title: ddgData.Heading || searchQuery,
+                snippet: ddgData.AbstractText,
+                url: ddgData.AbstractURL || "",
+              });
+            }
+
+            if (Array.isArray(ddgData.RelatedTopics)) {
+              for (const topic of ddgData.RelatedTopics) {
+                if (results.length >= 5) break;
+
+                if (topic?.Text) {
+                  results.push({
+                    title: topic.Text.slice(0, 80),
+                    snippet: topic.Text,
+                    url: topic.FirstURL || "",
+                  });
+                }
+
+                if (Array.isArray(topic?.Topics)) {
+                  for (const nested of topic.Topics) {
+                    if (results.length >= 5) break;
+                    if (!nested?.Text) continue;
+                    results.push({
+                      title: nested.Text.slice(0, 80),
+                      snippet: nested.Text,
+                      url: nested.FirstURL || "",
+                    });
+                  }
+                }
+              }
+            }
+          } catch {
+            // Ignore and try HTML fallback.
           }
-          if (results.length === 0) return `Search for "${searchQuery}" returned no results. Try a different query.`;
-          return JSON.stringify({ query: searchQuery, results });
-        } catch (searchErr) {
-          return `Search error: ${searchErr.message}`;
+
+          // Second pass: parse DuckDuckGo HTML search page for normal web results.
+          if (results.length === 0) {
+            try {
+              const htmlRes = await fetch(
+                `https://html.duckduckgo.com/html/?q=${encodeURIComponent(searchQuery)}`,
+                {
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (Kosmoi Worker)",
+                  },
+                },
+              );
+              const html = await htmlRes.text();
+              const anchorRegex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
+              let match;
+              while ((match = anchorRegex.exec(html)) && results.length < 5) {
+                const url = stripHtml(match[1]);
+                const title = stripHtml(match[2]);
+                if (!url || !title) continue;
+                results.push({ title, snippet: "", url });
+              }
+            } catch {
+              // Keep empty if fallback fails.
+            }
+          }
+
+          return { query: searchQuery, results };
+        };
+
+        const queryResults = [];
+        for (const q of requestedQueries.slice(0, 3)) {
+          queryResults.push(await runSingleQuery(q));
         }
+
+        const anyHit = queryResults.some((entry) => entry.results.length > 0);
+        if (!anyHit) {
+          return `Search returned no results for queries: ${requestedQueries.slice(0, 3).join(", ")}`;
+        }
+
+        return JSON.stringify(
+          requestedQueries.length === 1 ? queryResults[0] : queryResults,
+        );
       }
 
       // --- TELEGRAM NOTIFICATIONS ---
@@ -780,7 +1049,10 @@ When finished, reply with "TASK_COMPLETED".
       console.log(`✅ Detected Tool Action: ${action.name}`);
       let result;
       try {
-        result = await executeTool(action.name, action.payload);
+        result = await executeTool(action.name, action.payload, {
+          actorId: task.assigned_to,
+          taskId: task.id,
+        });
       } catch (e) {
         // Log Error for Loop Detection
         if (history) {
@@ -998,6 +1270,31 @@ async function main() {
     }
   }
 
+  function isHumanRoutedTask(task) {
+    const assigned = String(task?.assigned_to || "")
+      .trim()
+      .toLowerCase();
+
+    if (!assigned) return true;
+    if (assigned.includes("human")) return true;
+    if (assigned === "user") return true;
+    if (assigned === "manual") return true;
+    return false;
+  }
+
+  function isSelfDelegatedTask(task) {
+    const assigned = String(task?.assigned_to || "")
+      .trim()
+      .toLowerCase();
+    const createdBy = String(task?.created_by || "")
+      .trim()
+      .toLowerCase();
+
+    if (!assigned || !createdBy) return false;
+    if (assigned !== createdBy) return false;
+    return assigned.endsWith("-agent");
+  }
+
   // --- WORKER LOOP ---
   while (true) {
     try {
@@ -1028,16 +1325,57 @@ async function main() {
         .from("agent_tasks")
         .select("*")
         .in("status", ["pending", "in_progress", "review"])
-        .limit(1);
+        .order("created_at", { ascending: true })
+        .limit(25);
 
       if (!isUniversal) {
-        query = query.eq("assigned_to", agentRole);
+        query = query.eq("assigned_to", agentRole).limit(1);
+      } else {
+        // Universal worker should not consume tasks explicitly routed to humans.
+        query = query
+          .not("assigned_to", "is", null)
+          .not("assigned_to", "ilike", "%human%");
       }
 
       const { data: tasks, error } = await query;
 
       if (tasks && tasks.length > 0) {
-        const task = tasks[0];
+        if (isUniversal) {
+          const selfDelegatedIds = tasks
+            .filter((candidate) => isSelfDelegatedTask(candidate))
+            .map((candidate) => candidate.id);
+
+          if (selfDelegatedIds.length > 0) {
+            const { error: skipErr } = await workerSupabase
+              .from("agent_tasks")
+              .update({
+                status: "done",
+                result: "SKIPPED: self-delegated loop guard",
+              })
+              .in("id", selfDelegatedIds);
+
+            if (skipErr) {
+              console.warn("⚠️ Failed to skip self-delegated tasks:", skipErr.message);
+            } else {
+              console.log(
+                `🧹 Skipped ${selfDelegatedIds.length} self-delegated task(s) to prevent loops.`,
+              );
+            }
+          }
+        }
+
+        const task = isUniversal
+          ? tasks.find(
+              (candidate) =>
+                !isHumanRoutedTask(candidate) &&
+                !isSelfDelegatedTask(candidate),
+            )
+          : tasks[0];
+
+        if (!task) {
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          continue;
+        }
         console.log(`\n👀 Found Task: "${task.title}" (ID: ${task.id})`);
 
         // 3. Git Pull (Just-in-Time Update)

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "701d39d6-4e63-4367-a2e1-fa6bd4b83afc",
+    "title": "Identify Top 3 Stale Leads",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:32.671188+00:00"
+  },
+  {
+    "id": "832b7e9f-e6e5-4ac4-84e2-0a5a71809df8",
+    "title": "Query CRM for Stale Leads",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:35.883796+00:00"
+  },
+  {
+    "id": "dbe5fc70-7203-446e-9b3b-e96f18c44b84",
+    "title": "Design Re-engagement Email Template",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:42.097033+00:00"
+  },
+  {
+    "id": "67158161-3e10-44b6-a45a-ee902599ee60",
+    "title": "Execute CRM Query for Top 3 Stale Leads",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:38.984079+00:00"
+  },
+  {
+    "id": "e05ce1c0-0bfd-4be8-837d-e64d26fd8f31",
+    "title": "Implement CRM Interaction Logging Function",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:44.643512+00:00"
+  },
+  {
+    "id": "cdbb00af-3629-4543-9bfb-6c02fe5be29d",
+    "title": "Implement CRM Interaction Logging Function",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:50.20982+00:00"
+  },
+  {
+    "id": "de914145-3a68-4c4e-9948-9783a9fb289b",
+    "title": "List Files and Implement CRM Interaction Logging Function",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:11.98238+00:00"
+  },
+  {
+    "id": "63ba9fa2-0f20-48ec-8c12-d7a4ce1a3768",
+    "title": "List Files to Locate Logging Function File",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:19.437688+00:00"
+  },
+  {
+    "id": "d33e4b51-88f6-40c8-aa8a-d42cf2735802",
+    "title": "Execute File Listing and Identify Logging Function File",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:24.264187+00:00"
+  },
+  {
+    "id": "2a679b3d-7ff1-446b-a2c8-d73a566489b3",
+    "title": "Execute File Listing and Identify Logging Function File",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:29.554721+00:00"
+  },
+  {
+    "id": "d3c0e585-3a67-4d8e-8510-796a175051aa",
+    "title": "Execute File Listing Command",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:34.59785+00:00"
+  },
+  {
+    "id": "95388e71-b540-4f2e-9f64-952b1392c07d",
+    "title": "Define Interaction Logging Schema",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:47.230321+00:00"
+  },
+  {
+    "id": "787846a3-767c-4708-9090-ee5e2a7ef98b",
+    "title": "Implement CRM Interaction Logging Function",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:18:52.949625+00:00"
+  },
+  {
+    "id": "fe6576e8-6ed1-4c69-83a3-c297286d8056",
+    "title": "List Files and Implement CRM Interaction Logging Function",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:15.050409+00:00"
+  },
+  {
+    "id": "6ddf939b-26fd-495c-9e3b-550e3eaf8d9d",
+    "title": "Execute File Listing to Locate Logging Function File",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:21.766931+00:00"
+  },
+  {
+    "id": "57197c18-9185-4071-82f2-f2fc8a37b124",
+    "title": "Execute File Listing and Identify Logging Function File",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:26.82001+00:00"
+  },
+  {
+    "id": "77a95b41-c5bc-4108-a547-e267bc705564",
+    "title": "Execute File Listing to Locate Logging Function File",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:32.148563+00:00"
+  },
+  {
+    "id": "7f512442-a6e7-40c3-9ea2-5a833f0ed244",
+    "title": "Execute File Listing Command and Provide Output",
+    "status": "pending",
+    "assigned_to": "human",
+    "created_at": "2026-03-09T11:19:37.207307+00:00"
+  }
+]

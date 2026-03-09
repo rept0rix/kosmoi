@@ -1,0 +1,81 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Kosmoi" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Kosmoi" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - generic [ref=e12]: 0 Vibes
+          - generic [ref=e13]:
+            - button [ref=e14] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+          - button "🇺🇸 EN" [ref=e18] [cursor=pointer]:
+            - img
+            - generic [ref=e19]: 🇺🇸 EN
+          - link [ref=e20] [cursor=pointer]:
+            - /url: /login
+            - button [ref=e21]:
+              - generic [ref=e23]:
+                - img
+    - main [ref=e24]:
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - img [ref=e32]
+          - heading "Set your password" [level=1] [ref=e35]
+          - paragraph [ref=e36]: Welcome. To finish signup, choose a password for your account.
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - text: New password
+              - textbox "At least 6 characters" [ref=e40]
+            - generic [ref=e41]:
+              - text: Confirm password
+              - textbox "Enter the password again" [ref=e42]
+          - button "Save and continue" [ref=e43] [cursor=pointer]
+    - button "Open Debug Role Switcher" [ref=e44] [cursor=pointer]:
+      - img [ref=e45]
+    - navigation [ref=e54]:
+      - generic [ref=e56]:
+        - link "Home" [ref=e57] [cursor=pointer]:
+          - /url: /App
+          - img [ref=e59]
+          - generic [ref=e62]: Home
+        - link "AI" [ref=e63] [cursor=pointer]:
+          - /url: /AIChat
+          - img [ref=e65]
+          - generic [ref=e67]: AI
+        - generic [ref=e69]:
+          - generic:
+            - generic:
+              - link "Scan" [ref=e71] [cursor=pointer]:
+                - /url: /wallet/scan
+                - img [ref=e73]
+                - generic [ref=e78]: Scan
+              - link "Send" [ref=e80] [cursor=pointer]:
+                - /url: /wallet/send
+                - img [ref=e82]
+                - generic [ref=e85]: Send
+              - link "Receive" [ref=e87] [cursor=pointer]:
+                - /url: /wallet/receive
+                - img [ref=e89]
+                - generic [ref=e92]: Receive
+              - link "Card" [ref=e94] [cursor=pointer]:
+                - /url: /wallet/card
+                - img [ref=e96]
+                - generic [ref=e98]: Card
+          - button [ref=e100] [cursor=pointer]:
+            - img [ref=e102]
+        - link "Market" [ref=e108] [cursor=pointer]:
+          - /url: /marketplace
+          - img [ref=e110]
+          - generic [ref=e115]: Market
+        - link "Organizer" [ref=e116] [cursor=pointer]:
+          - /url: /organizer
+          - img [ref=e118]
+          - generic [ref=e120]: Organizer
+  - region "Notifications alt+T"

@@ -1,0 +1,11 @@
+{
+  "browser": {
+    "launchOptions": {
+      "headless": false
+    },
+    "contextOptions": {
+      "viewport": { "width": 1440, "height": 960 },
+      "userAgent": "ScreenshotAgent"
+    }
+  }
+}
