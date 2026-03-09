@@ -45,3 +45,7 @@ node_modules/
 downloads/
 
 github-recovery-codes.txt
+
+# Local test scripts
+scripts/test_gemini.js
+test_barakabot_fix.js
