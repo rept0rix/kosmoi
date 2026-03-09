@@ -22,7 +22,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 // Initialize Gemini
 const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Initialize Protocol
 const protocol = new AgentProtocol(AGENT_NAME);

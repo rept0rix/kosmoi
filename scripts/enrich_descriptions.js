@@ -21,7 +21,7 @@ if (!apiKey) {
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 async function enrichDescriptions() {
   console.log("🤖 Data Enrichment Agent: Starting Full Scale...");

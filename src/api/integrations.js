@@ -44,7 +44,6 @@ export const Core = {
       const modelsToTry = [
         requestedModel,
         "gemini-2.0-flash",
-        "gemini-2.0-flash-exp",
         "gemini-2.0-flash-lite",
         "gemini-3-pro-preview",
       ].filter(Boolean); // Remove null/undefined
@@ -275,7 +274,7 @@ export const Core = {
       if (!apiKey) return null;
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "embedding-001" });
+      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
       const result = await model.embedContent(text);
       return result.embedding.values;
     } catch (error) {

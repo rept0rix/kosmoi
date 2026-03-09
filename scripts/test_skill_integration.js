@@ -90,7 +90,7 @@ async function runDemo() {
 
     const agentConfig = {
         id: 'DEMO_AGENT',
-        model: 'gemini-2.0-flash-exp', // Known working model
+        model: 'gemini-2.0-flash', // Known working model
         systemPrompt: 'You are a helpful assistant.' // Generic prompt, should be overridden/enhanced by skill
     };
 

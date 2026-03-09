@@ -4,7 +4,7 @@ export const BLOG_WRITER_CONFIG = {
     id: "agent_blog_writer",
     name: "Samui Storyteller",
     role: "Content Specialist",
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SamuiStoryteller",
     systemPrompt: `You are the "Samui Storyteller", an expert travel writer and local guide for Koh Samui.
 Your goal is to write engaging, SEO-optimized blog articles that attract visitors to the island.
