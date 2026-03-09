@@ -8,7 +8,11 @@ import {
   Sparkles,
   TrendingUp,
   Wallet,
+  Trophy,
 } from "lucide-react";
+import { OrganizerService } from "@/features/organizer/services/OrganizerService";
+import { useAuth } from "@/features/auth/context/AuthContext";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -21,6 +25,26 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 export default function OrganizerOverview({ activeTrip, onNavigate }) {
+  const { user } = useAuth();
+  const [goalStats, setGoalStats] = useState({ total: 0, completed: 0 });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      if (!user) return;
+      try {
+        const goals = await OrganizerService.getGoals();
+        if (goals) {
+          setGoalStats({
+            total: goals.length,
+            completed: goals.filter((g) => g.completed).length,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load goal stats", e);
+      }
+    };
+    loadStats();
+  }, [user]);
   if (!activeTrip) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center space-y-4 animate-in fade-in zoom-in duration-500">
@@ -142,6 +166,26 @@ export default function OrganizerOverview({ activeTrip, onNavigate }) {
                 <p className="text-xs text-slate-500">View trip stats</p>
               </div>
               <ArrowRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-amber-500" />
+            </CardContent>
+          </Card>
+
+          <Card
+            className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-all cursor-pointer group"
+            onClick={() => onNavigate("goals")}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Trophy className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">
+                  Bucket List
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {goalStats.completed}/{goalStats.total} Achieved
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-purple-500" />
             </CardContent>
           </Card>
         </div>

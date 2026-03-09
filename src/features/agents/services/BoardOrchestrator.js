@@ -1,22 +1,23 @@
-import { AgentService } from './AgentService.js';
-import { db } from '../../../api/supabaseClient.js';
+import { AgentService } from "./AgentService.js";
+import { db } from "../../../api/supabaseClient.js";
 
 /**
  * The BoardOrchestrator acts as the "Chairman" of the board.
  * It decides which agent should speak next based on the conversation history and the current goal.
  */
 export class BoardOrchestrator {
-    constructor(availableAgents, options = {}) {
-        this.availableAgents = availableAgents;
-        this.orchestratorAgent = new AgentService({
-            id: 'board-chairman',
-            role: 'Chairman',
-            model: 'gemini-2.0-flash',
-            systemPrompt: `You are the Chairman of the Board for "Kosmoi".
+  constructor(availableAgents, options = {}) {
+    this.availableAgents = availableAgents;
+    this.orchestratorAgent = new AgentService(
+      {
+        id: "board-chairman",
+        role: "Chairman",
+        model: "gemini-2.0-flash",
+        systemPrompt: `You are the Chairman of the Board for "Kosmoi".
 Your job is to orchestrate a discussion between various AI agents to achieve a specific GOAL.
 
 You have the following agents available:
-${availableAgents.map(a => `- ${a.role} (ID: ${a.id}): ${a.systemPrompt.slice(0, 100)}...`).join('\n')}
+${availableAgents.map((a) => `- ${a.role} (ID: ${a.id}): ${a.systemPrompt.slice(0, 100)}...`).join("\n")}
 
 INSTRUCTIONS:
 1. Analyze the current conversation history.
@@ -36,83 +37,100 @@ RULES:
 - **DIRECT HANDOFF**: If an agent says "I will let the Tech Lead handle this", you MUST select the Tech Lead next.
 - **GITHUB DELEGATION**: If the discussion involves creating issues, reviewing PRs, or repository management, you MUST delegate to the 'github-specialist-agent'.
 - **ANTI-LOOP**: If the last 3 messages are just agreements, FORCE the next agent to take a concrete step (write code, search, search GitHub, etc.).
-`
-        }, options);
-        this.options = options;
+`,
+      },
+      options,
+    );
+    this.options = options;
+  }
+
+  /**
+   * Decides the next step in the conversation.
+   * @param {string} goal - The user's main objective.
+   * @param {Array} history - The conversation history (messages).
+   * @returns {Promise<{
+   *   nextSpeakerId: string,
+   *   reason: string,
+   *   instruction: string,
+   *   manageTeam?: {
+   *     action: 'ADD' | 'REMOVE' | null,
+   *     agentId: string,
+   *     reason: string
+   *   }
+   * }>}
+   */
+  async getNextSpeaker(
+    goal,
+    history,
+    autonomousMode = false,
+    companyState = {},
+    activeAgentIds = [],
+    activeWorkflowState = null,
+  ) {
+    // 1. CHECK FOR ACTIVE WORKFLOW (MATRIX)
+    // Check if there is a strict active workflow step
+    if (activeWorkflowState && !activeWorkflowState.isComplete) {
+      const currentStep = activeWorkflowState.currentStep;
+      console.log(
+        `[Orchestrator] Active Workflow Step: ${activeWorkflowState.workflow.name} -> ${currentStep.label} (${currentStep.role})`,
+      );
+
+      // If the last speaker was the CURRENT role, we might want to advance or wait.
+      // For this implementation, if the current role just spoke, we assume they are done and we should advance (or waiting for user input).
+      // BUT, the `WorkflowService` must be advanced by the main app logic (e.g., in `useBoardRoom.js` after a message).
+      // Here, we just ENFORCE that the next speaker is the one defined in the step.
+
+      return {
+        nextSpeakerId: currentStep.role,
+        reason: `Strict Workflow Enforcement: ${activeWorkflowState.workflow.name} (Step ${activeWorkflowState.progress}%) requires ${currentStep.role} to act.`,
+        instruction: `You are performing the '${currentStep.label}' step of the '${activeWorkflowState.workflow.name}' workflow. Focus ONLY on this task.`,
+      };
     }
 
-    /**
-     * Decides the next step in the conversation.
-     * @param {string} goal - The user's main objective.
-     * @param {Array} history - The conversation history (messages).
-     * @returns {Promise<{
-     *   nextSpeakerId: string, 
-     *   reason: string, 
-     *   instruction: string,
-     *   manageTeam?: {
-     *     action: 'ADD' | 'REMOVE' | null,
-     *     agentId: string,
-     *     reason: string
-     *   }
-     * }>}
-     */
-    async getNextSpeaker(goal, history, autonomousMode = false, companyState = {}, activeAgentIds = [], activeWorkflowState = null) {
-        // 1. CHECK FOR ACTIVE WORKFLOW (MATRIX)
-        // Check if there is a strict active workflow step
-        if (activeWorkflowState && !activeWorkflowState.isComplete) {
-            const currentStep = activeWorkflowState.currentStep;
-            console.log(`[Orchestrator] Active Workflow Step: ${activeWorkflowState.workflow.name} -> ${currentStep.label} (${currentStep.role})`);
+    // Legacy Documentation Workflow Hack (Optional: Remove if fully replaced by generic above)
+    const isDocWorkflow = goal.toLowerCase().includes("documentation");
+    if (isDocWorkflow && !activeWorkflowState) {
+      const { WORKFLOWS } = await import("./workflows.js");
+      // ... legacy logic ...
+    }
 
-            // If the last speaker was the CURRENT role, we might want to advance or wait.
-            // For this implementation, if the current role just spoke, we assume they are done and we should advance (or waiting for user input).
-            // BUT, the `WorkflowService` must be advanced by the main app logic (e.g., in `useBoardRoom.js` after a message).
-            // Here, we just ENFORCE that the next speaker is the one defined in the step.
+    // 3. ERROR RECOVERY (TestOps Integration)
+    // Check if the last message indicates a failure
+    const lastMsg = history[history.length - 1];
+    if (lastMsg) {
+      const content = lastMsg.content;
+      // Detect structured errors or explicit error mentions
+      const isError =
+        content.includes("[Error]") ||
+        (content.toLowerCase().includes("error:") && content.length < 500) ||
+        content.includes("Exception:");
 
-            return {
-                nextSpeakerId: currentStep.role,
-                reason: `Strict Workflow Enforcement: ${activeWorkflowState.workflow.name} (Step ${activeWorkflowState.progress}%) requires ${currentStep.role} to act.`,
-                instruction: `You are performing the '${currentStep.label}' step of the '${activeWorkflowState.workflow.name}' workflow. Focus ONLY on this task.`
-            };
-        }
+      // Avoid looping: If the QA specialist just spoke, don't pick them again immediately unless it's a new error?
+      // Actually, if QA just spoke, we expect them to have proposed a fix or assigned a task.
+      const wasQA = lastMsg.agentId === "qa-specialist-agent";
 
-        // Legacy Documentation Workflow Hack (Optional: Remove if fully replaced by generic above)
-        const isDocWorkflow = goal.toLowerCase().includes("documentation");
-        if (isDocWorkflow && !activeWorkflowState) {
-            const { WORKFLOWS } = await import('./workflows.js');
-            // ... legacy logic ...
-        }
+      if (isError && !wasQA) {
+        console.log("[Orchestrator] Error detected! Summoning QA Specialist.");
+        return {
+          nextSpeakerId: "qa-specialist-agent",
+          reason:
+            "An error was detected in the previous message. QA Specialist must analyze it.",
+          instruction:
+            "Analyze the error reported in the last message using your 'analyze_failure' tool. Propose a fix or create a ticket.",
+        };
+      }
+    }
 
-        // 3. ERROR RECOVERY (TestOps Integration)
-        // Check if the last message indicates a failure
-        const lastMsg = history[history.length - 1];
-        if (lastMsg) {
-            const content = lastMsg.content;
-            // Detect structured errors or explicit error mentions
-            const isError = content.includes('[Error]') ||
-                (content.toLowerCase().includes('error:') && content.length < 500) ||
-                content.includes('Exception:');
+    // 2. FALLBACK TO LLM ORCHESTRATION (Existing Logic)
+    const formattedHistory = history
+      .map((msg) => {
+        const speaker =
+          msg.role === "user" ? "User" : msg.agentId || "Unknown Agent";
+        return `${speaker}: ${msg.content}`;
+      })
+      .join("\n");
 
-            // Avoid looping: If the QA specialist just spoke, don't pick them again immediately unless it's a new error?
-            // Actually, if QA just spoke, we expect them to have proposed a fix or assigned a task.
-            const wasQA = lastMsg.agentId === 'qa-specialist-agent';
-
-            if (isError && !wasQA) {
-                console.log("[Orchestrator] Error detected! Summoning QA Specialist.");
-                return {
-                    nextSpeakerId: "qa-specialist-agent",
-                    reason: "An error was detected in the previous message. QA Specialist must analyze it.",
-                    instruction: "Analyze the error reported in the last message using your 'analyze_failure' tool. Propose a fix or create a ticket."
-                };
-            }
-        }
-
-        // 2. FALLBACK TO LLM ORCHESTRATION (Existing Logic)
-        const formattedHistory = history.map(msg => {
-            const speaker = msg.role === 'user' ? 'User' : (msg.agentId || 'Unknown Agent');
-            return `${speaker}: ${msg.content}`;
-        }).join('\n');
-
-        const prompt = `
+    const prompt = `
 CURRENT GOAL: "${goal}"
 
 COMPANY STATE (NEWS & KPIs):
@@ -120,7 +138,7 @@ COMPANY STATE (NEWS & KPIs):
 ${JSON.stringify(companyState || {}, null, 2)}
 
 PRESENT AGENTS (IN THE ROOM):
-${activeAgentIds.length > 0 ? activeAgentIds.join(', ') : "Everyone is available"}
+${activeAgentIds.length > 0 ? activeAgentIds.join(", ") : "Everyone is available"}
 
 CONVERSATION HISTORY:
 ${formattedHistory}
@@ -161,70 +179,78 @@ Output JSON format:
 }
 `;
 
+    try {
+      const response = await this.orchestratorAgent.sendMessage(prompt, {
+        simulateTools: false,
+        bypassGuardrails: true,
+      });
+
+      // CRITICAL FIX: The AgentService puts the parsed LLM JSON in 'raw'.
+      // 'response.text' tries to extract a 'message' property which doesn't exist in the Orchestrator schema.
+      if (response.raw && response.raw.nextSpeakerId) {
+        return response.raw;
+      }
+
+      // Fallback for string-based responses (if any)
+      const text = response.text;
+      console.log("[Orchestrator] Raw Text (Fallback):", text);
+
+      // Clean up markdown code blocks if present
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
         try {
-            const response = await this.orchestratorAgent.sendMessage(prompt, { simulateTools: false, bypassGuardrails: true });
-
-            // CRITICAL FIX: The AgentService puts the parsed LLM JSON in 'raw'.
-            // 'response.text' tries to extract a 'message' property which doesn't exist in the Orchestrator schema.
-            if (response.raw && response.raw.nextSpeakerId) {
-                return response.raw;
-            }
-
-            // Fallback for string-based responses (if any)
-            const text = response.text;
-            console.log("[Orchestrator] Raw Text (Fallback):", text);
-
-            // Clean up markdown code blocks if present
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try {
-                    const cleanText = jsonMatch[0]
-                        .replace(/```json/g, '')
-                        .replace(/```/g, '')
-                        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-                        .trim();
-                    const decision = JSON.parse(cleanText);
-                    return decision;
-                } catch (e) {
-                    console.error("JSON Parse Error in Orchestrator:", e);
-                    console.log("Raw Text:", text);
-                    // Fallback: Try to repair common JSON errors or just return default
-                    return {
-                        nextSpeakerId: this.availableAgents[0].id,
-                        reason: "Orchestrator JSON was malformed. Defaulting to first agent.",
-                        instruction: "Continue the discussion."
-                    };
-                }
-            } else {
-                console.warn("Orchestrator did not return JSON. Fallback to first agent.");
-                return {
-                    nextSpeakerId: this.availableAgents[0].id,
-                    reason: "Orchestrator failed to parse JSON.",
-                    instruction: "Please continue the discussion."
-                };
-            }
-        } catch (error) {
-            console.error("Orchestrator Error:", error);
-            return {
-                nextSpeakerId: null,
-                reason: "Error in orchestration.",
-                instruction: ""
-            };
+          const cleanText = jsonMatch[0]
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+            .trim();
+          const decision = JSON.parse(cleanText);
+          return decision;
+        } catch (e) {
+          console.error("JSON Parse Error in Orchestrator:", e);
+          console.log("Raw Text:", text);
+          // Fallback: Try to repair common JSON errors or just return default
+          return {
+            nextSpeakerId: this.availableAgents[0].id,
+            reason:
+              "Orchestrator JSON was malformed. Defaulting to first agent.",
+            instruction: "Continue the discussion.",
+          };
         }
-    }
-    /**
-     * Forces the CEO to start a Daily Standup meeting.
-     * @param {Object} companyState - The current state of the company (budget, missions, etc).
-     * @returns {Object} A decision object for the CEO to speak next.
-     */
-    startDailyStandup(companyState = {}) {
-        const budget = companyState.budget || 0;
-        const activeMissions = companyState.active_missions ? companyState.active_missions.length : 0;
-
+      } else {
+        console.warn(
+          "Orchestrator did not return JSON. Fallback to first agent.",
+        );
         return {
-            nextSpeakerId: "ceo-agent",
-            reason: "Initiating Daily Standup Routine",
-            instruction: `
+          nextSpeakerId: this.availableAgents[0].id,
+          reason: "Orchestrator failed to parse JSON.",
+          instruction: "Please continue the discussion.",
+        };
+      }
+    } catch (error) {
+      console.error("Orchestrator Error:", error);
+      return {
+        nextSpeakerId: null,
+        reason: "Error in orchestration.",
+        instruction: "",
+      };
+    }
+  }
+  /**
+   * Forces the CEO to start a Daily Standup meeting.
+   * @param {Object} companyState - The current state of the company (budget, missions, etc).
+   * @returns {Object} A decision object for the CEO to speak next.
+   */
+  startDailyStandup(companyState = {}) {
+    const budget = companyState.budget || 0;
+    const activeMissions = companyState.active_missions
+      ? companyState.active_missions.length
+      : 0;
+
+    return {
+      nextSpeakerId: "ceo-agent",
+      reason: "Initiating Daily Standup Routine",
+      instruction: `
 [DAILY STANDUP PROTOCOL]
 Good morning team.
 Current Status:
@@ -237,76 +263,82 @@ OBJECTIVE: We need to generate revenue and ship features.
 3. Decide on ONE key objective for today.
 
 Start the meeting now. Be authoritative.
-`
+`,
+    };
+  }
+  /**
+   * The Heartbeat Tick.
+   * Called periodically by the CompanyHeartbeat service.
+   * Checks for stalled states or opportunities to work.
+   *
+   * @param {Object} context - { companyState, activeMeeting, lastMessageTime }
+   * @returns {Promise<Object|null>} Decision object or null if no action needed.
+   */
+  async tick(context = {}) {
+    const { companyState, activeMeeting, lastMessageTime } = context;
+    const now = Date.now();
+    const silenceThreshold = 45000; // 45 seconds of silence = stalled
+
+    console.log("[Orchestrator] Tick...", context);
+
+    // 1. If NO meeting is active, should we start one OR assign work?
+    if (!activeMeeting) {
+      // Check for OPEN tasks
+      try {
+        const tasks = await db.entities.AgentTasks.list(); // Fetch all tasks (ordered by created_at desc)
+        const openTasks = tasks.filter(
+          (t) => t.status === "open" || t.status === "in_progress",
+        );
+
+        if (openTasks.length > 0) {
+          // Find a task that needs attention
+          const urgentTask =
+            openTasks.find((t) => t.priority === "high") || openTasks[0];
+
+          // If it's unassigned, assign it
+          if (urgentTask.assigned_to === "Unassigned") {
+            // For MVP, assign to Tech Lead or Product based on title?
+            // Let's just pick Tech Lead for now or ask CEO to assign.
+            return {
+              nextSpeakerId: "ceo-agent",
+              reason: "There are unassigned tasks.",
+              instruction: `Task '${urgentTask.title}' is unassigned. Assign it to a relevant agent.`,
+            };
+          }
+
+          // If it's assigned, nudge the assignee if they haven't updated it recently?
+          // (Skip for MVP complexity, just focus on unassigned or starting work)
+        }
+      } catch (e) {
+        console.warn("[Orchestrator] Failed to fetch tasks:", e);
+      }
+
+      // If it's "Morning" (mocked) or we are IDLE, start a standup.
+      // For MVP, if we are completely idle, suggest a standup.
+      if (companyState?.status === "IDLE") {
+        return this.startDailyStandup(companyState);
+      }
+      return null;
+    }
+
+    // 2. If meeting IS active, is it stalled?
+    if (activeMeeting && lastMessageTime) {
+      const timeSinceLastMsg = now - new Date(lastMessageTime).getTime();
+      if (timeSinceLastMsg > silenceThreshold) {
+        console.log(
+          `[Orchestrator] Meeting stalled for ${timeSinceLastMsg}ms. Nudging...`,
+        );
+
+        // Force a nudge
+        return {
+          nextSpeakerId: "ceo-agent", // CEO breaks the silence
+          reason: "The room has been silent for too long.",
+          instruction:
+            "The discussion has stalled. Please briefly suggest the next concrete step or ask for input to maintain momentum.",
         };
+      }
     }
-    /**
-     * The Heartbeat Tick.
-     * Called periodically by the CompanyHeartbeat service.
-     * Checks for stalled states or opportunities to work.
-     * 
-     * @param {Object} context - { companyState, activeMeeting, lastMessageTime }
-     * @returns {Promise<Object|null>} Decision object or null if no action needed.
-     */
-    async tick(context = {}) {
-        const { companyState, activeMeeting, lastMessageTime } = context;
-        const now = Date.now();
-        const silenceThreshold = 45000; // 45 seconds of silence = stalled
 
-        console.log("[Orchestrator] Tick...", context);
-
-        // 1. If NO meeting is active, should we start one OR assign work?
-        if (!activeMeeting) {
-            // Check for OPEN tasks
-            try {
-                const tasks = await db.entities.AgentTasks.list(); // Fetch all tasks (ordered by created_at desc)
-                const openTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
-
-                if (openTasks.length > 0) {
-                    // Find a task that needs attention
-                    const urgentTask = openTasks.find(t => t.priority === 'high') || openTasks[0];
-
-                    // If it's unassigned, assign it
-                    if (urgentTask.assigned_to === 'Unassigned') {
-                        // For MVP, assign to Tech Lead or Product based on title?
-                        // Let's just pick Tech Lead for now or ask CEO to assign.
-                        return {
-                            nextSpeakerId: "ceo-agent",
-                            reason: "There are unassigned tasks.",
-                            instruction: `Task '${urgentTask.title}' is unassigned. Assign it to a relevant agent.`
-                        };
-                    }
-
-                    // If it's assigned, nudge the assignee if they haven't updated it recently?
-                    // (Skip for MVP complexity, just focus on unassigned or starting work)
-                }
-            } catch (e) {
-                console.warn("[Orchestrator] Failed to fetch tasks:", e);
-            }
-
-            // If it's "Morning" (mocked) or we are IDLE, start a standup.
-            // For MVP, if we are completely idle, suggest a standup.
-            if (companyState?.status === 'IDLE') {
-                return this.startDailyStandup(companyState);
-            }
-            return null;
-        }
-
-        // 2. If meeting IS active, is it stalled?
-        if (activeMeeting && lastMessageTime) {
-            const timeSinceLastMsg = now - new Date(lastMessageTime).getTime();
-            if (timeSinceLastMsg > silenceThreshold) {
-                console.log(`[Orchestrator] Meeting stalled for ${timeSinceLastMsg}ms. Nudging...`);
-
-                // Force a nudge
-                return {
-                    nextSpeakerId: "ceo-agent", // CEO breaks the silence
-                    reason: "The room has been silent for too long.",
-                    instruction: "Ask the team for a status update or propose the next step. Don't let the momentum die."
-                };
-            }
-        }
-
-        return null;
-    }
+    return null;
+  }
 }

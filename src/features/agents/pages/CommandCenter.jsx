@@ -118,6 +118,24 @@ const CommandCenter = () => {
   });
   const [loadingStats, setLoadingStats] = useState(true);
   const [activeTab, setActiveTab] = useState("business"); // business | network
+  const [dbStatus, setDbStatus] = useState("checking");
+
+  useEffect(() => {
+    const checkDb = async () => {
+      try {
+        const { error } = await db
+          .from("service_providers")
+          .select("id")
+          .limit(1);
+        setDbStatus(error ? "offline" : "online");
+      } catch (e) {
+        setDbStatus("offline");
+      }
+    };
+    checkDb();
+    const interval = setInterval(checkDb, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch Stats
   useEffect(() => {
@@ -301,11 +319,25 @@ const CommandCenter = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-slate-500 font-mono">
-                      <span>DB_CONNECTION (RxDB)</span>
-                      <span className="text-emerald-500">ONLINE</span>
+                      <span>DB_CONNECTION (Supabase)</span>
+                      <span
+                        className={
+                          dbStatus === "online"
+                            ? "text-emerald-500"
+                            : "text-red-500"
+                        }
+                      >
+                        {dbStatus === "online" ? "ONLINE" : "OFFLINE"}
+                      </span>
                     </div>
                     <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 w-[98%] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                      <div
+                        className={`h-full w-full rounded-full transition-colors duration-500 ${
+                          dbStatus === "online"
+                            ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                            : "bg-red-500"
+                        }`}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
