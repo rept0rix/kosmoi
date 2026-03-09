@@ -95,6 +95,15 @@ export default function MapProviderCard({ provider, onClose }) {
     <div className="w-full">
       <div className="flex gap-4">
         <div className="flex-1 min-w-0">
+          {onClose && (
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute top-2 right-2 p-1 rounded-full text-slate-400 hover:text-slate-100 hover:bg-white/10 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <h3
             className="font-bold text-lg text-slate-100 mb-1 truncate cursor-pointer hover:text-neon-cyan transition-colors shadow-sm"
             onClick={handleDetailsClick}
