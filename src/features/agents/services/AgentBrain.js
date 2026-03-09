@@ -1,18 +1,27 @@
-import { callAgentInteraction } from '../../../api/geminiInteractions.js';
-import { callStrandsInteraction } from '../../../api/strandsInteractions.js';
-import { callGroqInteraction } from '../../../api/groqInteractions.js';
-import { getModelConfig, AI_PROVIDERS } from '../../../services/ai/ModelRegistry.js';
-import { db } from '../../../api/supabaseClient.js';
-import { TranslationService } from '../../../services/TranslationService.js';
-import { KnowledgeService } from '../../../services/ai/KnowledgeService.js';
-import { SkillService } from './SkillService.js';
+import { callAgentInteraction } from "../../../api/geminiInteractions.js";
+import { callStrandsInteraction } from "../../../api/strandsInteractions.js";
+import { callGroqInteraction } from "../../../api/groqInteractions.js";
+import {
+  getModelConfig,
+  AI_PROVIDERS,
+} from "../../../services/ai/ModelRegistry.js";
+import { db } from "../../../api/supabaseClient.js";
+import { TranslationService } from "../../../services/TranslationService.js";
+import { KnowledgeService } from "../../../services/ai/KnowledgeService.js";
+import { SkillService } from "./SkillService.js";
 
 // JSON Schema for Agent Output
 const AGENT_RESPONSE_SCHEMA = {
   type: "object",
   properties: {
-    thought_process: { type: "string", description: "Your internal reasoning for the response." },
-    message: { type: "string", description: "The message to display to the user." },
+    thought_process: {
+      type: "string",
+      description: "Your internal reasoning for the response.",
+    },
+    message: {
+      type: "string",
+      description: "The message to display to the user.",
+    },
     action: {
       type: "object",
       description: "Optional action to take (e.g. create task, tool call).",
@@ -26,13 +35,16 @@ const AGENT_RESPONSE_SCHEMA = {
         priority: { type: "string" },
         language: { type: "string" },
         code: { type: "string" },
-        config: { type: "object" }
+        config: { type: "object" },
       },
-      nullable: true
+      nullable: true,
     },
-    original_en_message: { type: "string", description: "Original English message if translated." }
+    original_en_message: {
+      type: "string",
+      description: "Original English message if translated.",
+    },
   },
-  required: ["thought_process", "message"]
+  required: ["thought_process", "message"],
 };
 
 /**
@@ -44,39 +56,51 @@ const AGENT_RESPONSE_SCHEMA = {
 export async function getAgentReply(agent, messages, context = {}) {
   try {
     // 0. Detect Language logic (Preserved)
-    const recentUserMsg = [...messages].reverse().find(m => m.agent_id === 'HUMAN_USER');
-    const userLang = recentUserMsg ? TranslationService.detectLanguage(recentUserMsg.content) : 'en';
+    const recentUserMsg = [...messages]
+      .reverse()
+      .find((m) => m.agent_id === "HUMAN_USER");
+    const userLang = recentUserMsg
+      ? TranslationService.detectLanguage(recentUserMsg.content)
+      : "en";
 
     // 1. Filter History (Preserved)
     const recentMessages = messages.slice(-50);
     if (messages.length > 0 && recentMessages[0].id !== messages[0].id) {
       recentMessages.unshift(messages[0]);
       recentMessages.splice(1, 0, {
-        agent_id: 'SYSTEM',
-        role: 'system',
-        content: '--- [END OF MISSION BRIEF] -- [SKIPPED CONVERSATION] ---'
+        agent_id: "SYSTEM",
+        role: "system",
+        content: "--- [END OF MISSION BRIEF] -- [SKIPPED CONVERSATION] ---",
       });
     }
 
     // 1.1 Translate (Preserved)
-    const translatedTranscript = await Promise.all(recentMessages.map(async msg => {
-      const speaker = msg.agent_id === 'HUMAN_USER' ? 'User' : (msg.agent_role || msg.agent_id);
-      let content = msg.content;
-      if (TranslationService.detectLanguage(content) === 'he') {
-        content = await TranslationService.translate(content, 'en');
-      }
-      return `${speaker}: ${content}`;
-    }));
+    const translatedTranscript = await Promise.all(
+      recentMessages.map(async (msg) => {
+        const speaker =
+          msg.agent_id === "HUMAN_USER"
+            ? "User"
+            : msg.agent_role || msg.agent_id;
+        let content = msg.content;
+        if (TranslationService.detectLanguage(content) === "he") {
+          content = await TranslationService.translate(content, "en");
+        }
+        return `${speaker}: ${content}`;
+      }),
+    );
 
-    const transcript = translatedTranscript.join('\n');
+    const transcript = translatedTranscript.join("\n");
 
     // 1.2 RAG (Preserved)
     let knowledgeContext = "";
     try {
       const lastMsg = recentMessages[recentMessages.length - 1];
-      if (lastMsg && lastMsg.agent_id === 'HUMAN_USER') {
-        const retreivedText = await KnowledgeService.retrieveContext(lastMsg.content);
-        if (retreivedText) knowledgeContext = `Relevant Knowledge Base Articles:\n${retreivedText}`;
+      if (lastMsg && lastMsg.agent_id === "HUMAN_USER") {
+        const retreivedText = await KnowledgeService.retrieveContext(
+          lastMsg.content,
+        );
+        if (retreivedText)
+          knowledgeContext = `Relevant Knowledge Base Articles:\n${retreivedText}`;
       }
     } catch (e) {
       console.warn("RAG Failed:", e);
@@ -90,10 +114,12 @@ export async function getAgentReply(agent, messages, context = {}) {
     } else {
       try {
         const lastMsg = recentMessages[recentMessages.length - 1];
-        if (lastMsg && lastMsg.agent_id === 'HUMAN_USER') {
-          const relevantSkills = await SkillService.findRelevantSkills(lastMsg.content);
+        if (lastMsg && lastMsg.agent_id === "HUMAN_USER") {
+          const relevantSkills = await SkillService.findRelevantSkills(
+            lastMsg.content,
+          );
           if (relevantSkills.length > 0) {
-            skillContext = `\nActive Skills Instructions:\n${relevantSkills.map(s => `[${s.name}]: ${s.instructions}`).join('\n')}\n`;
+            skillContext = `\nActive Skills Instructions:\n${relevantSkills.map((s) => `[${s.name}]: ${s.instructions}`).join("\n")}\n`;
           }
         }
       } catch (e) {
@@ -105,21 +131,21 @@ export async function getAgentReply(agent, messages, context = {}) {
     // We remove the heavy JSON enforcement text because the schema handles it.
     const prompt = `
 Context:
-Meeting Title: ${context.meetingTitle || 'General Discussion'}
+Meeting Title: ${context.meetingTitle || "General Discussion"}
 System State: ${JSON.stringify(context.config || {})}
 Current Tasks: ${JSON.stringify(context.tasks || [])}
 User Language: ${userLang}
-activeWorkflow: ${context.workflow ? JSON.stringify(context.workflow) : 'None'}
-activeWorkflowStep: ${context.workflowStep ? JSON.stringify(context.workflowStep) : 'None'}
+activeWorkflow: ${context.workflow ? JSON.stringify(context.workflow) : "None"}
+activeWorkflowStep: ${context.workflowStep ? JSON.stringify(context.workflowStep) : "None"}
 Knowledge Base:
 ${knowledgeContext || "No relevant documents found."}
 ${skillContext}
 
 WORKFLOW INSTRUCTION:
-${context.workflow ? `You are participating in the "${context.workflow.name}" workflow. Current Step: ${context.workflowStep.label} (${context.workflowStep.role}).` : ''}
+${context.workflow ? `You are participating in the "${context.workflow.name}" workflow. Current Step: ${context.workflowStep.label} (${context.workflowStep.role}).` : ""}
 
 AVAILABLE TOOLS:
-${agent.allowedTools ? agent.allowedTools.map(t => `- ${t}`).join('\n') : 'No tools available.'}
+${agent.allowedTools ? agent.allowedTools.map((t) => `- ${t}`).join("\n") : "No tools available."}
 
 Conversation Transcript:
 ${transcript}
@@ -148,31 +174,36 @@ Use "thought_process" to reason before you speak.
         model: agent.model,
         prompt: prompt,
         system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
-        jsonSchema: AGENT_RESPONSE_SCHEMA
+        jsonSchema: AGENT_RESPONSE_SCHEMA,
       });
-    } else if (agent.provider === 'STRANDS' || modelConfig.provider === 'STRANDS') {
+    } else if (
+      agent.provider === "STRANDS" ||
+      modelConfig.provider === "STRANDS"
+    ) {
       data = await callStrandsInteraction({
         model: agent.model,
-        prompt: prompt
+        prompt: prompt,
       });
     } else {
       // Google / Default
-      if (agent.id === 'ceo-agent') {
-        console.log(`[AgentBrain] Generating for CEO. System Prompt Start: ${(agent.systemPrompt || '').slice(0, 50)}...`);
+      if (agent.id === "ceo-agent") {
+        console.log(
+          `[AgentBrain] Generating for CEO. System Prompt Start: ${(agent.systemPrompt || "").slice(0, 50)}...`,
+        );
       }
 
       data = await callAgentInteraction({
         model: agent.model,
         prompt: prompt,
         system_instruction: `PERSONA: ${agent.systemPrompt}. You are a helpful AI agent.`,
-        jsonMode: true
+        jsonMode: true,
       });
     }
 
     // 4. Auto-Translate Output (Preserved)
-    if (userLang === 'he' && data.message) {
+    if (userLang === "he" && data.message) {
       const originalEn = data.message;
-      const translatedHe = await TranslationService.translate(originalEn, 'he');
+      const translatedHe = await TranslationService.translate(originalEn, "he");
       data.message = translatedHe;
       data.original_en_message = originalEn;
     }
@@ -188,8 +219,8 @@ Use "thought_process" to reason before you speak.
           actions: data.action,
           context_used: !!knowledgeContext,
           model_used: agent.model,
-          api: "interactions"
-        }
+          api: "interactions",
+        },
       });
     } catch (logErr) {
       console.error("Failed to log agent interaction", logErr);
@@ -200,22 +231,57 @@ Use "thought_process" to reason before you speak.
       const call = data.tool_calls[0];
       const func = call.function || call;
       data.action = {
-        type: 'tool_call',
+        type: "tool_call",
         name: func.name,
-        payload: func.arguments || func.parameters || {} // Handle different provider formats
+        payload: func.arguments || func.parameters || {}, // Handle different provider formats
       };
     }
 
     return data;
-
   } catch (error) {
     console.error("AgentBrain (Interactions) Error:", error);
-    // Fallback for when the LLM service is down or context is too large
+
+    // Detailed error reporting
+    const isRateLimit =
+      error.status === 429 ||
+      error.code === 429 ||
+      (error.message && error.message.includes("429"));
+    const isKeyMissing =
+      error.message && error.message.includes("API_KEY_MISSING");
+
+    let userFriendlyMessage =
+      "I'm having trouble connecting to my backend intelligence service. I've logged the error and will try to reconnect shortly.";
+
+    if (isRateLimit) {
+      userFriendlyMessage =
+        "Service is temporarily overloaded (Rate Limit). Please give me a few seconds to catch my breath and try again.";
+    } else if (isKeyMissing) {
+      userFriendlyMessage =
+        "Configuration error (API Key Missing). Please check the server environment variables.";
+    } else if (error.message && error.message.toLowerCase().includes("quota")) {
+      userFriendlyMessage =
+        "My intelligence service quota has been reached. I'll be back online once the limit resets.";
+    } else if (error.status === 401 || error.code === 401) {
+      userFriendlyMessage =
+        "Authentication failure (Invalid API Key). Please verify the credentials in the .env file.";
+    }
+
     return {
-      message: "I'm having trouble connecting to my upgraded neural network. Please check your configuration.",
+      message: userFriendlyMessage,
       action: null,
-      thought_process: "Error occurred: " + error.message,
-      raw_error: error
+      thought_process: "Connection Error: " + error.message,
+      error_code: isRateLimit
+        ? "RATE_LIMIT"
+        : isKeyMissing
+          ? "CONFIG_ERROR"
+          : error.status === 401
+            ? "AUTH_ERROR"
+            : "GENERIC_ERROR",
+      raw_error: {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+      },
     };
   }
 }
