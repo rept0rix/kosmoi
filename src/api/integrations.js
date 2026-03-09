@@ -261,28 +261,9 @@ export const Core = {
     }
   },
   GetEmbedding: async ({ text }) => {
-    try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const apiKey =
-        (typeof localStorage !== "undefined"
-          ? localStorage.getItem("gemini_api_key")
-          : null) ||
-        (typeof import.meta !== "undefined" && import.meta.env
-          ? import.meta.env.VITE_GEMINI_API_KEY
-          : process.env.VITE_GEMINI_API_KEY);
-
-      if (!apiKey) return null;
-
-      const ai = new GoogleGenAI({ apiKey });
-      const result = await ai.models.embedContent({
-        model: "text-embedding-004",
-        contents: text,
-      });
-      return result.embeddings?.[0]?.values ?? null;
-    } catch (error) {
-      console.error("Embedding Error:", error);
-      return null;
-    }
+    // RAG disabled: text-embedding-004 requires v1 API which is not available in current SDK config.
+    // Agents operate without RAG context until this is resolved.
+    return null;
   },
   SendN8NEmail: async ({ to, subject, body, campaignId }) => {
     const { n8nService } =
