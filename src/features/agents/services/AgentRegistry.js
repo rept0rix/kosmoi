@@ -28,6 +28,8 @@ import { FINANCE_CAPITAL_AGENT } from "./registry/FinanceCapitalAgent.js";
 import { LEGAL_SHIELD_AGENT } from "./registry/LegalShieldAgent.js";
 import { COMPETITIVE_RADAR_AGENT } from "./registry/CompetitiveRadarAgent.js";
 import { INNOVATION_RESEARCHER_AGENT } from "./registry/InnovationResearcherAgent.js";
+import { TECH_SCOUT_AGENT } from "./registry/TechScoutAgent.js";
+import { PLANNER_AGENT } from "./registry/PlannerAgent.js";
 
 import { FRONTEND_AGENT } from "./registry/FrontendAgent.js";
 import { BACKEND_AGENT } from "./registry/BackendAgent.js";
@@ -88,6 +90,10 @@ export const agents = [
     CFO_AGENT,
     CRO_AGENT,
     PROJECT_MANAGER_AGENT,
+
+    // --- AUTONOMY LAYER ---
+    PLANNER_AGENT,
+    TECH_SCOUT_AGENT,
 
     // --- STRATEGIC LAYER ---
     MARKETING_INTELLIGENCE_AGENT,
