@@ -22,7 +22,7 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 // Use available model from diagnostics
-const modelName = "gemini-2.0-flash-exp";
+const modelName = "gemini-2.0-flash";
 const model = genAI.getGenerativeModel({ model: modelName });
 
 async function generateAndSeedEvents() {

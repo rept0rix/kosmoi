@@ -41,7 +41,7 @@ export const callAgentInteraction = async ({
     const client = getClient();
 
     const generateConfig = {
-      model: model || "gemini-2.0-flash-exp", // Default to stable 2.0 exp
+      model: model || "gemini-2.0-flash",
       contents: [
         {
           role: "user",

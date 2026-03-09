@@ -11,12 +11,12 @@ export const AI_PROVIDERS = {
 
 export const AI_MODELS = {
     // --- GOOGLE GEMINI ---
-    GEMINI_2_FLASH_EXP: {
-        id: 'gemini-2.0-flash-exp',
+    GEMINI_2_FLASH: {
+        id: 'gemini-2.0-flash',
         provider: AI_PROVIDERS.GOOGLE,
         tier: 'fast',
         contextWindow: 1000000,
-        description: 'Fastest Google model, experimental 2.0'
+        description: 'Fastest Google model, stable 2.0'
     },
     GEMINI_1_5_PRO: {
         id: 'gemini-1.5-pro',
