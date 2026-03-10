@@ -115,6 +115,14 @@ export default function GoalsTab() {
   const progress =
     goals.length === 0 ? 0 : (completedCount / goals.length) * 100;
 
+  if (!user) {
+    return (
+      <div className="text-center py-8 text-slate-400 text-sm">
+        Please log in to track your goals.
+      </div>
+    );
+  }
+
   if (loading && goals.length === 0) {
     return (
       <div className="flex justify-center p-8">
