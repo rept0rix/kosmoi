@@ -6,7 +6,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 // --- Configuration ---
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const N8N_WEBHOOK_URL = Deno.env.get('VITE_N8N_EMAIL_WEBHOOK')
-const TEST_EMAIL = Deno.env.get('TEST_EMAIL') || 'admin@kosmoi.com'
+// TEST_EMAIL: set this env var in Supabase Dashboard only during development/testing.
+// In production, leave it unset — emails will go to the actual business email.
+// If unset AND business has no email, the brain logs a 'lead.no_email' signal.
+const TEST_EMAIL = Deno.env.get('TEST_EMAIL') // No fallback — undefined = production mode
 // @ts-ignore
 const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 const SENDER_EMAIL = 'Sarah <onboarding@resend.dev>'
@@ -146,6 +149,23 @@ serve(async (req: Request) => {
             }
 
             console.log(`✅ Successfully imported/updated ${newCount} businesses`);
+
+            // Signal: new leads found — brain knows the pipeline has been refreshed
+            if (newCount > 0) {
+                await supabaseClient.rpc('write_signal', {
+                    p_event_type: 'leads.batch_scouted',
+                    p_entity_type: 'system',
+                    p_entity_id: null,
+                    p_source: 'sales-scout',
+                    p_data: {
+                        count: newCount,
+                        area: { lat, lng, radius },
+                        category_filter: type,
+                        new_leads: imported.map((p: any) => ({ id: p.id, name: p.business_name, category: p.category }))
+                    }
+                });
+            }
+
             return new Response(JSON.stringify({
                 success: true,
                 count: newCount,
@@ -309,7 +329,37 @@ serve(async (req: Request) => {
 
             console.log(`💌 Target: ${targetLead.business_name}`);
 
-            const recipientEmail = TEST_EMAIL || 'admin@kosmoi.com';
+            // FIXED: Use the real business email when available.
+            // TEST_EMAIL is only used as a fallback during active development testing.
+            // In production (TEST_EMAIL is not set), skip leads with no email
+            // and log as a signal so the brain can decide on WhatsApp outreach instead.
+            const realBusinessEmail = targetLead.email;
+            const recipientEmail = realBusinessEmail || TEST_EMAIL;
+
+            if (!recipientEmail) {
+                // No email for this lead — log as signal for future WhatsApp/LINE routing
+                await supabaseClient.rpc('write_signal', {
+                    p_event_type: 'lead.no_email',
+                    p_entity_type: 'provider',
+                    p_entity_id: targetLead.id,
+                    p_source: 'sales-scout',
+                    p_data: {
+                        business_name: targetLead.business_name,
+                        phone: targetLead.phone,
+                        category: targetLead.category,
+                        message: 'Lead has no email — requires WhatsApp/LINE outreach'
+                    }
+                });
+                console.log(`⚠️ No email for ${targetLead.business_name} — logged signal for WhatsApp routing`);
+                return new Response(JSON.stringify({ message: "Lead has no email", lead_id: targetLead.id, next_channel: "whatsapp" }), { headers: { "Content-Type": "application/json" } });
+            }
+
+            const isTestMode = !!TEST_EMAIL;
+            if (isTestMode) {
+                console.log(`⚠️ TEST MODE: Routing ${targetLead.business_name} email to ${recipientEmail} (real: ${realBusinessEmail || 'none'})`);
+            } else {
+                console.log(`📧 PRODUCTION: Sending to real business email: ${recipientEmail}`);
+            }
 
             // 2. INSERT INVITATION (Sending State)
             const { data: invite, error: dbError } = await supabaseClient
@@ -321,7 +371,8 @@ serve(async (req: Request) => {
                     metadata: {
                         channel: 'email',
                         target_email: recipientEmail,
-                        real_business_email: targetLead.email || 'unknown',
+                        real_business_email: realBusinessEmail || 'none',
+                        is_test_mode: isTestMode,
                         sender: 'sales-scout-cloud',
                         stage: 'sending'
                     }
@@ -386,12 +437,28 @@ serve(async (req: Request) => {
                 } catch (e) { console.error("Resend err", e); }
             }
 
-            // 6. Update Status
+            // 6. Update Status + Write Signal
             if (emailSent) {
                 await supabaseClient.from('invitations').update({
                     status: 'pending',
                     metadata: { ...invite.metadata, stage: 'sent', sent_at: new Date().toISOString() }
                 }).eq('id', invite.id);
+
+                // Signal: invitation was sent — brain tracks outreach pipeline
+                await supabaseClient.rpc('write_signal', {
+                    p_event_type: 'invitation.sent',
+                    p_entity_type: 'provider',
+                    p_entity_id: targetLead.id,
+                    p_source: 'sales-scout',
+                    p_data: {
+                        invite_id: invite.id,
+                        business_name: targetLead.business_name,
+                        category: targetLead.category,
+                        recipient_email: recipientEmail,
+                        is_real_email: !!realBusinessEmail,
+                        channel: 'email'
+                    }
+                });
 
                 console.log(`✅ Sent & Tracked: ${invite.id}`);
             } else {
@@ -399,6 +466,20 @@ serve(async (req: Request) => {
                     status: 'failed',
                     metadata: { ...invite.metadata, stage: 'failed' }
                 }).eq('id', invite.id);
+
+                // Signal: send failure — brain can retry or flag for review
+                await supabaseClient.rpc('write_signal', {
+                    p_event_type: 'invitation.send_failed',
+                    p_entity_type: 'provider',
+                    p_entity_id: targetLead.id,
+                    p_source: 'sales-scout',
+                    p_data: {
+                        invite_id: invite.id,
+                        business_name: targetLead.business_name,
+                        reason: 'both_n8n_and_resend_failed'
+                    }
+                });
+
                 return new Response(JSON.stringify({ error: "Send Failed" }), { status: 500 });
             }
 
