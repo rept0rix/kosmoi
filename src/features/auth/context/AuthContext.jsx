@@ -205,6 +205,11 @@ export const AuthProvider = ({ children }) => {
         window.location.pathname.startsWith("/he") ||
         window.location.pathname.startsWith("/th") ||
         window.location.pathname.startsWith("/ru") ||
+        window.location.pathname.startsWith("/en") ||
+        window.location.pathname.startsWith("/fr") ||
+        window.location.pathname.startsWith("/de") ||
+        window.location.pathname.startsWith("/es") ||
+        window.location.pathname.startsWith("/zh") ||
         [
           "/about",
           "/contact",

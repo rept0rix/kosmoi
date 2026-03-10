@@ -153,6 +153,7 @@ export default function GoogleMap({
       const map = new window.google.maps.Map(mapRef.current, {
         center: { lat: center.lat, lng: center.lng },
         zoom: zoom,
+        mapId: "DEMO_MAP_ID", // Required for AdvancedMarkerElement
         disableDefaultUI: true, // Disable all default UI
         zoomControl: false,
         mapTypeControl: false,
@@ -309,35 +310,33 @@ export default function GoogleMap({
             },
             map: googleMapRef.current,
             title: "My location",
-            icon: {
-              // @ts-ignore
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: "#4285F4",
-              fillOpacity: 1,
-              strokeWeight: 2,
-              strokeColor: "#ffffff",
-            },
             zIndex: 999,
           };
 
           if (!userMarkerRef.current) {
             // @ts-ignore
-            userMarkerRef.current = new window.google.maps.Marker(
-              markerOptions,
+            const pinOptions = {
+              background: "#4285F4",
+              borderColor: "#ffffff",
+              glyphColor: "#ffffff",
+            };
+            const pinElement = new window.google.maps.marker.PinElement(
+              pinOptions,
             );
+            markerOptions.content = pinElement.element;
+            userMarkerRef.current =
+              new window.google.maps.marker.AdvancedMarkerElement(
+                markerOptions,
+              );
           } else {
             // @ts-ignore
-            userMarkerRef.current.setPosition(markerOptions.position);
-            // @ts-ignore
-            userMarkerRef.current.setIcon(markerOptions.icon);
-            userMarkerRef.current.setMap(googleMapRef.current);
+            userMarkerRef.current.position = markerOptions.position;
           }
         }
       } else {
         // No location
         if (userMarkerRef.current) {
-          userMarkerRef.current.setMap(null);
+          userMarkerRef.current.map = null;
           userMarkerRef.current = null;
         }
         if (userOverlayRef.current) {
@@ -355,11 +354,48 @@ export default function GoogleMap({
         };
 
         if (markerData.icon) {
-          markerOptions.icon = markerData.icon;
+          if (
+            markerData.icon.path &&
+            markerData.icon.path !== window.google.maps.SymbolPath.CIRCLE
+          ) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("width", 24 * (markerData.icon.scale || 1) + "px");
+            svg.setAttribute(
+              "height",
+              24 * (markerData.icon.scale || 1) + "px",
+            );
+            const path = document.createElementNS(svgNS, "path");
+            path.setAttribute("d", markerData.icon.path);
+            path.setAttribute("fill", markerData.icon.fillColor || "#000000");
+            path.setAttribute(
+              "stroke",
+              markerData.icon.strokeColor || "#FFFFFF",
+            );
+            path.setAttribute(
+              "stroke-width",
+              markerData.icon.strokeWeight || 1,
+            );
+            svg.appendChild(path);
+            markerOptions.content = svg;
+          } else if (markerData.icon.url) {
+            const img = document.createElement("img");
+            img.src = markerData.icon.url;
+            img.style.width = markerData.icon.scaledSize
+              ? markerData.icon.scaledSize.width + "px"
+              : "30px";
+            img.style.height = markerData.icon.scaledSize
+              ? markerData.icon.scaledSize.height + "px"
+              : "30px";
+            markerOptions.content = img;
+          }
         }
 
         // @ts-ignore
-        const marker = new window.google.maps.Marker(markerOptions);
+        const marker = new window.google.maps.marker.AdvancedMarkerElement(
+          markerOptions,
+        );
 
         if (markerData.infoWindow) {
           // @ts-ignore
