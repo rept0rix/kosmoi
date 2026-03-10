@@ -19,7 +19,7 @@ import { setupIframeMessaging } from "@/shared/lib/iframe-messaging";
 import { AuthProvider, useAuth } from "@/features/auth/context/AuthContext";
 import UserNotRegisteredError from "@/components/UserNotRegisteredError";
 // import AgentCommandCenter from '@/pages/AgentCommandCenter'; // Unused?
-import AdminImporter from "@/pages/AdminImporter";
+const AdminImporter = lazy(() => import("@/pages/AdminImporter"));
 import {
   ProtectedAdminRoute,
   ProtectedUserRoute,
@@ -27,7 +27,7 @@ import {
 import * as RouteGuards from "@/components/RouteGuards"; // Import all as RouteGuards for the new route
 import { RequireRole } from "@/components/RequireRole";
 
-import VendorSignup from "@/features/vendors/pages/Signup";
+const VendorSignup = lazy(() => import("@/features/vendors/pages/Signup"));
 // import VendorLite from '@/pages/VendorLite'; // Unused?
 
 import { AppConfigProvider } from "@/components/AppConfigContext";
@@ -49,74 +49,78 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LanguageProvider, useLanguage } from "@/components/LanguageContext";
 
 // Content Sprint Pages
-import AboutUs from "@/pages/AboutUs";
-import UseCases from "@/pages/UseCases";
-import Pricing from "@/pages/Pricing";
-import TermsOfService from "@/pages/legal/TermsOfService";
-import PrivacyPolicy from "@/pages/legal/PrivacyPolicy";
-import Security from "@/pages/legal/Security";
-import Accessibility from "@/pages/legal/Accessibility";
-import BusinessInfo from "@/pages/BusinessInfo";
-import Contact from "@/pages/Contact";
-import SupportChat from "@/pages/SupportChat";
-import Blog from "@/pages/Blog";
-import BlogPostDetail from "@/pages/BlogPostDetail";
-import CalendarView from "@/pages/vendor/CalendarView";
-import MyBookings from "@/pages/MyBookings";
-import Marketplace from "@/pages/Marketplace.jsx";
-import ProductDetails from "@/pages/ProductDetails";
-import ChatHub from "@/pages/ChatHub";
-import Notifications from "@/pages/Notifications";
-import Organizer from "@/pages/Organizer.jsx";
+const AboutUs = lazy(() => import("@/pages/AboutUs"));
+const UseCases = lazy(() => import("@/pages/UseCases"));
+const Pricing = lazy(() => import("@/pages/Pricing"));
+const TermsOfService = lazy(() => import("@/pages/legal/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
+const Security = lazy(() => import("@/pages/legal/Security"));
+const Accessibility = lazy(() => import("@/pages/legal/Accessibility"));
+const BusinessInfo = lazy(() => import("@/pages/BusinessInfo"));
+const Contact = lazy(() => import("@/pages/Contact"));
+const SupportChat = lazy(() => import("@/pages/SupportChat"));
+const Blog = lazy(() => import("@/pages/Blog"));
+const BlogPostDetail = lazy(() => import("@/pages/BlogPostDetail"));
+const CalendarView = lazy(() => import("@/pages/vendor/CalendarView"));
+const MyBookings = lazy(() => import("@/pages/MyBookings"));
+const Marketplace = lazy(() => import("@/pages/Marketplace.jsx"));
+const ProductDetails = lazy(() => import("@/pages/ProductDetails"));
+const ChatHub = lazy(() => import("@/pages/ChatHub"));
+const Notifications = lazy(() => import("@/pages/Notifications"));
+const Organizer = lazy(() => import("@/pages/Organizer.jsx"));
 
-import RealEstateHub from "@/pages/RealEstateHub";
-import OneDollar from "@/pages/OneDollar";
-import ClaimProfile from "@/pages/ClaimProfile";
-import WellnessHub from "@/pages/WellnessHub";
-import TransportHub from "@/pages/TransportHub";
-import CommandCenter from "@/features/agents/pages/CommandCenter";
+const RealEstateHub = lazy(() => import("@/pages/RealEstateHub"));
+const OneDollar = lazy(() => import("@/pages/OneDollar"));
+const ClaimProfile = lazy(() => import("@/pages/ClaimProfile"));
+const WellnessHub = lazy(() => import("@/pages/WellnessHub"));
+const TransportHub = lazy(() => import("@/pages/TransportHub"));
+const CommandCenter = lazy(
+  () => import("@/features/agents/pages/CommandCenter"),
+);
 import AdminLayout from "@/layouts/AdminLayout";
-import AdminOverview from "@/pages/admin/AdminOverview";
-import AdminUsers from "@/pages/admin/AdminUsers";
-import AdminClaims from "@/pages/admin/AdminClaims";
-import AdminAgents from "@/features/agents/pages/AdminAgents";
-import AgentDetail from "@/pages/admin/AgentDetail";
-import AdminCompany from "@/pages/admin/AdminCompany";
-import AdminBusinesses from "@/pages/admin/AdminBusinesses";
-import AdminBookings from "@/pages/admin/AdminBookings";
-import AdminData from "@/pages/admin/AdminData";
-import AdminCRM from "@/pages/admin/AdminCRM";
-import AdminSales from "@/pages/admin/AdminSales";
-import AdminLeads from "./pages/admin/AdminLeads";
-import AdminMailbox from "./pages/admin/AdminMailbox";
-import AdminMarketing from "./pages/admin/AdminMarketing";
-import AdminAutomations from "./pages/admin/AdminAutomations";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
-import AdminScheduler from "./pages/admin/AdminScheduler";
-import AdminEvolution from "./pages/admin/AdminEvolution";
-import AdminKanban from "./pages/admin/AdminKanban";
-import AdminRoadmap from "@/pages/admin/AdminRoadmap";
-import AdminCanvas from "./pages/admin/AdminCanvas";
-import AdminInfra from "./pages/admin/AdminInfra";
-import AdminHealth from "./pages/admin/AdminHealth";
-import AdminLiveControl from "./pages/admin/AdminLiveControl";
-import AdminLogs from "./pages/admin/AdminLogs";
-import AdminSchema from "./pages/admin/AdminSchema";
-import AdminMemory from "./pages/admin/AdminMemory";
-import AdminSitemap from "@/pages/admin/AdminSitemap";
-import AdminOptimizer from "./pages/admin/AdminOptimizer";
-import AdminHyperloop from "./pages/admin/AdminHyperloop";
-import AdminSkills from "./pages/admin/AdminSkills";
-import AdminWallet from "./pages/admin/AdminWallet";
-import Roadmap from "./pages/Roadmap"; // New Public Roadmap
-import Studio from "@/pages/admin/Studio";
-import BoardRoom from "@/pages/BoardRoom";
-import NotFound from "@/pages/NotFound";
-import TransactionHistoryPage from "./pages/TransactionHistoryPage";
+const AdminOverview = lazy(() => import("@/pages/admin/AdminOverview"));
+const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
+const AdminClaims = lazy(() => import("@/pages/admin/AdminClaims"));
+const AdminAgents = lazy(() => import("@/features/agents/pages/AdminAgents"));
+const AgentDetail = lazy(() => import("@/pages/admin/AgentDetail"));
+const AdminCompany = lazy(() => import("@/pages/admin/AdminCompany"));
+const AdminBusinesses = lazy(() => import("@/pages/admin/AdminBusinesses"));
+const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
+const AdminData = lazy(() => import("@/pages/admin/AdminData"));
+const AdminCRM = lazy(() => import("@/pages/admin/AdminCRM"));
+const AdminSales = lazy(() => import("@/pages/admin/AdminSales"));
+const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
+const AdminMailbox = lazy(() => import("./pages/admin/AdminMailbox"));
+const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
+const AdminAutomations = lazy(() => import("./pages/admin/AdminAutomations"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminScheduler = lazy(() => import("./pages/admin/AdminScheduler"));
+const AdminEvolution = lazy(() => import("./pages/admin/AdminEvolution"));
+const AdminKanban = lazy(() => import("./pages/admin/AdminKanban"));
+const AdminRoadmap = lazy(() => import("@/pages/admin/AdminRoadmap"));
+const AdminCanvas = lazy(() => import("./pages/admin/AdminCanvas"));
+const AdminInfra = lazy(() => import("./pages/admin/AdminInfra"));
+const AdminHealth = lazy(() => import("./pages/admin/AdminHealth"));
+const AdminLiveControl = lazy(() => import("./pages/admin/AdminLiveControl"));
+const AdminLogs = lazy(() => import("./pages/admin/AdminLogs"));
+const AdminSchema = lazy(() => import("./pages/admin/AdminSchema"));
+const AdminMemory = lazy(() => import("./pages/admin/AdminMemory"));
+const AdminSitemap = lazy(() => import("@/pages/admin/AdminSitemap"));
+const AdminOptimizer = lazy(() => import("./pages/admin/AdminOptimizer"));
+const AdminHyperloop = lazy(() => import("./pages/admin/AdminHyperloop"));
+const AdminSkills = lazy(() => import("./pages/admin/AdminSkills"));
+const AdminWallet = lazy(() => import("./pages/admin/AdminWallet"));
+const Roadmap = lazy(() => import("./pages/Roadmap"));
+const Studio = lazy(() => import("@/pages/admin/Studio"));
+const BoardRoom = lazy(() => import("@/pages/BoardRoom"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const TransactionHistoryPage = lazy(
+  () => import("./pages/TransactionHistoryPage"),
+);
 
-import LocalBrain from "@/pages/LocalBrain";
+const LocalBrain = lazy(() => import("@/pages/LocalBrain"));
 // import SystemMonitor from '@/components/dashboard/SystemMonitor'; // Unused?
-import ProviderProfile from "@/pages/ProviderProfile";
+const ProviderProfile = lazy(() => import("@/pages/ProviderProfile"));
 
 // Speed Pass Injection
 // import SpeedPassCard from '@/components/SpeedPassCard'; // Disabled
@@ -217,195 +221,215 @@ const AuthenticatedApp = () => {
             <MapViewPage />
           </div>
 
-          <Routes>
-            {/* Note: All paths here are relative to the parent Route (language prefix or root) */}
-            <Route path="/" element={<MainPage />} />
-            {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
-            <Route path="mapview" element={null} />
-            <Route path="map" element={<Navigate to="/mapview" replace />} />
-            {/* Business Registration Flow (Non-Vendor) */}
-            <Route
-              path="business-registration"
-              element={<Pages.BusinessRegistration />}
-            />
-            <Route
-              path="business"
-              element={
-                <RequireRole role="vendor">
-                  <Pages.Business />
-                </RequireRole>
-              }
-            />
-            <Route path="vendor-signup" element={<VendorSignup />} />
-            {Object.entries(Pages)
-              .filter(([path]) => path !== "MapView")
-              .filter(
-                ([path]) =>
-                  ![
-                    "Wallet",
-                    "ProviderDashboard",
-                    "RealEstate",
-                    "Experiences",
-                    "Business",
-                    "BusinessRegistration",
-                    "Login",
-                    "UpdatePassword",
-                    "CompleteSignup",
-                    "VendorSignup",
-                  ].includes(path),
-              ) // Exclude Super App and Business pages for manual routing
-              .map(([path, Page]) => (
-                <Route
-                  key={path}
-                  path={`${path.toLowerCase()}`}
-                  element={<Page />}
-                />
-              ))}
-            {/* Public Super App Routes */}
-            <Route path="roadmap" element={<Roadmap />} />
-            <Route path="real-estate" element={<RealEstateHub />} />
-            <Route path="test-drive" element={<OneDollar />} />
-            <Route path="wellness" element={<Pages.Wellness />} />
-            <Route path="transport" element={<Pages.Transport />} />
-            <Route path="one-dollar" element={<OneDollar />} />
-            <Route path="claim" element={<ClaimProfile />} /> // Query param:
-            ?token=...
-            <Route path="marketplace" element={<Marketplace />} />
-            <Route path="marketplace/:id" element={<ProductDetails />} />
-            <Route path="organizer" element={<Organizer />} />
-            <Route path="login" element={<Pages.Login />} />
-            <Route path="update-password" element={<Pages.UpdatePassword />} />
-            <Route path="complete-signup" element={<Pages.CompleteSignup />} />
-            <Route path="experiences" element={<Pages.Experiences />} />
-            <Route
-              path="experiences/:id"
-              element={<Pages.ExperienceDetails />}
-            />
-            <Route path="provider/:providerId" element={<ProviderProfile />} />
-            <Route path="chat/:workflowId" element={<Pages.AgentChat />} />
-            <Route path="chat-hub" element={<ChatHub />} />
-            <Route path="notifications" element={<Notifications />} />
-            {/* Admin & Vendor Routes */}
-            <Route path="command-center" element={<CommandCenter />} />
-            <Route path="board-room" element={<BoardRoom />} />
-            {/* Admin Routes (New Layout) */}
-            <Route element={<ProtectedAdminRoute />}>
+          <Suspense
+            fallback={
+              <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[50vh]">
+                <KosmoiLoader />
+              </div>
+            }
+          >
+            <Routes>
+              {/* Note: All paths here are relative to the parent Route (language prefix or root) */}
+              <Route path="/" element={<MainPage />} />
+              {/* Add dummy route for mapview so it matches but renders nothing (since we render it manually above) */}
+              <Route path="mapview" element={null} />
+              <Route path="map" element={<Navigate to="/mapview" replace />} />
+              {/* Business Registration Flow (Non-Vendor) */}
               <Route
-                path="admin"
+                path="business-registration"
+                element={<Pages.BusinessRegistration />}
+              />
+              <Route
+                path="business"
                 element={
-                  <RequireRole role="admin">
-                    <AdminLayout />
+                  <RequireRole role="vendor">
+                    <Pages.Business />
                   </RequireRole>
                 }
-              >
+              />
+              <Route path="vendor-signup" element={<VendorSignup />} />
+              {Object.entries(Pages)
+                .filter(([path]) => path !== "MapView")
+                .filter(
+                  ([path]) =>
+                    ![
+                      "Wallet",
+                      "ProviderDashboard",
+                      "RealEstate",
+                      "Experiences",
+                      "Business",
+                      "BusinessRegistration",
+                      "Login",
+                      "UpdatePassword",
+                      "CompleteSignup",
+                      "VendorSignup",
+                    ].includes(path),
+                ) // Exclude Super App and Business pages for manual routing
+                .map(([path, Page]) => (
+                  <Route
+                    key={path}
+                    path={`${path.toLowerCase()}`}
+                    element={<Page />}
+                  />
+                ))}
+              {/* Public Super App Routes */}
+              <Route path="roadmap" element={<Roadmap />} />
+              <Route path="real-estate" element={<RealEstateHub />} />
+              <Route path="test-drive" element={<OneDollar />} />
+              <Route path="wellness" element={<Pages.Wellness />} />
+              <Route path="transport" element={<Pages.Transport />} />
+              <Route path="one-dollar" element={<OneDollar />} />
+              <Route path="claim" element={<ClaimProfile />} /> // Query param:
+              ?token=...
+              <Route path="marketplace" element={<Marketplace />} />
+              <Route path="marketplace/:id" element={<ProductDetails />} />
+              <Route path="organizer" element={<Organizer />} />
+              <Route path="login" element={<Pages.Login />} />
+              <Route
+                path="update-password"
+                element={<Pages.UpdatePassword />}
+              />
+              <Route
+                path="complete-signup"
+                element={<Pages.CompleteSignup />}
+              />
+              <Route path="experiences" element={<Pages.Experiences />} />
+              <Route
+                path="experiences/:id"
+                element={<Pages.ExperienceDetails />}
+              />
+              <Route
+                path="provider/:providerId"
+                element={<ProviderProfile />}
+              />
+              <Route path="chat/:workflowId" element={<Pages.AgentChat />} />
+              <Route path="chat-hub" element={<ChatHub />} />
+              <Route path="notifications" element={<Notifications />} />
+              {/* Admin & Vendor Routes */}
+              <Route path="command-center" element={<CommandCenter />} />
+              <Route path="board-room" element={<BoardRoom />} />
+              {/* Admin Routes (New Layout) */}
+              <Route element={<ProtectedAdminRoute />}>
                 <Route
-                  index
-                  element={<Navigate to="command-center" replace />}
-                />
-                <Route path="command-center" element={<CommandCenter />} />
-                <Route path="board-room" element={<BoardRoom />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="claims" element={<AdminClaims />} />
-                <Route path="agents" element={<AdminAgents />} />
-                <Route path="agents/:agentId" element={<AgentDetail />} />
-                <Route path="company" element={<AdminCompany />} />
-                <Route path="bookings" element={<AdminBookings />} />
-                <Route path="businesses" element={<AdminBusinesses />} />
-                <Route path="data" element={<AdminData />} />
-                <Route path="optimizer" element={<AdminOptimizer />} />
-                <Route path="crm" element={<AdminCRM />} />
-                <Route path="sales" element={<AdminSales />} />
-                <Route path="mailbox" element={<AdminMailbox />} />
-                <Route path="leads" element={<AdminLeads />} />
-                <Route path="marketing" element={<AdminMarketing />} />
-                <Route path="analytics" element={<AdminAnalytics />} />
-                <Route path="automations" element={<AdminAutomations />} />
-                <Route path="scheduler" element={<AdminScheduler />} />
-                <Route path="logs" element={<AdminLogs />} />
-                <Route path="evolution" element={<AdminEvolution />} />
-                <Route path="schema" element={<AdminSchema />} />
-                <Route path="hyperloop" element={<AdminHyperloop />} />
-                <Route path="memory" element={<AdminMemory />} />
-                <Route path="tasks" element={<AdminKanban />} />
-                <Route path="roadmap" element={<AdminRoadmap />} />
-                <Route path="infrastructure" element={<AdminInfra />} />
-                <Route path="canvas" element={<AdminCanvas />} />
-                <Route path="health" element={<AdminHealth />} />
-                <Route path="live" element={<AdminLiveControl />} />
-                <Route path="studio" element={<Studio />} />
-                <Route path="skills" element={<AdminSkills />} />
-                <Route path="wallet" element={<AdminWallet />} />
-                <Route
-                  path="settings"
+                  path="admin"
                   element={
-                    <div className="p-8 text-slate-400">
-                      Admin Settings Coming Soon...
-                    </div>
+                    <RequireRole role="admin">
+                      <AdminLayout />
+                    </RequireRole>
                   }
-                />
-                <Route path="importer" element={<AdminImporter />} />
-                <Route path="sitemap" element={<AdminSitemap />} />
-                <Route path="wiki" element={<Pages.AdminWiki />} />
+                >
+                  <Route
+                    index
+                    element={<Navigate to="command-center" replace />}
+                  />
+                  <Route path="command-center" element={<CommandCenter />} />
+                  <Route path="board-room" element={<BoardRoom />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="claims" element={<AdminClaims />} />
+                  <Route path="agents" element={<AdminAgents />} />
+                  <Route path="agents/:agentId" element={<AgentDetail />} />
+                  <Route path="company" element={<AdminCompany />} />
+                  <Route path="bookings" element={<AdminBookings />} />
+                  <Route path="businesses" element={<AdminBusinesses />} />
+                  <Route path="data" element={<AdminData />} />
+                  <Route path="optimizer" element={<AdminOptimizer />} />
+                  <Route path="crm" element={<AdminCRM />} />
+                  <Route path="sales" element={<AdminSales />} />
+                  <Route path="mailbox" element={<AdminMailbox />} />
+                  <Route path="leads" element={<AdminLeads />} />
+                  <Route path="marketing" element={<AdminMarketing />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
+                  <Route path="automations" element={<AdminAutomations />} />
+                  <Route path="scheduler" element={<AdminScheduler />} />
+                  <Route path="logs" element={<AdminLogs />} />
+                  <Route path="evolution" element={<AdminEvolution />} />
+                  <Route path="schema" element={<AdminSchema />} />
+                  <Route path="hyperloop" element={<AdminHyperloop />} />
+                  <Route path="memory" element={<AdminMemory />} />
+                  <Route path="tasks" element={<AdminKanban />} />
+                  <Route path="roadmap" element={<AdminRoadmap />} />
+                  <Route path="infrastructure" element={<AdminInfra />} />
+                  <Route path="canvas" element={<AdminCanvas />} />
+                  <Route path="health" element={<AdminHealth />} />
+                  <Route path="live" element={<AdminLiveControl />} />
+                  <Route path="studio" element={<Studio />} />
+                  <Route path="skills" element={<AdminSkills />} />
+                  <Route path="wallet" element={<AdminWallet />} />
+                  <Route
+                    path="settings"
+                    element={
+                      <div className="p-8 text-slate-400">
+                        Admin Settings Coming Soon...
+                      </div>
+                    }
+                  />
+                  <Route path="importer" element={<AdminImporter />} />
+                  <Route path="sitemap" element={<AdminSitemap />} />
+                  <Route path="wiki" element={<Pages.AdminWiki />} />
+                </Route>
               </Route>
-            </Route>
-            <Route element={<ProtectedUserRoute />}>
-              <Route path="profile/edit" element={<Pages.EditProfile />} />
-              <Route path="wallet" element={<Pages.Wallet />} />
+              <Route element={<ProtectedUserRoute />}>
+                <Route path="profile/edit" element={<Pages.EditProfile />} />
+                <Route path="wallet" element={<Pages.Wallet />} />
+                <Route
+                  path="wallet/history"
+                  element={<TransactionHistoryPage />}
+                />
+                <Route path="wallet/scan" element={<Pages.WalletScan />} />
+                <Route path="wallet/send" element={<Pages.WalletSend />} />
+                <Route
+                  path="wallet/receive"
+                  element={<Pages.WalletReceive />}
+                />
+                <Route path="wallet/card" element={<Pages.WalletCard />} />
+                <Route
+                  path="provider-dashboard"
+                  element={<Pages.ProviderDashboard />}
+                />
+                <Route path="vendor/calendar" element={<CalendarView />} />
+                <Route path="my-bookings" element={<MyBookings />} />
+                <Route path="memory-lab" element={<MemoryLab />} />
+              </Route>
               <Route
-                path="wallet/history"
-                element={<TransactionHistoryPage />}
+                path="earnings-preview"
+                element={
+                  <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+                    <OnboardingEarningDisplay data={{}} />
+                  </div>
+                }
               />
-              <Route path="wallet/scan" element={<Pages.WalletScan />} />
-              <Route path="wallet/send" element={<Pages.WalletSend />} />
-              <Route path="wallet/receive" element={<Pages.WalletReceive />} />
-              <Route path="wallet/card" element={<Pages.WalletCard />} />
+              <Route path="persistence-test" element={<PersistenceTest />} />
+              <Route path="persistence-test" element={<PersistenceTest />} />
+              {/* Trust Pages */}
+              <Route path="about" element={<AboutUs />} />
+              <Route path="use-cases" element={<UseCases />} />
+              <Route path="pricing" element={<Pricing />} />
+              <Route path="legal/terms" element={<TermsOfService />} />
+              <Route path="legal/privacy" element={<PrivacyPolicy />} />
+              <Route path="legal/security" element={<Security />} />
+              <Route path="legal/accessibility" element={<Accessibility />} />
+              <Route path="business-info" element={<BusinessInfo />} />
+              <Route path="contact" element={<Contact />} />
+              <Route path="blog" element={<Blog />} />
+              <Route path="blog/:slug" element={<BlogPostDetail />} />
+              {/* Support & Aliases */}
+              <Route path="support" element={<SupportChat />} />
               <Route
-                path="provider-dashboard"
-                element={<Pages.ProviderDashboard />}
+                path="bookmarks"
+                element={<Navigate to="/favorites" replace />}
               />
-              <Route path="vendor/calendar" element={<CalendarView />} />
-              <Route path="my-bookings" element={<MyBookings />} />
-              <Route path="memory-lab" element={<MemoryLab />} />
-            </Route>
-            <Route
-              path="earnings-preview"
-              element={
-                <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
-                  <OnboardingEarningDisplay data={{}} />
-                </div>
-              }
-            />
-            <Route path="persistence-test" element={<PersistenceTest />} />
-            <Route path="persistence-test" element={<PersistenceTest />} />
-            {/* Trust Pages */}
-            <Route path="about" element={<AboutUs />} />
-            <Route path="use-cases" element={<UseCases />} />
-            <Route path="pricing" element={<Pricing />} />
-            <Route path="legal/terms" element={<TermsOfService />} />
-            <Route path="legal/privacy" element={<PrivacyPolicy />} />
-            <Route path="legal/security" element={<Security />} />
-            <Route path="legal/accessibility" element={<Accessibility />} />
-            <Route path="business-info" element={<BusinessInfo />} />
-            <Route path="contact" element={<Contact />} />
-            <Route path="blog" element={<Blog />} />
-            <Route path="blog/:slug" element={<BlogPostDetail />} />
-            {/* Support & Aliases */}
-            <Route path="support" element={<SupportChat />} />
-            <Route
-              path="bookmarks"
-              element={<Navigate to="/favorites" replace />}
-            />
-            <Route
-              path="settings"
-              element={<Navigate to="/profile" replace />}
-            />
-            <Route path="local-brain" element={<LocalBrain />} />
-            <Route
-              path="health"
-              element={<div className="p-4 text-green-500 font-bold">OK</div>}
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route
+                path="settings"
+                element={<Navigate to="/profile" replace />}
+              />
+              <Route path="local-brain" element={<LocalBrain />} />
+              <Route
+                path="health"
+                element={<div className="p-4 text-green-500 font-bold">OK</div>}
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </div>
       </div>
     </LayoutWrapper>

@@ -1,19 +1,24 @@
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Login from "./features/auth/pages/Login";
-import MapView from "./pages/MapView";
+import { lazy } from "react";
+const Home = lazy(() => import("./pages/Home"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Login = lazy(() => import("./features/auth/pages/Login"));
+const MapView = lazy(() => import("./pages/MapView"));
 import __Layout from "./Layout.jsx";
 import React from "react";
 
 // Real page imports
-import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";
-import Favorites from "./pages/Favorites";
-import BoardRoom from "./pages/BoardRoom";
-import ServiceProviders from "./pages/ServiceProviders";
-import ServiceProviderDetails from "./pages/ServiceProviderDetails";
-import RequestService from "./pages/RequestService";
-import CompleteSignup from "./features/auth/pages/CompleteSignup";
+const Profile = lazy(() => import("./pages/Profile"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const BoardRoom = lazy(() => import("./pages/BoardRoom"));
+const ServiceProviders = lazy(() => import("./pages/ServiceProviders"));
+const ServiceProviderDetails = lazy(
+  () => import("./pages/ServiceProviderDetails"),
+);
+const RequestService = lazy(() => import("./pages/RequestService"));
+const CompleteSignup = lazy(
+  () => import("./features/auth/pages/CompleteSignup"),
+);
 
 // Safe fallback for pages still in development
 const SafePage = () =>
@@ -61,7 +66,7 @@ export const PAGES = {
   RequestService: RequestService,
   MyRequests: SafePage,
   LeadBoard: SafePage,
-  AIChat: SafePage,
+  AIChat: lazy(() => import("./pages/AIChat")),
   AgentChat: SafePage,
   SeedData: SafePage,
   Diagnostics: SafePage,
