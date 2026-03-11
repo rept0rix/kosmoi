@@ -12,7 +12,6 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { MapPin, Bath, Bed, Square, Heart, Filter, Grid, Map, Loader2 } from 'lucide-react';
-import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import {
@@ -181,13 +180,13 @@ export default function RealEstateHub() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            <NavigationBar />
+        <div className="min-h-screen bg-slate-950 flex flex-col font-sans">
+
 
             {/* Hero Section */}
             <div className="relative h-[500px] w-full bg-slate-900 flex items-center justify-center">
                 <img
-                    src="https://images.unsplash.com/photo-1600596542815-6ad4c727dd2c?w=1600&q=80"
+                    src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1600&q=80"
                     alt="Luxury Villa"
                     className="absolute inset-0 w-full h-full object-cover opacity-60"
                 />
@@ -238,19 +237,19 @@ export default function RealEstateHub() {
             {/* Content Section */}
             <div className="max-w-7xl mx-auto px-4 py-12 w-full flex-1">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-white">
                         {activeTab === 'buy' ? 'Properties for Sale' : 'Properties for Rent'}
                     </h2>
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-2" /> Filters</Button>
-                        <Button variant="outline" size="sm"><Map className="w-4 h-4 mr-2" /> Map View</Button>
+                        <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800"><Filter className="w-4 h-4 mr-2" /> Filters</Button>
+                        <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800"><Map className="w-4 h-4 mr-2" /> Map View</Button>
                     </div>
                 </div>
 
                 {/* Property Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {properties.map((property) => (
-                        <Card key={property.id} className="group overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300">
+                        <Card key={property.id} className="group overflow-hidden border border-slate-800 bg-slate-900 shadow-lg hover:shadow-xl hover:border-slate-700 transition-all duration-300">
                             <div className="relative h-64 overflow-hidden">
                                 <img
                                     src={property.images?.[0]?.url || 'https://via.placeholder.com/800x600'}
@@ -271,12 +270,12 @@ export default function RealEstateHub() {
                             </div>
 
                             <CardContent className="p-6">
-                                <h3 className="text-xl font-bold text-gray-900 mb-2 truncate">{property.title}</h3>
-                                <p className="text-gray-500 flex items-center mb-4 text-sm">
+                                <h3 className="text-xl font-bold text-white mb-2 truncate">{property.title}</h3>
+                                <p className="text-slate-400 flex items-center mb-4 text-sm">
                                     <MapPin className="w-4 h-4 mr-1" /> {property.location}
                                 </p>
 
-                                <div className="flex items-center justify-between text-gray-600 text-sm">
+                                <div className="flex items-center justify-between text-slate-400 text-sm">
                                     <div className="flex items-center gap-1">
                                         <Bed className="w-4 h-4" />
                                         <span className="font-semibold">{property.beds}</span> Beds
@@ -292,8 +291,8 @@ export default function RealEstateHub() {
                                 </div>
                             </CardContent>
 
-                            <CardFooter className="p-4 bg-gray-50 border-t flex justify-between items-center">
-                                <div className="text-xs text-gray-400">Listed by Agent</div>
+                            <CardFooter className="p-4 bg-slate-800/50 border-t border-slate-700 flex justify-between items-center">
+                                <div className="text-xs text-slate-500">Listed by Agent</div>
                                 <Button
                                     size="sm"
                                     className="border-primary bg-indigo-600 hover:bg-indigo-700 text-white"

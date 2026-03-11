@@ -86,7 +86,7 @@ export default function Profile() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans">
+    <div className="min-h-screen bg-slate-950 pb-24 font-sans">
       {/* --- Header Section (Red Gradient) --- */}
       <div className="bg-gradient-to-b from-[#E93B4E] to-[#C92A3B] pt-12 pb-8 px-6 text-white relative overflow-hidden">
         {/* Decorative BG elements */}
@@ -132,13 +132,13 @@ export default function Profile() {
 
       {/* --- Mode Switcher Card --- */}
       <div className="px-4 -mt-6 relative z-30 mb-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between">
+        <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-xl ${activeMode === 'business' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+            <div className={`p-3 rounded-xl ${activeMode === 'business' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
               {activeMode === 'business' ? <Store className="w-6 h-6" /> : <User className="w-6 h-6" />}
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white">
+              <h3 className="font-bold text-white">
                 {activeMode === 'business' ? 'Business Mode' : 'Personal Mode'}
               </h3>
               <p className="text-xs text-slate-500">
@@ -149,7 +149,7 @@ export default function Profile() {
           <Button
             size="sm"
             variant="outline"
-            className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 font-bold flex gap-2"
+            className="rounded-full border-blue-500/50 text-blue-400 hover:bg-blue-500/20 font-bold flex gap-2"
             onClick={() => {
               const newMode = activeMode === 'personal' ? 'business' : 'personal';
               if (newMode === 'business' && user?.role !== 'vendor' && user?.role !== 'service_provider') {
@@ -172,27 +172,27 @@ export default function Profile() {
 
       {/* --- Menu List --- */}
       <div className="px-4 relative z-20">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="bg-slate-900 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
 
           {menuItems.map((section, idx) => (
             <div key={idx} className="pb-2 last:pb-0">
-              <div className="px-5 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-['Outfit']">
+              <div className="px-5 py-4 bg-slate-800/50 border-b border-slate-800">
+                <h3 className="text-sm font-semibold text-white font-['Outfit']">
                   {section.title}
                 </h3>
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="divide-y divide-slate-800">
                 {section.items.map((item, itemIdx) => (
                   <button
                     key={itemIdx}
                     onClick={() => navigate(item.path)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+                    className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors group"
                   >
                     <div className="flex items-center gap-4">
                       <div className="text-slate-400 group-hover:text-[#E93B4E] transition-colors">
                         <item.icon className="w-5 h-5" />
                       </div>
-                      <span className="text-slate-600 dark:text-slate-300 font-medium text-[15px]">
+                      <span className="text-slate-300 font-medium text-[15px]">
                         {item.label}
                       </span>
                     </div>
@@ -204,7 +204,7 @@ export default function Profile() {
           ))}
 
           {/* Logout Button */}
-          <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 mt-2">
+          <div className="p-4 bg-slate-800/50 mt-2">
             <Button
               variant="ghost"
               className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 justify-start h-12 px-4"

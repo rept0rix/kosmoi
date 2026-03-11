@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Heart, Filter, Loader2, Star, Sparkles, MapPin, Clock } from 'lucide-react';
-import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -162,8 +161,6 @@ export default function WellnessHub() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            <NavigationBar />
-
             {/* Hero Section */}
             <div className="relative h-[400px] md:h-[500px] w-full bg-slate-900 flex items-center justify-center">
                 <img
