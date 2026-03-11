@@ -31,6 +31,8 @@ export default function GoalsTab() {
   useEffect(() => {
     if (user) {
       loadGoals();
+    } else {
+      setLoading(false); // Don't spin forever if not logged in
     }
   }, [user]);
 

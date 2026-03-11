@@ -14,6 +14,9 @@ import ServiceProviders from "./pages/ServiceProviders";
 import ServiceProviderDetails from "./pages/ServiceProviderDetails";
 import RequestService from "./pages/RequestService";
 import CompleteSignup from "./features/auth/pages/CompleteSignup";
+import AIChat from "./pages/AIChat";
+import TripPlannerPage from "./pages/TripPlanner";
+import Blog from "./pages/Blog";
 
 // Safe fallback for pages still in development — styled "Coming Soon"
 const SafePage = () =>
@@ -138,13 +141,13 @@ export const PAGES = {
   RequestService: RequestService,
   MyRequests: SafePage,
   LeadBoard: SafePage,
-  AIChat: SafePage,
+  AIChat: AIChat,
   AgentChat: SafePage,
   SeedData: SafePage,
   Diagnostics: SafePage,
-  TripPlanner: SafePage,
+  TripPlanner: TripPlannerPage,
   CommandCenter: SafePage,
-  Blog: SafePage,
+  Blog: Blog,
   BlogPostDetail: SafePage,
   AdminWiki: SafePage,
 };
