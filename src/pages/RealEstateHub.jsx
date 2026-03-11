@@ -12,7 +12,6 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { MapPin, Bath, Bed, Square, Heart, Filter, Grid, Map, Loader2 } from 'lucide-react';
-import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import {
@@ -182,7 +181,7 @@ export default function RealEstateHub() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            <NavigationBar />
+
 
             {/* Hero Section */}
             <div className="relative h-[500px] w-full bg-slate-900 flex items-center justify-center">

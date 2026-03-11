@@ -49,41 +49,41 @@ export default function Organizer() {
           onValueChange={setActiveTab}
           className="w-full space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl">
             <TabsTrigger
               value="overview"
-              className="h-12 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+              className="flex flex-col gap-1 h-14 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
             >
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">Overview</span>
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Overview</span>
             </TabsTrigger>
             <TabsTrigger
               value="plan"
-              className="h-12 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+              className="flex flex-col gap-1 h-14 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
             >
-              <Calendar className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">My Plan</span>
+              <Calendar className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Plan</span>
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="h-12 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+              className="flex flex-col gap-1 h-14 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
             >
-              <History className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">History</span>
+              <History className="w-4 h-4" />
+              <span className="text-[10px] leading-none">History</span>
             </TabsTrigger>
             <TabsTrigger
               value="collections"
-              className="h-12 data-[state=active]:bg-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+              className="flex flex-col gap-1 h-14 data-[state=active]:bg-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
             >
-              <Heart className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">Collections</span>
+              <Heart className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Saves</span>
             </TabsTrigger>
             <TabsTrigger
               value="goals"
-              className="h-12 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
+              className="flex flex-col gap-1 h-14 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all"
             >
-              <Trophy className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">Goals</span>
+              <Trophy className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Goals</span>
             </TabsTrigger>
           </TabsList>
 

@@ -31,7 +31,7 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 // --- Configuration ---
 // Define which paths belong to which zone
 const ZONES = {
-  PUBLIC: ['/', '/about', '/team', '/pricing', '/business-info', '/legal', '/business'],
+  PUBLIC: ['/', '/about', '/team', '/pricing', '/business-info', '/legal', '/business', '/login', '/contact', '/one-dollar'],
   BUSINESS: ['/business-registration', '/vendor-dashboard'],
   ADMIN: ['/admin', '/board-room', '/command-center', '/admin-importer'],
   // Everything else is considered APP
