@@ -8,7 +8,7 @@ const AboutUs = () => {
     const { t } = useTranslation();
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="min-h-screen bg-slate-950">
             {/* Compact Hero Section */}
             <div className="bg-slate-900 text-white pt-24 pb-12 md:pt-32 md:pb-16 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
@@ -22,9 +22,9 @@ const AboutUs = () => {
             </div>
 
             {/* Stats Bar - High Density Info */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <div className="bg-slate-900 border-b border-slate-800">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800">
+                    <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-800">
                         <StatItem icon={<Globe className="w-4 h-4 text-blue-500" />} value="50+" label="Countries" />
                         <StatItem icon={<Building className="w-4 h-4 text-purple-500" />} value="2,000+" label="Partners" />
                         <StatItem icon={<Users className="w-4 h-4 text-green-500" />} value="150k" label="Active Users" />
@@ -38,20 +38,20 @@ const AboutUs = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                     <div className="lg:col-span-2 space-y-6">
                         <div>
-                            <h2 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white flex items-center gap-2">
+                            <h2 className="text-2xl font-bold mb-3 text-white flex items-center gap-2">
                                 <Zap className="w-5 h-5 text-yellow-500" />
                                 {t('about.mission')}
                             </h2>
-                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            <p className="text-slate-400 leading-relaxed">
                                 {t('about.mission_desc_1')}
                             </p>
-                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed mt-2">
+                            <p className="text-slate-400 leading-relaxed mt-2">
                                 {t('about.mission_desc_2')}
                             </p>
                         </div>
 
                         <div className="pt-4">
-                            <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-white">{t('about.values')}</h3>
+                            <h3 className="text-lg font-semibold mb-3 text-white">{t('about.values')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <ValueCard
                                     icon={<Globe className="w-4 h-4 text-blue-500" />}
@@ -116,19 +116,19 @@ const StatItem = ({ icon, value, label }) => (
     <div className="py-6 flex flex-col items-center justify-center text-center">
         <div className="flex items-center gap-2 mb-1">
             {icon}
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">{value}</span>
+            <span className="text-2xl font-bold text-white">{value}</span>
         </div>
         <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</span>
     </div>
 );
 
 const ValueCard = ({ icon, title, desc }) => (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="mt-0.5 shrink-0 bg-slate-50 dark:bg-slate-800 p-1.5 rounded">
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-900 border border-slate-800 shadow-sm">
+        <div className="mt-0.5 shrink-0 bg-slate-800 p-1.5 rounded">
             {icon}
         </div>
         <div>
-            <h4 className="font-semibold text-sm text-slate-900 dark:text-white">{title}</h4>
+            <h4 className="font-semibold text-sm text-white">{title}</h4>
             <p className="text-xs text-slate-500 leading-snug mt-1">{desc}</p>
         </div>
     </div>

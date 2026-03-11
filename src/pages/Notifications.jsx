@@ -23,7 +23,7 @@ const NOTIFICATIONS = [
         time: '5 min ago',
         unread: true,
         icon: MessageCircle,
-        color: 'text-indigo-600 bg-indigo-100',
+        color: 'text-indigo-400 bg-indigo-500/20',
         actionLabel: 'Reply',
         actionLink: '/chat/sarah'
     },
@@ -35,7 +35,7 @@ const NOTIFICATIONS = [
         time: '2 hours ago',
         unread: true,
         icon: Tag,
-        color: 'text-green-600 bg-green-100',
+        color: 'text-green-400 bg-green-500/20',
         actionLabel: 'View Deal',
         actionLink: '/marketplace/123'
     },
@@ -47,7 +47,7 @@ const NOTIFICATIONS = [
         time: '1 day ago',
         unread: false,
         icon: Info,
-        color: 'text-blue-600 bg-blue-100',
+        color: 'text-blue-400 bg-blue-500/20',
         actionLabel: 'Complete Profile',
         actionLink: '/profile/edit'
     },
@@ -59,7 +59,7 @@ const NOTIFICATIONS = [
         time: '2 days ago',
         unread: false,
         icon: Heart,
-        color: 'text-pink-600 bg-pink-100',
+        color: 'text-pink-400 bg-pink-500/20',
         actionLabel: 'View Listing',
         actionLink: '/marketplace/456'
     }
@@ -76,60 +76,60 @@ export default function Notifications() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex justify-center py-8 px-4 font-sans">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white sticky top-0 z-10">
+        <div className="min-h-screen bg-slate-950 flex justify-center py-8 px-4 font-sans">
+            <div className="w-full max-w-2xl bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900 sticky top-0 z-10">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                        <div className="p-2 bg-indigo-500/20 text-indigo-400 rounded-lg">
                             <Bell className="w-5 h-5" />
                         </div>
-                        <h1 className="text-xl font-bold text-slate-900">{t('notifications.title')}</h1>
+                        <h1 className="text-xl font-bold text-white">{t('notifications.title') || 'Notifications'}</h1>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-slate-500 hover:text-indigo-600">
-                        {t('notifications.mark_all_read')}
+                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-400">
+                        {t('notifications.mark_all_read') || 'Mark all as read'}
                     </Button>
                 </div>
 
                 <ScrollArea className="h-[80vh]">
-                    <div className="divide-y divide-slate-50">
+                    <div className="divide-y divide-slate-800">
                         {NOTIFICATIONS.map((notif) => (
                             <div
                                 key={notif.id}
                                 onClick={() => setSelectedNotification(notif)}
-                                className={`p-5 flex gap-4 hover:bg-slate-50 transition-colors cursor-pointer ${notif.unread ? 'bg-indigo-50/30' : ''}`}
+                                className={`p-5 flex gap-4 hover:bg-slate-800/50 transition-colors cursor-pointer ${notif.unread ? 'bg-indigo-500/5' : ''}`}
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.color}`}>
                                     <notif.icon className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h3 className={`text-sm font-semibold ${notif.unread ? 'text-slate-900' : 'text-slate-700'}`}>
+                                        <h3 className={`text-sm font-semibold ${notif.unread ? 'text-white' : 'text-slate-300'}`}>
                                             {notif.title}
                                         </h3>
-                                        <span className="text-xs text-slate-400 whitespace-nowrap ms-2">{notif.time}</span>
+                                        <span className="text-xs text-slate-500 whitespace-nowrap ms-2">{notif.time}</span>
                                     </div>
-                                    <p className="text-sm text-slate-600 leading-relaxed pe-6 line-clamp-2" dir="auto">
+                                    <p className="text-sm text-slate-400 leading-relaxed pe-6 line-clamp-2" dir="auto">
                                         {notif.description}
                                     </p>
                                 </div>
                                 {notif.unread && (
                                     <div className="self-center">
-                                        <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                                        <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
                                     </div>
                                 )}
                             </div>
                         ))}
                     </div>
 
-                    <div className="p-8 text-center text-slate-400 text-sm">
-                        <p>{t('notifications.no_more')}</p>
+                    <div className="p-8 text-center text-slate-500 text-sm">
+                        <p>{t('notifications.no_more') || 'No more notifications'}</p>
                     </div>
                 </ScrollArea>
             </div>
 
             {/* Notification Details Dialog */}
             <Dialog open={!!selectedNotification} onOpenChange={(open) => !open && setSelectedNotification(null)}>
-                <DialogContent className="max-w-md bg-white dark:bg-slate-900 rounded-2xl p-0 overflow-hidden border-0">
+                <DialogContent className="max-w-md bg-slate-900 rounded-2xl p-0 overflow-hidden border border-slate-800">
                     {selectedNotification && (
                         <>
                             <div className={`h-24 ${selectedNotification.color.split(' ')[1]} flex items-center justify-center`}>
@@ -139,18 +139,18 @@ export default function Notifications() {
                             <div className="p-6">
                                 <DialogHeader className="mb-4">
                                     <div className="flex items-center justify-between mb-2">
-                                        <Badge variant="outline" className="capitalize">
+                                        <Badge variant="outline" className="capitalize border-slate-700 text-slate-400">
                                             {selectedNotification.type}
                                         </Badge>
-                                        <span className="text-xs text-slate-400">{selectedNotification.time}</span>
+                                        <span className="text-xs text-slate-500">{selectedNotification.time}</span>
                                     </div>
-                                    <DialogTitle className="text-2xl font-bold text-slate-900 dark:text-white">
+                                    <DialogTitle className="text-2xl font-bold text-white">
                                         {selectedNotification.title}
                                     </DialogTitle>
                                 </DialogHeader>
 
                                 <ScrollArea className="max-h-[300px] mb-6">
-                                    <DialogDescription className="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <DialogDescription className="text-base text-slate-300 leading-relaxed">
                                         {selectedNotification.description}
                                     </DialogDescription>
                                 </ScrollArea>
@@ -158,7 +158,7 @@ export default function Notifications() {
                                 <DialogFooter className="flex-col sm:flex-col gap-2">
                                     {selectedNotification.actionLabel && (
                                         <Button
-                                            className="w-full h-12 text-base font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
+                                            className="w-full h-12 text-base font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
                                             onClick={() => handleAction(selectedNotification.actionLink)}
                                         >
                                             {selectedNotification.actionLabel}
@@ -167,10 +167,10 @@ export default function Notifications() {
                                     )}
                                     <Button
                                         variant="outline"
-                                        className="w-full h-12 border-slate-200"
+                                        className="w-full h-12 border-slate-700 text-slate-300 hover:bg-slate-800"
                                         onClick={() => setSelectedNotification(null)}
                                     >
-                                        {t('notifications.close')}
+                                        {t('notifications.close') || 'Close'}
                                     </Button>
                                 </DialogFooter>
                             </div>

@@ -127,7 +127,7 @@ const LandingNavbar = () => {
                 asChild
                 variant="default"
                 size="sm"
-                className="gap-2 rounded-full bg-neon-cyan/20 text-neon-cyan hover:bg-neon-cyan/30 border border-neon-cyan/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                className="gap-2 rounded-full bg-cyan-400/20 text-cyan-400 hover:bg-cyan-400/30 border border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
               >
                 <Link to="/app">
                   {t("nav.dashboard", "Dashboard")}{" "}
