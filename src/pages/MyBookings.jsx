@@ -54,11 +54,11 @@ export default function MyBookings() {
 
     if (!user) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 bg-slate-900 rounded-2xl p-8">
                 <AlertCircle className="w-12 h-12 text-amber-500" />
-                <h2 className="text-xl font-semibold">{t('favorites.loginRequired')}</h2>
-                <p className="text-gray-500">{t('my_bookings.login_desc') || t('my_reviews.login_desc')}</p>
-                <Button onClick={() => navigate('/login')}>{t('login')}</Button>
+                <h2 className="text-xl font-semibold text-white">{t('favorites.loginRequired') || 'Login Required'}</h2>
+                <p className="text-slate-400">{'Log in to view your booking history'}</p>
+                <Button onClick={() => navigate('/login')}>{t('login') || 'Log In'}</Button>
             </div>
         );
     }

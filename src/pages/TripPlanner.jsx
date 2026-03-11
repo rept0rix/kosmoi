@@ -57,30 +57,32 @@ export default function TripPlanner({
 
   if (!activeTrip) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] p-8 text-center bg-white dark:bg-slate-900">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-          <MapPin className="w-8 h-8 text-blue-600" />
+      <div className="flex flex-col items-center justify-center min-h-[500px] p-8 text-center bg-slate-900">
+        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6">
+          <MapPin className="w-8 h-8 text-blue-400" />
         </div>
-        <h2 className="text-2xl font-bold mb-2">Start Your Journey</h2>
-        <p className="text-gray-500 mb-6 max-w-md">
+        <h2 className="text-2xl font-bold text-white mb-2">Start Your Journey</h2>
+        <p className="text-slate-400 mb-6 max-w-md">
           Create a trip to start adding places, bookings, and custom stops to
           your itinerary.
         </p>
 
         <div className="w-full max-w-sm space-y-4 text-left">
           <div>
-            <label className="text-sm font-medium mb-1 block">Trip Name</label>
+            <label className="text-sm font-medium text-slate-300 mb-1 block">Trip Name</label>
             <Input
               value={newTripName}
               onChange={(e) => setNewTripName(e.target.value)}
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1 block">Start Date</label>
+            <label className="text-sm font-medium text-slate-300 mb-1 block">Start Date</label>
             <Input
               type="date"
               value={newTripDate}
               onChange={(e) => setNewTripDate(e.target.value)}
+              className="bg-slate-800 border-slate-700 text-white"
             />
           </div>
           <Button

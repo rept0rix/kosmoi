@@ -92,30 +92,30 @@ export default function Favorites({ onAddToTrip }) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center">
-          <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h2 className="text-2xl font-bold mb-2">
-            {t("favorites.loginRequired")}
+      <div className="bg-slate-900 flex items-center justify-center p-8 min-h-[400px]">
+        <div className="max-w-md w-full p-8 text-center bg-slate-800/50 rounded-2xl border border-slate-700">
+          <Heart className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {t("favorites.loginRequired") || "Login Required"}
           </h2>
-          <p className="text-gray-600 mb-6">{t("favorites.login_desc")}</p>
+          <p className="text-slate-400 mb-6">{t("favorites.login_desc") || "Login to view your favorites"}</p>
           <Button onClick={() => navigateToLogin()} className="w-full">
-            {t("login")}
+            {t("login") || "Login"}
           </Button>
-        </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="bg-slate-900 p-4 min-h-[400px]">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-            {t("favorites.title")}
+          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            <Heart className="w-8 h-8 text-red-400 fill-red-400" />
+            {t("favorites.title") || "Saved Places"}
           </h1>
-          <p className="text-gray-600 mt-2">{t("favorites.subtitle")}</p>
+          <p className="text-slate-400 mt-2">{t("favorites.subtitle") || "Your favorite spots on Koh Samui"}</p>
         </div>
 
         {isLoading ? (
