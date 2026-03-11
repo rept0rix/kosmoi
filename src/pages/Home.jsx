@@ -158,7 +158,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
-          className="flex flex-wrap justify-center gap-4 mt-12 w-full max-w-6xl"
+          className="grid grid-cols-3 gap-4 mt-12 w-full max-w-lg mx-auto"
         >
           {categories.map((cat, idx) => (
             <button
@@ -170,7 +170,7 @@ export default function Home() {
                   handleInteraction();
                 }
               }}
-              className="flex flex-col items-center justify-center w-[140px] h-[100px] p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group hover:-translate-y-1"
+              className="flex flex-col items-center justify-center h-[100px] p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 backdrop-blur-sm transition-all group hover:-translate-y-1"
             >
               <cat.icon
                 className={`w-6 h-6 mb-2 ${cat.color} opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all`}

@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Filter, Loader2, Star, Car, MapPin, Gauge } from 'lucide-react';
-import NavigationBar from '@/components/landing/NavigationBar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import {
@@ -160,8 +159,6 @@ export default function TransportHub() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            <NavigationBar />
-
             {/* Hero Section */}
             <div className="relative h-[400px] md:h-[500px] w-full bg-slate-900 flex items-center justify-center">
                 <img
