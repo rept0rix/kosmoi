@@ -36,59 +36,131 @@ import { supabase } from "@/api/supabaseClient";
 
 export default function AdminLiveControl() {
   const [metrics, setMetrics] = useState(null);
+  const [goals, setGoals] = useState([]);
+  const [recentTasks, setRecentTasks] = useState([]);
   const [nextRun, setNextRun] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [triggering, setTriggering] = useState(false);
+  const [lastTickResult, setLastTickResult] = useState(null);
   const [systemStatus, setSystemStatus] = useState({
-    ceo: "active",
-    database: "connected",
-    realtime: "connected",
+    ceo: "checking",
+    database: "checking",
+    realtime: "checking",
   });
 
   useEffect(() => {
-    loadMetrics();
+    loadAll();
     calculateNextRun();
 
-    // Refresh metrics every 30 seconds
+    // Refresh every 30 seconds
     const interval = setInterval(() => {
-      loadMetrics();
+      loadAll();
       calculateNextRun();
     }, 30000);
 
-    return () => clearInterval(interval);
+    // Realtime subscription for agent_tasks changes
+    const channel = supabase
+      .channel("live-control-tasks")
+      .on("postgres_changes", { event: "*", schema: "public", table: "agent_tasks" }, () => {
+        loadRecentTasks();
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const loadMetrics = async () => {
+  const loadAll = async () => {
     setLoading(true);
-    const data = await MetricsService.getAll();
-    setMetrics(data);
+    await Promise.all([loadMetrics(), loadGoals(), loadRecentTasks(), checkSystemStatus()]);
     setLoading(false);
   };
 
+  const loadMetrics = async () => {
+    try {
+      const data = await MetricsService.getAll();
+      setMetrics(data);
+    } catch (e) {
+      console.error("Failed to load metrics:", e);
+    }
+  };
+
+  const loadGoals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("company_goals")
+        .select("*")
+        .eq("status", "active")
+        .order("priority", { ascending: true });
+      if (!error && data) setGoals(data);
+    } catch (e) {
+      console.error("Failed to load goals:", e);
+    }
+  };
+
+  const loadRecentTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("agent_tasks")
+        .select("id, title, status, assigned_to, priority, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (!error && data) setRecentTasks(data);
+    } catch (e) {
+      console.error("Failed to load tasks:", e);
+    }
+  };
+
+  const checkSystemStatus = async () => {
+    try {
+      // Check DB connection
+      const { error: dbError } = await supabase.from("company_goals").select("id").limit(1);
+
+      // Check last cron tick (agent_logs from core-loop-cron)
+      const { data: lastTick } = await supabase
+        .from("agent_logs")
+        .select("created_at")
+        .eq("agent_id", "core-loop-cron")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const lastTickAge = lastTick?.[0]
+        ? (Date.now() - new Date(lastTick[0].created_at).getTime()) / 60000
+        : null;
+
+      setSystemStatus({
+        ceo: lastTickAge !== null && lastTickAge < 15 ? "active" : "idle",
+        database: dbError ? "error" : "connected",
+        realtime: "connected",
+      });
+    } catch {
+      setSystemStatus({ ceo: "error", database: "error", realtime: "error" });
+    }
+  };
+
   const calculateNextRun = () => {
-    // CEO runs every 15 minutes (0, 15, 30, 45)
     const now = new Date();
     const minutes = now.getMinutes();
-    const nextMinute = Math.ceil(minutes / 15) * 15;
+    const nextMinute = Math.ceil(minutes / 10) * 10; // Every 10 min cron
     const diff = nextMinute - minutes;
-    setNextRun(diff === 0 ? 15 : diff);
+    setNextRun(diff === 0 ? 10 : diff);
   };
 
   const triggerManualRun = async () => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
+    setTriggering(true);
     try {
-      await fetch(`${supabaseUrl}/functions/v1/cron-worker`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({}),
-      });
-      loadMetrics();
+      const response = await fetch("/api/cron/agent-tick", { method: "POST" });
+      const result = await response.json();
+      setLastTickResult(result);
+      // Reload data after trigger
+      await loadAll();
     } catch (e) {
       console.error("Manual trigger failed:", e);
+      setLastTickResult({ error: e.message });
+    } finally {
+      setTriggering(false);
     }
   };
 
@@ -121,10 +193,15 @@ export default function AdminLiveControl() {
             {/* Manual trigger */}
             <Button
               onClick={triggerManualRun}
-              className="bg-gradient-to-r from-blue-500 to-purple-500"
+              disabled={triggering}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 disabled:opacity-50"
             >
-              <Zap className="w-4 h-4 mr-2" />
-              Trigger Now
+              {triggering ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4 mr-2" />
+              )}
+              {triggering ? "Running..." : "Trigger Now"}
             </Button>
           </div>
         </div>
@@ -139,26 +216,104 @@ export default function AdminLiveControl() {
                 System Status
               </h3>
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">CEO Agent</span>
-                  <Badge className="bg-green-500/20 text-green-400">
-                    Active
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Database</span>
-                  <Badge className="bg-green-500/20 text-green-400">
-                    Connected
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Realtime</span>
-                  <Badge className="bg-green-500/20 text-green-400">
-                    Connected
-                  </Badge>
-                </div>
+                {Object.entries(systemStatus).map(([key, status]) => (
+                  <div key={key} className="flex justify-between items-center">
+                    <span className="text-sm capitalize">{key === "ceo" ? "Cron Loop" : key}</span>
+                    <Badge className={
+                      status === "active" || status === "connected"
+                        ? "bg-green-500/20 text-green-400"
+                        : status === "idle"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : status === "checking"
+                            ? "bg-slate-500/20 text-slate-400"
+                            : "bg-red-500/20 text-red-400"
+                    }>
+                      {status === "active" ? "Active" : status === "connected" ? "Connected" : status === "idle" ? "Idle" : status === "checking" ? "..." : "Error"}
+                    </Badge>
+                  </div>
+                ))}
               </div>
             </Card>
+
+            {/* Company Goals (KPI Gauges) */}
+            <Card className="p-4 bg-slate-900/60 border-white/5">
+              <h3 className="font-bold mb-3 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                Company Goals
+              </h3>
+              <div className="space-y-3">
+                {goals.map((goal) => {
+                  const progress = goal.target_value > 0
+                    ? Math.min((goal.current_value / goal.target_value) * 100, 100)
+                    : 0;
+                  return (
+                    <div key={goal.id}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-slate-400 truncate">{goal.title}</span>
+                        <span className="font-mono text-slate-300">
+                          {goal.current_value}/{goal.target_value}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ${
+                            progress >= 75 ? "bg-emerald-500" :
+                            progress >= 40 ? "bg-blue-500" :
+                            progress >= 10 ? "bg-yellow-500" : "bg-red-500"
+                          }`}
+                          style={{ width: `${Math.max(progress, 2)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {goals.length === 0 && (
+                  <p className="text-sm text-slate-500">No goals defined</p>
+                )}
+              </div>
+            </Card>
+
+            {/* Recent Agent Tasks */}
+            {recentTasks.length > 0 && (
+              <Card className="p-4 bg-slate-900/60 border-white/5">
+                <h3 className="font-bold mb-3 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  Recent Tasks
+                </h3>
+                <div className="space-y-2">
+                  {recentTasks.map((task) => (
+                    <div key={task.id} className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 truncate max-w-[160px]">{task.title}</span>
+                      <Badge className={
+                        task.status === "done" ? "bg-green-500/20 text-green-400" :
+                        task.status === "in_progress" ? "bg-blue-500/20 text-blue-400" :
+                        task.status === "open" ? "bg-yellow-500/20 text-yellow-400" :
+                        "bg-slate-500/20 text-slate-400"
+                      }>
+                        {task.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Last Tick Result */}
+            {lastTickResult && (
+              <Card className="p-4 bg-slate-900/60 border-white/5">
+                <h3 className="font-bold mb-2 flex items-center gap-2 text-sm">
+                  {lastTickResult.error ? (
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                  )}
+                  Last Tick
+                </h3>
+                <pre className="text-xs text-slate-400 font-mono whitespace-pre-wrap">
+                  {JSON.stringify(lastTickResult, null, 2)}
+                </pre>
+              </Card>
+            )}
 
             {/* Key Metrics */}
             <Card className="p-4 bg-slate-900/60 border-white/5">
