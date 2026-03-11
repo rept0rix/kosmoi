@@ -41,7 +41,7 @@ const FilterBar = ({ activeCategory }) => {
         return (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <Select>
-                    <SelectTrigger className="w-[130px] h-9 bg-white border-slate-200">
+                    <SelectTrigger className="w-[130px] h-9 bg-slate-800 border-slate-700 text-slate-200">
                         <SelectValue placeholder="Price Range" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -51,7 +51,7 @@ const FilterBar = ({ activeCategory }) => {
                     </SelectContent>
                 </Select>
                 <Select>
-                    <SelectTrigger className="w-[120px] h-9 bg-white border-slate-200">
+                    <SelectTrigger className="w-[120px] h-9 bg-slate-800 border-slate-700 text-slate-200">
                         <SelectValue placeholder="Bedrooms" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -62,7 +62,7 @@ const FilterBar = ({ activeCategory }) => {
                     </SelectContent>
                 </Select>
                 <Select>
-                    <SelectTrigger className="w-[120px] h-9 bg-white border-slate-200">
+                    <SelectTrigger className="w-[120px] h-9 bg-slate-800 border-slate-700 text-slate-200">
                         <SelectValue placeholder="View" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -80,7 +80,7 @@ const FilterBar = ({ activeCategory }) => {
         return (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <Select>
-                    <SelectTrigger className="w-[130px] h-9 bg-white border-slate-200">
+                    <SelectTrigger className="w-[130px] h-9 bg-slate-800 border-slate-700 text-slate-200">
                         <SelectValue placeholder="Price" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -90,7 +90,7 @@ const FilterBar = ({ activeCategory }) => {
                     </SelectContent>
                 </Select>
                 <Select>
-                    <SelectTrigger className="w-[130px] h-9 bg-white border-slate-200">
+                    <SelectTrigger className="w-[130px] h-9 bg-slate-800 border-slate-700 text-slate-200">
                         <SelectValue placeholder="Transmission" />
                     </SelectTrigger>
                     <SelectContent position="popper">
@@ -116,8 +116,8 @@ const CategorySection = ({ title, categoryId, products, onSeeAll, onContact }) =
     return (
         <div className="flex flex-col gap-4">
             <div className="flex justify-between items-end">
-                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-                <Button variant="link" className="text-indigo-600 p-0 h-auto font-medium" onClick={onSeeAll}>
+                <h3 className="text-lg font-bold text-white">{title}</h3>
+                <Button variant="link" className="text-indigo-400 p-0 h-auto font-medium" onClick={onSeeAll}>
                     See All
                 </Button>
             </div>
@@ -240,17 +240,17 @@ export default function Marketplace() {
                     <div key={cat.id} className="space-y-1">
                         <Button
                             variant="ghost"
-                            className={`w-full justify-between font-medium text-base h-auto py-2 px-3 rounded-lg group ${activeCategory?.id === cat.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                            className={`w-full justify-between font-medium text-base h-auto py-2 px-3 rounded-lg group ${activeCategory?.id === cat.id ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-300 hover:bg-slate-800'}`}
                             onClick={() => handleCategorySelect(cat)}
                         >
                             <span className="flex items-center gap-3">
-                                <div className={`p-1.5 rounded-md ${activeCategory?.id === cat.id ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600'} transition-colors`}>
+                                <div className={`p-1.5 rounded-md ${activeCategory?.id === cat.id ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-400'} transition-colors`}>
                                     <cat.icon className="w-4 h-4" />
                                 </div>
                                 {cat.label}
                             </span>
                             {cat.subcategories?.length > 0 && (
-                                <ChevronRight className={`w-4 h-4 text-slate-300 transition-transform ${activeCategory?.id === cat.id ? 'rotate-90 text-indigo-400' : 'group-hover:text-slate-400'}`} />
+                                <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${activeCategory?.id === cat.id ? 'rotate-90 text-indigo-400' : 'group-hover:text-slate-400'}`} />
                             )}
                         </Button>
 
@@ -261,7 +261,7 @@ export default function Marketplace() {
                                         key={sub.id}
                                         variant="ghost"
                                         size="sm"
-                                        className={`w-full justify-start text-sm h-8 rounded-md ${activeSubCategory?.id === sub.id ? 'text-indigo-600 font-medium bg-indigo-50/50' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`w-full justify-start text-sm h-8 rounded-md ${activeSubCategory?.id === sub.id ? 'text-indigo-400 font-medium bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200'}`}
                                         onClick={(e) => handleSubCategorySelect(sub, e)}
                                     >
                                         {sub.label}
@@ -304,7 +304,7 @@ export default function Marketplace() {
 
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-slate-950 flex flex-col font-sans">
             <div className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 pb-24">
 
                 {/* Top Controls: Sell Button & Sort (Unified Row) */}
@@ -312,11 +312,11 @@ export default function Marketplace() {
                     <div className="hidden md:block"></div>
 
                     <div className="flex items-center gap-3 ml-auto">
-                        <div className="bg-white p-1 rounded-lg border border-slate-200 shadow-sm flex items-center">
+                        <div className="bg-slate-800 p-1 rounded-lg border border-slate-700 flex items-center">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`h-8 px-3 rounded-md transition-all ${viewMode === 'grid' || isHomeView ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                                className={`h-8 px-3 rounded-md transition-all ${viewMode === 'grid' || isHomeView ? 'bg-slate-700 text-white font-medium' : 'text-slate-400 hover:text-white'}`}
                                 onClick={() => setViewMode('grid')}
                             >
                                 <List className="w-4 h-4 mr-2" /> List
@@ -324,7 +324,7 @@ export default function Marketplace() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`h-8 px-3 rounded-md transition-all ${viewMode === 'map' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                                className={`h-8 px-3 rounded-md transition-all ${viewMode === 'map' ? 'bg-slate-700 text-white font-medium' : 'text-slate-400 hover:text-white'}`}
                                 onClick={() => setViewMode('map')}
                             >
                                 <MapIcon className="w-4 h-4 mr-2" /> Map
@@ -343,11 +343,11 @@ export default function Marketplace() {
                 </div>
 
                 {/* Main Search & Category Bar */}
-                <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 mb-4 max-w-4xl mx-auto flex items-center ring-offset-2 focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
+                <div className="bg-slate-900 p-1 rounded-2xl border border-slate-800 mb-4 max-w-4xl mx-auto flex items-center focus-within:ring-2 focus-within:ring-indigo-500/30 transition-shadow">
 
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="ghost" className="h-11 px-4 text-slate-700 hover:bg-slate-50 rounded-xl mr-1 border-r border-transparent hover:border-slate-100 focus:bg-slate-50">
+                            <Button variant="ghost" className="h-11 px-4 text-slate-200 hover:bg-slate-800 rounded-xl mr-1 border-r border-transparent hover:border-slate-700 focus:bg-slate-800">
                                 <LayoutGrid className="w-5 h-5 mr-2 text-slate-400" />
                                 <span className="font-medium truncate max-w-[100px] md:max-w-[140px] text-start">
                                     {activeCategory ? activeCategory.label : 'Categories'}
@@ -355,12 +355,12 @@ export default function Marketplace() {
                                 <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent align="start" className="p-0 border-slate-100 shadow-xl rounded-xl bg-white w-[300px] md:w-[600px] ring-1 ring-slate-900/5 focus:outline-none" sideOffset={8}>
+                        <PopoverContent align="start" className="p-0 border-slate-700 shadow-xl rounded-xl bg-slate-900 w-[300px] md:w-[600px] focus:outline-none" sideOffset={8}>
                             <CategoryMenu />
                         </PopoverContent>
                     </Popover>
 
-                    <div className="w-px h-8 bg-slate-100 mx-2 hidden md:block"></div>
+                    <div className="w-px h-8 bg-slate-700 mx-2 hidden md:block"></div>
 
                     <div className="flex-1 relative">
                         <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -384,23 +384,23 @@ export default function Marketplace() {
                     <div className="max-w-4xl mx-auto mb-6">
                         <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-1">
                             {activeCategory && (
-                                <Badge variant="secondary" className="px-3 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer border border-indigo-100" onClick={() => setActiveCategory(null)}>
+                                <Badge variant="secondary" className="px-3 py-1 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors cursor-pointer border border-indigo-500/30" onClick={() => setActiveCategory(null)}>
                                     {activeCategory.label} <X className="w-3 h-3 ml-1" />
                                 </Badge>
                             )}
                             {activeSubCategory && (
-                                <Badge variant="outline" className="px-3 py-1 cursor-pointer hover:bg-slate-50 bg-white" onClick={() => setActiveSubCategory(null)}>
+                                <Badge variant="outline" className="px-3 py-1 cursor-pointer hover:bg-slate-800 bg-slate-900 border-slate-700 text-slate-300" onClick={() => setActiveSubCategory(null)}>
                                     {activeSubCategory.label} <X className="w-3 h-3 ml-1" />
                                 </Badge>
                             )}
-                            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 text-xs text-slate-400 hover:text-red-500">Clear All</Button>
+                            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 text-xs text-slate-500 hover:text-red-400">Clear All</Button>
                         </div>
                     </div>
                 )}
 
                 {/* MAP VIEW */}
                 {viewMode === 'map' ? (
-                    <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative z-0">
+                    <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-slate-800 relative z-0">
                         <MapContainer center={[9.53, 100.04]} zoom={12} scrollWheelZoom={false} className="h-full w-full">
                             <TileLayer
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -425,45 +425,40 @@ export default function Marketplace() {
                     <div className="flex flex-col gap-8">
                         {isHomeView ? (
                             <div className="space-y-10 animate-in fade-in duration-500">
-                                <CategorySection
-                                    title="Fresh Real Estate"
-                                    categoryId="real-estate"
-                                    products={products}
-                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'real-estate'))}
-                                    onContact={handleContactSeller}
-                                />
-                                <CategorySection
-                                    title="Latest Vehicles"
-                                    categoryId="vehicles"
-                                    products={products}
-                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'vehicles'))}
-                                    onContact={handleContactSeller}
-                                />
-                                <CategorySection
-                                    title="Tech & Electronics"
-                                    categoryId="electronics"
-                                    products={products}
-                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'electronics'))}
-                                    onContact={handleContactSeller}
-                                />
-                                <CategorySection
-                                    title="Home & Furniture"
-                                    categoryId="furniture"
-                                    products={products}
-                                    onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'furniture'))}
-                                    onContact={handleContactSeller}
-                                />
+                                {loading ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {[1,2,3,4].map(i => <div key={i} className="h-60 bg-slate-800 rounded-xl animate-pulse" />)}
+                                    </div>
+                                ) : products.length === 0 ? (
+                                    <div className="text-center py-24">
+                                        <div className="w-20 h-20 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-5">
+                                            <Box className="w-10 h-10 text-indigo-400" />
+                                        </div>
+                                        <h3 className="text-white text-xl font-semibold mb-2">Be the first to list!</h3>
+                                        <p className="text-slate-400 mb-6 max-w-xs mx-auto">The marketplace is brand new. Post your first listing and reach the whole island.</p>
+                                        <Button onClick={handleSellClick} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6">
+                                            <Plus className="w-4 h-4 mr-2" /> Post a Listing
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <CategorySection title="Fresh Real Estate" categoryId="real-estate" products={products} onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'real-estate'))} onContact={handleContactSeller} />
+                                        <CategorySection title="Latest Vehicles" categoryId="vehicles" products={products} onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'vehicles'))} onContact={handleContactSeller} />
+                                        <CategorySection title="Tech & Electronics" categoryId="electronics" products={products} onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'electronics'))} onContact={handleContactSeller} />
+                                        <CategorySection title="Home & Furniture" categoryId="furniture" products={products} onSeeAll={() => setActiveCategory(MARKETPLACE_CATEGORIES.find(c => c.id === 'furniture'))} onContact={handleContactSeller} />
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <div className="flex flex-col gap-6">
                                 <div className="flex justify-between items-center pb-2">
-                                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                                    <h2 className="text-xl font-bold text-white tracking-tight">
                                         {activeSubCategory ? activeSubCategory.label : activeCategory ? activeCategory.label : `Search: "${searchTerm}"`}
                                     </h2>
 
                                     <Select value={sort} onValueChange={setSort}>
-                                        <SelectTrigger className="w-[150px] h-9 text-sm border-0 bg-transparent hover:bg-slate-50 transition-colors text-right">
-                                            <span className="text-slate-500 mr-2">Sort:</span>
+                                        <SelectTrigger className="w-[150px] h-9 text-sm border-0 bg-transparent hover:bg-slate-800 transition-colors text-right">
+                                            <span className="text-slate-400 mr-2">Sort:</span>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent position="popper">
@@ -476,7 +471,7 @@ export default function Marketplace() {
 
                                 {loading ? (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                                        {[1, 2, 3, 4, 8].map(i => <div key={i} className="h-72 bg-slate-200 rounded-xl animate-pulse" />)}
+                                        {[1, 2, 3, 4, 8].map(i => <div key={i} className="h-72 bg-slate-800 rounded-xl animate-pulse" />)}
                                     </div>
                                 ) : products.length > 0 ? (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -490,11 +485,11 @@ export default function Marketplace() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-                                        <Box className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                                        <p className="text-slate-900 font-semibold text-lg">No results found</p>
-                                        <p className="text-slate-500 mb-6">Try adjusting your filters or search terms</p>
-                                        <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
+                                    <div className="text-center py-20 bg-slate-900 rounded-2xl border border-dashed border-slate-700">
+                                        <Box className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                                        <p className="text-white font-semibold text-lg">No results found</p>
+                                        <p className="text-slate-400 mb-6">Try adjusting your filters or search terms</p>
+                                        <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800" onClick={clearFilters}>Clear filters</Button>
                                     </div>
                                 )}
                             </div>
