@@ -1,7 +1,17 @@
 {
+    "crons": [
+        {
+            "path": "/api/cron/agent-tick",
+            "schedule": "*/10 * * * *"
+        }
+    ],
     "rewrites": [
         {
-            "source": "/((?!.*\\.).*)",
+            "source": "/api/(.*)",
+            "destination": "/api/$1"
+        },
+        {
+            "source": "/((?!api/)(?!.*\\.).*)",
             "destination": "/index.html"
         }
     ]
