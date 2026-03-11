@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import NavigationBar from "@/components/landing/NavigationBar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -252,8 +251,6 @@ export default function ExperienceDetails() {
 
   return (
     <div className="min-h-screen bg-white">
-      <NavigationBar />
-
       <main className="pb-24">
         {/* 1. Gallery / Hero */}
         <div className="relative h-[40vh] md:h-[60vh] w-full overflow-hidden bg-gray-100">

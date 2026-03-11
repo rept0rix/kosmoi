@@ -318,9 +318,9 @@ export function ScoutSearch({ onMapAction }) {
     <div className="fixed top-20 left-4 right-4 z-50 md:left-1/2 md:-translate-x-1/2 md:w-[600px] pointer-events-none">
       <div className="pointer-events-auto flex flex-col gap-2">
         {/* Search Bar / Input */}
-        <Card className="shadow-[0_0_20px_rgba(6,182,212,0.15)] border border-neon-cyan/30 bg-slate-900/80 backdrop-blur-xl overflow-hidden ring-1 ring-neon-cyan/20">
+        <Card className="shadow-[0_0_20px_rgba(6,182,212,0.15)] border border-cyan-400/30 bg-slate-900/80 backdrop-blur-xl overflow-hidden ring-1 ring-cyan-400/20">
           <div className="flex items-center p-2 gap-2">
-            <div className="w-10 h-10 bg-neon-cyan/20 rounded-full flex items-center justify-center text-neon-cyan shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.3)] border border-neon-cyan/50">
+            <div className="w-10 h-10 bg-cyan-400/20 rounded-full flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.3)] border border-cyan-400/50">
               <Sparkles className="w-5 h-5" />
             </div>
             <Input
@@ -344,7 +344,7 @@ export function ScoutSearch({ onMapAction }) {
 
             {/* SCAN BUTTON */}
             <Button
-              className={`font-bold rounded-full w-10 h-10 p-0 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all hover:scale-105 ${isScanning ? "bg-amber-500 hover:bg-amber-600 animate-pulse" : "bg-slate-800 hover:bg-slate-700 border border-neon-cyan/30 text-neon-cyan"}`}
+              className={`font-bold rounded-full w-10 h-10 p-0 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all hover:scale-105 ${isScanning ? "bg-amber-500 hover:bg-amber-600 animate-pulse" : "bg-slate-800 hover:bg-slate-700 border border-cyan-400/30 text-cyan-400"}`}
               onClick={handleScanArea}
               disabled={isScanning}
               title="Scout Area"
@@ -357,7 +357,7 @@ export function ScoutSearch({ onMapAction }) {
             </Button>
 
             <Button
-              className="bg-neon-cyan hover:bg-neon-cyan/80 text-black font-bold rounded-full w-10 h-10 p-0 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all hover:scale-105"
+              className="bg-cyan-400 hover:bg-cyan-400/80 text-black font-bold rounded-full w-10 h-10 p-0 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all hover:scale-105"
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
             >
@@ -401,9 +401,9 @@ export function ScoutSearch({ onMapAction }) {
                         className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
                         {msg.role !== "user" && (
-                          <Avatar className="w-8 h-8 border border-neon-cyan/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                          <Avatar className="w-8 h-8 border border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
                             <AvatarImage src="/agents/scout.png" />
-                            <AvatarFallback className="bg-slate-800 text-neon-cyan">
+                            <AvatarFallback className="bg-slate-800 text-cyan-400">
                               S
                             </AvatarFallback>
                           </Avatar>
@@ -412,12 +412,12 @@ export function ScoutSearch({ onMapAction }) {
                         <div
                           className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm text-sm ${
                             msg.role === "user"
-                              ? "bg-neon-cyan text-black font-medium rounded-tr-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                              ? "bg-cyan-400 text-black font-medium rounded-tr-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                               : "bg-slate-900/80 border border-white/10 text-slate-200 rounded-tl-sm"
                           }`}
                         >
                           <ReactMarkdown
-                            className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-strong:text-neon-cyan prose-a:text-neon-pink"
+                            className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-strong:text-cyan-400 prose-a:text-neon-pink"
                             remarkPlugins={[remarkGfm]}
                             components={{
                               p: ({ node, ...props }) => (
@@ -432,15 +432,15 @@ export function ScoutSearch({ onMapAction }) {
                     ))}
                     {isTyping && (
                       <div className="flex gap-3">
-                        <Avatar className="w-8 h-8 border border-neon-cyan/30 shadow-sm">
-                          <AvatarFallback className="bg-slate-900 text-neon-cyan">
+                        <Avatar className="w-8 h-8 border border-cyan-400/30 shadow-sm">
+                          <AvatarFallback className="bg-slate-900 text-cyan-400">
                             S
                           </AvatarFallback>
                         </Avatar>
                         <div className="bg-slate-900/80 border border-white/10 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 bg-neon-cyan rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                          <div className="w-1.5 h-1.5 bg-neon-cyan rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                          <div className="w-1.5 h-1.5 bg-neon-cyan rounded-full animate-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>
                         </div>
                       </div>
                     )}

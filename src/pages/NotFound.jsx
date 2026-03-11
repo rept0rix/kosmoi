@@ -7,11 +7,11 @@ export default function NotFound() {
     const navigate = useNavigate();
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950">
             <div className="text-center px-4">
-                <h1 className="text-9xl font-bold text-gray-200">404</h1>
-                <h2 className="text-3xl font-bold text-gray-900 mt-4 mb-2">Page Not Found</h2>
-                <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                <h1 className="text-9xl font-bold text-slate-800">404</h1>
+                <h2 className="text-3xl font-bold text-white mt-4 mb-2">Page Not Found</h2>
+                <p className="text-slate-400 mb-8 max-w-md mx-auto">
                     The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
                 </p>
 
@@ -19,7 +19,7 @@ export default function NotFound() {
                     <Button
                         onClick={() => navigate(-1)}
                         variant="outline"
-                        className="gap-2"
+                        className="gap-2 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
                     >
                         <MoveLeft className="w-4 h-4" />
                         Go Back
@@ -35,8 +35,8 @@ export default function NotFound() {
             </div>
 
             {/* Decorative */}
-            <div className="mt-16 text-gray-400 text-sm">
-                Samui Service Hub
+            <div className="mt-16 text-slate-600 text-sm">
+                Kosmoi
             </div>
         </div>
     );

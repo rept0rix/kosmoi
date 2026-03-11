@@ -19,13 +19,92 @@ const RequestService = lazy(() => import("./pages/RequestService"));
 const CompleteSignup = lazy(
   () => import("./features/auth/pages/CompleteSignup"),
 );
+const TripPlannerPage = lazy(() => import("./pages/TripPlanner"));
+const Blog = lazy(() => import("./pages/Blog"));
 
-// Safe fallback for pages still in development
+// Safe fallback for pages still in development — styled "Coming Soon"
 const SafePage = () =>
   React.createElement(
     "div",
-    { style: { padding: 50, color: "green", fontSize: 24 } },
-    "Page Under Maintenance (Safe Mode)",
+    {
+      style: {
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #0f172a 0%, #020617 50%, #0f172a 100%)",
+        fontFamily: "Inter, system-ui, sans-serif",
+        padding: "2rem",
+        textAlign: "center",
+      },
+    },
+    React.createElement(
+      "div",
+      {
+        style: {
+          width: 80,
+          height: 80,
+          borderRadius: 20,
+          background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 36,
+          marginBottom: 24,
+          boxShadow: "0 0 40px rgba(124,58,237,0.3)",
+        },
+      },
+      "🚧",
+    ),
+    React.createElement(
+      "h1",
+      {
+        style: {
+          fontSize: 32,
+          fontWeight: 700,
+          background: "linear-gradient(to right, #a78bfa, #f472b6)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          margin: "0 0 12px 0",
+        },
+      },
+      "Coming Soon",
+    ),
+    React.createElement(
+      "p",
+      {
+        style: {
+          fontSize: 16,
+          color: "#94a3b8",
+          maxWidth: 400,
+          lineHeight: 1.6,
+          margin: "0 0 32px 0",
+        },
+      },
+      "This feature is currently under development. Check back soon!",
+    ),
+    React.createElement(
+      "a",
+      {
+        href: "/",
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "10px 24px",
+          borderRadius: 12,
+          border: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(255,255,255,0.05)",
+          color: "#e2e8f0",
+          fontSize: 14,
+          textDecoration: "none",
+          backdropFilter: "blur(8px)",
+          transition: "all 0.2s",
+        },
+      },
+      "← Back to Home",
+    ),
   );
 
 export const PAGES = {
@@ -70,9 +149,9 @@ export const PAGES = {
   AgentChat: SafePage,
   SeedData: SafePage,
   Diagnostics: SafePage,
-  TripPlanner: SafePage,
+  TripPlanner: TripPlannerPage,
   CommandCenter: SafePage,
-  Blog: SafePage,
+  Blog: Blog,
   BlogPostDetail: SafePage,
   AdminWiki: SafePage,
 };

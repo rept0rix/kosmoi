@@ -34,6 +34,25 @@ export async function toolRouter(toolName, payload, options = {}) {
   const { userId, agentId, dbClient } = options;
   const client = dbClient || supabase;
 
+  // 🟢 AUTO-APPROVED TOOLS: Safe operations that don't need human approval
+  // These are read-only or low-risk write operations the autonomous loop can execute freely
+  const AUTO_APPROVED_TOOLS = [
+    "create_lead",          // Create a new lead record in DB
+    "update_lead_status",   // Update lead status (new → contacted → converted)
+    "scout_leads",          // Query service_providers for unverified businesses
+    "log_activity",         // Write to agent_logs
+    "read_knowledge",       // Read from knowledge base
+    "write_knowledge",      // Save learnings to knowledge base
+    "send_notification",    // Push notification to user (non-destructive)
+    "query_database",       // Read-only DB queries
+    "generate_invitation",  // Generate email template (not send)
+  ];
+
+  if (AUTO_APPROVED_TOOLS.includes(toolName)) {
+    console.log(`[Safety] ✅ Auto-approved tool: ${toolName}`);
+    // Fall through to ToolRegistry execution below
+  }
+
   // 🛡️ SAFETY MIDDLEWARE: Intercept sensitive tools
   // Note: create_payment_link removed from sensitive list for One Dollar Challenge (read-only operation in test mode)
   const SENSITIVE_TOOLS = [
