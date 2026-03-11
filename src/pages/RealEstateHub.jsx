@@ -186,7 +186,7 @@ export default function RealEstateHub() {
             {/* Hero Section */}
             <div className="relative h-[500px] w-full bg-slate-900 flex items-center justify-center">
                 <img
-                    src="https://images.unsplash.com/photo-1600596542815-6ad4c727dd2c?w=1600&q=80"
+                    src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1600&q=80"
                     alt="Luxury Villa"
                     className="absolute inset-0 w-full h-full object-cover opacity-60"
                 />
