@@ -1,35 +1,30 @@
 # syntax = docker/dockerfile:1
 # ============================================================
-# Kosmoi Agent Worker - Cloud Deployment
-# Runs the autonomous agent loop 24/7
-# Deploy to: Railway / Render / Fly.io / any Docker host
+# Kosmoi Agent Worker - Cloud Deployment (Minimal Image)
 # ============================================================
 
-ARG NODE_VERSION=22
-FROM node:${NODE_VERSION}-slim
+FROM node:22-slim
 
 WORKDIR /app
 
-# git is needed for the worker's git-pull/push features
+# Install git (needed for worker features)
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y git ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install all deps (devDeps needed for tsx runtime)
+# Install PRODUCTION deps only (~1.2GB vs 2.5GB full)
 COPY package.json ./
-RUN npm install --include=dev
+RUN npm install --omit=dev --ignore-scripts 2>&1 | tail -5
 
-# Copy source code
+# Copy source code (node_modules excluded via .dockerignore)
 COPY . .
 
-# Silence git ownership warnings inside container
-RUN git config --global --add safe.directory /app
+# Fix git ownership warning
+RUN git config --global --add safe.directory /app || true
 
 ENV NODE_ENV=production
-# PORT is required by Railway/Render for health checks
 ENV PORT=8080
 
 EXPOSE 8080
 
-# Start launcher (manages worker process + health endpoint)
 CMD ["node", "scripts/worker_start.js"]
