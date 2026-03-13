@@ -16,8 +16,8 @@ RUN apt-get update -qq && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install all deps (devDeps needed for tsx runtime)
-COPY package-lock.json package.json ./
-RUN npm ci --include=dev
+COPY package.json ./
+RUN npm install --include=dev
 
 # Copy source code
 COPY . .
