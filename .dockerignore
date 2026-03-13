@@ -1,35 +1,35 @@
-# Logs
+# ===== DEPENDENCY DIRECTORIES =====
+node_modules
+sdk/node_modules
+sdk/build
+sdk/coverage
+
+# ===== HUGE DIRS (not needed for worker) =====
+.claude/
+.git/
+.venv/
+tools/
+backend-agents/
+.taskmaster/
+
+# ===== BUILD OUTPUT =====
+dist
+dist-ssr
+*.local
+
+# ===== LOGS =====
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-
-node_modules
-# dist
-!sdk/dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# ===== DEV TOOLS =====
+.vscode/
+.idea/
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 
-sdk/node_modules
-# Explicitly include SDK dist
-# !/sdk/dist/*
-sdk/build
-sdk/coverage
-sdk/tests/.env
-
+# ===== ENV / SECRETS =====
 .env
+sdk/tests/.env
