@@ -10,10 +10,14 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "worker": "tsx scripts/agent_worker.js",
+    "worker:universal": "tsx scripts/agent_worker.js",
+    "worker:dev": "tsx --watch scripts/agent_worker.js",
+    "monitor": "tsx scripts/monitor_agent.js",
+    "brain:boot": "node scripts/bootstrap_brain.js",
+    "digest": "tsx scripts/daily_digest.js",
     "leads:list": "node server/tools/list_leads.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "worker:universal": "tsx scripts/agent_worker.js",
     "cron:crawler": "node scripts/harvest_samuimap.js",
     "ingest:harvest": "node scripts/ingest_harvested_data.js"
   },
@@ -131,7 +135,8 @@
     "web-push": "^3.6.7",
     "workflow": "^4.0.1-beta.41",
     "ws": "^8.18.3",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
@@ -160,7 +165,6 @@
     "supabase": "^2.67.3",
     "tailwindcss": "^3.4.17",
     "task-master-ai": "^0.40.0",
-    "tsx": "^4.21.0",
     "typescript": "^5.8.2",
     "vite": "^6.1.0",
     "vite-plugin-pwa": "^1.1.0",

@@ -45,7 +45,7 @@ function startWorker() {
     console.log(`[Launcher] Starting agent worker (restart #${restartCount})...`);
     workerStatus = 'running';
 
-    const worker = spawn('node', ['scripts/agent_worker.js'], {
+    const worker = spawn('npx', ['tsx', 'scripts/agent_worker.js'], {
         cwd: PROJECT_ROOT,
         stdio: 'inherit',
         env: { ...process.env }
