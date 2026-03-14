@@ -150,7 +150,14 @@ import { AgentService } from "../src/features/agents/services/AgentService.js";
 import { agents } from "../src/features/agents/services/AgentRegistry.js";
 import { clearMemory } from "../src/features/agents/services/memorySupabase.js";
 import { StripeService } from "../src/services/payments/StripeService.js"; // Import StripeService
-import { ReceptionistAgent } from "../src/features/agents/services/ReceptionistAgent.js"; // Import Receptionist Agent
+// ReceptionistAgent loaded dynamically to avoid Vite alias issues in Node.js
+let ReceptionistAgent = null;
+try {
+  const m = await import("../src/features/agents/services/ReceptionistAgent.js");
+  ReceptionistAgent = m.ReceptionistAgent;
+} catch (e) {
+  console.warn("⚠️ ReceptionistAgent not available (Vite alias incompatibility):", e.message);
+}
 import "./WorkflowTools.js"; // Register Workflow Tools (Node only)
 import { MCPClientManager } from "./mcp_client.js"; // Import MCP Manager
 
@@ -651,8 +658,26 @@ async function executeTool(toolName, payload, context = {}) {
           return `Error sending email: ${emailErr.message}`;
         }
 
-      case "generate_email":
-        return `Subject: Hello from Kosmoi\n\nDear Lead,\n\nWe saw you are interested in... [Generated Content Stub]`;
+      case "generate_email": {
+        const emailApiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+        if (!emailApiKey) return "Error: GEMINI_API_KEY not set for email generation";
+        const emailPrompt = `Write a personalized outreach email for a business in Koh Samui, Thailand.
+Context: ${JSON.stringify(payload)}
+Requirements:
+- Professional but warm tone
+- Mention specific value of joining Kosmoi platform
+- Clear call-to-action to claim their business profile
+- Short (max 150 words)
+- Subject line included
+Format: Subject: [subject]\n\n[body]`;
+        const emailRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${emailApiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: emailPrompt }] }] })
+        });
+        const emailData = await emailRes.json();
+        return emailData?.candidates?.[0]?.content?.parts?.[0]?.text || "Error generating email";
+      }
 
       // --- KNOWLEDGE BASE ---
       case "read_knowledge": {
@@ -877,6 +902,146 @@ async function executeTool(toolName, payload, context = {}) {
         return tgData.ok ? "Telegram notification sent." : `Telegram error: ${JSON.stringify(tgData)}`;
       }
 
+      // --- N8N OUTREACH (Email + WhatsApp) ---
+      case "send_n8n_email": {
+        const n8nEmailUrl = process.env.VITE_N8N_EMAIL_WEBHOOK || process.env.N8N_EMAIL_WEBHOOK;
+        if (!n8nEmailUrl || n8nEmailUrl.includes("YOUR_")) return "Error: N8N_EMAIL_WEBHOOK not configured";
+        const n8nRes = await fetch(n8nEmailUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        return n8nRes.ok ? `Email sent via n8n to ${payload.to || payload.email}` : `n8n email error: ${n8nRes.status}`;
+      }
+
+      case "send_n8n_whatsapp": {
+        const n8nWaUrl = process.env.VITE_N8N_WHATSAPP_WEBHOOK || process.env.N8N_WHATSAPP_WEBHOOK;
+        if (!n8nWaUrl || n8nWaUrl.includes("YOUR_")) return "Error: N8N_WHATSAPP_WEBHOOK not configured";
+        const n8nWaRes = await fetch(n8nWaUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        return n8nWaRes.ok ? `WhatsApp sent via n8n to ${payload.phone || payload.to}` : `n8n WhatsApp error: ${n8nWaRes.status}`;
+      }
+
+      // --- BUSINESS METRICS ANALYSIS ---
+      case "analyze_business_metrics": {
+        const { data: providers } = await workerSupabase
+          .from("service_providers").select("id, name, category, verified, created_at").limit(100);
+        const { data: leads } = await workerSupabase
+          .from("crm_leads").select("id, status, created_at").limit(200);
+        const { data: txns } = await workerSupabase
+          .from("transactions").select("amount, status, created_at").limit(200);
+
+        const totalRevenue = (txns || []).filter(t => t.status === "succeeded" || t.status === "completed")
+          .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        const verifiedProviders = (providers || []).filter(p => p.verified).length;
+        const conversionRate = leads?.length ? ((leads.filter(l => l.status === "converted").length / leads.length) * 100).toFixed(1) : 0;
+
+        const metrics = {
+          total_providers: providers?.length || 0,
+          verified_providers: verifiedProviders,
+          total_leads: leads?.length || 0,
+          lead_conversion_rate: `${conversionRate}%`,
+          total_revenue_thb: totalRevenue,
+          total_transactions: txns?.length || 0,
+          generated_at: new Date().toISOString()
+        };
+        await workerSupabase.from("company_knowledge").upsert({ key: "BUSINESS_METRICS", value: metrics, category: "analytics", updated_at: new Date().toISOString() });
+        return JSON.stringify(metrics);
+      }
+
+      // --- AGENT META-TOOLS ---
+      case "update_agent_prompt": {
+        const { agent_id, new_prompt, reason } = payload;
+        if (!agent_id || !new_prompt) return "Error: agent_id and new_prompt required";
+        await workerSupabase.from("company_knowledge").upsert({
+          key: `AGENT_PROMPT_OVERRIDE_${agent_id.toUpperCase()}`,
+          value: { prompt: new_prompt, reason, updated_at: new Date().toISOString() },
+          category: "agent_config",
+          updated_at: new Date().toISOString()
+        });
+        return `Agent prompt for ${agent_id} updated and stored.`;
+      }
+
+      case "delegate_task":
+      case "summon_agent": {
+        const { agent_id, task_title, task_description, priority } = payload;
+        if (!agent_id || !task_title) return "Error: agent_id and task_title required";
+        const { error: delegateErr } = await workerSupabase.from("agent_tasks").insert([{
+          title: task_title,
+          description: task_description || task_title,
+          assigned_to: agent_id,
+          priority: priority || "medium",
+          status: "pending",
+          created_by: context.agentId || "system",
+        }]);
+        return delegateErr ? `Delegation error: ${delegateErr.message}` : `Task delegated to ${agent_id}: "${task_title}"`;
+      }
+
+      case "market_scanner":
+      case "get_trends": {
+        const query = payload.query || payload.topic || "Koh Samui tourism business trends 2025";
+        const searchRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+        const searchData = await searchRes.json();
+        const results = (searchData.RelatedTopics || []).slice(0, 5).map(t => t.Text).filter(Boolean);
+        return results.length ? results.join("\n\n") : `No trends found for: ${query}`;
+      }
+
+      case "read_table": {
+        const table = payload.table || "providers";
+        const limit = payload.limit || 20;
+        // columns can be array or string
+        const cols = Array.isArray(payload.columns) ? payload.columns.join(", ") : (payload.columns || "*");
+        let q = workerSupabase.from(table).select(cols).limit(limit);
+        // support both 'filters' and 'where' keys
+        const filterObj = payload.filters || payload.where || {};
+        for (const [key, val] of Object.entries(filterObj)) {
+          // normalize common aliases (verified → is_verified)
+          const col = key === "verified" ? "is_verified" : key;
+          q = q.eq(col, val);
+        }
+        if (payload.order_by) q = q.order(payload.order_by, { ascending: payload.ascending ?? false });
+        const { data: tableData, error: tableErr } = await q;
+        if (tableErr) return `Error reading ${table}: ${tableErr.message}`;
+        return JSON.stringify(tableData, null, 2);
+      }
+
+      case "search_providers": {
+        const search = payload.query || payload.search || "";
+        const verified = payload.verified !== undefined ? payload.verified : null;
+        let q = workerSupabase.from("service_providers")
+          .select("id, business_name, category, phone, email, whatsapp, verified, claimed, status, created_at")
+          .limit(payload.limit || 20);
+        if (search) q = q.ilike("business_name", `%${search}%`);
+        if (verified !== null) q = q.eq("verified", verified);
+        const { data: provData, error: provErr } = await q;
+        if (provErr) return `Error searching providers: ${provErr.message}`;
+        return JSON.stringify(provData, null, 2);
+      }
+
+      case "score_lead": {
+        const { providerId, businessName } = payload;
+        let provider = null;
+        if (providerId) {
+          const { data } = await workerSupabase.from("service_providers").select("*").eq("id", providerId).single();
+          provider = data;
+        } else if (businessName) {
+          const { data } = await workerSupabase.from("service_providers").select("*").ilike("business_name", `%${businessName}%`).limit(1).maybeSingle();
+          provider = data;
+        }
+        if (!provider) return `Provider not found for scoring.`;
+        let score = 0;
+        if (provider.business_name) score += 20;
+        if (provider.phone || provider.whatsapp) score += 20;
+        if (provider.email) score += 20;
+        if (provider.verified) score += 25;
+        if (provider.category) score += 15;
+        const grade = score >= 80 ? "A" : score >= 60 ? "B" : score >= 40 ? "C" : "D";
+        return JSON.stringify({ id: provider.id, name: provider.business_name, score, grade, breakdown: { has_name: !!provider.business_name, has_phone: !!(provider.phone||provider.whatsapp), has_email: !!provider.email, is_verified: !!provider.verified, has_category: !!provider.category } });
+      }
+
       default:
         // Check if it's an MCP Tool
         const mcpTools = mcpManager.getTools();
@@ -921,21 +1086,32 @@ TITLE: ${task.title}
 DESCRIPTION: ${task.description}
 
 Please execute this task using your available tools.
-AVAILABLE TOOLS:
-- execute_command: Run shell commands
-- write_code: Write files
-- send_email: Send real emails (Resend/SMTP configured)
-- create_lead: Add CRM headers
-- create_lead: Add CRM headers
-- create_task: Delegate work
+
+AVAILABLE TOOLS (call by setting "action": {"name": "tool_name", "payload": {...}} in your JSON):
+- analyze_business_metrics: Get platform stats (providers, users, revenue). Payload: {}
+- write_knowledge: Save to knowledge base. Payload: { "key": "...", "value": "...", "category": "analytics" }
+- read_knowledge: Read from knowledge base. Payload: { "key": "..." }
+- delegate_task: Assign work to another agent. Payload: { "toAgent": "sales|marketing|tech", "title": "...", "description": "..." }
+- market_scanner: Read competitor/market data. Payload: { "topic": "samui_market" }
+- score_lead: Score a provider as a lead. Payload: { "providerId": "uuid" }
+- create_task: Create agent task. Payload: { "title": "...", "description": "...", "assignee": "agent_role" }
+- send_telegram: Alert admin. Payload: { "message": "..." }
+- execute_command: Run shell command. Payload: { "command": "..." }
+- write_code: Write file. Payload: { "path": "...", "content": "..." }
+- send_email: Send email. Payload: { "to": "...", "subject": "...", "body": "..." }
+- read_table: Query DB. Payload: { "table": "...", "limit": 10 }
+- search_providers: Search providers. Payload: { "query": "...", "category": "..." }
 
 ${mcpManager.formatToolsSystemPrompt()}
 
-If you need to run commands, use 'execute_command'.
-If you need to write code, use 'write_code'.
-If you need to send an email, use 'send_email'.
+OUTPUT FORMAT (you MUST return valid JSON):
+{
+  "thought_process": "your reasoning",
+  "message": "brief status",
+  "action": { "name": "tool_name", "payload": {} }
+}
 
-When finished, reply with "TASK_COMPLETED".
+When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
 `;
 
   let currentMessage = prompt;
@@ -949,7 +1125,6 @@ When finished, reply with "TASK_COMPLETED".
     const response = await activeAgent.sendMessage(currentMessage, {
       simulateTools: false,
     });
-    // console.log(`🗣️ Agent Raw Output:`, response); // Debug if needed
 
     // 2. ROBUST ACTION PARSING
     let action = response.toolRequest;
@@ -1074,10 +1249,12 @@ When finished, reply with "TASK_COMPLETED".
         "Error: Tool action detected but tool name is missing. Please check your JSON structure.";
     } else {
       // No tool call. Check if done.
-      // No tool call. Check if done.
+      // Check both response.text and response.raw.message (JSON output from Gemini)
+      const rawMessage = response.raw?.message || "";
+      const completionText = (response.text + " " + rawMessage).toUpperCase();
       if (
-        response.text.toUpperCase().includes("TASK_COMPLETED") ||
-        response.text.toUpperCase().includes("TERMINATE")
+        completionText.includes("TASK_COMPLETED") ||
+        completionText.includes("TERMINATE")
       ) {
         console.log("✅ Task Completed by Agent.");
         const { error: completeError } = await workerSupabase
@@ -1246,6 +1423,7 @@ async function main() {
           // actually if lastMsg is USER, then we haven't replied yet, as reply would be top of stack)
 
           // Trigger Agent with workerSupabase (Service Role)
+          if (!ReceptionistAgent) continue;
           const responseText = await ReceptionistAgent.handleIncomingMessage(
             lastMsg,
             meeting.provider_id,
@@ -1505,6 +1683,83 @@ function startCronScheduler() {
   }, 60_000); // check every minute
 }
 
+// ============================================================
+// REALTIME LISTENERS — Instant event-driven triggers
+// ============================================================
+function startRealtimeListeners() {
+  console.log("⚡ Realtime listeners started");
+
+  // Trigger 1: New message → Receptionist responds immediately
+  workerSupabase
+    .channel("realtime:board_messages")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "board_messages" },
+      async (payload) => {
+        const msg = payload.new;
+        if (!msg.agent_id || msg.agent_id === "HUMAN_USER") {
+          console.log(`⚡ [Realtime] New message → running receptionist immediately`);
+          await runReceptionistCycle().catch((e) =>
+            console.warn("[Realtime] Receptionist error:", e.message)
+          );
+        }
+      }
+    )
+    .subscribe();
+
+  // Trigger 2: New business registered → CRM agent follows up
+  workerSupabase
+    .channel("realtime:service_providers")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "service_providers" },
+      async (payload) => {
+        const business = payload.new;
+        console.log(`⚡ [Realtime] New business: ${business.name} → triggering CRM follow-up`);
+        await workerSupabase.from("agent_tasks").insert([{
+          title: `Welcome new business: ${business.name}`,
+          description: `A new business just registered. Send a welcome message and offer onboarding help. Business ID: ${business.id}`,
+          assigned_to: "crm-sales-agent",
+          priority: "high",
+          status: "pending",
+          created_by: "realtime-trigger",
+          input_context: JSON.stringify({ business_id: business.id, business_name: business.name }),
+        }]).then(({ error }) => {
+          if (error) console.warn("[Realtime] CRM task insert error:", error.message);
+        });
+      }
+    )
+    .subscribe();
+
+  // Trigger 3: Transaction/payment succeeded → activate provider
+  // NOTE: The actual table name in this project is "transactions", not "payments"
+  workerSupabase
+    .channel("realtime:transactions")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "transactions" },
+      async (payload) => {
+        const payment = payload.new;
+        if (payment.status === "succeeded" || payment.status === "completed") {
+          console.log(`⚡ [Realtime] Transaction succeeded → activating provider ${payment.provider_id}`);
+          await workerSupabase.from("agent_tasks").insert([{
+            title: `Activate provider after payment`,
+            description: `Payment confirmed. Update provider status to verified and send confirmation. Provider ID: ${payment.provider_id}`,
+            assigned_to: "crm-sales-agent",
+            priority: "urgent",
+            status: "pending",
+            created_by: "realtime-trigger",
+            input_context: JSON.stringify({ provider_id: payment.provider_id, amount: payment.amount }),
+          }]).then(({ error }) => {
+            if (error) console.warn("[Realtime] Transaction task insert error:", error.message);
+          });
+        }
+      }
+    )
+    .subscribe();
+}
+
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
 startCronScheduler();
+startRealtimeListeners();
