@@ -156,6 +156,58 @@ console.error = function (...args) {
 };
 // ------------------------
 
+// --- ADMIN VISIBILITY: Log to Supabase agent_logs (powers LiveAgentFeed) ---
+async function logToAdmin(agentId, message, level = "info", metadata = {}) {
+  try {
+    await workerSupabase.from("agent_logs").insert({
+      agent_id: agentId || "worker",
+      level,
+      message,
+      metadata: { role: "assistant", username: agentId || "worker", source: "agent_worker", ...metadata },
+    });
+  } catch (_) { /* non-fatal */ }
+}
+
+// --- TELEGRAM NOTIFICATIONS ---
+async function notifyTelegram(message) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chat = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chat, text: message, parse_mode: "Markdown" }),
+    });
+  } catch (_) { /* non-fatal */ }
+}
+
+// --- WORKER MEMORY: persist context between tasks ---
+async function loadWorkerMemory() {
+  try {
+    const { data } = await workerSupabase
+      .from("company_knowledge")
+      .select("value")
+      .eq("key", "WORKER_MEMORY")
+      .single();
+    return data?.value ? (typeof data.value === "string" ? JSON.parse(data.value) : data.value) : {};
+  } catch (_) { return {}; }
+}
+
+async function saveWorkerMemory(updates) {
+  try {
+    const current = await loadWorkerMemory();
+    const merged = { ...current, ...updates, last_updated: new Date().toISOString() };
+    await workerSupabase.from("company_knowledge").upsert({
+      key: "WORKER_MEMORY",
+      value: merged,
+      category: "worker",
+      updated_at: new Date().toISOString(),
+    });
+  } catch (_) { /* non-fatal */ }
+}
+// -----------------------------------------------------------------------
+
 // Import services
 // Note: We need to use absolute paths or handle imports carefully in Node
 // Since package.json has "type": "module", we can use imports.
@@ -1274,6 +1326,11 @@ ${sections.join("\n\n")}
 async function processTask(task, agentService, agentConfigOverride) {
   console.log(`\n📋 Processing Task: ${task.title}`);
   console.log(`[${workerName}] Claiming task...`);
+
+  // Log task start to admin feed + Telegram
+  await logToAdmin(task.assigned_to, `🚀 Started: ${task.title}`, "info", { task_id: task.id, priority: task.priority });
+  await notifyTelegram(`🤖 *${task.assigned_to || "Worker"}* started:\n*${task.title}*`);
+
   const { error: updateError } = await workerSupabase
     .from("agent_tasks")
     .update({ status: "in_progress" })
@@ -1499,6 +1556,12 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
         if (completeError)
           console.warn("⚠️ Failed to update result:", completeError.message);
 
+        // Log success to admin feed + Telegram + memory
+        const snippet = response.text?.slice(0, 200) || "";
+        await logToAdmin(task.assigned_to, `✅ Done: ${task.title}\n${snippet}`, "info", { task_id: task.id, status: "done" });
+        await notifyTelegram(`✅ *${task.assigned_to || "Worker"}* completed:\n*${task.title}*\n\n${snippet}`);
+        await saveWorkerMemory({ [`last_done_${task.assigned_to}`]: { title: task.title, result: snippet, at: new Date().toISOString() } });
+
         return;
       }
 
@@ -1518,6 +1581,8 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
             result: "FAILED: Agent returned text without calling any tool 3 times in a row.",
           })
           .eq("id", task.id);
+        await logToAdmin(task.assigned_to, `❌ Failed: ${task.title} (no tool calls)`, "error", { task_id: task.id });
+        await notifyTelegram(`❌ *${task.assigned_to || "Worker"}* failed:\n*${task.title}*\nAgent stopped calling tools.`);
         return;
       }
 
@@ -1944,7 +2009,11 @@ function startCronScheduler() {
         status: "pending",
         created_by: "cron-scheduler",
       }]);
-      if (error) console.error(`Cron insert error for ${sched.agentId}:`, error.message);
+      if (error) {
+        console.error(`Cron insert error for ${sched.agentId}:`, error.message);
+      } else {
+        await logToAdmin("cron-scheduler", `⏰ Scheduled: ${sched.title}`, "info", { agent: sched.agentId });
+      }
     }
 
     // Clean old fire keys every hour
