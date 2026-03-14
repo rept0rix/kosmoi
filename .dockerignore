@@ -30,6 +30,9 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 
+# ===== MCP CONFIG (local-only tools - Chrome, etc. not available in Railway) =====
+.mcp.json
+
 # ===== ENV / SECRETS =====
 .env
 sdk/tests/.env
