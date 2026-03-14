@@ -35,45 +35,61 @@ if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
   console.log("🔑 Worker running with Service Role Privileges");
 }
 
-// --- OTA AUTO-UPDATE LOGIC ---
+// --- WORKER RUNTIME CONFIG (applied at startup, no disk writes) ---
+let workerRuntimeConfig = {
+  logLevel: "info",         // "debug" | "info" | "warn"
+  pollIntervalMs: null,     // override poll interval if set
+  modelOverride: null,      // override AI model if set
+};
+
+// --- SAFE CONFIG PULL (replaces insecure OTA self-overwrite) ---
 async function checkForUpdates() {
-  console.log("📡 Checking for updates (via agent_tasks)...");
-  const UPDATE_ID = "00000000-0000-0000-0000-000000000001";
+  console.log("📡 Checking for runtime config (WORKER_CONFIG in company_knowledge)...");
 
   const { data, error } = await workerSupabase
-    .from("agent_tasks")
-    .select("*")
-    .eq("id", UPDATE_ID)
+    .from("company_knowledge")
+    .select("key, value, updated_at")
+    .eq("key", "WORKER_CONFIG")
     .single();
 
   if (error || !data) {
-    console.log("✅ No updates found.");
+    console.log("✅ No WORKER_CONFIG found — using defaults.");
     return;
   }
 
   try {
-    const updateData = JSON.parse(data.description);
-    const remoteVersion = new Date(updateData.version).getTime();
-    const localStats = fs.statSync(__filename);
-    const localVersion = localStats.mtime.getTime();
+    const raw = data.value;
+    const config = typeof raw === "string" ? JSON.parse(raw) : raw;
 
-    if (remoteVersion > localVersion) {
-      console.log("🚀 New version detected! Downloading update...");
-      console.log(`   Remote: ${updateData.version}`);
+    // Only accept a strict allowlist of safe scalar config keys.
+    // Any attempt to set 'code', 'script', 'exec', or similar is ignored.
+    const ALLOWED_KEYS = ["logLevel", "pollIntervalMs", "modelOverride"];
+    const applied = {};
 
-      // Backup
-      fs.copyFileSync(__filename, `${__filename}.bak`);
+    for (const key of ALLOWED_KEYS) {
+      if (config[key] !== undefined) {
+        const value = config[key];
+        // Additional type guards per key
+        if (key === "logLevel" && ["debug", "info", "warn"].includes(value)) {
+          workerRuntimeConfig.logLevel = value;
+          applied[key] = value;
+        } else if (key === "pollIntervalMs" && typeof value === "number" && value >= 5000) {
+          workerRuntimeConfig.pollIntervalMs = value;
+          applied[key] = value;
+        } else if (key === "modelOverride" && typeof value === "string" && value.length < 100) {
+          workerRuntimeConfig.modelOverride = value;
+          applied[key] = value;
+        }
+      }
+    }
 
-      // Overwrite
-      fs.writeFileSync(__filename, updateData.code);
-
-      console.log("✅ Update applied. Restarting worker...");
-      process.exit(0);
+    if (Object.keys(applied).length > 0) {
+      console.log("✅ WORKER_CONFIG applied to runtime (no disk writes):", applied);
     } else {
-      console.log("✅ Worker is up to date.");
+      console.log("✅ WORKER_CONFIG present but no valid keys to apply.");
     }
   } catch (e) {
-    console.error("❌ Failed to parse update payload:", e.message);
+    console.error("❌ Failed to parse WORKER_CONFIG payload:", e.message);
   }
 }
 // -----------------------------
@@ -918,6 +934,134 @@ Format: Subject: [subject]\n\n[body]`;
         );
       }
 
+      // --- LEAD SCORING ---
+      case "score_lead": {
+        // Resolve the lead by ID or email
+        const scoreLookupId = payload.lead_id || payload.id;
+        const scoreLookupEmail = payload.lead_email || payload.email;
+
+        let leadRecord = null;
+
+        if (scoreLookupId) {
+          const { data: ld, error: ldErr } = await workerSupabase
+            .from("crm_leads")
+            .select("*")
+            .eq("id", scoreLookupId)
+            .single();
+          if (ldErr) return `Error fetching lead: ${ldErr.message}`;
+          leadRecord = ld;
+        } else if (scoreLookupEmail) {
+          const { data: ld, error: ldErr } = await workerSupabase
+            .from("crm_leads")
+            .select("*")
+            .ilike("email", scoreLookupEmail.trim())
+            .limit(1)
+            .single();
+          if (ldErr) return `Error fetching lead by email: ${ldErr.message}`;
+          leadRecord = ld;
+        } else {
+          return "Error: score_lead requires lead_id or lead_email.";
+        }
+
+        if (!leadRecord) return "Error: Lead not found.";
+
+        // Fetch interactions for this lead
+        const { data: interactions, error: intErr } = await workerSupabase
+          .from("crm_interactions")
+          .select("*")
+          .eq("lead_id", leadRecord.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (intErr) return `Error fetching interactions: ${intErr.message}`;
+
+        const scoringNow = Date.now();
+        const scoringReasoning = [];
+        let leadScore = 0;
+
+        // Factor 1: Recency of last contact (0-35 points)
+        const lastInteractionDate = interactions && interactions.length > 0
+          ? new Date(interactions[0].created_at).getTime()
+          : (leadRecord.updated_at ? new Date(leadRecord.updated_at).getTime() : null);
+
+        if (lastInteractionDate) {
+          const daysSinceLast = (scoringNow - lastInteractionDate) / (1000 * 60 * 60 * 24);
+          let recencyScore = 0;
+          if (daysSinceLast <= 1)       recencyScore = 35;
+          else if (daysSinceLast <= 3)  recencyScore = 30;
+          else if (daysSinceLast <= 7)  recencyScore = 22;
+          else if (daysSinceLast <= 14) recencyScore = 14;
+          else if (daysSinceLast <= 30) recencyScore = 7;
+          leadScore += recencyScore;
+          scoringReasoning.push(`Recency: ${Math.round(daysSinceLast)}d since last contact → +${recencyScore} pts`);
+        } else {
+          scoringReasoning.push("Recency: No contact date → +0 pts");
+        }
+
+        // Factor 2: Number of interactions (0-35 points)
+        const interactionCount = interactions ? interactions.length : 0;
+        let interactionScore = 0;
+        if (interactionCount >= 10)     interactionScore = 35;
+        else if (interactionCount >= 7) interactionScore = 28;
+        else if (interactionCount >= 4) interactionScore = 20;
+        else if (interactionCount >= 2) interactionScore = 12;
+        else if (interactionCount >= 1) interactionScore = 5;
+        leadScore += interactionScore;
+        scoringReasoning.push(`Interactions: ${interactionCount} total → +${interactionScore} pts`);
+
+        // Factor 3: Business size indicators in notes (0-30 points)
+        const notesText = [
+          leadRecord.notes || "",
+          leadRecord.description || "",
+          leadRecord.company || "",
+          ...(interactions || []).map((i) => i.notes || i.content || ""),
+        ].join(" ").toLowerCase();
+
+        const enterpriseSignals = ["enterprise", "large", "corporation", "ceo", "director", "vp ", "chief", "head of", "10,000", "50,000", "100k", "1 million", "regional", "national"];
+        const midSignals = ["team", "manager", "lead ", "department", "growing", "scale", "multiple", "several", "200", "500", "1,000"];
+        const smallSignals = ["startup", "small", "solo", "freelance", "one-person", "myself", "just me"];
+
+        const enterpriseHits = enterpriseSignals.filter((s) => notesText.includes(s)).length;
+        const midHits = midSignals.filter((s) => notesText.includes(s)).length;
+        const smallHits = smallSignals.filter((s) => notesText.includes(s)).length;
+
+        let sizeScore = 0;
+        let sizeLabel = "unknown";
+        if (enterpriseHits >= 2)      { sizeScore = 30; sizeLabel = "enterprise"; }
+        else if (enterpriseHits >= 1) { sizeScore = 22; sizeLabel = "large"; }
+        else if (midHits >= 2)        { sizeScore = 16; sizeLabel = "mid-size"; }
+        else if (midHits >= 1)        { sizeScore = 10; sizeLabel = "growing SMB"; }
+        else if (smallHits >= 1)      { sizeScore = 4;  sizeLabel = "small/solo"; }
+
+        leadScore += sizeScore;
+        scoringReasoning.push(`Business size (${sizeLabel}): enterprise=${enterpriseHits}, mid=${midHits}, small=${smallHits} → +${sizeScore} pts`);
+
+        // Clamp to 0-100
+        leadScore = Math.min(100, Math.max(0, leadScore));
+
+        // Persist score back to lead record
+        const { error: updateScoreErr } = await workerSupabase
+          .from("crm_leads")
+          .update({ score: leadScore, updated_at: new Date().toISOString() })
+          .eq("id", leadRecord.id);
+
+        if (updateScoreErr) {
+          console.warn(`[score_lead] Failed to persist score: ${updateScoreErr.message}`);
+        }
+
+        const scoreResult = {
+          lead_id: leadRecord.id,
+          lead_email: leadRecord.email,
+          lead_name: `${leadRecord.first_name || ""} ${leadRecord.last_name || ""}`.trim(),
+          score: leadScore,
+          reasoning: scoringReasoning,
+          interactions_analyzed: interactionCount,
+        };
+
+        console.log(`[score_lead] Lead ${leadRecord.id} scored: ${leadScore}/100`);
+        return JSON.stringify(scoreResult);
+      }
+
       // --- TELEGRAM NOTIFICATIONS ---
       case "notify_admin":
       case "send_telegram": {
@@ -1094,6 +1238,39 @@ Format: Subject: [subject]\n\n[body]`;
   }
 }
 
+// ── Company Context Injection ────────────────────────────────────────────────
+// Reads COMPANY_OVERVIEW, MARKETING_PLAYBOOK, and WORKER_STATUS from
+// company_knowledge and returns a formatted context string for agent prompts.
+async function getCompanyContext() {
+  const CONTEXT_KEYS = ["COMPANY_OVERVIEW", "MARKETING_PLAYBOOK", "WORKER_STATUS"];
+  try {
+    const { data, error } = await workerSupabase
+      .from("company_knowledge")
+      .select("key, value")
+      .in("key", CONTEXT_KEYS);
+
+    if (error || !data || data.length === 0) {
+      return ""; // Gracefully degrade — no context available yet
+    }
+
+    const sections = data.map(({ key, value }) => {
+      const summary = typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
+      return `### ${key}\n${summary}`;
+    });
+
+    return `
+=== COMPANY CONTEXT (injected by worker) ===
+${sections.join("\n\n")}
+=== END COMPANY CONTEXT ===
+
+`;
+  } catch (err) {
+    console.warn("⚠️ getCompanyContext failed (non-fatal):", err.message);
+    return "";
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function processTask(task, agentService, agentConfigOverride) {
   console.log(`\n📋 Processing Task: ${task.title}`);
   console.log(`[${workerName}] Claiming task...`);
@@ -1112,8 +1289,13 @@ async function processTask(task, agentService, agentConfigOverride) {
   // Let's assume we always pass agentService now.
   const activeAgent = agentService || agent;
 
+  // Inject company context unless already present in input_context
+  const inputContext = task.input_context || "";
+  const companyContext =
+    inputContext.includes("=== COMPANY CONTEXT") ? "" : await getCompanyContext();
+
   const prompt = `
-You have been assigned a task:
+${companyContext}You have been assigned a task:
 TITLE: ${task.title}
 DESCRIPTION: ${task.description}
 
@@ -1456,10 +1638,47 @@ async function main() {
           // Check if we already replied (simple check: verify no recent reply from receptionist...
           // actually if lastMsg is USER, then we haven't replied yet, as reply would be top of stack)
 
-          // Trigger Agent with workerSupabase (Service Role)
           if (!ReceptionistAgent) continue;
+
+          // --- MEMORY ENHANCEMENT: Enrich message with provider context ---
+          let enrichedMessage = { ...lastMsg };
+          try {
+            // Load provider profile
+            const { data: providerProfile } = await workerSupabase
+              .from("service_providers")
+              .select("id, business_name, category, description, opening_hours, phone, email, verified, metadata")
+              .eq("id", meeting.provider_id)
+              .single();
+
+            // Load last 5 interactions with this provider
+            const { data: recentInteractions } = await workerSupabase
+              .from("crm_interactions")
+              .select("id, type, notes, content, created_at, direction")
+              .eq("provider_id", meeting.provider_id)
+              .order("created_at", { ascending: false })
+              .limit(5);
+
+            // Attach enriched context to the message object so ReceptionistAgent can use it
+            enrichedMessage._context = {
+              providerProfile: providerProfile || null,
+              recentInteractions: recentInteractions || [],
+              interactionSummary: recentInteractions && recentInteractions.length > 0
+                ? `${recentInteractions.length} recent interaction(s). Last: "${(recentInteractions[0].notes || recentInteractions[0].content || "").slice(0, 120)}"`
+                : "No prior interactions found.",
+            };
+
+            console.log(
+              `[Receptionist] Enriched context for provider ${meeting.provider_id}: ` +
+              `profile=${!!providerProfile}, interactions=${recentInteractions?.length || 0}`
+            );
+          } catch (enrichErr) {
+            console.warn(`[Receptionist] Context enrichment failed (non-fatal): ${enrichErr.message}`);
+            // Fall back to original message without enrichment
+          }
+
+          // Trigger Agent with enriched message and workerSupabase (Service Role)
           const responseText = await ReceptionistAgent.handleIncomingMessage(
-            lastMsg,
+            enrichedMessage,
             meeting.provider_id,
             workerSupabase,
           );
@@ -1674,6 +1893,10 @@ const scheduledAgents = [
   { agentId: "tech-scout-agent", cron: { hour: 9,  minute: 0,  days: [1] },              title: "Weekly Tech Landscape Scan" },
   { agentId: "optimizer-agent",  cron: { hour: 10, minute: 0,  days: [1,4] },            title: "Bi-Weekly Business Health Check" },
   { agentId: "crm-sales-agent",  cron: { hour: 9,  minute: 30, days: [1,2,3,4,5] },      title: "Morning Lead Follow-Up" },
+  // ── Marketing Automation ─────────────────────────────────────────────────
+  { agentId: "crm-sales-agent",  cron: { hour: 10, minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Daily Lead Outreach: Find 3 uncontacted businesses and send personalized emails" },
+  { agentId: "optimizer-agent",  cron: { hour: 7,  minute: 0,  days: [1] },              title: "Weekly Business Health Report: Analyze metrics and write summary to company_knowledge" },
+  { agentId: "crm-sales-agent",  cron: { hour: 18, minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Evening Follow-up: Check leads contacted today, send follow-up to non-responders" },
 ];
 
 const firedToday = new Set(); // key: "agentId-YYYY-MM-DD-HH" to prevent double-fire
