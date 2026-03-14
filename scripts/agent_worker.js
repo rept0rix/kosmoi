@@ -40,7 +40,7 @@ async function checkForUpdates() {
   console.log("📡 Checking for updates (via agent_tasks)...");
   const UPDATE_ID = "00000000-0000-0000-0000-000000000001";
 
-  const { data, error } = await realSupabase
+  const { data, error } = await workerSupabase
     .from("agent_tasks")
     .select("*")
     .eq("id", UPDATE_ID)
@@ -376,6 +376,38 @@ async function executeTool(toolName, payload, context = {}) {
         const issueData = await issueRes.json();
         if (!issueRes.ok) return `Error: ${JSON.stringify(issueData)}`;
         return `Issue Created: ${issueData.html_url}`;
+
+      case "github_push_file": {
+        // Self-improvement: push a file to GitHub → triggers Railway redeploy
+        const ghToken = process.env.GITHUB_TOKEN;
+        if (!ghToken) return "Error: GITHUB_TOKEN not set in environment";
+        const ghRepo = payload.repo || "rept0rix/kosmoi";
+        const ghPath = payload.path;
+        const ghContent = payload.content;
+        const ghMessage = payload.message || `feat(worker): auto-update ${ghPath}`;
+        if (!ghPath || !ghContent) return "Error: path and content are required";
+
+        // Get current file SHA (required for update)
+        const shaRes = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${ghPath}`, {
+          headers: { Authorization: `token ${ghToken}`, Accept: "application/vnd.github.v3+json" }
+        });
+        const shaData = await shaRes.json();
+        const sha = shaData.sha; // undefined if file is new
+
+        const pushRes = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${ghPath}`, {
+          method: "PUT",
+          headers: { Authorization: `token ${ghToken}`, Accept: "application/vnd.github.v3+json", "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: ghMessage,
+            content: Buffer.from(ghContent).toString("base64"),
+            ...(sha && { sha })
+          })
+        });
+        const pushData = await pushRes.json();
+        if (!pushRes.ok) return `GitHub push error: ${JSON.stringify(pushData.message)}`;
+        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically.`;
+      }
+
       case "create_task":
         const assignedTo =
           payload.assigned_to ||
@@ -1095,6 +1127,8 @@ AVAILABLE TOOLS (call by setting "action": {"name": "tool_name", "payload": {...
 - market_scanner: Read competitor/market data. Payload: { "topic": "samui_market" }
 - score_lead: Score a provider as a lead. Payload: { "providerId": "uuid" }
 - create_task: Create agent task. Payload: { "title": "...", "description": "...", "assignee": "agent_role" }
+- github_push_file: Push code/file to GitHub → triggers Railway auto-redeploy. Payload: { "path": "scripts/agent_worker.js", "content": "...", "message": "feat: improve X" }
+- update_agent_prompt: Improve agent system prompt stored in DB. Payload: { "agent_id": "tech-lead-agent", "new_prompt": "...", "reason": "..." }
 - send_telegram: Alert admin. Payload: { "message": "..." }
 - execute_command: Run shell command. Payload: { "command": "..." }
 - write_code: Write file. Payload: { "path": "...", "content": "..." }
