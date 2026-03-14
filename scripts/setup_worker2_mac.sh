@@ -1,96 +1,87 @@
 #!/bin/bash
 # ============================================================
 # Worker2 Setup Script — Mac
-# מריץ את הKosmoi worker על מק שני כ-background service
+# Usage: curl -s https://raw.githubusercontent.com/rept0rix/kosmoi/main/scripts/setup_worker2_mac.sh | bash
 # ============================================================
-
 set -e
 
 REPO_URL="https://github.com/rept0rix/kosmoi.git"
 INSTALL_DIR="$HOME/kosmoi-worker2"
-WORKER_NAME="Worker2-Mac"
 PLIST_NAME="com.kosmoi.worker2"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME.plist"
 
-echo "🤖 Kosmoi Worker2 Setup"
-echo "========================"
+echo "" && echo "🤖 Kosmoi Worker2 Setup" && echo "========================" && echo ""
 
-# 1. Clone repo
-if [ -d "$INSTALL_DIR" ]; then
-  echo "📁 Directory exists — pulling latest..."
-  cd "$INSTALL_DIR" && git pull
+if [ -d "$INSTALL_DIR/.git" ]; then
+  echo "📁 Updating existing installation..."
+  cd "$INSTALL_DIR" && git pull --quiet
 else
   echo "📥 Cloning repo..."
-  git clone "$REPO_URL" "$INSTALL_DIR"
+  git clone --quiet "$REPO_URL" "$INSTALL_DIR"
   cd "$INSTALL_DIR"
 fi
 
-# 2. Install Node deps
 echo "📦 Installing dependencies..."
-npm install --omit=dev 2>&1 | tail -3
+cd "$INSTALL_DIR"
+npm install --omit=dev --silent 2>&1 | tail -2
 
-# 3. Create .env
-echo "📝 Writing .env..."
-cat > "$INSTALL_DIR/.env" << 'ENVEOF'
-VITE_SUPABASE_URL=https://gzjzeywhqbwppfxqkptf.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_dP_8q9Q25Dg5qQXxIhDS0A_IPKNOOvO
-VITE_SUPABASE_SERVICE_ROLE_KEY=sb_secret_qSrW9aYZy5L0ySIlpnleHg_b_8OX1Cy
-GEMINI_API_KEY=AIzaSyDS3lAT6NZlNHCvJi8GJ2PSoNcU7KU9rOQ
-VITE_GEMINI_API_KEY=AIzaSyDS3lAT6NZlNHCvJi8GJ2PSoNcU7KU9rOQ
-TELEGRAM_BOT_TOKEN=8680199102:AAHvICv9yP7CQfofaFJ87IeI7ElLob_54rA
-TELEGRAM_CHAT_ID=264614073
+echo "" && echo "🔑 Enter your credentials:" && echo ""
+read -p "  VITE_SUPABASE_URL         [Required]: " SUPABASE_URL
+read -p "  VITE_SUPABASE_SERVICE_KEY  [Required]: " SERVICE_KEY
+read -p "  VITE_GEMINI_API_KEY        [Required]: " GEMINI_KEY
+read -p "  TELEGRAM_BOT_TOKEN         [Required]: " TG_TOKEN
+read -p "  TELEGRAM_CHAT_ID           [Required]: " TG_CHAT
+read -p "  GITHUB_TOKEN               [Optional]: " GH_TOKEN
+read -p "  WORKER_NAME                [Optional, default=Worker2-Mac]: " WORKER_NAME
+WORKER_NAME="${WORKER_NAME:-Worker2-Mac}"
+
+echo "" && echo "📝 Writing .env..."
+cat > "$INSTALL_DIR/.env" << ENVEOF
+VITE_SUPABASE_URL=${SUPABASE_URL}
+VITE_SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY}
+VITE_SUPABASE_ANON_KEY=${SERVICE_KEY}
+VITE_GEMINI_API_KEY=${GEMINI_KEY}
+GEMINI_API_KEY=${GEMINI_KEY}
+TELEGRAM_BOT_TOKEN=${TG_TOKEN}
+TELEGRAM_CHAT_ID=${TG_CHAT}
+VITE_TELEGRAM_BOT_TOKEN=${TG_TOKEN}
+VITE_TELEGRAM_CHAT_ID=${TG_CHAT}
+GITHUB_TOKEN=${GH_TOKEN}
+WORKER_NAME=${WORKER_NAME}
 NODE_ENV=production
-WORKER_NAME=Worker2-Mac
 ENVEOF
 
-# 4. Create LaunchAgent plist (מריץ אוטומטית עם login + מנסה שוב אם קרסה)
-echo "⚙️  Creating LaunchAgent (auto-start on login)..."
+NODE_PATH=$(which node 2>/dev/null || echo "/opt/homebrew/bin/node")
+[ ! -f "$NODE_PATH" ] && NODE_PATH="/usr/local/bin/node"
+echo "🔍 Using node: $NODE_PATH"
+
+echo "⚙️  Creating LaunchAgent..."
+mkdir -p "$HOME/Library/LaunchAgents"
 cat > "$PLIST_PATH" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>$PLIST_NAME</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/node</string>
-        <string>$INSTALL_DIR/scripts/agent_worker.js</string>
-        <string>--name=Worker2-Mac</string>
+<plist version="1.0"><dict>
+    <key>Label</key><string>${PLIST_NAME}</string>
+    <key>ProgramArguments</key><array>
+        <string>${NODE_PATH}</string>
+        <string>${INSTALL_DIR}/scripts/agent_worker.js</string>
+        <string>--name=${WORKER_NAME}</string>
     </array>
-    <key>WorkingDirectory</key>
-    <string>$INSTALL_DIR</string>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>HOME</key>
-        <string>$HOME</string>
-        <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin</string>
-    </dict>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>ThrottleInterval</key>
-    <integer>10</integer>
-    <key>StandardOutPath</key>
-    <string>$HOME/kosmoi-worker2.log</string>
-    <key>StandardErrorPath</key>
-    <string>$HOME/kosmoi-worker2.error.log</string>
-</dict>
-</plist>
+    <key>WorkingDirectory</key><string>${INSTALL_DIR}</string>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>ThrottleInterval</key><integer>10</integer>
+    <key>StandardOutPath</key><string>${HOME}/kosmoi-worker2.log</string>
+    <key>StandardErrorPath</key><string>${HOME}/kosmoi-worker2-error.log</string>
+</dict></plist>
 PLIST
 
-# 5. Load the service
-echo "🚀 Starting Worker2..."
+echo "🚀 Starting ${WORKER_NAME}..."
 launchctl unload "$PLIST_PATH" 2>/dev/null || true
 launchctl load "$PLIST_PATH"
 
+echo "" && echo "✅ ${WORKER_NAME} is running!" && echo ""
+echo "  Logs:    tail -f ~/kosmoi-worker2.log"
+echo "  Stop:    launchctl unload ~/Library/LaunchAgents/${PLIST_NAME}.plist"
+echo "  Status:  launchctl list | grep kosmoi"
 echo ""
-echo "✅ Worker2 is running!"
-echo ""
-echo "📋 Commands:"
-echo "  View logs:    tail -f ~/kosmoi-worker2.log"
-echo "  Stop worker:  launchctl unload ~/Library/LaunchAgents/$PLIST_NAME.plist"
-echo "  Start worker: launchctl load ~/Library/LaunchAgents/$PLIST_NAME.plist"
-echo "  Status:       launchctl list | grep kosmoi"
