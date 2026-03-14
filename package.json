@@ -19,7 +19,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "cron:crawler": "node scripts/harvest_samuimap.js",
-    "ingest:harvest": "node scripts/ingest_harvested_data.js"
+    "ingest:harvest": "node scripts/ingest_harvested_data.js",
+    "backend:api": "cd backend-agents && uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.4",
