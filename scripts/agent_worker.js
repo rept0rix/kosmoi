@@ -2033,7 +2033,72 @@ function startRealtimeListeners() {
     .subscribe();
 }
 
+// ============================================================
+// SELF-TASKING LOOP — Agent reviews its own work and spawns follow-ups
+// ============================================================
+async function runSelfTaskingReview() {
+  console.log("🧠 [SelfTask] Running self-review — checking recent completed tasks...");
+  try {
+    // Look at tasks completed in the last 6 hours
+    const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    const { data: doneTasks, error } = await workerSupabase
+      .from("agent_tasks")
+      .select("id, title, assigned_to, result, updated_at")
+      .eq("status", "done")
+      .gte("updated_at", since)
+      .order("updated_at", { ascending: false })
+      .limit(10);
+
+    if (error || !doneTasks || doneTasks.length === 0) {
+      console.log("🧠 [SelfTask] No recent completed tasks — skipping self-review.");
+      return;
+    }
+
+    // Check if we already ran a self-review recently (avoid double-fire)
+    const { data: recentReview } = await workerSupabase
+      .from("agent_tasks")
+      .select("id")
+      .eq("assigned_to", "planner-agent")
+      .eq("created_by", "self-tasking-loop")
+      .gte("created_at", since)
+      .limit(1);
+
+    if (recentReview && recentReview.length > 0) {
+      console.log("🧠 [SelfTask] Self-review already scheduled recently — skipping.");
+      return;
+    }
+
+    const summary = doneTasks
+      .map((t) => `- [${t.assigned_to}] "${t.title}" → ${(t.result || "").slice(0, 120)}`)
+      .join("\n");
+
+    console.log(`🧠 [SelfTask] Found ${doneTasks.length} completed tasks — spawning planner review`);
+
+    await workerSupabase.from("agent_tasks").insert([{
+      title: "Self-Review: Analyze recent work and create follow-up tasks",
+      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
+      assigned_to: "planner-agent",
+      priority: "medium",
+      status: "pending",
+      created_by: "self-tasking-loop",
+    }]);
+
+    console.log("🧠 [SelfTask] Planner review task created ✅");
+  } catch (err) {
+    console.warn("🧠 [SelfTask] Error:", err.message);
+  }
+}
+
+function startSelfTaskingLoop() {
+  console.log("🧠 Self-Tasking Loop started (every 4 hours)");
+  // Run once 10 min after startup (let the main loop settle first)
+  setTimeout(() => runSelfTaskingReview(), 10 * 60 * 1000);
+  // Then every 4 hours
+  setInterval(() => runSelfTaskingReview(), 4 * 60 * 60 * 1000);
+}
+
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
 startCronScheduler();
 startRealtimeListeners();
+startSelfTaskingLoop();
