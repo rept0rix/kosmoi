@@ -1332,15 +1332,29 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
 
   let currentMessage = prompt;
   let turnCount = 0;
-  const MAX_TURNS = 30; // Increased to allow for complex data generation tasks
+  let consecutiveNoToolTurns = 0;
+  const MAX_TURNS = 30;
+  const MAX_NO_TOOL_TURNS = 3; // Fail fast if Gemini keeps returning text-only
 
   while (turnCount < MAX_TURNS) {
     turnCount++;
     console.log(`\n🔄 Turn ${turnCount}...`);
 
-    const response = await activeAgent.sendMessage(currentMessage, {
-      simulateTools: false,
-    });
+    let response;
+    try {
+      response = await activeAgent.sendMessage(currentMessage, {
+        simulateTools: false,
+      });
+    } catch (err) {
+      // API-level error (expired key, quota, network) — fail immediately
+      console.error(`❌ Gemini API error on turn ${turnCount}:`, err.message || err);
+      await workerSupabase.from("agent_tasks").update({
+        status: "failed",
+        result: `FAILED: Gemini API error — ${err.message || String(err)}`,
+      }).eq("id", task.id);
+      return;
+    }
+    // console.log(`🗣️ Agent Raw Output:`, response); // Debug if needed
 
     // 2. ROBUST ACTION PARSING
     let action = response.toolRequest;
@@ -1458,6 +1472,7 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
       }
 
       console.log(`✅ Tool Result:`, result.substring(0, 100) + "...");
+      consecutiveNoToolTurns = 0; // Reset on successful tool call
       currentMessage = `Tool '${action.name}' output:\n${result}\n\nWhat is the next step?`;
     } else if (action && !action.name) {
       console.warn("⚠️ Detected action but NAME is undefined:", action);
@@ -1488,33 +1503,35 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
       }
 
       // If no tool and no completion, just continue conversation or stop?
+      consecutiveNoToolTurns++;
       console.log(
-        "⚠️ No tool called and not completed. Agent might be confused.",
+        `⚠️ No tool called (${consecutiveNoToolTurns}/${MAX_NO_TOOL_TURNS}). Agent might be confused.`,
       );
 
-      // Force fail if we are stuck in a loop without actions (RELAXED LIMIT)
-      if (turnCount >= MAX_TURNS) {
+      // Fail fast after N consecutive no-tool turns
+      if (consecutiveNoToolTurns >= MAX_NO_TOOL_TURNS) {
         console.error("❌ Task Failed: Agent is not calling tools.");
         await workerSupabase
           .from("agent_tasks")
           .update({
-            status: "done",
-            result: "FAILED: Agent failed to execute tools.",
+            status: "failed",
+            result: "FAILED: Agent returned text without calling any tool 3 times in a row.",
           })
           .eq("id", task.id);
         return;
       }
 
-      // Try to nudge the agent
+      // Strong nudge
       if (
         response.text.toLowerCase().includes("complete") ||
-        response.text.toLowerCase().includes("finished")
+        response.text.toLowerCase().includes("finished") ||
+        response.text.toLowerCase().includes("done")
       ) {
         currentMessage =
-          "System Notification: You have indicated the task is complete. Please strictly reply with the exact text 'TASK_COMPLETED' to finalize the process.";
+          'SYSTEM: Task not yet marked complete. You MUST call a tool OR reply with the exact text "TASK_COMPLETED" (nothing else).';
       } else {
         currentMessage =
-          "Action not detected. If you have finished the task, please explicitly reply with 'TASK_COMPLETED'. Otherwise, select the appropriate tool to proceed.";
+          'SYSTEM: You must use a tool to proceed. Do NOT write explanations — call one of your available tools now. If the task is truly done, reply only with "TASK_COMPLETED".';
       }
     }
   }
