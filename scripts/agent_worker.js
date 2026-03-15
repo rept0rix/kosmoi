@@ -2166,8 +2166,23 @@ function startSelfTaskingLoop() {
   setInterval(() => runSelfTaskingReview(), 4 * 60 * 60 * 1000);
 }
 
+// ============================================================
+// HEARTBEAT — writes timestamp to Supabase every 2 min
+// so the admin dashboard can show "Worker Online/Offline"
+// ============================================================
+async function startHeartbeat() {
+  const beat = async () => {
+    await workerSupabase
+      .from("company_knowledge")
+      .upsert({ key: "WORKER_HEARTBEAT", value: new Date().toISOString() }, { onConflict: "key" });
+  };
+  await beat(); // immediate first beat
+  setInterval(beat, 2 * 60 * 1000);
+}
+
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
 startCronScheduler();
 startRealtimeListeners();
 startSelfTaskingLoop();
+startHeartbeat();
