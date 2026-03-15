@@ -231,6 +231,60 @@ serve(async (req: Request) => {
         } else if (event.type === 'customer.subscription.deleted') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string)
+        } else if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = event.data.object as any
+            const providerId = paymentIntent.metadata?.providerId
+            const userId = paymentIntent.metadata?.userId
+
+            console.log(`Processing payment_intent.succeeded: pi=${paymentIntent.id}, provider=${providerId}, user=${userId}`)
+
+            // 1. Update provider verified status if a providerId is attached
+            if (providerId) {
+                const { error: verifyError } = await supabase
+                    .from('service_providers')
+                    .update({
+                        verified: true,
+                        stripe_status: 'verified',
+                        metadata: supabase.rpc ? undefined : undefined, // preserve existing metadata via separate step
+                    })
+                    .eq('id', providerId)
+
+                if (verifyError) {
+                    console.error('Failed to mark provider as verified:', verifyError)
+                } else {
+                    console.log(`Provider ${providerId} marked as verified.`)
+                }
+            }
+
+            // 2. Create an agent_task for crm-sales-agent to send a welcome message
+            const welcomeTitle = providerId
+                ? `Send welcome message to new verified provider ${providerId}`
+                : `Follow up on successful payment intent ${paymentIntent.id}`
+
+            const { error: taskError } = await supabase
+                .from('agent_tasks')
+                .insert([{
+                    title: welcomeTitle,
+                    description: JSON.stringify({
+                        event: 'payment_intent.succeeded',
+                        payment_intent_id: paymentIntent.id,
+                        provider_id: providerId || null,
+                        user_id: userId || null,
+                        amount: paymentIntent.amount,
+                        currency: paymentIntent.currency,
+                    }),
+                    assigned_to: 'crm-sales-agent',
+                    priority: 'high',
+                    status: 'pending',
+                    created_by: 'stripe-webhook',
+                }])
+
+            if (taskError) {
+                console.error('Failed to create agent task for welcome message:', taskError)
+            } else {
+                console.log(`Agent task created for crm-sales-agent (welcome message, provider ${providerId}).`)
+            }
+
         } else if (event.type === 'account.updated') {
             const account = event.data.object as any
             const status = account.charges_enabled && account.payouts_enabled ? 'verified' : 'restricted'

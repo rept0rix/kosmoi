@@ -35,45 +35,61 @@ if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
   console.log("🔑 Worker running with Service Role Privileges");
 }
 
-// --- OTA AUTO-UPDATE LOGIC ---
+// --- WORKER RUNTIME CONFIG (applied at startup, no disk writes) ---
+let workerRuntimeConfig = {
+  logLevel: "info",         // "debug" | "info" | "warn"
+  pollIntervalMs: null,     // override poll interval if set
+  modelOverride: null,      // override AI model if set
+};
+
+// --- SAFE CONFIG PULL (replaces insecure OTA self-overwrite) ---
 async function checkForUpdates() {
-  console.log("📡 Checking for updates (via agent_tasks)...");
-  const UPDATE_ID = "00000000-0000-0000-0000-000000000001";
+  console.log("📡 Checking for runtime config (WORKER_CONFIG in company_knowledge)...");
 
   const { data, error } = await workerSupabase
-    .from("agent_tasks")
-    .select("*")
-    .eq("id", UPDATE_ID)
+    .from("company_knowledge")
+    .select("key, value, updated_at")
+    .eq("key", "WORKER_CONFIG")
     .single();
 
   if (error || !data) {
-    console.log("✅ No updates found.");
+    console.log("✅ No WORKER_CONFIG found — using defaults.");
     return;
   }
 
   try {
-    const updateData = JSON.parse(data.description);
-    const remoteVersion = new Date(updateData.version).getTime();
-    const localStats = fs.statSync(__filename);
-    const localVersion = localStats.mtime.getTime();
+    const raw = data.value;
+    const config = typeof raw === "string" ? JSON.parse(raw) : raw;
 
-    if (remoteVersion > localVersion) {
-      console.log("🚀 New version detected! Downloading update...");
-      console.log(`   Remote: ${updateData.version}`);
+    // Only accept a strict allowlist of safe scalar config keys.
+    // Any attempt to set 'code', 'script', 'exec', or similar is ignored.
+    const ALLOWED_KEYS = ["logLevel", "pollIntervalMs", "modelOverride"];
+    const applied = {};
 
-      // Backup
-      fs.copyFileSync(__filename, `${__filename}.bak`);
+    for (const key of ALLOWED_KEYS) {
+      if (config[key] !== undefined) {
+        const value = config[key];
+        // Additional type guards per key
+        if (key === "logLevel" && ["debug", "info", "warn"].includes(value)) {
+          workerRuntimeConfig.logLevel = value;
+          applied[key] = value;
+        } else if (key === "pollIntervalMs" && typeof value === "number" && value >= 5000) {
+          workerRuntimeConfig.pollIntervalMs = value;
+          applied[key] = value;
+        } else if (key === "modelOverride" && typeof value === "string" && value.length < 100) {
+          workerRuntimeConfig.modelOverride = value;
+          applied[key] = value;
+        }
+      }
+    }
 
-      // Overwrite
-      fs.writeFileSync(__filename, updateData.code);
-
-      console.log("✅ Update applied. Restarting worker...");
-      process.exit(0);
+    if (Object.keys(applied).length > 0) {
+      console.log("✅ WORKER_CONFIG applied to runtime (no disk writes):", applied);
     } else {
-      console.log("✅ Worker is up to date.");
+      console.log("✅ WORKER_CONFIG present but no valid keys to apply.");
     }
   } catch (e) {
-    console.error("❌ Failed to parse update payload:", e.message);
+    console.error("❌ Failed to parse WORKER_CONFIG payload:", e.message);
   }
 }
 // -----------------------------
@@ -139,6 +155,58 @@ console.error = function (...args) {
   logToFile("ERROR", args);
 };
 // ------------------------
+
+// --- ADMIN VISIBILITY: Log to Supabase agent_logs (powers LiveAgentFeed) ---
+async function logToAdmin(agentId, message, level = "info", metadata = {}) {
+  try {
+    await workerSupabase.from("agent_logs").insert({
+      agent_id: agentId || "worker",
+      level,
+      message,
+      metadata: { role: "assistant", username: agentId || "worker", source: "agent_worker", ...metadata },
+    });
+  } catch (_) { /* non-fatal */ }
+}
+
+// --- TELEGRAM NOTIFICATIONS ---
+async function notifyTelegram(message) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chat = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chat, text: message, parse_mode: "Markdown" }),
+    });
+  } catch (_) { /* non-fatal */ }
+}
+
+// --- WORKER MEMORY: persist context between tasks ---
+async function loadWorkerMemory() {
+  try {
+    const { data } = await workerSupabase
+      .from("company_knowledge")
+      .select("value")
+      .eq("key", "WORKER_MEMORY")
+      .single();
+    return data?.value ? (typeof data.value === "string" ? JSON.parse(data.value) : data.value) : {};
+  } catch (_) { return {}; }
+}
+
+async function saveWorkerMemory(updates) {
+  try {
+    const current = await loadWorkerMemory();
+    const merged = { ...current, ...updates, last_updated: new Date().toISOString() };
+    await workerSupabase.from("company_knowledge").upsert({
+      key: "WORKER_MEMORY",
+      value: merged,
+      category: "worker",
+      updated_at: new Date().toISOString(),
+    });
+  } catch (_) { /* non-fatal */ }
+}
+// -----------------------------------------------------------------------
 
 // Import services
 // Note: We need to use absolute paths or handle imports carefully in Node
@@ -918,6 +986,134 @@ Format: Subject: [subject]\n\n[body]`;
         );
       }
 
+      // --- LEAD SCORING ---
+      case "score_lead": {
+        // Resolve the lead by ID or email
+        const scoreLookupId = payload.lead_id || payload.id;
+        const scoreLookupEmail = payload.lead_email || payload.email;
+
+        let leadRecord = null;
+
+        if (scoreLookupId) {
+          const { data: ld, error: ldErr } = await workerSupabase
+            .from("crm_leads")
+            .select("*")
+            .eq("id", scoreLookupId)
+            .single();
+          if (ldErr) return `Error fetching lead: ${ldErr.message}`;
+          leadRecord = ld;
+        } else if (scoreLookupEmail) {
+          const { data: ld, error: ldErr } = await workerSupabase
+            .from("crm_leads")
+            .select("*")
+            .ilike("email", scoreLookupEmail.trim())
+            .limit(1)
+            .single();
+          if (ldErr) return `Error fetching lead by email: ${ldErr.message}`;
+          leadRecord = ld;
+        } else {
+          return "Error: score_lead requires lead_id or lead_email.";
+        }
+
+        if (!leadRecord) return "Error: Lead not found.";
+
+        // Fetch interactions for this lead
+        const { data: interactions, error: intErr } = await workerSupabase
+          .from("crm_interactions")
+          .select("*")
+          .eq("lead_id", leadRecord.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (intErr) return `Error fetching interactions: ${intErr.message}`;
+
+        const scoringNow = Date.now();
+        const scoringReasoning = [];
+        let leadScore = 0;
+
+        // Factor 1: Recency of last contact (0-35 points)
+        const lastInteractionDate = interactions && interactions.length > 0
+          ? new Date(interactions[0].created_at).getTime()
+          : (leadRecord.updated_at ? new Date(leadRecord.updated_at).getTime() : null);
+
+        if (lastInteractionDate) {
+          const daysSinceLast = (scoringNow - lastInteractionDate) / (1000 * 60 * 60 * 24);
+          let recencyScore = 0;
+          if (daysSinceLast <= 1)       recencyScore = 35;
+          else if (daysSinceLast <= 3)  recencyScore = 30;
+          else if (daysSinceLast <= 7)  recencyScore = 22;
+          else if (daysSinceLast <= 14) recencyScore = 14;
+          else if (daysSinceLast <= 30) recencyScore = 7;
+          leadScore += recencyScore;
+          scoringReasoning.push(`Recency: ${Math.round(daysSinceLast)}d since last contact → +${recencyScore} pts`);
+        } else {
+          scoringReasoning.push("Recency: No contact date → +0 pts");
+        }
+
+        // Factor 2: Number of interactions (0-35 points)
+        const interactionCount = interactions ? interactions.length : 0;
+        let interactionScore = 0;
+        if (interactionCount >= 10)     interactionScore = 35;
+        else if (interactionCount >= 7) interactionScore = 28;
+        else if (interactionCount >= 4) interactionScore = 20;
+        else if (interactionCount >= 2) interactionScore = 12;
+        else if (interactionCount >= 1) interactionScore = 5;
+        leadScore += interactionScore;
+        scoringReasoning.push(`Interactions: ${interactionCount} total → +${interactionScore} pts`);
+
+        // Factor 3: Business size indicators in notes (0-30 points)
+        const notesText = [
+          leadRecord.notes || "",
+          leadRecord.description || "",
+          leadRecord.company || "",
+          ...(interactions || []).map((i) => i.notes || i.content || ""),
+        ].join(" ").toLowerCase();
+
+        const enterpriseSignals = ["enterprise", "large", "corporation", "ceo", "director", "vp ", "chief", "head of", "10,000", "50,000", "100k", "1 million", "regional", "national"];
+        const midSignals = ["team", "manager", "lead ", "department", "growing", "scale", "multiple", "several", "200", "500", "1,000"];
+        const smallSignals = ["startup", "small", "solo", "freelance", "one-person", "myself", "just me"];
+
+        const enterpriseHits = enterpriseSignals.filter((s) => notesText.includes(s)).length;
+        const midHits = midSignals.filter((s) => notesText.includes(s)).length;
+        const smallHits = smallSignals.filter((s) => notesText.includes(s)).length;
+
+        let sizeScore = 0;
+        let sizeLabel = "unknown";
+        if (enterpriseHits >= 2)      { sizeScore = 30; sizeLabel = "enterprise"; }
+        else if (enterpriseHits >= 1) { sizeScore = 22; sizeLabel = "large"; }
+        else if (midHits >= 2)        { sizeScore = 16; sizeLabel = "mid-size"; }
+        else if (midHits >= 1)        { sizeScore = 10; sizeLabel = "growing SMB"; }
+        else if (smallHits >= 1)      { sizeScore = 4;  sizeLabel = "small/solo"; }
+
+        leadScore += sizeScore;
+        scoringReasoning.push(`Business size (${sizeLabel}): enterprise=${enterpriseHits}, mid=${midHits}, small=${smallHits} → +${sizeScore} pts`);
+
+        // Clamp to 0-100
+        leadScore = Math.min(100, Math.max(0, leadScore));
+
+        // Persist score back to lead record
+        const { error: updateScoreErr } = await workerSupabase
+          .from("crm_leads")
+          .update({ score: leadScore, updated_at: new Date().toISOString() })
+          .eq("id", leadRecord.id);
+
+        if (updateScoreErr) {
+          console.warn(`[score_lead] Failed to persist score: ${updateScoreErr.message}`);
+        }
+
+        const scoreResult = {
+          lead_id: leadRecord.id,
+          lead_email: leadRecord.email,
+          lead_name: `${leadRecord.first_name || ""} ${leadRecord.last_name || ""}`.trim(),
+          score: leadScore,
+          reasoning: scoringReasoning,
+          interactions_analyzed: interactionCount,
+        };
+
+        console.log(`[score_lead] Lead ${leadRecord.id} scored: ${leadScore}/100`);
+        return JSON.stringify(scoreResult);
+      }
+
       // --- TELEGRAM NOTIFICATIONS ---
       case "notify_admin":
       case "send_telegram": {
@@ -1094,9 +1290,47 @@ Format: Subject: [subject]\n\n[body]`;
   }
 }
 
+// ── Company Context Injection ────────────────────────────────────────────────
+// Reads COMPANY_OVERVIEW, MARKETING_PLAYBOOK, and WORKER_STATUS from
+// company_knowledge and returns a formatted context string for agent prompts.
+async function getCompanyContext() {
+  const CONTEXT_KEYS = ["COMPANY_OVERVIEW", "MARKETING_PLAYBOOK", "WORKER_STATUS"];
+  try {
+    const { data, error } = await workerSupabase
+      .from("company_knowledge")
+      .select("key, value")
+      .in("key", CONTEXT_KEYS);
+
+    if (error || !data || data.length === 0) {
+      return ""; // Gracefully degrade — no context available yet
+    }
+
+    const sections = data.map(({ key, value }) => {
+      const summary = typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
+      return `### ${key}\n${summary}`;
+    });
+
+    return `
+=== COMPANY CONTEXT (injected by worker) ===
+${sections.join("\n\n")}
+=== END COMPANY CONTEXT ===
+
+`;
+  } catch (err) {
+    console.warn("⚠️ getCompanyContext failed (non-fatal):", err.message);
+    return "";
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function processTask(task, agentService, agentConfigOverride) {
   console.log(`\n📋 Processing Task: ${task.title}`);
   console.log(`[${workerName}] Claiming task...`);
+
+  // Log task start to admin feed + Telegram
+  await logToAdmin(task.assigned_to, `🚀 Started: ${task.title}`, "info", { task_id: task.id, priority: task.priority });
+  await notifyTelegram(`🤖 *${task.assigned_to || "Worker"}* started:\n*${task.title}*`);
+
   const { error: updateError } = await workerSupabase
     .from("agent_tasks")
     .update({ status: "in_progress" })
@@ -1112,8 +1346,13 @@ async function processTask(task, agentService, agentConfigOverride) {
   // Let's assume we always pass agentService now.
   const activeAgent = agentService || agent;
 
+  // Inject company context unless already present in input_context
+  const inputContext = task.input_context || "";
+  const companyContext =
+    inputContext.includes("=== COMPANY CONTEXT") ? "" : await getCompanyContext();
+
   const prompt = `
-You have been assigned a task:
+${companyContext}You have been assigned a task:
 TITLE: ${task.title}
 DESCRIPTION: ${task.description}
 
@@ -1150,15 +1389,29 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
 
   let currentMessage = prompt;
   let turnCount = 0;
-  const MAX_TURNS = 30; // Increased to allow for complex data generation tasks
+  let consecutiveNoToolTurns = 0;
+  const MAX_TURNS = 30;
+  const MAX_NO_TOOL_TURNS = 3; // Fail fast if Gemini keeps returning text-only
 
   while (turnCount < MAX_TURNS) {
     turnCount++;
     console.log(`\n🔄 Turn ${turnCount}...`);
 
-    const response = await activeAgent.sendMessage(currentMessage, {
-      simulateTools: false,
-    });
+    let response;
+    try {
+      response = await activeAgent.sendMessage(currentMessage, {
+        simulateTools: false,
+      });
+    } catch (err) {
+      // API-level error (expired key, quota, network) — fail immediately
+      console.error(`❌ Gemini API error on turn ${turnCount}:`, err.message || err);
+      await workerSupabase.from("agent_tasks").update({
+        status: "failed",
+        result: `FAILED: Gemini API error — ${err.message || String(err)}`,
+      }).eq("id", task.id);
+      return;
+    }
+    // console.log(`🗣️ Agent Raw Output:`, response); // Debug if needed
 
     // 2. ROBUST ACTION PARSING
     let action = response.toolRequest;
@@ -1276,6 +1529,7 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
       }
 
       console.log(`✅ Tool Result:`, result.substring(0, 100) + "...");
+      consecutiveNoToolTurns = 0; // Reset on successful tool call
       currentMessage = `Tool '${action.name}' output:\n${result}\n\nWhat is the next step?`;
     } else if (action && !action.name) {
       console.warn("⚠️ Detected action but NAME is undefined:", action);
@@ -1302,37 +1556,47 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
         if (completeError)
           console.warn("⚠️ Failed to update result:", completeError.message);
 
+        // Log success to admin feed + Telegram + memory
+        const snippet = response.text?.slice(0, 200) || "";
+        await logToAdmin(task.assigned_to, `✅ Done: ${task.title}\n${snippet}`, "info", { task_id: task.id, status: "done" });
+        await notifyTelegram(`✅ *${task.assigned_to || "Worker"}* completed:\n*${task.title}*\n\n${snippet}`);
+        await saveWorkerMemory({ [`last_done_${task.assigned_to}`]: { title: task.title, result: snippet, at: new Date().toISOString() } });
+
         return;
       }
 
       // If no tool and no completion, just continue conversation or stop?
+      consecutiveNoToolTurns++;
       console.log(
-        "⚠️ No tool called and not completed. Agent might be confused.",
+        `⚠️ No tool called (${consecutiveNoToolTurns}/${MAX_NO_TOOL_TURNS}). Agent might be confused.`,
       );
 
-      // Force fail if we are stuck in a loop without actions (RELAXED LIMIT)
-      if (turnCount >= MAX_TURNS) {
+      // Fail fast after N consecutive no-tool turns
+      if (consecutiveNoToolTurns >= MAX_NO_TOOL_TURNS) {
         console.error("❌ Task Failed: Agent is not calling tools.");
         await workerSupabase
           .from("agent_tasks")
           .update({
-            status: "done",
-            result: "FAILED: Agent failed to execute tools.",
+            status: "failed",
+            result: "FAILED: Agent returned text without calling any tool 3 times in a row.",
           })
           .eq("id", task.id);
+        await logToAdmin(task.assigned_to, `❌ Failed: ${task.title} (no tool calls)`, "error", { task_id: task.id });
+        await notifyTelegram(`❌ *${task.assigned_to || "Worker"}* failed:\n*${task.title}*\nAgent stopped calling tools.`);
         return;
       }
 
-      // Try to nudge the agent
+      // Strong nudge
       if (
         response.text.toLowerCase().includes("complete") ||
-        response.text.toLowerCase().includes("finished")
+        response.text.toLowerCase().includes("finished") ||
+        response.text.toLowerCase().includes("done")
       ) {
         currentMessage =
-          "System Notification: You have indicated the task is complete. Please strictly reply with the exact text 'TASK_COMPLETED' to finalize the process.";
+          'SYSTEM: Task not yet marked complete. You MUST call a tool OR reply with the exact text "TASK_COMPLETED" (nothing else).';
       } else {
         currentMessage =
-          "Action not detected. If you have finished the task, please explicitly reply with 'TASK_COMPLETED'. Otherwise, select the appropriate tool to proceed.";
+          'SYSTEM: You must use a tool to proceed. Do NOT write explanations — call one of your available tools now. If the task is truly done, reply only with "TASK_COMPLETED".';
       }
     }
   }
@@ -1456,10 +1720,47 @@ async function main() {
           // Check if we already replied (simple check: verify no recent reply from receptionist...
           // actually if lastMsg is USER, then we haven't replied yet, as reply would be top of stack)
 
-          // Trigger Agent with workerSupabase (Service Role)
           if (!ReceptionistAgent) continue;
+
+          // --- MEMORY ENHANCEMENT: Enrich message with provider context ---
+          let enrichedMessage = { ...lastMsg };
+          try {
+            // Load provider profile
+            const { data: providerProfile } = await workerSupabase
+              .from("service_providers")
+              .select("id, business_name, category, description, opening_hours, phone, email, verified, metadata")
+              .eq("id", meeting.provider_id)
+              .single();
+
+            // Load last 5 interactions with this provider
+            const { data: recentInteractions } = await workerSupabase
+              .from("crm_interactions")
+              .select("id, type, notes, content, created_at, direction")
+              .eq("provider_id", meeting.provider_id)
+              .order("created_at", { ascending: false })
+              .limit(5);
+
+            // Attach enriched context to the message object so ReceptionistAgent can use it
+            enrichedMessage._context = {
+              providerProfile: providerProfile || null,
+              recentInteractions: recentInteractions || [],
+              interactionSummary: recentInteractions && recentInteractions.length > 0
+                ? `${recentInteractions.length} recent interaction(s). Last: "${(recentInteractions[0].notes || recentInteractions[0].content || "").slice(0, 120)}"`
+                : "No prior interactions found.",
+            };
+
+            console.log(
+              `[Receptionist] Enriched context for provider ${meeting.provider_id}: ` +
+              `profile=${!!providerProfile}, interactions=${recentInteractions?.length || 0}`
+            );
+          } catch (enrichErr) {
+            console.warn(`[Receptionist] Context enrichment failed (non-fatal): ${enrichErr.message}`);
+            // Fall back to original message without enrichment
+          }
+
+          // Trigger Agent with enriched message and workerSupabase (Service Role)
           const responseText = await ReceptionistAgent.handleIncomingMessage(
-            lastMsg,
+            enrichedMessage,
             meeting.provider_id,
             workerSupabase,
           );
@@ -1674,6 +1975,10 @@ const scheduledAgents = [
   { agentId: "tech-scout-agent", cron: { hour: 9,  minute: 0,  days: [1] },              title: "Weekly Tech Landscape Scan" },
   { agentId: "optimizer-agent",  cron: { hour: 10, minute: 0,  days: [1,4] },            title: "Bi-Weekly Business Health Check" },
   { agentId: "crm-sales-agent",  cron: { hour: 9,  minute: 30, days: [1,2,3,4,5] },      title: "Morning Lead Follow-Up" },
+  // ── Marketing Automation ─────────────────────────────────────────────────
+  { agentId: "crm-sales-agent",  cron: { hour: 10, minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Daily Lead Outreach: Find 3 uncontacted businesses and send personalized emails" },
+  { agentId: "optimizer-agent",  cron: { hour: 7,  minute: 0,  days: [1] },              title: "Weekly Business Health Report: Analyze metrics and write summary to company_knowledge" },
+  { agentId: "crm-sales-agent",  cron: { hour: 18, minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Evening Follow-up: Check leads contacted today, send follow-up to non-responders" },
 ];
 
 const firedToday = new Set(); // key: "agentId-YYYY-MM-DD-HH" to prevent double-fire
@@ -1704,7 +2009,11 @@ function startCronScheduler() {
         status: "pending",
         created_by: "cron-scheduler",
       }]);
-      if (error) console.error(`Cron insert error for ${sched.agentId}:`, error.message);
+      if (error) {
+        console.error(`Cron insert error for ${sched.agentId}:`, error.message);
+      } else {
+        await logToAdmin("cron-scheduler", `⏰ Scheduled: ${sched.title}`, "info", { agent: sched.agentId });
+      }
     }
 
     // Clean old fire keys every hour
@@ -1793,7 +2102,72 @@ function startRealtimeListeners() {
     .subscribe();
 }
 
+// ============================================================
+// SELF-TASKING LOOP — Agent reviews its own work and spawns follow-ups
+// ============================================================
+async function runSelfTaskingReview() {
+  console.log("🧠 [SelfTask] Running self-review — checking recent completed tasks...");
+  try {
+    // Look at tasks completed in the last 6 hours
+    const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    const { data: doneTasks, error } = await workerSupabase
+      .from("agent_tasks")
+      .select("id, title, assigned_to, result, updated_at")
+      .eq("status", "done")
+      .gte("updated_at", since)
+      .order("updated_at", { ascending: false })
+      .limit(10);
+
+    if (error || !doneTasks || doneTasks.length === 0) {
+      console.log("🧠 [SelfTask] No recent completed tasks — skipping self-review.");
+      return;
+    }
+
+    // Check if we already ran a self-review recently (avoid double-fire)
+    const { data: recentReview } = await workerSupabase
+      .from("agent_tasks")
+      .select("id")
+      .eq("assigned_to", "planner-agent")
+      .eq("created_by", "self-tasking-loop")
+      .gte("created_at", since)
+      .limit(1);
+
+    if (recentReview && recentReview.length > 0) {
+      console.log("🧠 [SelfTask] Self-review already scheduled recently — skipping.");
+      return;
+    }
+
+    const summary = doneTasks
+      .map((t) => `- [${t.assigned_to}] "${t.title}" → ${(t.result || "").slice(0, 120)}`)
+      .join("\n");
+
+    console.log(`🧠 [SelfTask] Found ${doneTasks.length} completed tasks — spawning planner review`);
+
+    await workerSupabase.from("agent_tasks").insert([{
+      title: "Self-Review: Analyze recent work and create follow-up tasks",
+      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
+      assigned_to: "planner-agent",
+      priority: "medium",
+      status: "pending",
+      created_by: "self-tasking-loop",
+    }]);
+
+    console.log("🧠 [SelfTask] Planner review task created ✅");
+  } catch (err) {
+    console.warn("🧠 [SelfTask] Error:", err.message);
+  }
+}
+
+function startSelfTaskingLoop() {
+  console.log("🧠 Self-Tasking Loop started (every 4 hours)");
+  // Run once 10 min after startup (let the main loop settle first)
+  setTimeout(() => runSelfTaskingReview(), 10 * 60 * 1000);
+  // Then every 4 hours
+  setInterval(() => runSelfTaskingReview(), 4 * 60 * 60 * 1000);
+}
+
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
 startCronScheduler();
 startRealtimeListeners();
+startSelfTaskingLoop();
