@@ -7,9 +7,10 @@ import { AgentService } from '@/features/agents/services/AgentService';
 import GroupChatWindow from '@/features/agents/components/GroupChatWindow';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAgentLiveStatus } from '@/features/agents/hooks/useAgentLiveStatus';
-import { LayoutDashboard, Users, Cpu, Activity, Wifi, WifiOff } from 'lucide-react';
+import { LayoutDashboard, Users, Cpu, Activity, Wifi, WifiOff, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaskMonitor } from '@/components/admin/TaskMonitor';
+import { AutonomyDashboard } from '@/components/admin/AutonomyDashboard';
 
 export default function AgentCommandCenter() {
     const [selectedAgentId, setSelectedAgentId] = useState(null);
@@ -121,6 +122,15 @@ export default function AgentCommandCenter() {
                             <Activity className="w-4 h-4" />
                             Operations
                         </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setViewMode('autonomy'); setSelectedAgentId(null); }}
+                            className={`gap-2 ${viewMode === 'autonomy' ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <Brain className="w-4 h-4" />
+                            Autonomy
+                        </Button>
                     </div>
                 </div>
 
@@ -128,7 +138,11 @@ export default function AgentCommandCenter() {
                 <ApprovalQueue userId={user?.id} />
 
                 {/* Content Area */}
-                {viewMode === 'operations' ? (
+                {viewMode === 'autonomy' ? (
+                    <div className="h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
+                        <AutonomyDashboard />
+                    </div>
+                ) : viewMode === 'operations' ? (
                     <div className="h-[calc(100vh-200px)]">
                         <TaskMonitor />
                     </div>
