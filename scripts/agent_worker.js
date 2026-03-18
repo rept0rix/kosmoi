@@ -2178,6 +2178,7 @@ async function runSelfTaskingReview() {
             created_by: "self-tasking-loop",
           }]);
           console.log(`🧠 [SelfTask] Created remediation task for ${agent} (${count} failures)`);
+          await notifyTelegram(`⚠️ *Remediation Task Created*\nAgent *${agent}* failed ${count} times in 6 hours.\nCreated investigation task for tech-lead-agent.\n\n${failureSummary.slice(0, 300)}`);
         }
       }
     }
@@ -2262,6 +2263,7 @@ async function autoRecoverStuckTasks() {
         updated_at: new Date().toISOString(),
       }).eq("id", task.id);
       console.log(`🔧 [AutoRecover] Reset stuck task: "${task.title}" (${task.assigned_to})`);
+      await notifyTelegram(`🔧 *Auto-Recovered Task*\nTask *"${task.title}"* was stuck in-progress for >45 min.\nAgent: ${task.assigned_to || "unknown"}\nStatus reset to pending for retry.`);
     }
   } catch (err) {
     console.warn("🔧 [AutoRecover] Error:", err.message);
@@ -2334,6 +2336,8 @@ Only return the JSON array, no other text.`;
     );
 
     console.log(`🪞 [Reflect] Saved ${newLessons.length} new lessons (total: ${allLessons.length})`);
+    const lessonSnippet = newLessons.map((l, i) => `${i + 1}. ${l.lesson}`).join("\n");
+    await notifyTelegram(`🪞 *Reflection Cycle Complete*\n+${newLessons.length} new lessons (${allLessons.length} total)\n\n${lessonSnippet}`);;
 
     // Every 10 learnings — distill into system prompt addendum
     if (allLessons.length > 0 && allLessons.length % 10 === 0) {
@@ -2365,6 +2369,7 @@ Return plain text, one principle per line.`;
           { onConflict: "key" }
         );
         console.log("🪞 [Reflect] Updated WORKER_CONFIG systemPromptAddendum with distilled principles ✅");
+        await notifyTelegram(`🧠 *System Prompt Evolved*\nReached ${allLessons.length} lessons — distilled new core principles:\n\n${principles.slice(0, 400)}`);
       }
     }
   } catch (err) {
