@@ -1331,9 +1331,14 @@ async function processTask(task, agentService, agentConfigOverride) {
   await logToAdmin(task.assigned_to, `🚀 Started: ${task.title}`, "info", { task_id: task.id, priority: task.priority });
   await notifyTelegram(`🤖 *${task.assigned_to || "Worker"}* started:\n*${task.title}*`);
 
+  // Generate success criteria before claiming (non-blocking, best-effort)
+  const successCriteria = await generateSuccessCriteria(task);
+  const claimUpdate = { status: "in_progress" };
+  if (successCriteria) claimUpdate.success_criteria = successCriteria;
+
   const { error: updateError } = await workerSupabase
     .from("agent_tasks")
-    .update({ status: "in_progress" })
+    .update(claimUpdate)
     .eq("id", task.id);
 
   if (updateError) {
@@ -1351,8 +1356,11 @@ async function processTask(task, agentService, agentConfigOverride) {
   const companyContext =
     inputContext.includes("=== COMPANY CONTEXT") ? "" : await getCompanyContext();
 
+  // Inject relevant past experience via RAG (non-blocking)
+  const relevantMemory = await retrieveRelevantMemory(task);
+
   const prompt = `
-${companyContext}You have been assigned a task:
+${companyContext}${relevantMemory}You have been assigned a task:
 TITLE: ${task.title}
 DESCRIPTION: ${task.description}
 
@@ -1545,22 +1553,24 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
         completionText.includes("TERMINATE")
       ) {
         console.log("✅ Task Completed by Agent.");
-        const { error: completeError } = await workerSupabase
-          .from("agent_tasks")
-          .update({
-            status: "done",
-            result: response.text,
-          })
-          .eq("id", task.id);
-
-        if (completeError)
-          console.warn("⚠️ Failed to update result:", completeError.message);
-
-        // Log success to admin feed + Telegram + memory
         const snippet = response.text?.slice(0, 200) || "";
         await logToAdmin(task.assigned_to, `✅ Done: ${task.title}\n${snippet}`, "info", { task_id: task.id, status: "done" });
-        await notifyTelegram(`✅ *${task.assigned_to || "Worker"}* completed:\n*${task.title}*\n\n${snippet}`);
         await saveWorkerMemory({ [`last_done_${task.assigned_to}`]: { title: task.title, result: snippet, at: new Date().toISOString() } });
+
+        // Verification tasks: evaluate result and handle parent
+        if (task.task_type === "verification") {
+          const passed = !response.text.toLowerCase().includes("fail") &&
+            !response.text.toLowerCase().includes("not met") &&
+            !response.text.toLowerCase().includes("incorrect");
+          await handleVerificationResult(task, passed, response.text);
+          await notifyTelegram(`🔍 *Verification ${passed ? "passed ✅" : "failed ❌"}:* ${task.title.replace("Verify: ", "")}`);
+          return;
+        }
+
+        // For primary/remediation tasks: spawn verification instead of marking done directly
+        const taskWithCriteria = { ...task, success_criteria: task.success_criteria || null };
+        await spawnVerificationTask(taskWithCriteria, response.text);
+        await notifyTelegram(`🔍 *${task.assigned_to || "Worker"}* completed — verifying:\n*${task.title}*`);
 
         return;
       }
@@ -1827,7 +1837,12 @@ async function main() {
         console.warn("⚠️ Heartbeat failed (non-fatal):", err.message);
       }
 
-      // 1. Run Receptionist Cycle (Priority)
+      // 1a. Auto-recover stuck tasks + poll Telegram commands
+      await autoRecoverStuckTasks();
+      await pollTelegramCommands();
+      await captureKpiSnapshot();
+
+      // 1b. Run Receptionist Cycle (Priority)
       await runReceptionistCycle();
 
       // 2. Poll for Tasks
@@ -2180,9 +2195,589 @@ async function startHeartbeat() {
   setInterval(beat, 2 * 60 * 1000);
 }
 
+// ============================================================
+// PHASE 1: CLOSED-LOOP VERIFICATION
+// ============================================================
+
+/**
+ * Scans for tasks stuck in_progress for >30 minutes and auto-recovers them.
+ * After 3 failures, escalates to human via Telegram.
+ */
+async function autoRecoverStuckTasks() {
+  try {
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: stuckTasks } = await workerSupabase
+      .from("agent_tasks")
+      .select("id, title, assigned_to, retry_count")
+      .eq("status", "in_progress")
+      .lt("updated_at", cutoff);
+
+    if (!stuckTasks || stuckTasks.length === 0) return;
+
+    for (const t of stuckTasks) {
+      const newRetryCount = (t.retry_count || 0) + 1;
+      if (newRetryCount >= 3) {
+        await workerSupabase.from("agent_tasks")
+          .update({ status: "escalated", retry_count: newRetryCount, updated_at: new Date().toISOString() })
+          .eq("id", t.id);
+        await escalateToHuman(t, `Stuck in_progress and failed ${newRetryCount} times`);
+        await logToAdmin("system", `🆘 Escalated: "${t.title}" after ${newRetryCount} failures`, "error", { task_id: t.id });
+      } else {
+        await workerSupabase.from("agent_tasks")
+          .update({ status: "pending", retry_count: newRetryCount, updated_at: new Date().toISOString() })
+          .eq("id", t.id);
+        await logToAdmin("system", `🔄 Auto-recovered stuck task: "${t.title}" (retry ${newRetryCount})`, "warn", { task_id: t.id });
+        await notifyTelegram(`🔄 Auto-recovered stuck task: *${t.title}* (retry ${newRetryCount}/3)`);
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ autoRecoverStuckTasks error (non-fatal):", err.message);
+  }
+}
+
+/**
+ * Generates 2-3 verifiable success criteria for a task using Gemini.
+ * Stored as JSONB on the task row so the verifier knows what to check.
+ */
+async function generateSuccessCriteria(task) {
+  try {
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Given this task, list exactly 2-3 short, verifiable success criteria (what observable outcome proves success?).
+Task: ${task.title}
+Description: ${task.description || ""}
+
+Return ONLY valid JSON: {"criteria": ["criterion 1", "criterion 2", "criterion 3"]}`
+            }]
+          }],
+          generationConfig: { temperature: 0.1 }
+        })
+      }
+    );
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch (_) { /* non-fatal */ }
+  return null;
+}
+
+/**
+ * Instead of marking a task "done", spawns a verification subtask.
+ * Original task goes to "review" until verified.
+ */
+async function spawnVerificationTask(originalTask, result) {
+  try {
+    const criteria = originalTask.success_criteria;
+    const criteriaText = criteria?.criteria
+      ? criteria.criteria.map((c, i) => `${i + 1}. ${c}`).join("\n")
+      : "Verify that the task was completed successfully based on the result.";
+
+    await workerSupabase.from("agent_tasks").update({
+      status: "review",
+      result,
+      updated_at: new Date().toISOString(),
+    }).eq("id", originalTask.id);
+
+    const { error } = await workerSupabase.from("agent_tasks").insert([{
+      title: `Verify: ${originalTask.title}`,
+      description: `Verify that the following task was completed successfully.\n\nOriginal Task: ${originalTask.title}\nAgent Result: ${(result || "").slice(0, 500)}\n\nSuccess Criteria:\n${criteriaText}\n\nUse read_table, read_knowledge, or analyze_business_metrics to independently confirm each criterion was met. Reply TASK_COMPLETED if all pass, or explain which criterion failed.`,
+      assigned_to: "tech-lead-agent",
+      priority: "high",
+      status: "pending",
+      task_type: "verification",
+      parent_task_id: originalTask.id,
+      created_by: "verification-system",
+    }]);
+
+    if (!error) {
+      await logToAdmin("verification-system", `🔍 Verification spawned for: "${originalTask.title}"`, "info", { task_id: originalTask.id });
+    }
+  } catch (err) {
+    // Fallback: if verification spawn fails, just mark done
+    console.warn("⚠️ spawnVerificationTask failed, marking done directly:", err.message);
+    await workerSupabase.from("agent_tasks")
+      .update({ status: "done", result, updated_at: new Date().toISOString() })
+      .eq("id", originalTask.id);
+  }
+}
+
+/**
+ * Handles a verification task result.
+ * On pass: marks parent task "verified".
+ * On fail: spawns a remediation task.
+ */
+async function handleVerificationResult(verificationTask, passed, verifierResult) {
+  if (!verificationTask.parent_task_id) return;
+
+  if (passed) {
+    await workerSupabase.from("agent_tasks").update({
+      status: "verified",
+      verified_at: new Date().toISOString(),
+      verification_result: verifierResult?.slice(0, 500),
+      updated_at: new Date().toISOString(),
+    }).eq("id", verificationTask.parent_task_id);
+
+    await logToAdmin("verification-system", `✅ Verified: "${verificationTask.title.replace("Verify: ", "")}"`, "info", { task_id: verificationTask.parent_task_id });
+    await notifyTelegram(`✅ *Verified:* ${verificationTask.title.replace("Verify: ", "")}`);
+
+    // Store memory for RAG
+    const { data: parentTask } = await workerSupabase.from("agent_tasks")
+      .select("*").eq("id", verificationTask.parent_task_id).single();
+    if (parentTask) await storeTaskMemory(parentTask, verifierResult || "");
+  } else {
+    // Spawn remediation
+    const { data: parentTask } = await workerSupabase.from("agent_tasks")
+      .select("*").eq("id", verificationTask.parent_task_id).single();
+
+    const currentRetry = (parentTask?.retry_count || 0) + 1;
+    await workerSupabase.from("agent_tasks")
+      .update({ retry_count: currentRetry, updated_at: new Date().toISOString() })
+      .eq("id", verificationTask.parent_task_id);
+
+    await workerSupabase.from("agent_tasks").insert([{
+      title: `Fix: ${(parentTask?.title || verificationTask.title.replace("Verify: ", ""))}`,
+      description: `The previous attempt failed verification. Retry with corrections.\n\nOriginal task: ${parentTask?.title}\nVerification failure: ${verifierResult?.slice(0, 400)}\n\nAddress the failure reason and complete the task correctly.`,
+      assigned_to: parentTask?.assigned_to || "tech-lead-agent",
+      priority: "high",
+      status: "pending",
+      task_type: "remediation",
+      parent_task_id: verificationTask.parent_task_id,
+      created_by: "verification-system",
+    }]);
+
+    await logToAdmin("verification-system", `🔧 Remediation spawned for: "${parentTask?.title}"`, "warn", { task_id: verificationTask.parent_task_id });
+    await notifyTelegram(`🔧 *Remediation needed:* ${parentTask?.title || "unknown task"}`);
+  }
+}
+
+// ============================================================
+// PHASE 2: BUSINESS KPI WATCHDOG
+// ============================================================
+
+const _kpiAlertCooldowns = {}; // in-memory cooldown guard
+
+/**
+ * Captures today's KPI snapshot and checks against thresholds.
+ * Runs every loop iteration but only writes to DB once per day.
+ */
+async function captureKpiSnapshot() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Fast DB counts
+    const [leadsRes, bookingsRes, verifiedRes, newBizRes] = await Promise.all([
+      workerSupabase.from("crm_leads").select("id", { count: "exact", head: true })
+        .gte("created_at", `${today}T00:00:00Z`),
+      workerSupabase.from("bookings").select("id", { count: "exact", head: true })
+        .gte("created_at", `${today}T00:00:00Z`),
+      workerSupabase.from("service_providers").select("id", { count: "exact", head: true })
+        .eq("is_verified", true),
+      workerSupabase.from("service_providers").select("id", { count: "exact", head: true })
+        .gte("created_at", `${today}T00:00:00Z`),
+    ]);
+
+    const snapshot = {
+      snapshot_date: today,
+      leads_today: leadsRes.count || 0,
+      bookings_today: bookingsRes.count || 0,
+      verified_businesses: verifiedRes.count || 0,
+      new_businesses_today: newBizRes.count || 0,
+    };
+
+    await workerSupabase.from("kpi_snapshots").upsert(snapshot, { onConflict: "snapshot_date" });
+
+    // Load thresholds and check
+    const { data: thresholds } = await workerSupabase.from("kpi_thresholds").select("*");
+    if (!thresholds) return;
+
+    for (const threshold of thresholds) {
+      const value = snapshot[threshold.metric_name];
+      if (value === undefined) continue;
+
+      const isBreach = threshold.comparison === "less_than"
+        ? value < threshold.warning_threshold
+        : value > threshold.warning_threshold;
+
+      if (isBreach) await triggerKpiAlert(threshold.metric_name, value, threshold);
+    }
+  } catch (err) {
+    console.warn("⚠️ captureKpiSnapshot error (non-fatal):", err.message);
+  }
+}
+
+async function triggerKpiAlert(metric, value, threshold) {
+  const cooldownKey = `kpi_${metric}`;
+  const lastAlert = _kpiAlertCooldowns[cooldownKey];
+  if (lastAlert && (Date.now() - lastAlert) < 6 * 60 * 60 * 1000) return; // 6h cooldown
+  _kpiAlertCooldowns[cooldownKey] = Date.now();
+
+  const severity = value <= threshold.critical_threshold ? "🚨 CRITICAL" : "⚠️ WARNING";
+  await notifyTelegram(`${severity} KPI Alert\n*${metric}* is *${value}*\n(threshold: ${threshold.warning_threshold})\n${threshold.description || ""}`);
+
+  await workerSupabase.from("agent_tasks").insert([{
+    title: `KPI Alert: ${metric} is ${value} (below threshold ${threshold.warning_threshold})`,
+    description: `Business metric alert: ${threshold.description || metric}. Current value: ${value}. Warning threshold: ${threshold.warning_threshold}. Analyze the situation and take action to improve this metric.`,
+    assigned_to: "optimizer-agent",
+    priority: "high",
+    status: "pending",
+    created_by: "kpi-watchdog",
+  }]);
+
+  await logToAdmin("kpi-watchdog", `${severity}: ${metric} = ${value}`, "warn", { metric, value });
+}
+
+// ============================================================
+// PHASE 3: PER-AGENT MEMORY VIA RAG
+// ============================================================
+
+/**
+ * Calls Gemini text-embedding-004 to get a 768-dim vector.
+ */
+async function embedText(text) {
+  try {
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "models/text-embedding-004",
+          content: { parts: [{ text: text.slice(0, 2000) }] }
+        })
+      }
+    );
+    const data = await res.json();
+    return data?.embedding?.values || null;
+  } catch (_) { return null; }
+}
+
+/**
+ * Searches knowledge_base for past task experience relevant to the current task.
+ * Returns a formatted context string, or empty string if nothing found.
+ */
+async function retrieveRelevantMemory(task) {
+  try {
+    const query = `${task.title} ${task.description || ""}`.slice(0, 500);
+    if (query.length < 20) return "";
+
+    const embedding = await embedText(query);
+    if (!embedding) return "";
+
+    const { data } = await workerSupabase.rpc("match_knowledge", {
+      query_embedding: embedding,
+      match_threshold: 0.75,
+      match_count: 3,
+    });
+
+    if (!data || data.length === 0) return "";
+
+    const memories = data
+      .filter(d => d.category === "task_memory")
+      .map(d => `- ${d.content.slice(0, 200)}`)
+      .join("\n");
+
+    if (!memories) return "";
+    return `\n=== RELEVANT PAST EXPERIENCE ===\n${memories}\n=== END EXPERIENCE ===\n`;
+  } catch (_) { return ""; }
+}
+
+/**
+ * Stores a completed (verified) task as a memory entry in knowledge_base.
+ */
+async function storeTaskMemory(task, result) {
+  try {
+    const content = `Task: ${task.title}\nAgent: ${task.assigned_to}\nResult: ${(result || "").slice(0, 800)}`;
+    const embedding = await embedText(content);
+    if (!embedding) return;
+
+    const typeMap = { email: "email", lead: "crm", booking: "booking", enrich: "enrichment", verify: "verification", report: "report" };
+    const taskTypeTag = Object.entries(typeMap).find(([k]) => task.title.toLowerCase().includes(k))?.[1] || "general";
+
+    await workerSupabase.from("knowledge_base").insert({
+      content,
+      category: "task_memory",
+      embedding,
+      metadata: { agent_id: task.assigned_to, task_id: task.id, completed_at: new Date().toISOString() },
+      agent_id: task.assigned_to,
+      source_task_id: task.id,
+      task_type_tag: taskTypeTag,
+    });
+  } catch (_) { /* non-fatal */ }
+}
+
+// ============================================================
+// PHASE 4: INTELLIGENT HUMAN ESCALATION
+// ============================================================
+
+/**
+ * Creates an escalation record and sends a rich Telegram message with commands.
+ */
+async function escalateToHuman(task, reason) {
+  try {
+    // Check if escalation already open for this task
+    const { data: existing } = await workerSupabase.from("escalations")
+      .select("id").eq("task_id", task.id).eq("status", "open").limit(1);
+    if (existing && existing.length > 0) return;
+
+    const { data: esc } = await workerSupabase.from("escalations").insert([{
+      task_id: task.id,
+      agent_id: task.assigned_to || "unknown",
+      reason,
+      retry_count: task.retry_count || 0,
+    }]).select().single();
+
+    const taskId = task.id?.slice(0, 8) || "unknown";
+    const msg = `🆘 *ESCALATION REQUIRED*\n\nTask: *${task.title}*\nAgent: ${task.assigned_to}\nFailures: ${task.retry_count || 0}\nReason: ${reason}\n\nCommands:\n\`/approve ${taskId}\` — retry as-is\n\`/reject ${taskId}\` — mark failed\n\`/context ${taskId} <text>\` — add context and retry`;
+
+    await notifyTelegram(msg);
+    await logToAdmin("escalation-system", `🆘 Escalated: "${task.title}"`, "error", { task_id: task.id, reason });
+  } catch (err) {
+    console.warn("⚠️ escalateToHuman error (non-fatal):", err.message);
+  }
+}
+
+let _telegramUpdateOffset = null;
+
+/**
+ * Polls Telegram for incoming commands (/approve, /reject, /context).
+ * Non-blocking — uses short timeout. Persists offset to avoid re-processing.
+ */
+async function pollTelegramCommands() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+
+  try {
+    // Load offset from memory on first run
+    if (_telegramUpdateOffset === null) {
+      const { data } = await workerSupabase.from("company_knowledge")
+        .select("value").eq("key", "TELEGRAM_UPDATE_OFFSET").single();
+      _telegramUpdateOffset = data?.value ? parseInt(data.value) + 1 : 0;
+    }
+
+    const res = await fetch(
+      `https://api.telegram.org/bot${token}/getUpdates?offset=${_telegramUpdateOffset}&timeout=1`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    const data = await res.json();
+    if (!data.ok || !data.result?.length) return;
+
+    for (const update of data.result) {
+      _telegramUpdateOffset = update.update_id + 1;
+      const text = (update.message?.text || "").trim();
+
+      if (text.startsWith("/approve ")) {
+        const taskIdPrefix = text.split(" ")[1];
+        await handleTelegramApprove(taskIdPrefix);
+      } else if (text.startsWith("/reject ")) {
+        const taskIdPrefix = text.split(" ")[1];
+        await handleTelegramReject(taskIdPrefix);
+      } else if (text.startsWith("/context ")) {
+        const parts = text.split(" ");
+        const taskIdPrefix = parts[1];
+        const ctx = parts.slice(2).join(" ");
+        await handleTelegramContext(taskIdPrefix, ctx);
+      }
+    }
+
+    // Persist offset
+    await workerSupabase.from("company_knowledge").upsert({
+      key: "TELEGRAM_UPDATE_OFFSET",
+      value: String(_telegramUpdateOffset),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "key" });
+  } catch (_) { /* non-fatal — Telegram may be unreachable */ }
+}
+
+async function handleTelegramApprove(taskIdPrefix) {
+  const { data: tasks } = await workerSupabase.from("agent_tasks")
+    .select("id, title").ilike("id::text", `${taskIdPrefix}%`).limit(1);
+  if (!tasks?.[0]) return;
+  const t = tasks[0];
+
+  await workerSupabase.from("agent_tasks")
+    .update({ status: "pending", retry_count: 0, updated_at: new Date().toISOString() }).eq("id", t.id);
+  await workerSupabase.from("escalations")
+    .update({ status: "resolved", human_response: "approved", resolved_at: new Date().toISOString() }).eq("task_id", t.id);
+  await notifyTelegram(`✅ Task approved and re-queued: *${t.title}*`);
+}
+
+async function handleTelegramReject(taskIdPrefix) {
+  const { data: tasks } = await workerSupabase.from("agent_tasks")
+    .select("id, title").ilike("id::text", `${taskIdPrefix}%`).limit(1);
+  if (!tasks?.[0]) return;
+  const t = tasks[0];
+
+  await workerSupabase.from("agent_tasks")
+    .update({ status: "failed", result: "Rejected by human via Telegram", updated_at: new Date().toISOString() }).eq("id", t.id);
+  await workerSupabase.from("escalations")
+    .update({ status: "resolved", human_response: "rejected", resolved_at: new Date().toISOString() }).eq("task_id", t.id);
+  await notifyTelegram(`🚫 Task rejected: *${t.title}*`);
+}
+
+async function handleTelegramContext(taskIdPrefix, context) {
+  const { data: tasks } = await workerSupabase.from("agent_tasks")
+    .select("id, title, description").ilike("id::text", `${taskIdPrefix}%`).limit(1);
+  if (!tasks?.[0]) return;
+  const t = tasks[0];
+
+  await workerSupabase.from("agent_tasks").update({
+    status: "pending",
+    retry_count: 0,
+    description: `${t.description || ""}\n\n[Human Context Added]: ${context}`,
+    updated_at: new Date().toISOString(),
+  }).eq("id", t.id);
+  await workerSupabase.from("escalations")
+    .update({ status: "resolved", human_response: `context: ${context}`, resolved_at: new Date().toISOString() }).eq("task_id", t.id);
+  await notifyTelegram(`💡 Context added and task re-queued: *${t.title}*`);
+}
+
+// ============================================================
+// PHASE 5: GOAL-ORIENTED PLANNING
+// ============================================================
+
+const GOAL_AGENT_MAP = {
+  verified_businesses: "crm-sales-agent",
+  leads_today: "crm-sales-agent",
+  bookings_today: "optimizer-agent",
+  new_businesses_today: "crm-sales-agent",
+};
+
+const GOAL_KEYWORDS = {
+  verified_businesses: ["verify", "verification", "onboard", "claim", "business"],
+  leads_today: ["lead", "crm", "outreach", "email", "prospect"],
+  bookings_today: ["booking", "reservation", "appointment", "schedule"],
+};
+
+/**
+ * Reads business_goals, updates current_value from kpi_snapshots,
+ * and spawns tasks for goals falling behind pace.
+ */
+async function evaluateGoalProgress() {
+  try {
+    const { data: goals } = await workerSupabase.from("business_goals")
+      .select("*").eq("status", "active");
+    if (!goals?.length) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: snapshot } = await workerSupabase.from("kpi_snapshots")
+      .select("*").eq("snapshot_date", today).single();
+
+    for (const goal of goals) {
+      const currentValue = snapshot?.[goal.target_metric] ?? goal.current_value;
+
+      await workerSupabase.from("business_goals").update({
+        current_value: currentValue,
+        last_evaluated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq("id", goal.id);
+
+      if (currentValue >= goal.target_value) {
+        await workerSupabase.from("business_goals")
+          .update({ status: "achieved", updated_at: new Date().toISOString() }).eq("id", goal.id);
+        await notifyTelegram(`🏆 Goal Achieved: *${goal.title}* (${currentValue}/${goal.target_value})`);
+        continue;
+      }
+
+      const progressPct = (currentValue / goal.target_value) * 100;
+      const isBelow50 = progressPct < 50;
+      const hasDeadline = !!goal.deadline;
+      const daysLeft = hasDeadline
+        ? Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24))
+        : null;
+      const isPressured = hasDeadline && daysLeft !== null && daysLeft < 30;
+
+      if (goal.auto_task_enabled && (isBelow50 || isPressured)) {
+        await spawnGoalAlignedTask(goal, currentValue, daysLeft);
+      }
+    }
+
+    await reprioritizeBacklog(goals);
+  } catch (err) {
+    console.warn("⚠️ evaluateGoalProgress error (non-fatal):", err.message);
+  }
+}
+
+async function spawnGoalAlignedTask(goal, currentValue, daysLeft) {
+  // 6h cooldown guard
+  const cooldownKey = `GOAL_TASK_COOLDOWN_${goal.id}`;
+  const { data: cooldown } = await workerSupabase.from("company_knowledge")
+    .select("updated_at").eq("key", cooldownKey).single();
+  if (cooldown?.updated_at) {
+    const age = Date.now() - new Date(cooldown.updated_at).getTime();
+    if (age < 6 * 60 * 60 * 1000) return;
+  }
+
+  const agent = GOAL_AGENT_MAP[goal.target_metric] || "optimizer-agent";
+  const deadlineNote = daysLeft !== null ? ` Deadline in ${daysLeft} days.` : "";
+
+  await workerSupabase.from("agent_tasks").insert([{
+    title: `Goal Push: ${goal.title} — ${currentValue}/${goal.target_value}`,
+    description: `Business goal "${goal.title}" is behind pace. Current: ${currentValue}, Target: ${goal.target_value}.${deadlineNote} Take targeted action to advance the metric "${goal.target_metric}". Focus on high-impact activities only.`,
+    assigned_to: agent,
+    priority: "high",
+    status: "pending",
+    created_by: "goal-planner",
+  }]);
+
+  await workerSupabase.from("company_knowledge").upsert({
+    key: cooldownKey, value: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "key" });
+
+  await logToAdmin("goal-planner", `🎯 Goal task spawned: ${goal.title}`, "info", { goal_id: goal.id, current: currentValue, target: goal.target_value });
+}
+
+async function reprioritizeBacklog(goals) {
+  try {
+    const { data: pendingTasks } = await workerSupabase.from("agent_tasks")
+      .select("id, title, description, priority").eq("status", "pending");
+    if (!pendingTasks?.length) return;
+
+    const behindGoals = goals.filter(g => (g.current_value / g.target_value) < 0.5);
+    if (!behindGoals.length) return;
+
+    const toUpgrade = [];
+    for (const task of pendingTasks) {
+      if (task.priority === "high") continue;
+      const text = `${task.title} ${task.description || ""}`.toLowerCase();
+      const aligns = behindGoals.some(goal => {
+        const keywords = GOAL_KEYWORDS[goal.target_metric] || [];
+        return keywords.some(kw => text.includes(kw));
+      });
+      if (aligns) toUpgrade.push(task.id);
+    }
+
+    if (toUpgrade.length > 0) {
+      await workerSupabase.from("agent_tasks")
+        .update({ priority: "high", updated_at: new Date().toISOString() })
+        .in("id", toUpgrade);
+      console.log(`🎯 Reprioritized ${toUpgrade.length} task(s) aligned to behind-pace goals`);
+    }
+  } catch (_) { /* non-fatal */ }
+}
+
+function startGoalPlanningLoop() {
+  console.log("🎯 Goal Planning Loop started (every 30 minutes)");
+  setTimeout(() => evaluateGoalProgress(), 5 * 60 * 1000); // 5 min after startup
+  setInterval(() => evaluateGoalProgress(), 30 * 60 * 1000);
+}
+
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
 startCronScheduler();
 startRealtimeListeners();
 startSelfTaskingLoop();
 startHeartbeat();
+startGoalPlanningLoop();
