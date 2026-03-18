@@ -529,7 +529,7 @@ async function executeTool(toolName, payload, context = {}) {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                from: "onboarding@resend.dev", // Fallback to testing domain to unblock flow
+                from: process.env.EMAIL_FROM || "onboarding@resend.dev",
                 to: [payload.to || payload.email],
                 subject: payload.subject,
                 text: payload.body || payload.content || payload.text,
