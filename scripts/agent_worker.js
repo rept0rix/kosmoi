@@ -63,7 +63,7 @@ async function checkForUpdates() {
 
     // Only accept a strict allowlist of safe scalar config keys.
     // Any attempt to set 'code', 'script', 'exec', or similar is ignored.
-    const ALLOWED_KEYS = ["logLevel", "pollIntervalMs", "modelOverride"];
+    const ALLOWED_KEYS = ["logLevel", "pollIntervalMs", "modelOverride", "systemPromptAddendum"];
     const applied = {};
 
     for (const key of ALLOWED_KEYS) {
@@ -79,6 +79,9 @@ async function checkForUpdates() {
         } else if (key === "modelOverride" && typeof value === "string" && value.length < 100) {
           workerRuntimeConfig.modelOverride = value;
           applied[key] = value;
+        } else if (key === "systemPromptAddendum" && typeof value === "string" && value.length < 2000) {
+          workerRuntimeConfig.systemPromptAddendum = value;
+          applied[key] = `[${value.length} chars]`;
         }
       }
     }
@@ -308,6 +311,10 @@ if (userData) {
   console.warn("⚠️ No users found in DB. Worker might fail to write memory.");
 }
 
+if (workerRuntimeConfig?.systemPromptAddendum && agentConfig) {
+  agentConfig.systemPrompt += `\n\n=== LEARNED PRINCIPLES ===\n${workerRuntimeConfig.systemPromptAddendum}`;
+}
+
 if (!isUniversal && agentConfig) {
   // Override System Prompt for Worker Mode (Dedicated)
   agentConfig.systemPrompt += `
@@ -473,7 +480,22 @@ async function executeTool(toolName, payload, context = {}) {
         });
         const pushData = await pushRes.json();
         if (!pushRes.ok) return `GitHub push error: ${JSON.stringify(pushData.message)}`;
-        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically.`;
+
+        // Schedule a health-check task 3 min after deploy to verify worker survived
+        setTimeout(async () => {
+          try {
+            await workerSupabase.from("agent_tasks").insert([{
+              title: `[DeployCheck] Verify worker health after push: ${ghPath}`,
+              description: `A file was just pushed to GitHub (${ghPath}). Railway should have redeployed. Check that:\n1. Worker heartbeat is recent (< 5 min)\n2. No new failed tasks since the deploy\n3. If worker is down, alert admin via Telegram`,
+              assigned_to: "tech-lead-agent",
+              priority: "high",
+              status: "pending",
+              created_by: "github_push_file",
+            }]);
+          } catch (e) { /* non-fatal */ }
+        }, 3 * 60 * 1000);
+
+        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically. Health check scheduled in 3 min.`;
       }
 
       case "create_task":
@@ -529,7 +551,7 @@ async function executeTool(toolName, payload, context = {}) {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                from: "onboarding@resend.dev", // Fallback to testing domain to unblock flow
+                from: process.env.EMAIL_FROM || "onboarding@resend.dev",
                 to: [payload.to || payload.email],
                 subject: payload.subject,
                 text: payload.body || payload.content || payload.text,
@@ -1827,7 +1849,10 @@ async function main() {
         console.warn("⚠️ Heartbeat failed (non-fatal):", err.message);
       }
 
-      // 1. Run Receptionist Cycle (Priority)
+      // 1. Auto-recover any tasks stuck in-progress
+      await autoRecoverStuckTasks();
+
+      // 2. Run Receptionist Cycle (Priority)
       await runReceptionistCycle();
 
       // 2. Poll for Tasks
@@ -2118,9 +2143,43 @@ async function runSelfTaskingReview() {
       .order("updated_at", { ascending: false })
       .limit(10);
 
+    // Also fetch failed tasks to include in review
+    const { data: failedTasks } = await workerSupabase
+      .from("agent_tasks")
+      .select("id, title, assigned_to, result, updated_at")
+      .eq("status", "failed")
+      .gte("updated_at", since)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+
     if (error || !doneTasks || doneTasks.length === 0) {
       console.log("🧠 [SelfTask] No recent completed tasks — skipping self-review.");
       return;
+    }
+
+    // Auto-create remediation tasks for repeated failures
+    if (failedTasks && failedTasks.length >= 2) {
+      const failuresByAgent = failedTasks.reduce((acc, t) => {
+        acc[t.assigned_to] = (acc[t.assigned_to] || 0) + 1;
+        return acc;
+      }, {});
+      for (const [agent, count] of Object.entries(failuresByAgent)) {
+        if (count >= 2) {
+          const failureSummary = failedTasks
+            .filter(t => t.assigned_to === agent)
+            .map(t => `- "${t.title}": ${(t.result || "").slice(0, 100)}`)
+            .join("\n");
+          await workerSupabase.from("agent_tasks").insert([{
+            title: `[AutoFix] Investigate repeated failures for ${agent}`,
+            description: `The agent ${agent} failed ${count} times in the last 6 hours:\n${failureSummary}\n\nInvestigate root cause and propose a fix.`,
+            assigned_to: "tech-lead-agent",
+            priority: "high",
+            status: "pending",
+            created_by: "self-tasking-loop",
+          }]);
+          console.log(`🧠 [SelfTask] Created remediation task for ${agent} (${count} failures)`);
+        }
+      }
     }
 
     // Check if we already ran a self-review recently (avoid double-fire)
@@ -2141,11 +2200,36 @@ async function runSelfTaskingReview() {
       .map((t) => `- [${t.assigned_to}] "${t.title}" → ${(t.result || "").slice(0, 120)}`)
       .join("\n");
 
+    const failedSummary = failedTasks && failedTasks.length > 0
+      ? "\n\nFailed tasks (needs attention):\n" + failedTasks
+          .map((t) => `- [${t.assigned_to}] "${t.title}" ❌ ${(t.result || "").slice(0, 100)}`)
+          .join("\n")
+      : "";
+
+    // Fetch real user analytics from DB
+    const { data: newLeads } = await workerSupabase
+      .from("crm_leads")
+      .select("name, source, notes, created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const { data: recentBookings } = await workerSupabase
+      .from("bookings")
+      .select("service_name, status, created_at")
+      .gte("created_at", since)
+      .limit(10);
+
+    const analyticsContext = [
+      newLeads?.length ? `New leads (${newLeads.length}): ${newLeads.map(l => l.source).join(', ')}` : null,
+      recentBookings?.length ? `Bookings (${recentBookings.length}): ${recentBookings.map(b => b.status).join(', ')}` : null,
+    ].filter(Boolean).join('\n');
+
     console.log(`🧠 [SelfTask] Found ${doneTasks.length} completed tasks — spawning planner review`);
 
     await workerSupabase.from("agent_tasks").insert([{
       title: "Self-Review: Analyze recent work and create follow-up tasks",
-      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
+      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}${failedSummary}${analyticsContext ? `\n\nUser activity (last 6h):\n${analyticsContext}` : ''}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
       assigned_to: "planner-agent",
       priority: "medium",
       status: "pending",
@@ -2158,12 +2242,145 @@ async function runSelfTaskingReview() {
   }
 }
 
+// ============================================================
+// AUTO-RECOVERY — Resets tasks stuck in-progress > 45 min
+// ============================================================
+async function autoRecoverStuckTasks() {
+  try {
+    const cutoff = new Date(Date.now() - 45 * 60 * 1000).toISOString();
+    const { data: stuck } = await workerSupabase
+      .from("agent_tasks")
+      .select("id, title, assigned_to")
+      .eq("status", "in_progress")
+      .lt("updated_at", cutoff)
+      .limit(3);
+
+    for (const task of stuck || []) {
+      await workerSupabase.from("agent_tasks").update({
+        status: "pending",
+        result: `Auto-recovered: was stuck in-progress > 45 min. Will retry.`,
+        updated_at: new Date().toISOString(),
+      }).eq("id", task.id);
+      console.log(`🔧 [AutoRecover] Reset stuck task: "${task.title}" (${task.assigned_to})`);
+    }
+  } catch (err) {
+    console.warn("🔧 [AutoRecover] Error:", err.message);
+  }
+}
+
+// ============================================================
+// REFLECTION CYCLE — Learns from past tasks, improves system prompt
+// ============================================================
+async function runReflectionCycle() {
+  console.log("🪞 [Reflect] Running reflection cycle...");
+  try {
+    const geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!geminiKey) return;
+
+    const { data: recentTasks } = await workerSupabase
+      .from("agent_tasks")
+      .select("title, status, result, assigned_to")
+      .in("status", ["done", "failed"])
+      .order("updated_at", { ascending: false })
+      .limit(20);
+
+    if (!recentTasks || recentTasks.length < 5) {
+      console.log("🪞 [Reflect] Not enough tasks yet — skipping.");
+      return;
+    }
+
+    const taskSummary = recentTasks
+      .map(t => `[${t.status}] ${t.assigned_to}: "${t.title}" → ${(t.result || "").slice(0, 80)}`)
+      .join("\n");
+
+    const reflectPrompt = `You are analyzing an AI agent worker system's recent task history to extract improvement lessons.
+
+Task history:
+${taskSummary}
+
+Return a JSON array of up to 3 specific, actionable lessons. Format:
+[{"lesson": "...", "applies_to": "agent-name or all", "priority": "high|medium|low"}]
+
+Only return the JSON array, no other text.`;
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: reflectPrompt }] }] }),
+      }
+    );
+
+    const geminiData = await geminiRes.json();
+    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return;
+
+    const newLessons = JSON.parse(jsonMatch[0]);
+
+    // Load existing learnings
+    const { data: existing } = await workerSupabase
+      .from("company_knowledge")
+      .select("value")
+      .eq("key", "WORKER_LEARNINGS")
+      .single();
+
+    const allLessons = [...(existing?.value?.lessons || []), ...newLessons].slice(-50);
+
+    await workerSupabase.from("company_knowledge").upsert(
+      { key: "WORKER_LEARNINGS", value: { lessons: allLessons, updated_at: new Date().toISOString() } },
+      { onConflict: "key" }
+    );
+
+    console.log(`🪞 [Reflect] Saved ${newLessons.length} new lessons (total: ${allLessons.length})`);
+
+    // Every 10 learnings — distill into system prompt addendum
+    if (allLessons.length > 0 && allLessons.length % 10 === 0) {
+      const distillPrompt = `Distill these ${allLessons.length} agent lessons into 3 core operating principles (max 2 sentences each):
+${JSON.stringify(allLessons, null, 2)}
+Return plain text, one principle per line.`;
+
+      const distillRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: distillPrompt }] }] }),
+        }
+      );
+      const distillData = await distillRes.json();
+      const principles = distillData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      if (principles) {
+        const { data: cfg } = await workerSupabase
+          .from("company_knowledge")
+          .select("value")
+          .eq("key", "WORKER_CONFIG")
+          .single();
+
+        const updatedConfig = { ...(cfg?.value || {}), systemPromptAddendum: principles };
+        await workerSupabase.from("company_knowledge").upsert(
+          { key: "WORKER_CONFIG", value: updatedConfig },
+          { onConflict: "key" }
+        );
+        console.log("🪞 [Reflect] Updated WORKER_CONFIG systemPromptAddendum with distilled principles ✅");
+      }
+    }
+  } catch (err) {
+    console.warn("🪞 [Reflect] Error:", err.message);
+  }
+}
+
 function startSelfTaskingLoop() {
   console.log("🧠 Self-Tasking Loop started (every 4 hours)");
   // Run once 10 min after startup (let the main loop settle first)
   setTimeout(() => runSelfTaskingReview(), 10 * 60 * 1000);
   // Then every 4 hours
   setInterval(() => runSelfTaskingReview(), 4 * 60 * 60 * 1000);
+  // Reflection cycle every 8 hours
+  setTimeout(() => runReflectionCycle(), 30 * 60 * 1000); // first run 30 min after startup
+  setInterval(() => runReflectionCycle(), 8 * 60 * 60 * 1000);
 }
 
 // ============================================================
