@@ -480,7 +480,22 @@ async function executeTool(toolName, payload, context = {}) {
         });
         const pushData = await pushRes.json();
         if (!pushRes.ok) return `GitHub push error: ${JSON.stringify(pushData.message)}`;
-        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically.`;
+
+        // Schedule a health-check task 3 min after deploy to verify worker survived
+        setTimeout(async () => {
+          try {
+            await workerSupabase.from("agent_tasks").insert([{
+              title: `[DeployCheck] Verify worker health after push: ${ghPath}`,
+              description: `A file was just pushed to GitHub (${ghPath}). Railway should have redeployed. Check that:\n1. Worker heartbeat is recent (< 5 min)\n2. No new failed tasks since the deploy\n3. If worker is down, alert admin via Telegram`,
+              assigned_to: "tech-lead-agent",
+              priority: "high",
+              status: "pending",
+              created_by: "github_push_file",
+            }]);
+          } catch (e) { /* non-fatal */ }
+        }, 3 * 60 * 1000);
+
+        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically. Health check scheduled in 3 min.`;
       }
 
       case "create_task":
@@ -2191,11 +2206,30 @@ async function runSelfTaskingReview() {
           .join("\n")
       : "";
 
+    // Fetch real user analytics from DB
+    const { data: newLeads } = await workerSupabase
+      .from("crm_leads")
+      .select("name, source, notes, created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const { data: recentBookings } = await workerSupabase
+      .from("bookings")
+      .select("service_name, status, created_at")
+      .gte("created_at", since)
+      .limit(10);
+
+    const analyticsContext = [
+      newLeads?.length ? `New leads (${newLeads.length}): ${newLeads.map(l => l.source).join(', ')}` : null,
+      recentBookings?.length ? `Bookings (${recentBookings.length}): ${recentBookings.map(b => b.status).join(', ')}` : null,
+    ].filter(Boolean).join('\n');
+
     console.log(`🧠 [SelfTask] Found ${doneTasks.length} completed tasks — spawning planner review`);
 
     await workerSupabase.from("agent_tasks").insert([{
       title: "Self-Review: Analyze recent work and create follow-up tasks",
-      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}${failedSummary}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
+      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}${failedSummary}${analyticsContext ? `\n\nUser activity (last 6h):\n${analyticsContext}` : ''}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
       assigned_to: "planner-agent",
       priority: "medium",
       status: "pending",
