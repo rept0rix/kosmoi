@@ -29,15 +29,16 @@ serve(async (req: Request) => {
       throw new Error("Missing GEMINI_API_KEY environment variable. Add it to the Edge Function secrets.");
     }
 
-    // Call Google Gemini Embeddings API (text-embedding-004)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`;
-    
+    // Call Google Gemini Embeddings API (gemini-embedding-001)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`;
+
     // We create the request body expected by Google's API
     const requestBody = {
-      model: "models/text-embedding-004",
+      model: "models/gemini-embedding-001",
       content: {
         parts: [{ text: text }],
       },
+      outputDimensionality: 768,
     };
 
     const response = await fetch(geminiUrl, {
