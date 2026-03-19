@@ -1,0 +1,3 @@
+-- Enhance claim_business RPC to write a signal and spawn a sales follow-up task
+-- on every successful claim. Applied to Supabase on 2026-03-19.
+-- See apply_migration call in session for full SQL.
