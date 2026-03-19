@@ -1,144 +1,34 @@
 import { db } from "../../../api/supabaseClient.js";
 
-// Import Agents from Registry
-import { UX_DESIGNER_AGENT } from "./UXDesignerAgent.js";
-import { SUPABASE_SPECIALIST_AGENT } from "./SupabaseSpecialist.js";
-import { GITHUB_SPECIALIST_AGENT } from "./registry/GitHubSpecialist.js";
-import { QA_SPECIALIST_AGENT } from "./registry/QASpecialist.js";
-
-import { BOARD_CHAIRMAN_AGENT } from "./registry/BoardChairmanAgent.js";
-import { HUMAN_USER_AGENT } from "./registry/HumanUserAgent.js";
-import { WORKER_NODE_AGENT } from "./registry/WorkerNodeAgent.js";
-import { VISION_FOUNDER_AGENT } from "./registry/VisionFounderAgent.js";
-import { BUSINESS_FOUNDER_AGENT } from "./registry/BusinessFounderAgent.js";
-import { PRODUCT_FOUNDER_AGENT } from "./registry/ProductFounderAgent.js";
-import { PARTNERSHIP_FOUNDER_AGENT } from "./registry/PartnershipFounderAgent.js";
-
-import { CEO_AGENT } from "./registry/CeoAgent.js";
-import { CTO_AGENT } from "./registry/CtoAgent.js";
-import { TECH_LEAD_AGENT } from "./registry/TechLeadAgent.js";
-import { HR_AGENT } from "./registry/HrAgent.js";
-import { CMO_AGENT } from "./registry/CmoAgent.js";
-import { CFO_AGENT } from "./registry/CfoAgent.js";
-import { CRO_AGENT } from "./registry/CroAgent.js";
-import { PROJECT_MANAGER_AGENT } from "./registry/ProjectManagerAgent.js";
-
-import { MARKETING_INTELLIGENCE_AGENT } from "./registry/MarketingIntelligenceAgent.js";
-import { FINANCE_CAPITAL_AGENT } from "./registry/FinanceCapitalAgent.js";
-import { LEGAL_SHIELD_AGENT } from "./registry/LegalShieldAgent.js";
-import { COMPETITIVE_RADAR_AGENT } from "./registry/CompetitiveRadarAgent.js";
-import { INNOVATION_RESEARCHER_AGENT } from "./registry/InnovationResearcherAgent.js";
-import { TECH_SCOUT_AGENT } from "./registry/TechScoutAgent.js";
-import { PLANNER_AGENT } from "./registry/PlannerAgent.js";
-
-import { FRONTEND_AGENT } from "./registry/FrontendAgent.js";
-import { BACKEND_AGENT } from "./registry/BackendAgent.js";
-import { GRAPHIC_DESIGNER_AGENT } from "./registry/GraphicDesignerAgent.js";
-import { UI_AGENT } from "./registry/UiAgent.js";
-import { UX_AGENT } from "./registry/UxAgent.js";
-import { QA_AGENT } from "./registry/QaAgent.js";
-import { SECURITY_AGENT } from "./registry/SecurityAgent.js";
-import { CONTENT_AGENT } from "./registry/ContentAgent.js";
-import { BLOG_WRITER_AGENT } from "./registry/BlogWriterAgent.js";
-import { CONCIERGE_AGENT } from "./registry/ConciergeAgent.js";
-import { SUPPORT_AGENT } from "./registry/SupportAgent.js";
-import { BOOKING_AGENT } from "./registry/BookingAgent.js";
-import { SALES_PITCH_AGENT } from "./registry/SalesPitchAgent.js";
-import { CRM_SALES_AGENT } from "./registry/CRMSalesAgent.js";
-import { VIDEO_AGENT } from "./registry/VideoAgent.js";
-import { VECTOR_SEARCH_AGENT } from "./registry/VectorSearchAgent.js";
-import { CODE_REFACTOR_AGENT } from "./registry/CodeRefactorAgent.js";
-import { PRODUCT_VISION_AGENT } from "./registry/ProductVisionAgent.js";
-
-import { SYSTEM_MAPPING_AGENT } from "./registry/SystemMappingAgent.js";
-import { UI_UX_DOCS_AGENT } from "./registry/UiUxDocsAgent.js";
-import { REQUIREMENTS_AGENT } from "./registry/RequirementsAgent.js";
-import { ONBOARDING_AGENT } from "./registry/OnboardingAgent.js";
-import { CONSISTENCY_AUDITOR_AGENT } from "./registry/ConsistencyAuditorAgent.js";
-
-import {
-    TRANSLATOR_AGENT, GROWTH_AGENT, BUILD_AGENT, TEST_AGENT,
-    SHIP_AGENT, OBSERVE_AGENT, IMPROVE_AGENT
-} from "./registry/AutomationAgents.js";
-import { OPTIMIZER_AGENT } from "./registry/OptimizerAgent.js";
+// Import agents by category — organized hierarchy
+import * as Strategic from "./registry/strategic/index.js";
+import * as Execution from "./registry/execution/index.js";
+import * as Specialist from "./registry/specialist/index.js";
+import * as Infrastructure from "./registry/infrastructure/index.js";
+import * as Intelligence from "./registry/intelligence/index.js";
 
 /**
- * The Central Registry of All Agents
+ * Agents organized by category (BMAD framework).
+ * Use this for UI rendering, capability filtering, and agent selection.
+ */
+export const agentsByCategory = {
+    strategic: Object.values(Strategic),
+    execution: Object.values(Execution),
+    specialist: Object.values(Specialist),
+    infrastructure: Object.values(Infrastructure),
+    intelligence: Object.values(Intelligence),
+};
+
+/**
+ * Flat array of all agents — kept for backward compatibility.
+ * Prefer agentsByCategory for new code.
  */
 export const agents = [
-    // --- SPECIALIST AGENTS ---
-    UX_DESIGNER_AGENT,
-    SUPABASE_SPECIALIST_AGENT,
-    GITHUB_SPECIALIST_AGENT,
-    QA_SPECIALIST_AGENT,
-
-    // --- BOARD LAYER ---
-    BOARD_CHAIRMAN_AGENT,
-    HUMAN_USER_AGENT,
-    WORKER_NODE_AGENT,
-    VISION_FOUNDER_AGENT,
-    BUSINESS_FOUNDER_AGENT,
-    PRODUCT_FOUNDER_AGENT,
-    PARTNERSHIP_FOUNDER_AGENT,
-
-    // --- EXECUTIVE LAYER ---
-    CEO_AGENT,
-    CTO_AGENT,
-    TECH_LEAD_AGENT,
-    HR_AGENT,
-    CMO_AGENT,
-    CFO_AGENT,
-    CRO_AGENT,
-    PROJECT_MANAGER_AGENT,
-
-    // --- AUTONOMY LAYER ---
-    PLANNER_AGENT,
-    TECH_SCOUT_AGENT,
-
-    // --- STRATEGIC LAYER ---
-    MARKETING_INTELLIGENCE_AGENT,
-    FINANCE_CAPITAL_AGENT,
-    LEGAL_SHIELD_AGENT,
-    COMPETITIVE_RADAR_AGENT,
-    INNOVATION_RESEARCHER_AGENT,
-    PRODUCT_VISION_AGENT,
-
-    // --- OPERATIONAL LAYER ---
-    FRONTEND_AGENT,
-    BACKEND_AGENT,
-    GRAPHIC_DESIGNER_AGENT,
-    UI_AGENT,
-    UX_AGENT,
-    QA_AGENT,
-    SECURITY_AGENT,
-    SECURITY_AGENT,
-    CONTENT_AGENT,
-    BLOG_WRITER_AGENT,
-    CONCIERGE_AGENT,
-    SUPPORT_AGENT,
-    BOOKING_AGENT,
-    SALES_PITCH_AGENT,
-    CRM_SALES_AGENT,
-    VIDEO_AGENT,
-    VECTOR_SEARCH_AGENT,
-    CODE_REFACTOR_AGENT,
-
-    // --- DOCUMENTATION LAYER ---
-    SYSTEM_MAPPING_AGENT,
-    UI_UX_DOCS_AGENT,
-    REQUIREMENTS_AGENT,
-    ONBOARDING_AGENT,
-    CONSISTENCY_AUDITOR_AGENT,
-
-    // --- AUTOMATION LAYER ---
-    TRANSLATOR_AGENT,
-    GROWTH_AGENT,
-    BUILD_AGENT,
-    TEST_AGENT,
-    SHIP_AGENT,
-    OBSERVE_AGENT,
-    IMPROVE_AGENT,
-    OPTIMIZER_AGENT
+    ...agentsByCategory.strategic,
+    ...agentsByCategory.execution,
+    ...agentsByCategory.specialist,
+    ...agentsByCategory.infrastructure,
+    ...agentsByCategory.intelligence,
 ];
 
 // Helper to get agent by ID

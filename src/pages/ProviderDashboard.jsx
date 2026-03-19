@@ -23,6 +23,7 @@ import {
 import GoogleMap from "@/components/GoogleMap";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/api/supabaseClient";
+import { ProviderService } from "@/services/ProviderService";
 import PricingModal from "@/components/payments/PricingModal";
 import { StripeService } from "@/services/payments/StripeService";
 
@@ -130,19 +131,9 @@ export default function ProviderDashboard() {
 
   const fetchProfile = async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from("service_providers")
-          .select("*")
-          .or(`id.eq.${user.id},owner_id.eq.${user.id}`)
-          .maybeSingle();
-
-        if (data) setProviderProfile(data);
-        if (error) console.error("Error fetching profile:", error);
-      }
+      const { data, error } = await ProviderService.getMyProfile();
+      if (data) setProviderProfile(data);
+      if (error) console.error("Error fetching profile:", error);
     } catch (error) {
       console.error("Critical Profile Error:", error);
     } finally {
@@ -162,19 +153,11 @@ export default function ProviderDashboard() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from("service_providers")
-        .update({
-          is_online: val,
-          last_seen: new Date().toISOString(),
-          ...(userLocation
-            ? {
-                current_lat: userLocation.lat,
-                current_lng: userLocation.lng,
-              }
-            : {}),
-        })
-        .eq("owner_id", user.id);
+      const { error } = await ProviderService.setOnlineStatus(
+        user.id,
+        val,
+        userLocation,
+      );
 
       if (error) {
         console.error("Failed to update status", error);
@@ -186,15 +169,9 @@ export default function ProviderDashboard() {
         setIsOnline(!val);
       } else {
         if (val)
-          toast({
-            title: "You are Online 🟢",
-            description: "Waiting for requests...",
-          });
+          toast({ title: "You are Online 🟢", description: "Waiting for requests..." });
         else
-          toast({
-            title: "You are Offline ⚫",
-            description: "You will not receive jobs.",
-          });
+          toast({ title: "You are Offline ⚫", description: "You will not receive jobs." });
       }
     } catch (e) {
       console.error(e);
@@ -206,19 +183,11 @@ export default function ProviderDashboard() {
     if (!incomingJob || !providerProfile) return;
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       // 1. Update Database
-      const { error } = await supabase
-        .from("service_requests")
-        .update({
-          status: "accepted",
-          provider_id: providerProfile.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", incomingJob.id);
+      const { error } = await ProviderService.acceptJob(
+        incomingJob.id,
+        providerProfile.id,
+      );
 
       if (error) throw error;
 
@@ -245,32 +214,10 @@ export default function ProviderDashboard() {
   useEffect(() => {
     const fetchEarnings = async () => {
       if (!providerProfile?.owner_id) return;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { data: wallet } = await supabase
-        .from("wallets")
-        .select("id")
-        .eq("user_id", providerProfile.owner_id)
-        .single();
-
-      if (!wallet) return;
-
-      const { data } = await supabase
-        .from("transactions")
-        .select("amount")
-        .eq("wallet_id", wallet.id)
-        .eq("type", "earning")
-        .eq("status", "completed")
-        .gte("created_at", today.toISOString());
-
-      if (data) {
-        const total = data.reduce(
-          (sum, txn) => sum + (Number(txn.amount) || 0),
-          0,
-        );
-        setDailyEarnings(total);
-      }
+      const { total } = await ProviderService.getDailyEarnings(
+        providerProfile.owner_id,
+      );
+      setDailyEarnings(total);
     };
     fetchEarnings();
   }, [providerProfile]);
