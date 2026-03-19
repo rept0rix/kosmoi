@@ -5,7 +5,7 @@ import fs from 'fs';
 
 // --- CONFIG ---
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY; // Must use Service Role for Admin tasks
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; // Must use Service Role for Admin tasks
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error("❌ Missing Supabase credentials in .env");

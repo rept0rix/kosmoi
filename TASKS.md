@@ -1,5 +1,5 @@
 # 📋 TASKS.md — Single Source of Truth
-> **עדכון אחרון:** 18 מרץ 2026
+> **עדכון אחרון:** 18.3.2026 (auto-updated)
 > **כלל:** רק קובץ זה מייצג את המצב האמיתי. שאר קבצי המשימות הם ארכיון.
 
 ---
@@ -22,7 +22,7 @@
 
 ### 💌 מערכת הזמנות (Invitation System)
 - [ ] צור תבניות מייל יפות ל-"Claim your business"
-- [ ] עקוב אחר Open Rates ו-Click Rates ב-Admin Dashboard
+- [x] עקוב אחר Open Rates ו-Click Rates ב-Admin Dashboard
 
 ### 📱 Mobile Optimization
 - [ ] ודא ש-Pricing ו-Dashboard נראים טוב במובייל

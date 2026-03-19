@@ -62,7 +62,7 @@ Supported filters:
 For both the endpoint template and CLI script:
 
 - `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 ## Integration path (if you want this live as API)
 

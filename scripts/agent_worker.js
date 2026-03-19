@@ -27,10 +27,10 @@ global.localStorage = {
 };
 
 // Set Service Role Key to bypass RLS
-if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
+if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
   global.localStorage.setItem(
     "sb-access-token",
-    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
   console.log("🔑 Worker running with Service Role Privileges");
 }
@@ -241,7 +241,7 @@ const actionHistory = new Map(); // Tracks event history per Agent Task ID
 
 // Ensure we use the Service Role Key for the worker operations
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const workerSupabase = supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : realSupabase;

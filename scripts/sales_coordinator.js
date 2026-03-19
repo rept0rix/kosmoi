@@ -7,7 +7,7 @@ import { INVITATION_TEMPLATE } from './lib/email_templates.js';
 
 // Initialize Services
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey || !apiKey) {

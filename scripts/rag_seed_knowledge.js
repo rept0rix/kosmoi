@@ -6,11 +6,11 @@ import { samuiKnowledge } from '../src/data/samuiKnowledge.js';
 
 // Init
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY; // Service Role for Write Access
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Service Role for Write Access
 const geminiKey = process.env.VITE_GEMINI_API_KEY;
 
 if (!supabaseUrl || !supabaseKey || !geminiKey) {
-    console.error("❌ Missing params. Check .env for VITE_SUPABASE_URL, VITE_SUPABASE_SERVICE_ROLE_KEY, VITE_GEMINI_API_KEY");
+    console.error("❌ Missing params. Check .env for VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_GEMINI_API_KEY");
     process.exit(1);
 }
 

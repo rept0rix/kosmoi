@@ -5,10 +5,10 @@ import fs from 'fs';
 dotenv.config();
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_KEY) {
-    console.error("Missing VITE_SUPABASE_SERVICE_ROLE_KEY inside .env!");
+    console.error("Missing SUPABASE_SERVICE_ROLE_KEY inside .env!");
     process.exit(1);
 }
 

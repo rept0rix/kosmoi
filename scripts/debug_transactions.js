@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY; // Using service role key to bypass RLS for verification
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Using service role key to bypass RLS for verification
 // AdminService usually runs with user auth, but for global fetching checking RLS is important.
 // Let's try anon first, but if RLS prevents it, we might need to sign in or use service role if available (usually not in .env for client apps).
 // Actually, AdminService.getAllTransactions likely relies on the user being an admin.

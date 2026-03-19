@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 dotenv.config();
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Use the credentials we just validated for IMAP
 const SMTP_USER = process.env.IMAP_USER;

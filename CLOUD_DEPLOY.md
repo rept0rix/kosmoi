@@ -33,7 +33,7 @@ The agent worker runs a 24/7 autonomous loop that:
 # Required - Supabase
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJxxx...
-VITE_SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
+SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
 
 # Required - AI Brain (at least one)
 GOOGLE_API_KEY=AIzaSy...          # Gemini (recommended)
@@ -88,7 +88,7 @@ fly launch --config fly.worker.toml --dockerfile Dockerfile.worker
 
 # Set secrets
 fly secrets set VITE_SUPABASE_URL=https://xxx.supabase.co
-fly secrets set VITE_SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
+fly secrets set SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
 fly secrets set GOOGLE_API_KEY=AIzaSy...
 ```
 
@@ -145,7 +145,7 @@ Or use the **Command Center** UI at `/command-center` to create tasks visually.
 |----------|----------|-------------|
 | `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon key |
-| `VITE_SUPABASE_SERVICE_ROLE_KEY` | ✅ | Admin key (bypasses RLS) |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Admin key (bypasses RLS) |
 | `GOOGLE_API_KEY` | ✅ | Gemini AI for agent brains |
 | `OPENAI_API_KEY` | optional | GPT-4 fallback |
 | `VITE_RESEND_API_KEY` | optional | Email sending |

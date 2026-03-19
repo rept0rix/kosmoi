@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.VITE_SUPABASE_URL;
-const key = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 console.log("🔍 Debugging Supabase Connection...");
 console.log(`📡 URL: ${url ? url.substring(0, 30) + '...' : 'UNDEFINED'}`);

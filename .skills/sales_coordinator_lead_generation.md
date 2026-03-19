@@ -82,4 +82,4 @@ opened_at: timestamp
 - `VITE_N8N_EMAIL_WEBHOOK` - Primary dispatch endpoint
 - `TEST_EMAIL` - Development recipient (safety)
 - `VITE_SUPABASE_URL` - Database connection
-- `VITE_SUPABASE_SERVICE_ROLE_KEY` - Admin access for agent operations
+- `SUPABASE_SERVICE_ROLE_KEY` - Admin access for agent operations

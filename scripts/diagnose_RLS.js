@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.VITE_SUPABASE_URL;
-const serviceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 const serviceClient = createClient(url, serviceKey);

@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY; // Use Service Role to bypass potential RLS issues during restore
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use Service Role to bypass potential RLS issues during restore
 
 if (!supabaseUrl || !supabaseKey) {
     console.error("❌ Missing Supabase credentials in .env");

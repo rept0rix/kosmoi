@@ -13,11 +13,11 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase as defaultClient } from '../src/api/supabaseClient.js';
 
 let supabase = defaultClient;
-if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
+if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.log("🔐 Using Service Role Key for Admin Access");
     supabase = createClient(
         process.env.VITE_SUPABASE_URL,
-        process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+        process.env.SUPABASE_SERVICE_ROLE_KEY
     );
     // MONKEY PATCH the exported client in SkillService locally for this script
     SkillService.saveSkill = async function (skillData, userId) {

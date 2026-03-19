@@ -33,7 +33,7 @@ Create a `.env` file in the root directory. You can copy the example keys from y
 # Supabase Configuration
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Tools
 VITE_RESEND_API_KEY=your_resend_key  # Optional: For sending emails
@@ -66,5 +66,5 @@ npm run worker -- --role=sales-pitch-agent
 ---
 **Troubleshooting:**
 
-- **Permission Denied?** Ensure `VITE_SUPABASE_SERVICE_ROLE_KEY` is correct. The worker needs admin privileges.
+- **Permission Denied?** Ensure `SUPABASE_SERVICE_ROLE_KEY` is correct. The worker needs admin privileges.
 - **Node Error?** Check your Node version with `node -v` (should be v18+).

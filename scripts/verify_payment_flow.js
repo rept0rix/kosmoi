@@ -15,7 +15,7 @@ const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 // Assuming the user has a way to run admin/service role actions or using ANON for public RPCs.
 // Let's try to assume we might need the SUPABASE_SERVICE_ROLE_KEY for the full simulation if we talk to DB directly.
 // But we can check if it exists in env.
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
     console.error("❌ Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env");

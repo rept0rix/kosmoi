@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { toolRouter } from "../src/services/agents/AgentService.js";
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Missing Env Vars. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_SERVICE_ROLE_KEY are in .env");
+    console.error("Missing Env Vars. Ensure VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are in .env");
     process.exit(1);
 }
 

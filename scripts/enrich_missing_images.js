@@ -9,7 +9,7 @@ dotenv.config();
 const BATCH_SIZE = 10; // Small batch for safety
 const GOOGLE_API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!GOOGLE_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
     console.error('❌ Missing credentials (Google API or Supabase)');

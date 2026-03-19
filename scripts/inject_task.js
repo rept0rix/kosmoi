@@ -9,7 +9,7 @@ fs.readFileSync(path.join(__dirname, '../.env'), 'utf8').split('\n').forEach(l =
   const eq = l.indexOf('='); if (eq > 0) env[l.slice(0, eq).trim()] = l.slice(eq + 1).trim();
 });
 
-const sb = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_SERVICE_ROLE_KEY);
+const sb = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 const { data, error } = await sb.from('agent_tasks').insert({
   title: 'Scout top 5 unverified providers and send Telegram report',

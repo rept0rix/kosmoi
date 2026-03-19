@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
@@ -37,7 +37,7 @@ const MONITORED_AGENTS = [
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("❌ VITE_SUPABASE_URL or VITE_SUPABASE_SERVICE_ROLE_KEY missing from .env");
+  console.error("❌ VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing from .env");
   process.exit(1);
 }
 

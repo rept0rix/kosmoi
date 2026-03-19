@@ -21,7 +21,7 @@ if (fs.existsSync(envPath)) {
 }
 
 const supabaseUrl = envConfig.VITE_SUPABASE_URL;
-const supabaseKey = envConfig.VITE_SUPABASE_SERVICE_ROLE_KEY || envConfig.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = envConfig.SUPABASE_SERVICE_ROLE_KEY || envConfig.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('❌ Missing VITE_SUPABASE_URL or Key in .env');

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import AgentProtocol from './lib/agent_protocol.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const protocol = new AgentProtocol('island_crawler');
 
