@@ -1,3 +1,6 @@
+[functions.generate-embeddings]
+verify_jwt = false
+
 [functions.create-payment-link]
 verify_jwt = false
 
