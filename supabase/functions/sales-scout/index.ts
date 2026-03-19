@@ -5,7 +5,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 // --- Configuration ---
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-const N8N_WEBHOOK_URL = Deno.env.get('VITE_N8N_EMAIL_WEBHOOK')
 // TEST_EMAIL: set this env var in Supabase Dashboard only during development/testing.
 // In production, leave it unset — emails will go to the actual business email.
 // If unset AND business has no email, the brain logs a 'lead.no_email' signal.
@@ -395,30 +394,9 @@ serve(async (req: Request) => {
             // 4. Generate Content
             const emailHtml = INVITATION_TEMPLATE(targetLead.business_name, trackingLinks);
 
-            // 5. Send (n8n or Resend)
+            // 5. Send via Resend
             let emailSent = false;
-            if (N8N_WEBHOOK_URL && N8N_WEBHOOK_URL.startsWith('http')) {
-                try {
-                    const n8nResp = await fetch(N8N_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            to: recipientEmail,
-                            subject: `Invitation for ${targetLead.business_name} - Kosmoi`,
-                            html: emailHtml,
-                            business_name: targetLead.business_name,
-                            claim_link: trackingLinks.click,
-                            lead_id: targetLead.id,
-                            phone: targetLead.phone,
-                            from: SENDER_EMAIL
-                        })
-                    });
-                    if (n8nResp.ok) emailSent = true;
-                } catch (e) { console.error("n8n err", e); }
-            }
-
-            // ... (Resend logic)
-            if (!emailSent && RESEND_API_KEY) {
+            if (RESEND_API_KEY) {
                 try {
                     const resendResp = await fetch('https://api.resend.com/emails', {
                         method: 'POST',
@@ -433,8 +411,15 @@ serve(async (req: Request) => {
                             html: emailHtml
                         })
                     });
-                    if (resendResp.ok) emailSent = true;
+                    if (resendResp.ok) {
+                        emailSent = true;
+                    } else {
+                        const errBody = await resendResp.json().catch(() => ({}));
+                        console.error('Resend error:', resendResp.status, errBody);
+                    }
                 } catch (e) { console.error("Resend err", e); }
+            } else {
+                console.error('RESEND_API_KEY not set — cannot send invitation');
             }
 
             // 6. Update Status + Write Signal
