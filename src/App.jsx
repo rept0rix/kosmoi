@@ -514,6 +514,8 @@ function App() {
         </AppConfigProvider>
       </AuthProvider>
     </QueryClientProvider>
+    <SpeedInsights />
+    <Analytics />
   );
 }
 
