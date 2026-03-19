@@ -1,0 +1,199 @@
+# 🔍 Cleanup Report — 2026-03-18
+> נוצר ע"י הארכיאולוג | סה"כ קבצים נסרקו: 203
+
+## 🗑️ בטוח למחיקה (90 קבצים)
+_ישנים 30+ יום + שם debug-י + לא מוזכרים בקוד_
+
+- [ ] `scripts/analyze_categories.js` — לא נגעת 72 ימים
+- [ ] `scripts/capture_screens.js` — לא נגעת 89 ימים
+- [ ] `scripts/check_analytics_schema.js` — לא נגעת 60 ימים
+- [ ] `scripts/check_category.js` — לא נגעת 60 ימים
+- [ ] `scripts/check_db_status.js` — לא נגעת 60 ימים
+- [ ] `scripts/check_duplicates.js` — לא נגעת 77 ימים
+- [ ] `scripts/check_enrichment_status.js` — לא נגעת 55 ימים
+- [ ] `scripts/check_env_db.js` — לא נגעת 65 ימים
+- [ ] `scripts/check_env_project_id.js` — לא נגעת 56 ימים
+- [ ] `scripts/check_interactions_count.js` — לא נגעת 85 ימים
+- [ ] `scripts/check_invites.js` — לא נגעת 60 ימים
+- [ ] `scripts/check_leads_count.js` — לא נגעת 85 ימים
+- [ ] `scripts/check_messages_schema.js` — לא נגעת 60 ימים
+- [ ] `scripts/check_owner_id_simple.js` — לא נגעת 65 ימים
+- [ ] `scripts/check_provider.js` — לא נגעת 72 ימים
+- [ ] `scripts/check_providers_availability.js` — לא נגעת 74 ימים
+- [ ] `scripts/check_push_table.js` — לא נגעת 65 ימים
+- [ ] `scripts/check_rag_setup.js` — לא נגעת 65 ימים
+- [ ] `scripts/check_service_providers.js` — לא נגעת 84 ימים
+- [ ] `scripts/check_stripe_status.js` — לא נגעת 65 ימים
+- [ ] `scripts/check_task_result.js` — לא נגעת 90 ימים
+- [ ] `scripts/check_task_status.js` — לא נגעת 58 ימים
+- [ ] `scripts/check_worker_status.js` — לא נגעת 95 ימים
+- [ ] `scripts/check_worker_tasks.js` — לא נגעת 95 ימים
+- [ ] `scripts/daily_smoke_test.js` — לא נגעת 77 ימים
+- [ ] `scripts/debug_check_tasks.js` — לא נגעת 75 ימים
+- [ ] `scripts/debug_env.mjs` — לא נגעת 90 ימים
+- [ ] `scripts/debug_harvest_single.js` — לא נגעת 58 ימים
+- [ ] `scripts/debug_images.js` — לא נגעת 73 ימים
+- [ ] `scripts/debug_rls_insert.js` — לא נגעת 60 ימים
+- [ ] `scripts/debug_service_role.js` — לא נגעת 74 ימים
+- [ ] `scripts/debug_specific_provider.js` — לא נגעת 73 ימים
+- [ ] `scripts/debug_supabase_connection.js` — לא נגעת 60 ימים
+- [ ] `scripts/debug_tasks.js` — לא נגעת 90 ימים
+- [ ] `scripts/debug_transactions.js` — לא נגעת 60 ימים
+- [ ] `scripts/diagnose_RLS.js` — לא נגעת 60 ימים
+- [ ] `scripts/enable_ai_test.js` — לא נגעת 60 ימים
+- [ ] `scripts/test_automation_proxy.js` — לא נגעת 77 ימים
+- [ ] `scripts/test_blog_agent.js` — לא נגעת 75 ימים
+- [ ] `scripts/test_chat_search.js` — לא נגעת 71 ימים
+- [ ] `scripts/test_claim_flow.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_connection.js` — לא נגעת 92 ימים
+- [ ] `scripts/test_deep_audit.ts` — לא נגעת 72 ימים
+- [ ] `scripts/test_deployed_webhook.js` — לא נגעת 60 ימים
+- [ ] `scripts/test_github_task.js` — לא נגעת 95 ימים
+- [ ] `scripts/test_groq.js` — לא נגעת 89 ימים
+- [ ] `scripts/test_insert.js` — לא נגעת 72 ימים
+- [ ] `scripts/test_knowledge_search.js` — לא נגעת 76 ימים
+- [ ] `scripts/test_memory.js` — לא נגעת 90 ימים
+- [ ] `scripts/test_mimo.js` — לא נגעת 85 ימים
+- [ ] `scripts/test_model_registry.js` — לא נגעת 89 ימים
+- [ ] `scripts/test_owner_id_write.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_p2p.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_payment_generation.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_qa_flow.js` — לא נגעת 95 ימים
+- [ ] `scripts/test_rag.js` — לא נגעת 60 ימים
+- [ ] `scripts/test_rag_retrieval.js` — לא נגעת 60 ימים
+- [ ] `scripts/test_rbac_schema.mjs` — לא נגעת 90 ימים
+- [ ] `scripts/test_real_email.js` — לא נגעת 90 ימים
+- [ ] `scripts/test_receptionist_flow.js` — לא נגעת 58 ימים
+- [ ] `scripts/test_refactored_client.mjs` — לא נגעת 90 ימים
+- [ ] `scripts/test_rxdb.mjs` — לא נגעת 90 ימים
+- [ ] `scripts/test_sales_agent.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_sales_n8n.js` — לא נגעת 60 ימים
+- [ ] `scripts/test_stripe_link.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_stripe_tool.js` — לא נגעת 90 ימים
+- [ ] `scripts/test_vibe_award.js` — לא נגעת 65 ימים
+- [ ] `scripts/test_worker_task.js` — לא נגעת 95 ימים
+- [ ] `scripts/verify_admin_map.js` — לא נגעת 60 ימים
+- [ ] `scripts/verify_analytics.js` — לא נגעת 60 ימים
+- [ ] `scripts/verify_content.js` — לא נגעת 72 ימים
+- [ ] `scripts/verify_crm.js` — לא נגעת 90 ימים
+- [ ] `scripts/verify_crm_data.js` — לא נגעת 90 ימים
+- [ ] `scripts/verify_crm_setup.js` — לא נגעת 89 ימים
+- [ ] `scripts/verify_crm_tables.js` — לא נגעת 85 ימים
+- [ ] `scripts/verify_dashboard_logic.js` — לא נגעת 65 ימים
+- [ ] `scripts/verify_db_connection.js` — לא נגעת 72 ימים
+- [ ] `scripts/verify_earnings.js` — לא נגעת 65 ימים
+- [ ] `scripts/verify_map_data.js` — לא נגעת 60 ימים
+- [ ] `scripts/verify_one_dollar.js` — לא נגעת 92 ימים
+- [ ] `scripts/verify_payment_flow.js` — לא נגעת 60 ימים
+- [ ] `scripts/verify_push_table.js` — לא נגעת 60 ימים
+- [ ] `scripts/verify_rag_tool.js` — לא נגעת 65 ימים
+- [ ] `scripts/verify_receptionist_schema.js` — לא נגעת 60 ימים
+- [ ] `scripts/verify_replication_schema.js` — לא נגעת 84 ימים
+- [ ] `scripts/verify_sanitization.js` — לא נגעת 98 ימים
+- [ ] `scripts/verify_security_guardrails.js` — לא נגעת 85 ימים
+- [ ] `scripts/verify_superapp_integration.js` — לא נגעת 90 ימים
+- [ ] `scripts/verify_table_access.js` — לא נגעת 95 ימים
+- [ ] `scripts/verify_workflow_tools.js` — לא נגעת 85 ימים
+
+## ⚠️ כדאי לבדוק (94 קבצים)
+
+### ישנים אבל שם רגיל:
+- `scripts/apply_analytics_schema.js` — 90 ימים ללא שינוי
+- `scripts/apply_db_patch.js` — 95 ימים ללא שינוי
+- `scripts/apply_migration_dummy.js` — 65 ימים ללא שינוי
+- `scripts/apply_migration_reviews.js` — 65 ימים ללא שינוי
+- `scripts/apply_migration_transactions.js` — 60 ימים ללא שינוי
+- `scripts/apply_migration_vendor.js` — 65 ימים ללא שינוי
+- `scripts/apply_p2p_migration.js` — 71 ימים ללא שינוי
+- `scripts/apply_rls.js` — 98 ימים ללא שינוי
+- `scripts/apply_stripe_migration.js` — 72 ימים ללא שינוי
+- `scripts/apply_visual_editor_schema.js` — 90 ימים ללא שינוי
+- `scripts/cleanup_junk_users.js` — 60 ימים ללא שינוי
+- `scripts/close_deal.js` — 90 ימים ללא שינוי
+- `scripts/convert_json_to_sql.js` — 76 ימים ללא שינוי
+- `scripts/cortex_listener.js` — 60 ימים ללא שינוי
+- `scripts/cortex_runner.js` — 60 ימים ללא שינוי
+- `scripts/create_admin.js` — 90 ימים ללא שינוי
+- `scripts/create_demo_users.js` — 93 ימים ללא שינוי
+- `scripts/create_test_task.js` — 85 ימים ללא שינוי
+- `scripts/delegate_task.js` — 93 ימים ללא שינוי
+- `scripts/demo_auto_reply.js` — 60 ימים ללא שינוי
+- `scripts/deploy_worker.js` — 95 ימים ללא שינוי
+- `scripts/dispatch_scrape_task.js` — 98 ימים ללא שינוי
+- `scripts/dispatch_translation_mission.js` — 98 ימים ללא שינוי
+- `scripts/download_assets.js` — 95 ימים ללא שינוי
+- `scripts/enrich_missing_images.js` — 58 ימים ללא שינוי
+- `scripts/enrich_providers.js` — 80 ימים ללא שינוי
+- `scripts/enrich_samui_data.js` — 56 ימים ללא שינוי
+- `scripts/ensure_admin.js` — 60 ימים ללא שינוי
+- `scripts/execute_crm_population.js` — 90 ימים ללא שינוי
+- `scripts/execute_one_dollar_challenge.js` — 90 ימים ללא שינוי
+- `scripts/fetch_gmail_inbound.js` — 60 ימים ללא שינוי
+- `scripts/fix_categories.js` — 72 ימים ללא שינוי
+- `scripts/fix_crm_default.js` — 89 ימים ללא שינוי
+- `scripts/fix_duplicate_images.js` — 73 ימים ללא שינוי
+- `scripts/generate_daily_planner.js` — 60 ימים ללא שינוי
+- `scripts/generate_invite.js` — 72 ימים ללא שינוי
+- `scripts/generate_seed_sql.js` — 82 ימים ללא שינוי
+- `scripts/ghost_protocol.js` — 77 ימים ללא שינוי
+- `scripts/harvest_descriptions.js` — 55 ימים ללא שינוי
+- `scripts/harvest_samuimap.js` — 58 ימים ללא שינוי
+- `scripts/ingest_harvested_data.js` — 58 ימים ללא שינוי
+- `scripts/ingest_knowledge.js` — 60 ימים ללא שינוי
+- `scripts/ingest_knowledge.ts` — 60 ימים ללא שינוי
+- `scripts/ingest_to_supabase.js` — 72 ימים ללא שינוי
+- `scripts/ingest_via_postgres.js` — 72 ימים ללא שינוי
+- `scripts/init_db_direct.js` — 72 ימים ללא שינוי
+- `scripts/inspect_chat_schema.js` — 60 ימים ללא שינוי
+- `scripts/inspect_events_schema.js` — 60 ימים ללא שינוי
+- `scripts/inspect_provider.mjs` — 90 ימים ללא שינוי
+- `scripts/inspect_providers.js` — 65 ימים ללא שינוי
+- `scripts/inspect_result.js` — 90 ימים ללא שינוי
+- `scripts/inspect_transactions_schema.js` — 60 ימים ללא שינוי
+- `scripts/inspect_wallets.js` — 60 ימים ללא שינוי
+- `scripts/janitor_scan.js` — 93 ימים ללא שינוי
+- `scripts/list_tasks.js` — 90 ימים ללא שינוי
+- `scripts/manager.js` — 60 ימים ללא שינוי
+- `scripts/manual_claim_diagnostic.js` — 57 ימים ללא שינוי
+- `scripts/placeholder_migration.js` — 65 ימים ללא שינוי
+- `scripts/probe_manypi.js` — 89 ימים ללא שינוי
+- `scripts/promote_google_admin.js` — 60 ימים ללא שינוי
+- `scripts/qa_warden.js` — 93 ימים ללא שינוי
+- `scripts/qa_worker.js` — 98 ימים ללא שינוי
+- `scripts/queue_additional_tasks.js` — 58 ימים ללא שינוי
+- `scripts/queue_autonomy_tasks.js` — 58 ימים ללא שינוי
+- `scripts/rag_seed_knowledge.js` — 60 ימים ללא שינוי
+- `scripts/read_interactions.js` — 90 ימים ללא שינוי
+- `scripts/read_leads.js` — 90 ימים ללא שינוי
+- `scripts/reload_and_check.js` — 65 ימים ללא שינוי
+- `scripts/reproduce_claim.js` — 65 ימים ללא שינוי
+- `scripts/reseed_knowledge.js` — 65 ימים ללא שינוי
+- `scripts/reset_agent_tasks.js` — 90 ימים ללא שינוי
+- `scripts/reset_crm_task.js` — 90 ימים ללא שינוי
+- `scripts/sales_coordinator.js` — 60 ימים ללא שינוי
+- `scripts/security_sentinel.js` — 93 ימים ללא שינוי
+- `scripts/seed_crm.js` — 90 ימים ללא שינוי
+- `scripts/seed_crm_leads.js` — 90 ימים ללא שינוי
+- `scripts/seed_crm_task.js` — 92 ימים ללא שינוי
+- `scripts/seed_knowledge.js` — 50 ימים ללא שינוי
+- `scripts/seed_marketplace.js` — 55 ימים ללא שינוי
+- `scripts/seed_stable_users.js` — 65 ימים ללא שינוי
+- `scripts/seed_transactions.js` — 60 ימים ללא שינוי
+- `scripts/send_push.js` — 60 ימים ללא שינוי
+- `scripts/setup_exec_sql.js` — 60 ימים ללא שינוי
+- `scripts/simulate_claim_flow.js` — 65 ימים ללא שינוי
+- `scripts/simulate_cortex.js` — 60 ימים ללא שינוי
+- `scripts/simulate_reply.js` — 90 ימים ללא שינוי
+- `scripts/start_docker_gateway.js` — 86 ימים ללא שינוי
+- `scripts/translator_worker.js` — 98 ימים ללא שינוי
+- `scripts/trigger_outreach.js` — 90 ימים ללא שינוי
+- `scripts/trigger_response.js` — 90 ימים ללא שינוי
+- `scripts/watch_and_sync.js` — 60 ימים ללא שינוי
+
+### שם debug-י אבל חדש יחסית:
+- `scripts/bootstrap_brain.js` — 0 ימים (שם נראה זמני)
+- `scripts/test_gemini.js` — 8 ימים (שם נראה זמני)
+- `scripts/test_skill_integration.js` — 8 ימים (שם נראה זמני)
+
+---
+_הארכיאולוג רץ ב-18.3.2026, 8:45:58_
