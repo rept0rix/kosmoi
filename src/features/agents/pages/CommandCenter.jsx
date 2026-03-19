@@ -15,6 +15,7 @@ import {
   Database,
   Download,
   Cpu,
+  Bot,
   Grid,
   LayoutDashboard,
   Network,
@@ -37,6 +38,7 @@ import { AdminService } from "@/services/AdminService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GlassCard } from "@/components/ui/GlassCard";
 import LiveAgentFeed from "@/components/admin/LiveAgentFeed";
+import { AutonomyDashboard } from "@/components/admin/AutonomyDashboard";
 
 const StatCard = ({ title, value, change, icon: Icon, color, subtext }) => (
   <GlassCard className="p-6 hover:scale-[1.02] transition-all bg-slate-900/60 border-white/5">
@@ -117,7 +119,7 @@ const CommandCenter = () => {
     activeSubscriptions: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
-  const [activeTab, setActiveTab] = useState("business"); // business | network
+  const [activeTab, setActiveTab] = useState("business"); // business | network | autonomy
   const [dbStatus, setDbStatus] = useState("checking");
 
   useEffect(() => {
@@ -208,6 +210,12 @@ const CommandCenter = () => {
                 className={`px-4 py-2 rounded-md text-xs font-mono font-bold uppercase transition-all flex items-center gap-2 ${activeTab === "network" ? "bg-purple-500/20 text-purple-300 shadow-inner" : "text-slate-500 hover:text-slate-300"}`}
               >
                 <Network className="w-4 h-4" /> Agent Network
+              </button>
+              <button
+                onClick={() => setActiveTab("autonomy")}
+                className={`px-4 py-2 rounded-md text-xs font-mono font-bold uppercase transition-all flex items-center gap-2 ${activeTab === "autonomy" ? "bg-emerald-500/20 text-emerald-300 shadow-inner" : "text-slate-500 hover:text-slate-300"}`}
+              >
+                <Bot className="w-4 h-4" /> Autonomy
               </button>
             </div>
           </div>
@@ -374,6 +382,13 @@ const CommandCenter = () => {
                 </div>
               </GlassCard>
             </div>
+          </div>
+        )}
+
+        {/* CONTENT: Autonomy View */}
+        {activeTab === "autonomy" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <AutonomyDashboard />
           </div>
         )}
 
