@@ -453,6 +453,7 @@ const LanguageRoot = ({ lang }) => {
 function App() {
   // console.log("ROOT APP RENDER");
   return (
+    <>
     <QueryClientProvider client={queryClientInstance}>
       <AuthProvider>
         <AppConfigProvider>
@@ -516,6 +517,7 @@ function App() {
     </QueryClientProvider>
     <SpeedInsights />
     <Analytics />
+    </>
   );
 }
 
