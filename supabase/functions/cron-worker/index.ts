@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
         }
 
         // --- MEDIUM: Stale leads (businesses scouted but never contacted) ---
-        if (alert => snapshot.alerts.find(a => a.type === 'STALE_LEADS')) {
+        if (snapshot.alerts.find(a => a.type === 'STALE_LEADS')) {
             actionsToTake.push({
                 type: 'OUTREACH_STALE_LEADS',
                 priority: 70,
@@ -253,7 +253,11 @@ Deno.serve(async (req: Request) => {
                         reason: action.reason,
                         fn: action.fn,
                         success,
-                        duration_ms: Date.now() - actionStart
+                        duration_ms: Date.now() - actionStart,
+                        ...(success ? {} : {
+                            status_code: response.status,
+                            error_body: result
+                        })
                     }
                 });
 
@@ -267,6 +271,21 @@ Deno.serve(async (req: Request) => {
                     duration_ms: Date.now() - actionStart
                 });
                 console.error(`[${cycleId}]   ❌ ${action.type}: ${execError.message}`);
+                // Write signal for network/fetch exceptions (not captured by the HTTP path above)
+                await supabase.rpc('write_signal', {
+                    p_event_type: 'brain.action_failed',
+                    p_entity_type: 'system',
+                    p_entity_id: null,
+                    p_source: 'cron-worker',
+                    p_data: {
+                        cycle_id: cycleId,
+                        action_type: action.type,
+                        fn: action.fn,
+                        success: false,
+                        error: execError.message,
+                        duration_ms: Date.now() - actionStart
+                    }
+                }).catch(() => {}); // never block on signal failure
             }
         }
 
