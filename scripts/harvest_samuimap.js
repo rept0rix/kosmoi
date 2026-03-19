@@ -46,8 +46,8 @@ if (!fs.existsSync(IMAGES_DIR)) {
 
 // Credentials (Optional - provided by user)
 const CREDS = {
-    username: 'rept0rix',
-    password: '0mgna0ryank0'
+    username: process.env.SAMUIMAP_USERNAME,
+    password: process.env.SAMUIMAP_PASSWORD
 };
 
 // Global State
