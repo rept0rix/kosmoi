@@ -26,22 +26,6 @@
 				"-y",
 				"chrome-devtools-mcp@latest"
 			]
-		},
-		"fetch": {
-			"command": "uvx",
-			"args": ["mcp-server-fetch"],
-			"description": "Fetch/read web pages and URLs — gives agents web access for research and outreach"
-		},
-		"brave-search": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@modelcontextprotocol/server-brave-search"
-			],
-			"env": {
-				"BRAVE_API_KEY": "${BRAVE_API_KEY}"
-			},
-			"description": "Brave Search API — lets agents search the web for leads, competitor info, market data"
 		}
 	}
 }

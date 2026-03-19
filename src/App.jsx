@@ -18,6 +18,7 @@ import {
 import { setupIframeMessaging } from "@/shared/lib/iframe-messaging";
 import { AuthProvider, useAuth } from "@/features/auth/context/AuthContext";
 import UserNotRegisteredError from "@/components/UserNotRegisteredError";
+// import AgentCommandCenter from '@/pages/AgentCommandCenter'; // Unused?
 const AdminImporter = lazy(() => import("@/pages/AdminImporter"));
 import {
   ProtectedAdminRoute,
@@ -27,6 +28,7 @@ import * as RouteGuards from "@/components/RouteGuards"; // Import all as RouteG
 import { RequireRole } from "@/components/RequireRole";
 
 const VendorSignup = lazy(() => import("@/features/vendors/pages/Signup"));
+// import VendorLite from '@/pages/VendorLite'; // Unused?
 
 import { AppConfigProvider } from "@/components/AppConfigContext";
 import { UserProfileProvider } from "@/contexts/UserProfileContext";
@@ -39,6 +41,7 @@ const MemoryLab = lazy(() => import("./pages/MemoryLab"));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import KosmoiLoader from "@/components/ui/KosmoiLoader";
+// import Footer from '@/components/Footer'; // Unused in main layout?
 
 import GlobalErrorBoundary from "@/components/GlobalErrorBoundary";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -116,7 +119,11 @@ const TransactionHistoryPage = lazy(
 );
 
 const LocalBrain = lazy(() => import("@/pages/LocalBrain"));
+// import SystemMonitor from '@/components/dashboard/SystemMonitor'; // Unused?
 const ProviderProfile = lazy(() => import("@/pages/ProviderProfile"));
+
+// Speed Pass Injection
+// import SpeedPassCard from '@/components/SpeedPassCard'; // Disabled
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -446,7 +453,6 @@ const LanguageRoot = ({ lang }) => {
 function App() {
   // console.log("ROOT APP RENDER");
   return (
-    <>
     <QueryClientProvider client={queryClientInstance}>
       <AuthProvider>
         <AppConfigProvider>
@@ -508,9 +514,6 @@ function App() {
         </AppConfigProvider>
       </AuthProvider>
     </QueryClientProvider>
-    <SpeedInsights />
-    <Analytics />
-    </>
   );
 }
 

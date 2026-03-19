@@ -19,8 +19,8 @@ const Team = lazy(() => import('@/pages/Team'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // --- Legal ---
-const Privacy = lazy(() => import('@/pages/legal/PrivacyPolicy'));
-const Terms = lazy(() => import('@/pages/legal/TermsOfService'));
+const Privacy = lazy(() => import('@/pages/legal/Privacy'));
+const Terms = lazy(() => import('@/pages/legal/Terms'));
 const Accessibility = lazy(() => import('@/pages/legal/Accessibility'));
 
 // --- User App ---

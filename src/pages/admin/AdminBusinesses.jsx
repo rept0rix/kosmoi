@@ -94,7 +94,8 @@ export default function AdminBusinesses() {
       );
 
       setBusinesses(data || []);
-      setTotalItems(total || data?.length || 0);
+      // setTotalItems(total || 0); // TODO: Fix AdminService to return total
+      setTotalItems(data?.length || 0); // Fallback if API doesn't return total count yet
     } catch (err) {
       console.error("Businesses Load Failed", err);
       setError(err.message);

@@ -51,7 +51,7 @@ export const ReceptionistAgent = {
                 id: `receptionist-${providerId}`,
                 name: `${provider?.business_name || 'Business'} Receptionist`,
                 role: 'receptionist',
-                allowedTools: ['create_lead'],
+                allowedTools: [], // Pending: Add booking tools if needed in future
                 systemPrompt: `
 You are the AI Receptionist for "${provider?.business_name || 'our business'}", a ${provider?.category || 'service'} provider.
 Your goal is to assist customers, answer questions based on business details, and be helpful.
@@ -80,29 +80,9 @@ Custom Instructions: ${config.custom_instructions || "Be polite and concise."}
 
             const result = await AgentRunner.run(receptionistAgentDef, message.content, context);
 
-            // 6. Auto-create CRM lead if customer shows interest
+            // 6. Return (and optionally log or send) response
             if (result && result.output) {
                 console.log(`[ReceptionistAgent] Generated reply: ${result.output}`);
-
-                const interestSignals = ['book', 'price', 'cost', 'available', 'interested', 'appointment', 'visit', 'how much', 'reservation'];
-                const messageText = (message.content || '').toLowerCase();
-                const hasInterest = interestSignals.some(s => messageText.includes(s));
-
-                if (hasInterest && agent.allowedTools.includes('create_lead')) {
-                    try {
-                        await supabaseClient.from('crm_leads').insert([{
-                            name: message.sender_name || 'Chat Lead',
-                            source: 'receptionist_chat',
-                            provider_id: providerId,
-                            notes: `Auto-captured via receptionist chat. Message: "${(message.content || '').slice(0, 200)}"`,
-                            status: 'new',
-                        }]);
-                        console.log(`[ReceptionistAgent] Lead auto-created for provider ${providerId}`);
-                    } catch (leadErr) {
-                        console.warn('[ReceptionistAgent] Lead creation failed (non-fatal):', leadErr.message);
-                    }
-                }
-
                 return result.output;
             }
 

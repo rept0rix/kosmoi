@@ -82,53 +82,6 @@ ToolRegistry.register(
         }
     });
 
-// --- SEMANTIC SEARCH TOOL ---
-ToolRegistry.register(
-    "semantic_search_services",
-    "Semantic vector search for businesses — use for natural language queries like 'relaxing spa near beach' or 'best Thai food'",
-    {
-        query: "Natural language search query",
-        limit: "Max results (default 10)"
-    },
-    async ({ query, limit = 10 }) => {
-        try {
-            if (!query) return "[Error] Query is required";
-
-            // 1. Generate embedding via edge function
-            const embRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-embeddings`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: query })
-            });
-            const { embedding, error: embErr } = await embRes.json();
-            if (embErr || !embedding) return `[Error] Failed to generate embedding: ${embErr}`;
-
-            // 2. Vector similarity search via RPC
-            const { data, error } = await supabase.rpc("match_service_providers", {
-                query_embedding: embedding,
-                match_threshold: 0.3,
-                match_count: Number(limit)
-            });
-            if (error) throw error;
-            if (!data?.length) return `[Semantic Search] No results found for "${query}"`;
-
-            const results = data.map(p =>
-                JSON.stringify({
-                    id: p.id,
-                    title: p.name,
-                    category: p.category,
-                    similarity: p.similarity?.toFixed(2)
-                })
-            ).join('\n');
-
-            return `[Semantic Results]:\n${results}`;
-        } catch (e) {
-            console.error("Semantic search failed:", e);
-            return `[Error] Semantic search failed: ${e.message}`;
-        }
-    }
-);
-
 // --- SUPABASE SPECIALIST TOOLS ---
 
 ToolRegistry.register(
