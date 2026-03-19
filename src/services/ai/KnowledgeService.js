@@ -21,7 +21,6 @@ export const KnowledgeService = {
             const embedding = await GetEmbedding({ text: queryText });
 
             if (!embedding) {
-                console.warn("[KnowledgeService] Failed to generate embedding for query. Aborting RAG.");
                 return "";
             }
 
