@@ -18,6 +18,14 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 console.log("Stripe Webhook Function Initialized")
 
+const writeSignal = async (eventType: string, entityId: string | null, metadata: Record<string, any> = {}) => {
+    await supabase.rpc('write_signal', {
+        p_event_type: eventType,
+        p_entity_id: entityId,
+        p_metadata: metadata,
+    }).catch((e: any) => console.warn('[signal] write failed:', e.message));
+};
+
 const toDateTime = (secs: number) => {
     var t = new Date('1970-01-01T00:30:00Z') // Unix epoch start.
     t.setSeconds(secs)
@@ -91,6 +99,7 @@ serve(async (req: Request) => {
             if (session.mode === 'subscription') {
                 const subscriptionId = session.subscription
                 await manageSubscriptionStatusChange(subscriptionId as string, session.customer as string, true)
+                await writeSignal('subscription.created', session.customer as string, { session_id: session.id, amount: session.amount_total });
             } else if (session.mode === 'payment' && session.metadata?.type === 'claim_profile') {
                 // Claim Profile Logic
                 const { userId, providerId } = session.metadata;
@@ -126,6 +135,7 @@ serve(async (req: Request) => {
                 if (txnError) console.error('Failed to record claim transaction:', txnError);
 
                 console.log(`Claim successful for provider ${providerId}`);
+                await writeSignal('claim.payment_completed', providerId, { user_id: userId, session_id: session.id });
 
             } else if (session.mode === 'payment' && session.metadata?.planId) {
                 // Plan Purchase Logic (Test Drive / Subscription Start)
@@ -165,6 +175,7 @@ serve(async (req: Request) => {
                          console.error('Failed to update business plan status:', updateError);
                      } else {
                          console.log(`Successfully upgraded business ${business.id} to plan ${planId}`);
+                         await writeSignal('subscription.plan_purchased', business.id, { user_id: userId, plan_id: planId, amount: session.amount_total });
                      }
                 }
 
@@ -204,6 +215,7 @@ serve(async (req: Request) => {
                         console.log(`Awarded ${vibeReward} Vibes to user ${userId}`);
                     }
                 }
+                await writeSignal('booking.paid', bookingId, { user_id: userId, amount_thb: bookingValueUsd, vibes_awarded: vibeReward });
             } else if (session.type === 'topup' || session.metadata?.type === 'topup') {
                 // Legacy / Topup logic
                 const { type, userId } = session.metadata || {}
@@ -225,12 +237,17 @@ serve(async (req: Request) => {
         } else if (event.type === 'customer.subscription.created') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string, true)
+            await writeSignal('subscription.created', subscription.customer as string, { subscription_id: subscription.id, status: subscription.status });
         } else if (event.type === 'customer.subscription.updated') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string)
+            if (subscription.cancel_at_period_end) {
+                await writeSignal('subscription.cancellation_requested', subscription.customer as string, { subscription_id: subscription.id, cancel_at: subscription.cancel_at });
+            }
         } else if (event.type === 'customer.subscription.deleted') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string)
+            await writeSignal('subscription.cancelled', subscription.customer as string, { subscription_id: subscription.id });
         } else if (event.type === 'account.updated') {
             const account = event.data.object as any
             const status = account.charges_enabled && account.payouts_enabled ? 'verified' : 'restricted'

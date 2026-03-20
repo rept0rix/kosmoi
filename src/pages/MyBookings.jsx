@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, XCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { BookingService } from '@/services/BookingService';
+import { db } from '@/api/supabaseClient';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +46,7 @@ export default function MyBookings() {
         try {
             await BookingService.cancelBooking(bookingId);
             toast({ title: t('my_bookings.cancel_success') });
+            db.rpc('write_signal', { p_event_type: 'booking.cancelled_by_user', p_entity_id: bookingId, p_metadata: { user_id: user?.id } }).catch(() => {});
             fetchBookings(); // Refresh list
         } catch (error) {
             console.error(error);

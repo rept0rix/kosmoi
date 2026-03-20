@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion, useSpring, useTransform } from 'framer-motion';
+import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { realSupabase } from '../../api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Target, TrendingUp, AlertTriangle, BookOpen,
   CheckCircle, Wifi, WifiOff, Activity,
-  ChevronRight, Users, ShoppingCart, Building2, RefreshCw
+  ChevronRight, Users, ShoppingCart, Building2, RefreshCw,
+  Zap, Brain, Radio, Shield
 } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 
@@ -407,6 +408,231 @@ function LessonsPanel() {
   );
 }
 
+// ── Signal Event Colours ─────────────────────────────────────────────────────
+
+const EVENT_STYLE = (eventType) => {
+  if (eventType?.startsWith('brain.action_failed') || eventType?.includes('failed'))
+    return { dot: 'bg-red-500', text: 'text-red-400', border: 'border-red-500/20', bg: 'bg-red-500/5' };
+  if (eventType?.startsWith('brain.escalation'))
+    return { dot: 'bg-orange-500', text: 'text-orange-400', border: 'border-orange-500/20', bg: 'bg-orange-500/5' };
+  if (eventType?.startsWith('goal.achieved') || eventType?.startsWith('strategy.'))
+    return { dot: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500/20', bg: 'bg-purple-500/5' };
+  if (eventType?.startsWith('brain.action_taken') || eventType?.startsWith('kpi.'))
+    return { dot: 'bg-blue-500', text: 'text-blue-400', border: 'border-blue-500/20', bg: 'bg-blue-500/5' };
+  if (eventType?.startsWith('subscription.') || eventType?.startsWith('booking.'))
+    return { dot: 'bg-emerald-500', text: 'text-emerald-400', border: 'border-emerald-500/20', bg: 'bg-emerald-500/5' };
+  return { dot: 'bg-slate-500', text: 'text-slate-400', border: 'border-slate-700/40', bg: 'bg-slate-800/30' };
+};
+
+// ── Brain Timeline ───────────────────────────────────────────────────────────
+
+function BrainTimeline() {
+  const [signals, setSignals] = useState([]);
+  const [decisions, setDecisions] = useState([]);
+  const [tab, setTab] = useState('signals'); // 'signals' | 'decisions'
+
+  useEffect(() => {
+    const loadSignals = async () => {
+      const { data } = await realSupabase
+        .from('signals')
+        .select('id, event_type, source, data, processed, created_at')
+        .order('created_at', { ascending: false })
+        .limit(25);
+      if (data) setSignals(data);
+    };
+
+    const loadDecisions = async () => {
+      const { data } = await realSupabase
+        .from('agent_decisions')
+        .select('id, agent_id, decision_type, success, result, created_at')
+        .order('created_at', { ascending: false })
+        .limit(15);
+      if (data) setDecisions(data);
+    };
+
+    loadSignals();
+    loadDecisions();
+
+    // Realtime: new signal arrives → prepend it
+    const sigSub = realSupabase
+      .channel('brain:signals')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+        setSignals(prev => [payload.new, ...prev].slice(0, 25));
+      })
+      .subscribe();
+
+    // Realtime: new decision logged
+    const decSub = realSupabase
+      .channel('brain:decisions')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_decisions' }, payload => {
+        setDecisions(prev => [payload.new, ...prev].slice(0, 15));
+      })
+      .subscribe();
+
+    return () => { sigSub.unsubscribe(); decSub.unsubscribe(); };
+  }, []);
+
+  return (
+    <Card className="bg-slate-900/40 border-white/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Brain className="w-4 h-4 text-violet-400" />
+          Brain Timeline
+          <span className="ml-1 flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
+          </span>
+          <div className="ml-auto flex gap-1">
+            {['signals', 'decisions'].map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`text-[10px] font-mono px-2 py-0.5 rounded transition-colors ${
+                  tab === t
+                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                    : 'text-slate-600 hover:text-slate-400'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-80">
+          <AnimatePresence initial={false}>
+            {tab === 'signals' && signals.map((sig, i) => {
+              const style = EVENT_STYLE(sig.event_type);
+              return (
+                <motion.div
+                  key={sig.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, delay: i === 0 ? 0 : 0 }}
+                  className={`flex items-start gap-3 mb-2 p-2 rounded-lg border ${style.bg} ${style.border}`}
+                >
+                  <div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
+                    <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+                    {i < signals.length - 1 && <span className="w-px h-4 bg-slate-700" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[11px] font-mono font-medium truncate ${style.text}`}>
+                        {sig.event_type}
+                      </span>
+                      <span className="text-[9px] text-slate-600 font-mono shrink-0">
+                        {formatDistanceToNow(new Date(sig.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[9px] text-slate-600 font-mono">{sig.source}</span>
+                      {sig.processed
+                        ? <span className="text-[9px] text-emerald-600 font-mono">processed</span>
+                        : <span className="text-[9px] text-amber-600 font-mono">pending</span>}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+
+            {tab === 'decisions' && decisions.map((dec, i) => (
+              <motion.div
+                key={dec.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                className={`flex items-start gap-3 mb-2 p-2 rounded-lg border ${
+                  dec.success
+                    ? 'bg-blue-500/5 border-blue-500/20'
+                    : 'bg-red-500/5 border-red-500/20'
+                }`}
+              >
+                <Zap className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${dec.success ? 'text-blue-400' : 'text-red-400'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono font-medium text-slate-300 truncate">
+                      {dec.decision_type}
+                    </span>
+                    <span className="text-[9px] text-slate-600 font-mono shrink-0">
+                      {formatDistanceToNow(new Date(dec.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] text-slate-600 font-mono">{dec.agent_id}</span>
+                    <span className={`text-[9px] font-mono ${dec.success ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {dec.success ? '✓ ok' : '✗ failed'}
+                    </span>
+                    {dec.result?.duration_ms && (
+                      <span className="text-[9px] text-slate-700 font-mono">{dec.result.duration_ms}ms</span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Strategy Confidence Panel ────────────────────────────────────────────────
+
+function StrategyPanel() {
+  const [strategies, setStrategies] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await realSupabase
+        .from('strategy_store')
+        .select('key, confidence, notes, updated_at')
+        .order('confidence', { ascending: false });
+      if (data) setStrategies(data);
+    };
+    load();
+
+    const sub = realSupabase
+      .channel('brain:strategies')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'strategy_store' }, load)
+      .subscribe();
+    return () => sub.unsubscribe();
+  }, []);
+
+  return (
+    <Card className="bg-slate-900/40 border-white/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Shield className="w-4 h-4 text-cyan-400" /> Strategy Confidence
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {strategies.map(s => {
+          const pct = Math.round(s.confidence * 100);
+          const color = pct >= 70 ? 'bg-emerald-500' : pct >= 50 ? 'bg-blue-500' : 'bg-amber-500';
+          return (
+            <div key={s.key}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-mono text-slate-400 truncate">{s.key}</span>
+                <span className="text-[11px] font-mono text-slate-500">{pct}%</span>
+              </div>
+              <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                <motion.div
+                  className={`h-full rounded-full ${color}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main AutonomyDashboard ──────────────────────────────────────────────────
 
 export function AutonomyDashboard() {
@@ -416,11 +642,13 @@ export function AutonomyDashboard() {
         <WorkerStatusPanel />
         <KpiTodayPanel />
       </div>
+      <BrainTimeline />
       <GoalsPanel />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <EscalationsPanel />
-        <LessonsPanel />
+        <StrategyPanel />
       </div>
+      <LessonsPanel />
     </div>
   );
 }

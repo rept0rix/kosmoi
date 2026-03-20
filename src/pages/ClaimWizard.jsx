@@ -5,6 +5,7 @@ import { ClaimBusinessFlow } from "@/features/vendors/components/ClaimBusinessFl
 import { CreatePaymentLink } from "@/api/integrations";
 import { Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { db } from '@/api/supabaseClient';
 import { toast } from "sonner";
 
 export default function ClaimWizard() {
@@ -61,6 +62,9 @@ export default function ClaimWizard() {
       if (!payment.url) {
         throw new Error("No payment URL returned");
       }
+
+      // Signal: user is committing to claim (before Stripe redirect)
+      db.rpc('write_signal', { p_event_type: 'claim.submitted', p_entity_id: businessData.id, p_metadata: { user_id: user.id, business_name: businessData.business_name } }).catch(() => {});
 
       // Redirect to Stripe
       window.location.href = payment.url;
