@@ -96,6 +96,7 @@ const AdminAutomations = lazy(() => import("./pages/admin/AdminAutomations"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminScheduler = lazy(() => import("./pages/admin/AdminScheduler"));
 const AdminEvolution = lazy(() => import("./pages/admin/AdminEvolution"));
+const AdminAutonomy = lazy(() => import("./pages/admin/AdminAutonomy"));
 const AdminKanban = lazy(() => import("./pages/admin/AdminKanban"));
 const AdminRoadmap = lazy(() => import("@/pages/admin/AdminRoadmap"));
 const AdminCanvas = lazy(() => import("./pages/admin/AdminCanvas"));
@@ -348,6 +349,7 @@ const AuthenticatedApp = () => {
                   <Route path="scheduler" element={<AdminScheduler />} />
                   <Route path="logs" element={<AdminLogs />} />
                   <Route path="evolution" element={<AdminEvolution />} />
+                  <Route path="autonomy" element={<AdminAutonomy />} />
                   <Route path="schema" element={<AdminSchema />} />
                   <Route path="hyperloop" element={<AdminHyperloop />} />
                   <Route path="memory" element={<AdminMemory />} />
