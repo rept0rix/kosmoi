@@ -105,22 +105,43 @@ Deno.serve(async (req: Request) => {
         const { data: strategies } = await supabase
             .from('strategy_store')
             .select('key, value, confidence')
-            .in('key', ['email_send_window', 'lead_priority_categories', 'platform_health_targets']);
+            .in('key', ['email_send_window', 'lead_priority_categories', 'platform_health_targets', 'churn_risk_signals']);
 
         const strategyMap: Record<string, { value: any; confidence: number }> = {};
         for (const s of strategies ?? []) {
             strategyMap[s.key] = { value: s.value, confidence: s.confidence };
         }
 
-        // Derive outreach threshold from strategy (high confidence → respect best_hour)
+        // Phase 5: Derive behaviors from strategy_store (only apply when confidence > 0.7)
         const emailStrategy = strategyMap['email_send_window'];
+        const leadStrategy  = strategyMap['lead_priority_categories'];
+        const healthTargets = strategyMap['platform_health_targets'];
+        const churnStrategy = strategyMap['churn_risk_signals'];
+
+        // 1. Outreach window: respect best send hour only when Brain has learned it (confidence > 0.7)
         const currentHourUtc = new Date().getUTCHours();
         const bestHourUtc = emailStrategy?.value?.best_hour_utc ?? 2;
         const outreachWindowOpen = emailStrategy && emailStrategy.confidence > 0.7
-            ? Math.abs(currentHourUtc - bestHourUtc) <= 2  // within 2h of best send window
-            : true; // low confidence → always allow
+            ? Math.abs(currentHourUtc - bestHourUtc) <= 2
+            : true;
 
-        console.log(`[${cycleId}] 📚 Strategies loaded: ${Object.keys(strategyMap).length}. Outreach window open: ${outreachWindowOpen}`);
+        // 2. Lead priority categories: pass to sales-scout payload when confident
+        const leadPriorityCategories = leadStrategy && leadStrategy.confidence > 0.7
+            ? leadStrategy.value?.priority_order ?? []
+            : [];
+        const leadMinRating = leadStrategy && leadStrategy.confidence > 0.7
+            ? leadStrategy.value?.min_rating ?? 0
+            : 0;
+
+        // 3. Health targets: boost claim/outreach priority when below targets
+        const claimBoosted = healthTargets && healthTargets.confidence > 0.6
+            ? (snapshot.health.claimed_providers / Math.max(snapshot.health.total_providers, 1)) < (healthTargets.value?.target_claim_rate ?? 0.15)
+            : false;
+
+        // 4. Churn thresholds: tune retention triggers
+        const churnNoLoginDays = churnStrategy?.value?.no_login_days ?? 14;
+
+        console.log(`[${cycleId}] 📚 Strategies loaded: ${Object.keys(strategyMap).length} | outreach_window=${outreachWindowOpen} | lead_cats=${leadPriorityCategories.length} | claim_boosted=${claimBoosted}`);
 
         // ================================================================
         // STEP 1.6 (Phase 2): Check KPI breaches
@@ -202,7 +223,7 @@ Deno.serve(async (req: Request) => {
                     priority: 85,
                     reason: `New leads today (${breach.current_value}) below critical threshold (${breach.critical_threshold})`,
                     fn: 'sales-scout',
-                    payload: { action: 'invite_leads' }
+                    payload: { action: 'invite_leads', priority_categories: leadPriorityCategories, min_rating: leadMinRating }
                 });
             }
             if (breach.metric_name === 'verified_businesses') {
@@ -260,25 +281,25 @@ Deno.serve(async (req: Request) => {
             }
         }
 
-        // --- MEDIUM: Claims pending ---
+        // --- MEDIUM: Claims pending (priority boosted by strategy if below target_claim_rate) ---
         if (snapshot.pipeline.claims_pending > 0) {
             actionsToTake.push({
                 type: 'PROCESS_PENDING_CLAIMS',
-                priority: 80,
-                reason: `${snapshot.pipeline.claims_pending} claims waiting for verification`,
+                priority: claimBoosted ? 88 : 80,
+                reason: `${snapshot.pipeline.claims_pending} claims waiting for verification${claimBoosted ? ' (claim rate below target — boosted)' : ''}`,
                 fn: 'admin-actions',
                 payload: { action: 'REVIEW_PENDING_CLAIMS' }
             });
         }
 
-        // --- MEDIUM: Stale leads ---
+        // --- MEDIUM: Stale leads (enriched with lead strategy if confident) ---
         if (snapshot.alerts.find(a => a.type === 'STALE_LEADS')) {
             actionsToTake.push({
                 type: 'OUTREACH_STALE_LEADS',
                 priority: 70,
                 reason: 'Stale leads need outreach',
                 fn: 'sales-scout',
-                payload: { action: 'invite_leads' }
+                payload: { action: 'invite_leads', priority_categories: leadPriorityCategories, min_rating: leadMinRating }
             });
         }
 
