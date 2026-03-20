@@ -338,6 +338,112 @@ Deno.serve(async (req: Request) => {
                 .eq('id', task.id);
         }
 
+        // ── SYNERGY LOOP 1: PM Recommendations → Actual Agent Calls ──────────────
+        // PM agent writes pm_recommendation tasks every Sunday.
+        // Brain reads them and maps each to the right agent call.
+        const { data: pmTasks } = await supabase
+            .from('agent_tasks')
+            .select('id, title, description, input_context')
+            .eq('task_type', 'pm_recommendation')
+            .eq('status', 'pending')
+            .order('input_context->rank', { ascending: true })
+            .limit(3);
+
+        const PM_METRIC_TO_AGENT: Record<string, { fn: string; payload: object }> = {
+            mrr:               { fn: 'retention-agent', payload: { action: 'SEND_TRIAL_REMINDERS' } },
+            claimed_providers: { fn: 'sales-scout',     payload: { action: 'invite_leads' } },
+            bookings:          { fn: 'retention-agent', payload: { action: 'SEND_TRIAL_REMINDERS' } },
+            active_users:      { fn: 'retention-agent', payload: { action: 'FULL_RUN' } },
+            retention:         { fn: 'retention-agent', payload: { action: 'FULL_RUN' } },
+        };
+
+        for (const task of pmTasks ?? []) {
+            const impact = task.input_context?.metric_impact ?? '';
+            const mapped = PM_METRIC_TO_AGENT[impact] ?? PM_METRIC_TO_AGENT['claimed_providers'];
+            actionsToTake.push({
+                type: `PM_REC_EXECUTE_${impact.toUpperCase()}`,
+                priority: task.input_context?.rank === 1 ? 82 : task.input_context?.rank === 2 ? 68 : 55,
+                reason: `PM recommendation: ${task.title}`,
+                fn: mapped.fn,
+                payload: { ...mapped.payload, _pm_task_id: task.id },
+            });
+            await supabase.from('agent_tasks').update({ status: 'in_progress' }).eq('id', task.id);
+        }
+
+        // ── SYNERGY LOOP 2: Onboarding Follow-up Chain ────────────────────────
+        // If a business was onboarded 24–48h ago but hasn't had any activity signal
+        // (no login, no booking, no profile edit) → retention-agent sends a check-in.
+        const onboardedWindow = {
+            from: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+            to:   new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        };
+        const { data: recentOnboardings } = await supabase
+            .from('signals')
+            .select('entity_id, data, created_at')
+            .eq('event_type', 'onboarding.welcome_sent')
+            .gte('created_at', onboardedWindow.from)
+            .lte('created_at', onboardedWindow.to)
+            .limit(5);
+
+        const followUpNeeded: string[] = [];
+        for (const ob of recentOnboardings ?? []) {
+            // Check if this provider has any signal after their onboarding
+            const { count: activityCount } = await supabase
+                .from('signals')
+                .select('id', { count: 'exact', head: true })
+                .eq('entity_id', ob.entity_id)
+                .in('event_type', ['profile.updated', 'booking.received', 'provider.login', 'support.reply_sent'])
+                .gt('created_at', ob.created_at);
+
+            if ((activityCount ?? 0) === 0) followUpNeeded.push(ob.entity_id);
+        }
+
+        if (followUpNeeded.length > 0) {
+            actionsToTake.push({
+                type: 'ONBOARDING_FOLLOWUP_CHECKIN',
+                priority: 78,
+                reason: `${followUpNeeded.length} businesses onboarded 24–48h ago with zero activity — sending check-in`,
+                fn: 'retention-agent',
+                payload: { action: 'SEND_TRIAL_REMINDERS', provider_ids: followUpNeeded, context: 'onboarding_followup' },
+            });
+        }
+
+        // ── SYNERGY LOOP 3: Hot Lead Detector (Sales → Support cross-awareness) ──
+        // If a lead was contacted by sales-scout AND then sent an inbound email
+        // within 72h → they're hot → escalate to priority outreach.
+        const { data: recentContacts } = await supabase
+            .from('signals')
+            .select('entity_id, data, created_at')
+            .eq('event_type', 'outreach.email_sent')
+            .gte('created_at', new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString())
+            .limit(20);
+
+        const hotLeads: string[] = [];
+        for (const contact of recentContacts ?? []) {
+            const contactedEmail = contact.data?.to ?? contact.data?.email;
+            if (!contactedEmail) continue;
+            // Check if they replied inbound after being contacted
+            const { count: replyCount } = await supabase
+                .from('inbound_emails')
+                .select('id', { count: 'exact', head: true })
+                .ilike('sender', `%${contactedEmail.split('@')[1] ?? ''}%`)
+                .gt('created_at', contact.created_at);
+
+            if ((replyCount ?? 0) > 0 && contact.entity_id) {
+                hotLeads.push(contact.entity_id);
+            }
+        }
+
+        if (hotLeads.length > 0) {
+            actionsToTake.push({
+                type: 'HOT_LEAD_PRIORITY_OUTREACH',
+                priority: 92,
+                reason: `${hotLeads.length} leads contacted by sales replied inbound — HOT leads detected`,
+                fn: 'sales-scout',
+                payload: { action: 'invite_leads', provider_ids: hotLeads, context: 'hot_lead', priority_boost: true },
+            });
+        }
+
         // --- CRITICAL: New business claimed profile → send onboarding email ---
         const { data: pendingOnboardings } = await supabase
             .from('signals')

@@ -179,6 +179,49 @@ Deno.serve(async (req: Request) => {
         const { error: insertErr } = await supabase.from('agent_tasks').insert(taskInserts);
         if (insertErr) console.warn('[pm-agent] Task insert warn:', insertErr.message);
 
+        // ── Loop 1: Feed strategy_store directly so Brain changes behavior THIS cycle ──
+        // Map each recommendation's metric_impact to a strategy_store key
+        const strategyUpdates: Record<string, { boost?: string; categories?: string[] }> = {};
+        for (const rec of analysis.recommendations) {
+            if (rec.metric_impact === 'claimed_providers' || rec.metric_impact === 'mrr') {
+                strategyUpdates['platform_health_targets'] = {
+                    ...(strategyUpdates['platform_health_targets'] ?? {}),
+                    boost: rec.suggested_action,
+                };
+            }
+            if (rec.metric_impact === 'active_users' || rec.metric_impact === 'retention') {
+                strategyUpdates['churn_risk_signals'] = {
+                    ...(strategyUpdates['churn_risk_signals'] ?? {}),
+                    boost: rec.suggested_action,
+                };
+            }
+        }
+
+        // Update strategy_store notes so Brain's next cycle knows PM reviewed these areas
+        for (const key of Object.keys(strategyUpdates)) {
+            await supabase
+                .from('strategy_store')
+                .update({ notes: `PM weekly (${new Date().toISOString().slice(0, 10)}): ${strategyUpdates[key].boost ?? 'reviewed by PM agent'}` })
+                .eq('key', key);
+        }
+
+        // Write PM priorities into lead_priority_categories if signal data shows category patterns
+        const topCategories = Object.entries(signalSummary)
+            .filter(([k]) => k.startsWith('claim.') || k.startsWith('booking.'))
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .slice(0, 5)
+            .map(([k]) => k.replace('claim.', '').replace('booking.', ''));
+
+        if (topCategories.length > 0) {
+            await supabase
+                .from('strategy_store')
+                .update({
+                    value: { priority_order: topCategories, min_rating: 0, source: 'pm-agent' },
+                    notes: `Updated by PM agent weekly analysis: ${topCategories.join(', ')}`,
+                })
+                .eq('key', 'lead_priority_categories');
+        }
+
         // 6. Write signal
         await supabase.rpc('write_signal', {
             p_event_type: 'pm.weekly_analysis_complete',
