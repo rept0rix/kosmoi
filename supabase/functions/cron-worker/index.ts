@@ -338,6 +338,40 @@ Deno.serve(async (req: Request) => {
                 .eq('id', task.id);
         }
 
+        // --- CRITICAL: New business claimed profile → send onboarding email ---
+        const { data: pendingOnboardings } = await supabase
+            .from('signals')
+            .select('entity_id, data')
+            .eq('event_type', 'claim.payment_completed')
+            .eq('processed', false)
+            .limit(5);
+
+        for (const ob of pendingOnboardings ?? []) {
+            actionsToTake.push({
+                type: 'ONBOARD_NEW_BUSINESS',
+                priority: 95,
+                reason: `New business claimed and paid: provider=${ob.entity_id}`,
+                fn: 'onboarding-agent',
+                payload: { provider_id: ob.entity_id, user_id: ob.data?.user_id }
+            });
+        }
+
+        // --- MEDIUM: Unread inbound emails → AI support response ---
+        const { count: unreadEmailCount } = await supabase
+            .from('inbound_emails')
+            .select('id', { count: 'exact', head: true })
+            .eq('processed_status', 'unread');
+
+        if ((unreadEmailCount ?? 0) > 0) {
+            actionsToTake.push({
+                type: 'SUPPORT_AUTO_REPLY',
+                priority: 75,
+                reason: `${unreadEmailCount} unread inbound emails awaiting AI support response`,
+                fn: 'support-agent',
+                payload: { action: 'PROCESS_UNREAD' }
+            });
+        }
+
         // --- LOW: Regular outreach (respects strategy send window) ---
         if (snapshot.pipeline.invites_sent_7d < 10 && snapshot.growth.unclaimed_providers > 20 && outreachWindowOpen) {
             actionsToTake.push({
@@ -357,6 +391,20 @@ Deno.serve(async (req: Request) => {
                 reason: 'Brain was dormant — running retention check',
                 fn: 'retention-agent',
                 payload: { action: 'SEND_TRIAL_REMINDERS' }
+            });
+        }
+
+        // --- WEEKLY: PM agent runs every Sunday at 08:00 UTC ---
+        const nowUtc = new Date();
+        const dayOfWeek   = nowUtc.getUTCDay(); // 0 = Sunday
+        const hourOfDay   = nowUtc.getUTCHours();
+        if (dayOfWeek === 0 && hourOfDay === 8) {
+            actionsToTake.push({
+                type: 'PM_WEEKLY_ANALYSIS',
+                priority: 45,
+                reason: 'Sunday 08:00 UTC — weekly PM agent analysis of signals/KPIs',
+                fn: 'pm-agent',
+                payload: { action: 'WEEKLY_ANALYSIS' }
             });
         }
 
@@ -597,6 +645,65 @@ Deno.serve(async (req: Request) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: telegramChatId, text: msg, parse_mode: 'Markdown' })
             }).catch(() => {});
+        }
+
+        // ================================================================
+        // STEP 5.5: DAILY BRIEFING — morning summary to founder (07:00–07:59 UTC)
+        // ================================================================
+        if (hourOfDay === 7 && telegramToken && telegramChatId) {
+            // Fetch yesterday's brain activity
+            const { data: actionsYesterday } = await supabase
+                .from('signals')
+                .select('event_type, data, created_at')
+                .in('event_type', ['brain.action_taken', 'onboarding.welcome_sent', 'email.inbound_received'])
+                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            const onboardings24h  = (actionsYesterday ?? []).filter(s => s.event_type === 'onboarding.welcome_sent').length;
+            const brainActions24h = (actionsYesterday ?? []).filter(s => s.event_type === 'brain.action_taken').length;
+            const inboundEmails24h = (actionsYesterday ?? []).filter(s => s.event_type === 'email.inbound_received').length;
+
+            // Fetch open goals
+            const { data: openGoals } = await supabase
+                .from('company_goals')
+                .select('title, current_value, target_value, unit')
+                .eq('status', 'active')
+                .limit(5);
+
+            const goalLines = (openGoals ?? []).map(g => {
+                const pct = Math.round((g.current_value / Math.max(g.target_value, 1)) * 100);
+                const bar = pct >= 80 ? '🟢' : pct >= 50 ? '🟡' : '🔴';
+                return `${bar} ${g.title}: ${g.current_value}/${g.target_value} ${g.unit ?? ''} (${pct}%)`;
+            }).join('\n');
+
+            const briefingMsg = [
+                `☀️ *KOSMOI DAILY BRIEFING* — ${new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}`,
+                ``,
+                `📊 *Platform Health*`,
+                `• MRR: ${snapshot.health.mrr_thb.toLocaleString()}฿`,
+                `• Claimed businesses: ${snapshot.health.claimed_providers}`,
+                `• Active subscriptions: ${snapshot.health.active_subscriptions}`,
+                ``,
+                `🤖 *Brain Activity (24h)*`,
+                `• Actions executed: ${brainActions24h}`,
+                `• New businesses onboarded: ${onboardings24h}`,
+                `• Inbound emails received: ${inboundEmails24h}`,
+                `• Unread signals: ${snapshot.brain.signals_unread}`,
+                criticalKpi.length > 0 ? `• ⚠️ KPI breaches: ${criticalKpi.map((b: any) => b.metric_name).join(', ')}` : `• ✅ No KPI breaches`,
+                ``,
+                openGoals?.length ? `🎯 *Goals*\n${goalLines}` : '',
+                ``,
+                `💡 Today's priority: ${actionsToTake[0] ? actionsToTake[0].reason : 'Platform looks healthy — no critical actions'}`,
+            ].filter(Boolean).join('\n');
+
+            await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: telegramChatId, text: briefingMsg, parse_mode: 'Markdown' })
+            }).catch(() => {});
+
+            console.log(`[${cycleId}] ☀️ Daily briefing sent to Telegram`);
         }
 
         // ================================================================
