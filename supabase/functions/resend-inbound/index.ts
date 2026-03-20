@@ -51,6 +51,21 @@ serve(async (req: Request) => {
             });
         }
 
+        // Signal: inbound email received — brain can detect replies, interest, and engagement
+        await supabase.rpc('write_signal', {
+            p_event_type: 'email.inbound_received',
+            p_entity_type: 'system',
+            p_entity_id: null,
+            p_source: 'resend-inbound',
+            p_data: {
+                from,
+                to: Array.isArray(to) ? to[0] : to,
+                subject,
+                has_text: !!text,
+                has_html: !!html
+            }
+        }).catch(() => {}); // non-fatal
+
         return new Response(JSON.stringify({ message: "Email processed successfully" }), {
             status: 200,
             headers: { "Content-Type": "application/json" },

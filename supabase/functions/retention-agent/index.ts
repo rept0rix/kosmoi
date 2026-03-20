@@ -179,9 +179,11 @@ Deno.serve(async (req: Request) => {
                         }
                     });
                     results.reminders_sent++;
+                    await sig('subscription.trial_reminder_sent', 'user', sub.users.id, { days_left: 7, email: sub.users.email });
                     console.log(`📧 7-day reminder sent to ${sub.users.email}`);
                 } catch (e: any) {
                     results.errors.push(`Email to ${sub.users.email}: ${e.message}`);
+                    await sig('subscription.trial_reminder_failed', 'user', sub.users.id, { days_left: 7, error: e.message });
                 }
             }
         }
@@ -213,9 +215,11 @@ Deno.serve(async (req: Request) => {
                         }
                     });
                     results.urgent_sent++;
+                    await sig('subscription.trial_urgent_sent', 'user', sub.users.id, { days_left: 2, email: sub.users.email });
                     console.log(`🚨 Urgent email sent to ${sub.users.email}`);
                 } catch (e: any) {
                     results.errors.push(`Email to ${sub.users.email}: ${e.message}`);
+                    await sig('subscription.trial_urgent_failed', 'user', sub.users.id, { days_left: 2, error: e.message });
                 }
             }
         }
@@ -251,6 +255,7 @@ Deno.serve(async (req: Request) => {
                         }
                     });
                     results.expired_sent++;
+                    await sig('subscription.trial_expired_sent', 'user', sub.users.id, { email: sub.users.email, subscription_id: sub.id });
                     console.log(`😢 Expired email sent to ${sub.users.email}`);
                 } catch (e: any) {
                     results.errors.push(`Email to ${sub.users.email}: ${e.message}`);
@@ -292,7 +297,7 @@ Deno.serve(async (req: Request) => {
                                     <h2>היי ${user.full_name || ''}! 👋</h2>
                                     <p>שמנו לב שלא נכנסת ל-Kosmoi כמה ימים.</p>
                                     <p>יש לנו leads חדשים שמחכים לך! 🎯</p>
-                                    <p><a href="https://kosmoi.site/dashboard" 
+                                    <p><a href="https://kosmoi.site/dashboard"
                                           style="display:inline-block;background:#3B82F6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;">
                                         חזרו לדאשבורד →
                                     </a></p>
@@ -307,10 +312,15 @@ Deno.serve(async (req: Request) => {
                             email: user.email
                         });
 
+                        await sig('user.reengagement_sent', 'user', user.id, {
+                            email: user.email,
+                            days_inactive: Math.floor((now.getTime() - new Date(user.last_sign_in_at).getTime()) / 86400000)
+                        });
                         results.reengagement_sent++;
                         console.log(`👋 Re-engagement sent to ${user.email}`);
                     } catch (e: any) {
                         results.errors.push(`Email to ${user.email}: ${e.message}`);
+                        await sig('user.reengagement_failed', 'user', user.id, { email: user.email, error: e.message });
                     }
                 }
             }
