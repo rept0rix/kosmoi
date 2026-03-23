@@ -101,6 +101,11 @@ const AdminRoadmap = lazy(() => import("@/pages/admin/AdminRoadmap"));
 const AdminCanvas = lazy(() => import("./pages/admin/AdminCanvas"));
 const AdminInfra = lazy(() => import("./pages/admin/AdminInfra"));
 const AdminHealth = lazy(() => import("./pages/admin/AdminHealth"));
+const AdminGodView = lazy(() => import("./pages/admin/AdminGodView"));
+const AdminExecutives = lazy(() => import("./pages/admin/AdminExecutives"));
+const AdminDepartments = lazy(() => import("./pages/admin/AdminDepartments"));
+const AdminCreativeHub = lazy(() => import("./pages/admin/AdminCreativeHub"));
+const AdminFullMatrix = lazy(() => import("./pages/admin/AdminFullMatrix"));
 const AdminLiveControl = lazy(() => import("./pages/admin/AdminLiveControl"));
 const AdminLogs = lazy(() => import("./pages/admin/AdminLogs"));
 const AdminSchema = lazy(() => import("./pages/admin/AdminSchema"));
@@ -351,6 +356,11 @@ const AuthenticatedApp = () => {
                   <Route path="infrastructure" element={<AdminInfra />} />
                   <Route path="canvas" element={<AdminCanvas />} />
                   <Route path="health" element={<AdminHealth />} />
+                  <Route path="god-view" element={<AdminGodView />} />
+                  <Route path="executives" element={<AdminExecutives />} />
+                  <Route path="departments" element={<AdminDepartments />} />
+                  <Route path="creative-hub" element={<AdminCreativeHub />} />
+                  <Route path="full-matrix" element={<AdminFullMatrix />} />
                   <Route path="live" element={<AdminLiveControl />} />
                   <Route path="studio" element={<Studio />} />
                   <Route path="skills" element={<AdminSkills />} />

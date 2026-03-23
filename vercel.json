@@ -1,10 +1,4 @@
 {
-    "crons": [
-        {
-            "path": "/api/cron/agent-tick",
-            "schedule": "*/10 * * * *"
-        }
-    ],
     "rewrites": [
         {
             "source": "/api/(.*)",

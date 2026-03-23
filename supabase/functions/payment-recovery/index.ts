@@ -32,6 +32,16 @@ Deno.serve(async (req: Request) => {
         const supabase = createClient(supabaseUrl, supabaseKey);
         const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
 
+        // Non-fatal signal writer — nervous system integration
+        const sig = (eventType: string, entityId: string | null, data: object) =>
+            supabase.rpc('write_signal', {
+                p_event_type: eventType,
+                p_entity_type: 'subscription',
+                p_entity_id: entityId,
+                p_source: 'payment-recovery',
+                p_data: data
+            }).catch(() => {});
+
         const body = await req.json();
         const { action, subscription_id, customer_email, customer_id, attempt_number } = body;
 
@@ -88,6 +98,11 @@ Deno.serve(async (req: Request) => {
                 attempt: 1
             });
 
+            await sig('payment.failed', subscription.id, {
+                customer_id, email: subscription.users.email,
+                attempt: 1, recovery_id: recovery?.id
+            });
+
             results.success = true;
             results.message = 'Recovery email sent';
             results.details = { recovery_id: recovery?.id };
@@ -132,6 +147,10 @@ Deno.serve(async (req: Request) => {
                     .eq('subscription_id', subscription_id)
                     .eq('attempt_number', attempt_number);
 
+                await sig('payment.recovered', subscription_id, {
+                    customer_id, attempt_number
+                });
+
                 results.success = true;
                 results.message = 'Payment recovered successfully!';
 
@@ -166,6 +185,10 @@ Deno.serve(async (req: Request) => {
                         });
                     }
 
+                    await sig('subscription.cancelled_nonpayment', subscription_id, {
+                        customer_id, total_attempts: 3
+                    });
+
                     results.message = 'Subscription cancelled after 3 failed attempts';
                 } else {
                     // Schedule next retry
@@ -177,6 +200,10 @@ Deno.serve(async (req: Request) => {
                             attempt_number: nextAttempt,
                             status: 'scheduled'
                         });
+
+                    await sig('payment.retry_scheduled', subscription_id, {
+                        customer_id, failed_attempt: attempt_number, next_attempt: nextAttempt
+                    });
 
                     results.message = `Retry ${attempt_number} failed, attempt ${nextAttempt} scheduled`;
                 }
@@ -213,6 +240,8 @@ Deno.serve(async (req: Request) => {
                 });
                 processed++;
             }
+
+            await sig('payment.batch_retries', null, { processed });
 
             results.success = true;
             results.message = `Processed ${processed} scheduled retries`;

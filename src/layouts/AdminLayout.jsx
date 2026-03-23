@@ -30,6 +30,11 @@ import {
   CalendarCheck,
   CircuitBoard,
   Mail,
+  Eye,
+  Crown,
+  Building2,
+  Sparkles,
+  Flame,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -102,6 +107,13 @@ export default function AdminLayout() {
         <nav className="flex-1 p-4 overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <NavGroup title="Command Protocol">
             <NavItem
+              to="/admin/god-view"
+              icon={<Eye />}
+              label="God View"
+              activeColor="text-cyan-400"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <NavItem
               to="/admin/command-center"
               icon={<LayoutDashboard />}
               label="Command Center"
@@ -111,6 +123,41 @@ export default function AdminLayout() {
               to="/admin/hyperloop"
               icon={<Activity />}
               label="Mission Control"
+              activeColor="text-fuchsia-400"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <NavItem
+              to="/admin/executives"
+              icon={<Crown />}
+              label="Executive Council"
+              activeColor="text-amber-400"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <NavItem
+              to="/admin/departments"
+              icon={<Building2 />}
+              label="Departments"
+              activeColor="text-emerald-400"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <NavItem
+              to="/admin/creative-hub"
+              icon={<Sparkles />}
+              label="Creative Hub"
+              activeColor="text-pink-400"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <NavItem
+              to="/admin/evolution"
+              icon={<Flame />}
+              label="Evolution Lab"
+              activeColor="text-orange-400"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <NavItem
+              to="/admin/full-matrix"
+              icon={<Network />}
+              label="Full Matrix"
               activeColor="text-fuchsia-400"
               onClick={() => setIsMobileOpen(false)}
             />
