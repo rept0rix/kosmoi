@@ -345,8 +345,8 @@ export default function GoogleMap({
         }
       }
 
-      // Add new markers (skip entries with null/invalid coordinates)
-      markers.filter((m) => m && typeof m.lat === 'number' && typeof m.lng === 'number' && isFinite(m.lat) && isFinite(m.lng)).forEach((markerData) => {
+      // Add new markers
+      markers.forEach((markerData) => {
         const markerOptions = {
           position: { lat: markerData.lat, lng: markerData.lng },
           // map: googleMapRef.current, // Don't set map here, clusterer will handle it

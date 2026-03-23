@@ -33,12 +33,8 @@ Deno.serve(async (req: Request) => {
     try {
         // Initialize Supabase
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
+        const supabaseKey = Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
         const supabase = createClient(supabaseUrl, supabaseKey);
-
-        // Helper: write signal non-fatally
-        const sig = (eventType: string, entityType: string, entityId: string | null, data: object) =>
-            supabase.rpc('write_signal', { p_event_type: eventType, p_entity_type: entityType, p_entity_id: entityId, p_source: 'retention-agent', p_data: data }).catch(() => {});
 
         // Parse action from request body
         let action = 'FULL_RUN';
@@ -61,43 +57,61 @@ Deno.serve(async (req: Request) => {
         };
 
         // ============================================
-        // ACTION: PROCESS_STALE_LEADS (Called by cron-worker)
+        // ACTION: PROCESS_STALE_LEADS (Called by CEO)
         // ============================================
         if (action === 'PROCESS_STALE_LEADS') {
-            // Unclaimed providers >48h old with no outreach attempt
             const staleTime = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-            const { data: staleProviders } = await supabase
-                .from('service_providers')
-                .select('id, business_name, email, category')
-                .eq('verified', false)
-                .eq('status', 'active')
+            const { data: staleLeads } = await supabase
+                .from('leads')
+                .select('*, service_providers!inner(business_name)')
+                .eq('status', 'new')
                 .lt('created_at', staleTime)
-                .limit(20);
+                .limit(10);
 
-            for (const provider of staleProviders || []) {
-                await sig('lead.stale_flagged', 'provider', provider.id, {
-                    business_name: provider.business_name,
-                    has_email: !!provider.email,
-                    category: provider.category,
-                });
+            for (const lead of staleLeads || []) {
+                // Update lead status to follow_up
+                await supabase
+                    .from('leads')
+                    .update({ status: 'follow_up', notes: 'Auto-followed up by Retention Agent' })
+                    .eq('id', lead.id);
+
+                // Notify the business owner
+                if (lead.service_providers?.email) {
+                    await sendEmail(supabaseUrl, supabaseKey, {
+                        to: lead.service_providers.email,
+                        subject: `🔔 תזכורת: יש לך lead שמחכה!`,
+                        html: `
+                            <div style="font-family: sans-serif; max-width: 500px; margin: auto;">
+                                <h2>יש לך lead שמחכה 48+ שעות!</h2>
+                                <p>שם: ${lead.name || 'לא ידוע'}</p>
+                                <p>סוג: ${lead.type || 'פנייה כללית'}</p>
+                                <p><a href="https://kosmoi.site/dashboard/leads" 
+                                      style="display:inline-block;background:#3B82F6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;">
+                                    צפה ב-Lead →
+                                </a></p>
+                            </div>
+                        `
+                    });
+                }
                 results.stale_leads_processed++;
             }
 
+            // Log and return
             await supabase.from('agent_decisions').insert({
                 agent_id: 'retention-agent',
                 decision_type: action,
                 action: results,
-                success: true,
+                success: true
             });
 
             return new Response(JSON.stringify({ success: true, results }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200,
+                status: 200
             });
         }
 
         // ============================================
-        // ACTION: SEND_TRIAL_REMINDERS (Called by cron-worker)
+        // ACTION: SEND_TRIAL_REMINDERS (Called by CEO)
         // ============================================
         if (action === 'SEND_TRIAL_REMINDERS') {
             // Send to trials expiring in 1-3 days
@@ -111,24 +125,22 @@ Deno.serve(async (req: Request) => {
 
             for (const sub of expiringTrials || []) {
                 const daysLeft = daysBetween(now, new Date(sub.trial_ends_at));
-                try {
-                    await sendEmail(supabaseUrl, supabaseKey, {
-                        to: sub.users.email,
-                        template: daysLeft <= 1 ? 'trial_ending' : 'trial_reminder',
-                        data: { name: sub.users.full_name || sub.users.email, daysLeft },
-                    });
-                    await sig('subscription.trial_reminder_sent', 'user', sub.users.id, { days_left: daysLeft, email: sub.users.email });
-                    results.reminders_sent++;
-                } catch (e: any) {
-                    results.errors.push(`Trial reminder to ${sub.users.email}: ${e.message}`);
-                }
+                await sendEmail(supabaseUrl, supabaseKey, {
+                    to: sub.users.email,
+                    template: daysLeft <= 1 ? 'trial_ending' : 'trial_reminder',
+                    data: {
+                        name: sub.users.full_name || sub.users.email,
+                        daysLeft: daysLeft
+                    }
+                });
+                results.reminders_sent++;
             }
 
             await supabase.from('agent_decisions').insert({
                 agent_id: 'retention-agent',
                 decision_type: action,
                 action: results,
-                success: true,
+                success: true
             });
 
             return new Response(JSON.stringify({ success: true, results }), {
@@ -167,9 +179,11 @@ Deno.serve(async (req: Request) => {
                         }
                     });
                     results.reminders_sent++;
+                    await sig('subscription.trial_reminder_sent', 'user', sub.users.id, { days_left: 7, email: sub.users.email });
                     console.log(`📧 7-day reminder sent to ${sub.users.email}`);
                 } catch (e: any) {
                     results.errors.push(`Email to ${sub.users.email}: ${e.message}`);
+                    await sig('subscription.trial_reminder_failed', 'user', sub.users.id, { days_left: 7, error: e.message });
                 }
             }
         }
@@ -201,9 +215,11 @@ Deno.serve(async (req: Request) => {
                         }
                     });
                     results.urgent_sent++;
+                    await sig('subscription.trial_urgent_sent', 'user', sub.users.id, { days_left: 2, email: sub.users.email });
                     console.log(`🚨 Urgent email sent to ${sub.users.email}`);
                 } catch (e: any) {
                     results.errors.push(`Email to ${sub.users.email}: ${e.message}`);
+                    await sig('subscription.trial_urgent_failed', 'user', sub.users.id, { days_left: 2, error: e.message });
                 }
             }
         }
@@ -239,6 +255,7 @@ Deno.serve(async (req: Request) => {
                         }
                     });
                     results.expired_sent++;
+                    await sig('subscription.trial_expired_sent', 'user', sub.users.id, { email: sub.users.email, subscription_id: sub.id });
                     console.log(`😢 Expired email sent to ${sub.users.email}`);
                 } catch (e: any) {
                     results.errors.push(`Email to ${sub.users.email}: ${e.message}`);
@@ -280,7 +297,7 @@ Deno.serve(async (req: Request) => {
                                     <h2>היי ${user.full_name || ''}! 👋</h2>
                                     <p>שמנו לב שלא נכנסת ל-Kosmoi כמה ימים.</p>
                                     <p>יש לנו leads חדשים שמחכים לך! 🎯</p>
-                                    <p><a href="https://kosmoi.site/dashboard" 
+                                    <p><a href="https://kosmoi.site/dashboard"
                                           style="display:inline-block;background:#3B82F6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;">
                                         חזרו לדאשבורד →
                                     </a></p>
@@ -295,10 +312,15 @@ Deno.serve(async (req: Request) => {
                             email: user.email
                         });
 
+                        await sig('user.reengagement_sent', 'user', user.id, {
+                            email: user.email,
+                            days_inactive: Math.floor((now.getTime() - new Date(user.last_sign_in_at).getTime()) / 86400000)
+                        });
                         results.reengagement_sent++;
                         console.log(`👋 Re-engagement sent to ${user.email}`);
                     } catch (e: any) {
                         results.errors.push(`Email to ${user.email}: ${e.message}`);
+                        await sig('user.reengagement_failed', 'user', user.id, { email: user.email, error: e.message });
                     }
                 }
             }

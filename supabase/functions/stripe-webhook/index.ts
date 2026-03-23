@@ -18,21 +18,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 console.log("Stripe Webhook Function Initialized")
 
-// Helper: write an event to the signals table so the brain can observe it
-const writeSignal = async (eventType: string, entityType: string, entityId: string | null, data: object) => {
-    try {
-        await supabase.rpc('write_signal', {
-            p_event_type: eventType,
-            p_entity_type: entityType,
-            p_entity_id: entityId,
-            p_source: 'stripe-webhook',
-            p_data: data
-        })
-    } catch (e) {
-        // Non-fatal: log but don't interrupt payment processing
-        console.error('Failed to write signal:', e)
-    }
-}
+const writeSignal = async (eventType: string, entityId: string | null, metadata: Record<string, any> = {}) => {
+    await supabase.rpc('write_signal', {
+        p_event_type: eventType,
+        p_entity_id: entityId,
+        p_metadata: metadata,
+    }).catch((e: any) => console.warn('[signal] write failed:', e.message));
+};
 
 const toDateTime = (secs: number) => {
     var t = new Date('1970-01-01T00:30:00Z') // Unix epoch start.
@@ -107,6 +99,7 @@ serve(async (req: Request) => {
             if (session.mode === 'subscription') {
                 const subscriptionId = session.subscription
                 await manageSubscriptionStatusChange(subscriptionId as string, session.customer as string, true)
+                await writeSignal('subscription.created', session.customer as string, { session_id: session.id, amount: session.amount_total });
             } else if (session.mode === 'payment' && session.metadata?.type === 'claim_profile') {
                 // Claim Profile Logic
                 const { userId, providerId } = session.metadata;
@@ -128,15 +121,6 @@ serve(async (req: Request) => {
                     return new Response('Error updating provider', { status: 500 });
                 }
 
-                // Signal: provider was claimed — brain tracks claim conversion funnel
-                await writeSignal('provider.claimed', 'provider', providerId, {
-                    user_id: userId,
-                    provider_id: providerId,
-                    amount_paid: session.amount_total ? session.amount_total / 100 : 0,
-                    currency: session.currency,
-                    stripe_session_id: session.id
-                })
-
                 // 2. Record Transaction
                 const { error: txnError } = await supabase.rpc('process_transaction', {
                     target_user_id: userId,
@@ -151,6 +135,7 @@ serve(async (req: Request) => {
                 if (txnError) console.error('Failed to record claim transaction:', txnError);
 
                 console.log(`Claim successful for provider ${providerId}`);
+                await writeSignal('claim.payment_completed', providerId, { user_id: userId, session_id: session.id });
 
             } else if (session.mode === 'payment' && session.metadata?.planId) {
                 // Plan Purchase Logic (Test Drive / Subscription Start)
@@ -189,16 +174,8 @@ serve(async (req: Request) => {
                      if (updateError) {
                          console.error('Failed to update business plan status:', updateError);
                      } else {
-                         console.log(`Successfully upgraded business ${business.id} to plan ${planId}`)
-
-                         // Signal: plan purchased — brain tracks revenue & upgrade funnel
-                         await writeSignal('subscription.plan_purchased', 'provider', business.id, {
-                             user_id: userId,
-                             plan_id: planId,
-                             amount: session.amount_total ? session.amount_total / 100 : 0,
-                             currency: session.currency,
-                             stripe_session_id: session.id
-                         })
+                         console.log(`Successfully upgraded business ${business.id} to plan ${planId}`);
+                         await writeSignal('subscription.plan_purchased', business.id, { user_id: userId, plan_id: planId, amount: session.amount_total });
                      }
                 }
 
@@ -238,15 +215,7 @@ serve(async (req: Request) => {
                         console.log(`Awarded ${vibeReward} Vibes to user ${userId}`);
                     }
                 }
-
-                // Signal: booking payment — brain tracks GMV and user activity
-                await writeSignal('booking.payment_received', 'user', userId, {
-                    booking_id: bookingId,
-                    amount: bookingValueUsd,
-                    currency: session.currency,
-                    vibes_awarded: vibeReward,
-                    stripe_session_id: session.id
-                })
+                await writeSignal('booking.paid', bookingId, { user_id: userId, amount_thb: bookingValueUsd, vibes_awarded: vibeReward });
             } else if (session.type === 'topup' || session.metadata?.type === 'topup') {
                 // Legacy / Topup logic
                 const { type, userId } = session.metadata || {}
@@ -263,47 +232,22 @@ serve(async (req: Request) => {
                     console.error('Failed to process transaction', error)
                     return new Response('Error processing transaction', { status: 500 })
                 }
-
-                // Signal: wallet topup — brain tracks revenue
-                await writeSignal('wallet.topup', 'user', userId, {
-                    amount: session.amount_total ? session.amount_total / 100 : 0,
-                    currency: session.currency,
-                    stripe_session_id: session.id
-                })
-
                 console.log(`Topup credited for user ${userId}`)
             }
         } else if (event.type === 'customer.subscription.created') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string, true)
-            // Signal: new subscription — brain tracks MRR growth
-            await writeSignal('subscription.created', 'subscription', null, {
-                subscription_id: subscription.id,
-                customer_id: subscription.customer,
-                status: subscription.status,
-                price_id: subscription.items?.data?.[0]?.price?.id
-            })
+            await writeSignal('subscription.created', subscription.customer as string, { subscription_id: subscription.id, status: subscription.status });
         } else if (event.type === 'customer.subscription.updated') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string)
-            // Only signal status changes (not routine billing updates)
             if (subscription.cancel_at_period_end) {
-                await writeSignal('subscription.cancellation_requested', 'subscription', null, {
-                    subscription_id: subscription.id,
-                    customer_id: subscription.customer,
-                    cancel_at: subscription.cancel_at
-                })
+                await writeSignal('subscription.cancellation_requested', subscription.customer as string, { subscription_id: subscription.id, cancel_at: subscription.cancel_at });
             }
         } else if (event.type === 'customer.subscription.deleted') {
             const subscription = event.data.object as any
             await manageSubscriptionStatusChange(subscription.id, subscription.customer as string)
-            // Signal: churn event — brain's most critical signal for retention
-            await writeSignal('subscription.cancelled', 'subscription', null, {
-                subscription_id: subscription.id,
-                customer_id: subscription.customer,
-                ended_at: subscription.ended_at,
-                reason: subscription.cancellation_details?.reason || 'unknown'
-            })
+            await writeSignal('subscription.cancelled', subscription.customer as string, { subscription_id: subscription.id });
         } else if (event.type === 'account.updated') {
             const account = event.data.object as any
             const status = account.charges_enabled && account.payouts_enabled ? 'verified' : 'restricted'

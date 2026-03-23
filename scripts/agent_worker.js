@@ -35,64 +35,45 @@ if (process.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
   console.log("🔑 Worker running with Service Role Privileges");
 }
 
-// --- WORKER RUNTIME CONFIG (applied at startup, no disk writes) ---
-let workerRuntimeConfig = {
-  logLevel: "info",         // "debug" | "info" | "warn"
-  pollIntervalMs: null,     // override poll interval if set
-  modelOverride: null,      // override AI model if set
-};
-
-// --- SAFE CONFIG PULL (replaces insecure OTA self-overwrite) ---
+// --- OTA AUTO-UPDATE LOGIC ---
 async function checkForUpdates() {
-  console.log("📡 Checking for runtime config (WORKER_CONFIG in company_knowledge)...");
+  console.log("📡 Checking for updates (via agent_tasks)...");
+  const UPDATE_ID = "00000000-0000-0000-0000-000000000001";
 
   const { data, error } = await workerSupabase
-    .from("company_knowledge")
-    .select("key, value, updated_at")
-    .eq("key", "WORKER_CONFIG")
+    .from("agent_tasks")
+    .select("*")
+    .eq("id", UPDATE_ID)
     .single();
 
   if (error || !data) {
-    console.log("✅ No WORKER_CONFIG found — using defaults.");
+    console.log("✅ No updates found.");
     return;
   }
 
   try {
-    const raw = data.value;
-    const config = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const updateData = JSON.parse(data.description);
+    const remoteVersion = new Date(updateData.version).getTime();
+    const localStats = fs.statSync(__filename);
+    const localVersion = localStats.mtime.getTime();
 
-    // Only accept a strict allowlist of safe scalar config keys.
-    // Any attempt to set 'code', 'script', 'exec', or similar is ignored.
-    const ALLOWED_KEYS = ["logLevel", "pollIntervalMs", "modelOverride", "systemPromptAddendum"];
-    const applied = {};
+    if (remoteVersion > localVersion) {
+      console.log("🚀 New version detected! Downloading update...");
+      console.log(`   Remote: ${updateData.version}`);
 
-    for (const key of ALLOWED_KEYS) {
-      if (config[key] !== undefined) {
-        const value = config[key];
-        // Additional type guards per key
-        if (key === "logLevel" && ["debug", "info", "warn"].includes(value)) {
-          workerRuntimeConfig.logLevel = value;
-          applied[key] = value;
-        } else if (key === "pollIntervalMs" && typeof value === "number" && value >= 5000) {
-          workerRuntimeConfig.pollIntervalMs = value;
-          applied[key] = value;
-        } else if (key === "modelOverride" && typeof value === "string" && value.length < 100) {
-          workerRuntimeConfig.modelOverride = value;
-          applied[key] = value;
-        } else if (key === "systemPromptAddendum" && typeof value === "string" && value.length < 2000) {
-          workerRuntimeConfig.systemPromptAddendum = value;
-          applied[key] = `[${value.length} chars]`;
-        }
-      }
-    }
+      // Backup
+      fs.copyFileSync(__filename, `${__filename}.bak`);
 
-    if (Object.keys(applied).length > 0) {
-      console.log("✅ WORKER_CONFIG applied to runtime (no disk writes):", applied);
+      // Overwrite
+      fs.writeFileSync(__filename, updateData.code);
+
+      console.log("✅ Update applied. Restarting worker...");
+      process.exit(0);
     } else {
-      console.log("✅ WORKER_CONFIG present but no valid keys to apply.");
+      console.log("✅ Worker is up to date.");
     }
   } catch (e) {
-    console.error("❌ Failed to parse WORKER_CONFIG payload:", e.message);
+    console.error("❌ Failed to parse update payload:", e.message);
   }
 }
 // -----------------------------
@@ -158,58 +139,6 @@ console.error = function (...args) {
   logToFile("ERROR", args);
 };
 // ------------------------
-
-// --- ADMIN VISIBILITY: Log to Supabase agent_logs (powers LiveAgentFeed) ---
-async function logToAdmin(agentId, message, level = "info", metadata = {}) {
-  try {
-    await workerSupabase.from("agent_logs").insert({
-      agent_id: agentId || "worker",
-      level,
-      message,
-      metadata: { role: "assistant", username: agentId || "worker", source: "agent_worker", ...metadata },
-    });
-  } catch (_) { /* non-fatal */ }
-}
-
-// --- TELEGRAM NOTIFICATIONS ---
-async function notifyTelegram(message) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chat = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chat) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chat, text: message, parse_mode: "Markdown" }),
-    });
-  } catch (_) { /* non-fatal */ }
-}
-
-// --- WORKER MEMORY: persist context between tasks ---
-async function loadWorkerMemory() {
-  try {
-    const { data } = await workerSupabase
-      .from("company_knowledge")
-      .select("value")
-      .eq("key", "WORKER_MEMORY")
-      .single();
-    return data?.value ? (typeof data.value === "string" ? JSON.parse(data.value) : data.value) : {};
-  } catch (_) { return {}; }
-}
-
-async function saveWorkerMemory(updates) {
-  try {
-    const current = await loadWorkerMemory();
-    const merged = { ...current, ...updates, last_updated: new Date().toISOString() };
-    await workerSupabase.from("company_knowledge").upsert({
-      key: "WORKER_MEMORY",
-      value: merged,
-      category: "worker",
-      updated_at: new Date().toISOString(),
-    });
-  } catch (_) { /* non-fatal */ }
-}
-// -----------------------------------------------------------------------
 
 // Import services
 // Note: We need to use absolute paths or handle imports carefully in Node
@@ -309,10 +238,6 @@ if (userData) {
   console.log(`🆔 Worker Identity: Using existing User ID: ${WORKER_UUID}`);
 } else {
   console.warn("⚠️ No users found in DB. Worker might fail to write memory.");
-}
-
-if (workerRuntimeConfig?.systemPromptAddendum && agentConfig) {
-  agentConfig.systemPrompt += `\n\n=== LEARNED PRINCIPLES ===\n${workerRuntimeConfig.systemPromptAddendum}`;
 }
 
 if (!isUniversal && agentConfig) {
@@ -480,22 +405,7 @@ async function executeTool(toolName, payload, context = {}) {
         });
         const pushData = await pushRes.json();
         if (!pushRes.ok) return `GitHub push error: ${JSON.stringify(pushData.message)}`;
-
-        // Schedule a health-check task 3 min after deploy to verify worker survived
-        setTimeout(async () => {
-          try {
-            await workerSupabase.from("agent_tasks").insert([{
-              title: `[DeployCheck] Verify worker health after push: ${ghPath}`,
-              description: `A file was just pushed to GitHub (${ghPath}). Railway should have redeployed. Check that:\n1. Worker heartbeat is recent (< 5 min)\n2. No new failed tasks since the deploy\n3. If worker is down, alert admin via Telegram`,
-              assigned_to: "tech-lead-agent",
-              priority: "high",
-              status: "pending",
-              created_by: "github_push_file",
-            }]);
-          } catch (e) { /* non-fatal */ }
-        }, 3 * 60 * 1000);
-
-        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically. Health check scheduled in 3 min.`;
+        return `✅ Pushed to GitHub: ${pushData.commit?.html_url || ghPath}. Railway will redeploy automatically.`;
       }
 
       case "create_task":
@@ -551,7 +461,7 @@ async function executeTool(toolName, payload, context = {}) {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+                from: "onboarding@resend.dev", // Fallback to testing domain to unblock flow
                 to: [payload.to || payload.email],
                 subject: payload.subject,
                 text: payload.body || payload.content || payload.text,
@@ -1008,134 +918,6 @@ Format: Subject: [subject]\n\n[body]`;
         );
       }
 
-      // --- LEAD SCORING ---
-      case "score_lead": {
-        // Resolve the lead by ID or email
-        const scoreLookupId = payload.lead_id || payload.id;
-        const scoreLookupEmail = payload.lead_email || payload.email;
-
-        let leadRecord = null;
-
-        if (scoreLookupId) {
-          const { data: ld, error: ldErr } = await workerSupabase
-            .from("crm_leads")
-            .select("*")
-            .eq("id", scoreLookupId)
-            .single();
-          if (ldErr) return `Error fetching lead: ${ldErr.message}`;
-          leadRecord = ld;
-        } else if (scoreLookupEmail) {
-          const { data: ld, error: ldErr } = await workerSupabase
-            .from("crm_leads")
-            .select("*")
-            .ilike("email", scoreLookupEmail.trim())
-            .limit(1)
-            .single();
-          if (ldErr) return `Error fetching lead by email: ${ldErr.message}`;
-          leadRecord = ld;
-        } else {
-          return "Error: score_lead requires lead_id or lead_email.";
-        }
-
-        if (!leadRecord) return "Error: Lead not found.";
-
-        // Fetch interactions for this lead
-        const { data: interactions, error: intErr } = await workerSupabase
-          .from("crm_interactions")
-          .select("*")
-          .eq("lead_id", leadRecord.id)
-          .order("created_at", { ascending: false })
-          .limit(50);
-
-        if (intErr) return `Error fetching interactions: ${intErr.message}`;
-
-        const scoringNow = Date.now();
-        const scoringReasoning = [];
-        let leadScore = 0;
-
-        // Factor 1: Recency of last contact (0-35 points)
-        const lastInteractionDate = interactions && interactions.length > 0
-          ? new Date(interactions[0].created_at).getTime()
-          : (leadRecord.updated_at ? new Date(leadRecord.updated_at).getTime() : null);
-
-        if (lastInteractionDate) {
-          const daysSinceLast = (scoringNow - lastInteractionDate) / (1000 * 60 * 60 * 24);
-          let recencyScore = 0;
-          if (daysSinceLast <= 1)       recencyScore = 35;
-          else if (daysSinceLast <= 3)  recencyScore = 30;
-          else if (daysSinceLast <= 7)  recencyScore = 22;
-          else if (daysSinceLast <= 14) recencyScore = 14;
-          else if (daysSinceLast <= 30) recencyScore = 7;
-          leadScore += recencyScore;
-          scoringReasoning.push(`Recency: ${Math.round(daysSinceLast)}d since last contact → +${recencyScore} pts`);
-        } else {
-          scoringReasoning.push("Recency: No contact date → +0 pts");
-        }
-
-        // Factor 2: Number of interactions (0-35 points)
-        const interactionCount = interactions ? interactions.length : 0;
-        let interactionScore = 0;
-        if (interactionCount >= 10)     interactionScore = 35;
-        else if (interactionCount >= 7) interactionScore = 28;
-        else if (interactionCount >= 4) interactionScore = 20;
-        else if (interactionCount >= 2) interactionScore = 12;
-        else if (interactionCount >= 1) interactionScore = 5;
-        leadScore += interactionScore;
-        scoringReasoning.push(`Interactions: ${interactionCount} total → +${interactionScore} pts`);
-
-        // Factor 3: Business size indicators in notes (0-30 points)
-        const notesText = [
-          leadRecord.notes || "",
-          leadRecord.description || "",
-          leadRecord.company || "",
-          ...(interactions || []).map((i) => i.notes || i.content || ""),
-        ].join(" ").toLowerCase();
-
-        const enterpriseSignals = ["enterprise", "large", "corporation", "ceo", "director", "vp ", "chief", "head of", "10,000", "50,000", "100k", "1 million", "regional", "national"];
-        const midSignals = ["team", "manager", "lead ", "department", "growing", "scale", "multiple", "several", "200", "500", "1,000"];
-        const smallSignals = ["startup", "small", "solo", "freelance", "one-person", "myself", "just me"];
-
-        const enterpriseHits = enterpriseSignals.filter((s) => notesText.includes(s)).length;
-        const midHits = midSignals.filter((s) => notesText.includes(s)).length;
-        const smallHits = smallSignals.filter((s) => notesText.includes(s)).length;
-
-        let sizeScore = 0;
-        let sizeLabel = "unknown";
-        if (enterpriseHits >= 2)      { sizeScore = 30; sizeLabel = "enterprise"; }
-        else if (enterpriseHits >= 1) { sizeScore = 22; sizeLabel = "large"; }
-        else if (midHits >= 2)        { sizeScore = 16; sizeLabel = "mid-size"; }
-        else if (midHits >= 1)        { sizeScore = 10; sizeLabel = "growing SMB"; }
-        else if (smallHits >= 1)      { sizeScore = 4;  sizeLabel = "small/solo"; }
-
-        leadScore += sizeScore;
-        scoringReasoning.push(`Business size (${sizeLabel}): enterprise=${enterpriseHits}, mid=${midHits}, small=${smallHits} → +${sizeScore} pts`);
-
-        // Clamp to 0-100
-        leadScore = Math.min(100, Math.max(0, leadScore));
-
-        // Persist score back to lead record
-        const { error: updateScoreErr } = await workerSupabase
-          .from("crm_leads")
-          .update({ score: leadScore, updated_at: new Date().toISOString() })
-          .eq("id", leadRecord.id);
-
-        if (updateScoreErr) {
-          console.warn(`[score_lead] Failed to persist score: ${updateScoreErr.message}`);
-        }
-
-        const scoreResult = {
-          lead_id: leadRecord.id,
-          lead_email: leadRecord.email,
-          lead_name: `${leadRecord.first_name || ""} ${leadRecord.last_name || ""}`.trim(),
-          score: leadScore,
-          reasoning: scoringReasoning,
-          interactions_analyzed: interactionCount,
-        };
-
-        console.log(`[score_lead] Lead ${leadRecord.id} scored: ${leadScore}/100`);
-        return JSON.stringify(scoreResult);
-      }
-
       // --- TELEGRAM NOTIFICATIONS ---
       case "notify_admin":
       case "send_telegram": {
@@ -1312,55 +1094,12 @@ Format: Subject: [subject]\n\n[body]`;
   }
 }
 
-// ── Company Context Injection ────────────────────────────────────────────────
-// Reads COMPANY_OVERVIEW, MARKETING_PLAYBOOK, and WORKER_STATUS from
-// company_knowledge and returns a formatted context string for agent prompts.
-async function getCompanyContext() {
-  const CONTEXT_KEYS = ["COMPANY_OVERVIEW", "MARKETING_PLAYBOOK", "WORKER_STATUS"];
-  try {
-    const { data, error } = await workerSupabase
-      .from("company_knowledge")
-      .select("key, value")
-      .in("key", CONTEXT_KEYS);
-
-    if (error || !data || data.length === 0) {
-      return ""; // Gracefully degrade — no context available yet
-    }
-
-    const sections = data.map(({ key, value }) => {
-      const summary = typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
-      return `### ${key}\n${summary}`;
-    });
-
-    return `
-=== COMPANY CONTEXT (injected by worker) ===
-${sections.join("\n\n")}
-=== END COMPANY CONTEXT ===
-
-`;
-  } catch (err) {
-    console.warn("⚠️ getCompanyContext failed (non-fatal):", err.message);
-    return "";
-  }
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
 async function processTask(task, agentService, agentConfigOverride) {
   console.log(`\n📋 Processing Task: ${task.title}`);
   console.log(`[${workerName}] Claiming task...`);
-
-  // Log task start to admin feed + Telegram
-  await logToAdmin(task.assigned_to, `🚀 Started: ${task.title}`, "info", { task_id: task.id, priority: task.priority });
-  await notifyTelegram(`🤖 *${task.assigned_to || "Worker"}* started:\n*${task.title}*`);
-
-  // Generate success criteria before claiming (non-blocking, best-effort)
-  const successCriteria = await generateSuccessCriteria(task);
-  const claimUpdate = { status: "in_progress" };
-  if (successCriteria) claimUpdate.success_criteria = successCriteria;
-
   const { error: updateError } = await workerSupabase
     .from("agent_tasks")
-    .update(claimUpdate)
+    .update({ status: "in_progress" })
     .eq("id", task.id);
 
   if (updateError) {
@@ -1373,16 +1112,8 @@ async function processTask(task, agentService, agentConfigOverride) {
   // Let's assume we always pass agentService now.
   const activeAgent = agentService || agent;
 
-  // Inject company context unless already present in input_context
-  const inputContext = task.input_context || "";
-  const companyContext =
-    inputContext.includes("=== COMPANY CONTEXT") ? "" : await getCompanyContext();
-
-  // Inject relevant past experience via RAG (non-blocking)
-  const relevantMemory = await retrieveRelevantMemory(task);
-
   const prompt = `
-${companyContext}${relevantMemory}You have been assigned a task:
+You have been assigned a task:
 TITLE: ${task.title}
 DESCRIPTION: ${task.description}
 
@@ -1419,29 +1150,15 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
 
   let currentMessage = prompt;
   let turnCount = 0;
-  let consecutiveNoToolTurns = 0;
-  const MAX_TURNS = 30;
-  const MAX_NO_TOOL_TURNS = 3; // Fail fast if Gemini keeps returning text-only
+  const MAX_TURNS = 30; // Increased to allow for complex data generation tasks
 
   while (turnCount < MAX_TURNS) {
     turnCount++;
     console.log(`\n🔄 Turn ${turnCount}...`);
 
-    let response;
-    try {
-      response = await activeAgent.sendMessage(currentMessage, {
-        simulateTools: false,
-      });
-    } catch (err) {
-      // API-level error (expired key, quota, network) — fail immediately
-      console.error(`❌ Gemini API error on turn ${turnCount}:`, err.message || err);
-      await workerSupabase.from("agent_tasks").update({
-        status: "failed",
-        result: `FAILED: Gemini API error — ${err.message || String(err)}`,
-      }).eq("id", task.id);
-      return;
-    }
-    // console.log(`🗣️ Agent Raw Output:`, response); // Debug if needed
+    const response = await activeAgent.sendMessage(currentMessage, {
+      simulateTools: false,
+    });
 
     // 2. ROBUST ACTION PARSING
     let action = response.toolRequest;
@@ -1559,7 +1276,6 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
       }
 
       console.log(`✅ Tool Result:`, result.substring(0, 100) + "...");
-      consecutiveNoToolTurns = 0; // Reset on successful tool call
       currentMessage = `Tool '${action.name}' output:\n${result}\n\nWhat is the next step?`;
     } else if (action && !action.name) {
       console.warn("⚠️ Detected action but NAME is undefined:", action);
@@ -1575,60 +1291,48 @@ When done, set "message" to contain "TASK_COMPLETED" and do NOT set "action".
         completionText.includes("TERMINATE")
       ) {
         console.log("✅ Task Completed by Agent.");
-        const snippet = response.text?.slice(0, 200) || "";
-        await logToAdmin(task.assigned_to, `✅ Done: ${task.title}\n${snippet}`, "info", { task_id: task.id, status: "done" });
-        await saveWorkerMemory({ [`last_done_${task.assigned_to}`]: { title: task.title, result: snippet, at: new Date().toISOString() } });
+        const { error: completeError } = await workerSupabase
+          .from("agent_tasks")
+          .update({
+            status: "done",
+            result: response.text,
+          })
+          .eq("id", task.id);
 
-        // Verification tasks: evaluate result and handle parent
-        if (task.task_type === "verification") {
-          const passed = !response.text.toLowerCase().includes("fail") &&
-            !response.text.toLowerCase().includes("not met") &&
-            !response.text.toLowerCase().includes("incorrect");
-          await handleVerificationResult(task, passed, response.text);
-          await notifyTelegram(`🔍 *Verification ${passed ? "passed ✅" : "failed ❌"}:* ${task.title.replace("Verify: ", "")}`);
-          return;
-        }
-
-        // For primary/remediation tasks: spawn verification instead of marking done directly
-        const taskWithCriteria = { ...task, success_criteria: task.success_criteria || null };
-        await spawnVerificationTask(taskWithCriteria, response.text);
-        await notifyTelegram(`🔍 *${task.assigned_to || "Worker"}* completed — verifying:\n*${task.title}*`);
+        if (completeError)
+          console.warn("⚠️ Failed to update result:", completeError.message);
 
         return;
       }
 
       // If no tool and no completion, just continue conversation or stop?
-      consecutiveNoToolTurns++;
       console.log(
-        `⚠️ No tool called (${consecutiveNoToolTurns}/${MAX_NO_TOOL_TURNS}). Agent might be confused.`,
+        "⚠️ No tool called and not completed. Agent might be confused.",
       );
 
-      // Fail fast after N consecutive no-tool turns
-      if (consecutiveNoToolTurns >= MAX_NO_TOOL_TURNS) {
+      // Force fail if we are stuck in a loop without actions (RELAXED LIMIT)
+      if (turnCount >= MAX_TURNS) {
         console.error("❌ Task Failed: Agent is not calling tools.");
         await workerSupabase
           .from("agent_tasks")
           .update({
-            status: "failed",
-            result: "FAILED: Agent returned text without calling any tool 3 times in a row.",
+            status: "done",
+            result: "FAILED: Agent failed to execute tools.",
           })
           .eq("id", task.id);
-        await logToAdmin(task.assigned_to, `❌ Failed: ${task.title} (no tool calls)`, "error", { task_id: task.id });
-        await notifyTelegram(`❌ *${task.assigned_to || "Worker"}* failed:\n*${task.title}*\nAgent stopped calling tools.`);
         return;
       }
 
-      // Strong nudge
+      // Try to nudge the agent
       if (
         response.text.toLowerCase().includes("complete") ||
-        response.text.toLowerCase().includes("finished") ||
-        response.text.toLowerCase().includes("done")
+        response.text.toLowerCase().includes("finished")
       ) {
         currentMessage =
-          'SYSTEM: Task not yet marked complete. You MUST call a tool OR reply with the exact text "TASK_COMPLETED" (nothing else).';
+          "System Notification: You have indicated the task is complete. Please strictly reply with the exact text 'TASK_COMPLETED' to finalize the process.";
       } else {
         currentMessage =
-          'SYSTEM: You must use a tool to proceed. Do NOT write explanations — call one of your available tools now. If the task is truly done, reply only with "TASK_COMPLETED".';
+          "Action not detected. If you have finished the task, please explicitly reply with 'TASK_COMPLETED'. Otherwise, select the appropriate tool to proceed.";
       }
     }
   }
@@ -1752,47 +1456,10 @@ async function main() {
           // Check if we already replied (simple check: verify no recent reply from receptionist...
           // actually if lastMsg is USER, then we haven't replied yet, as reply would be top of stack)
 
+          // Trigger Agent with workerSupabase (Service Role)
           if (!ReceptionistAgent) continue;
-
-          // --- MEMORY ENHANCEMENT: Enrich message with provider context ---
-          let enrichedMessage = { ...lastMsg };
-          try {
-            // Load provider profile
-            const { data: providerProfile } = await workerSupabase
-              .from("service_providers")
-              .select("id, business_name, category, description, opening_hours, phone, email, verified, metadata")
-              .eq("id", meeting.provider_id)
-              .single();
-
-            // Load last 5 interactions with this provider
-            const { data: recentInteractions } = await workerSupabase
-              .from("crm_interactions")
-              .select("id, type, notes, content, created_at, direction")
-              .eq("provider_id", meeting.provider_id)
-              .order("created_at", { ascending: false })
-              .limit(5);
-
-            // Attach enriched context to the message object so ReceptionistAgent can use it
-            enrichedMessage._context = {
-              providerProfile: providerProfile || null,
-              recentInteractions: recentInteractions || [],
-              interactionSummary: recentInteractions && recentInteractions.length > 0
-                ? `${recentInteractions.length} recent interaction(s). Last: "${(recentInteractions[0].notes || recentInteractions[0].content || "").slice(0, 120)}"`
-                : "No prior interactions found.",
-            };
-
-            console.log(
-              `[Receptionist] Enriched context for provider ${meeting.provider_id}: ` +
-              `profile=${!!providerProfile}, interactions=${recentInteractions?.length || 0}`
-            );
-          } catch (enrichErr) {
-            console.warn(`[Receptionist] Context enrichment failed (non-fatal): ${enrichErr.message}`);
-            // Fall back to original message without enrichment
-          }
-
-          // Trigger Agent with enriched message and workerSupabase (Service Role)
           const responseText = await ReceptionistAgent.handleIncomingMessage(
-            enrichedMessage,
+            lastMsg,
             meeting.provider_id,
             workerSupabase,
           );
@@ -1859,12 +1526,7 @@ async function main() {
         console.warn("⚠️ Heartbeat failed (non-fatal):", err.message);
       }
 
-      // 1a. Auto-recover stuck tasks + poll Telegram commands + KPI snapshot
-      await autoRecoverStuckTasks();
-      await pollTelegramCommands();
-      await captureKpiSnapshot();
-
-      // 1b. Run Receptionist Cycle (Priority)
+      // 1. Run Receptionist Cycle (Priority)
       await runReceptionistCycle();
 
       // 2. Poll for Tasks
@@ -2012,10 +1674,6 @@ const scheduledAgents = [
   { agentId: "tech-scout-agent", cron: { hour: 9,  minute: 0,  days: [1] },              title: "Weekly Tech Landscape Scan" },
   { agentId: "optimizer-agent",  cron: { hour: 10, minute: 0,  days: [1,4] },            title: "Bi-Weekly Business Health Check" },
   { agentId: "crm-sales-agent",  cron: { hour: 9,  minute: 30, days: [1,2,3,4,5] },      title: "Morning Lead Follow-Up" },
-  // ── Marketing Automation ─────────────────────────────────────────────────
-  { agentId: "crm-sales-agent",  cron: { hour: 10, minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Daily Lead Outreach: Find 3 uncontacted businesses and send personalized emails" },
-  { agentId: "optimizer-agent",  cron: { hour: 7,  minute: 0,  days: [1] },              title: "Weekly Business Health Report: Analyze metrics and write summary to company_knowledge" },
-  { agentId: "crm-sales-agent",  cron: { hour: 18, minute: 0,  days: [0,1,2,3,4,5,6] }, title: "Evening Follow-up: Check leads contacted today, send follow-up to non-responders" },
 ];
 
 const firedToday = new Set(); // key: "agentId-YYYY-MM-DD-HH" to prevent double-fire
@@ -2046,11 +1704,7 @@ function startCronScheduler() {
         status: "pending",
         created_by: "cron-scheduler",
       }]);
-      if (error) {
-        console.error(`Cron insert error for ${sched.agentId}:`, error.message);
-      } else {
-        await logToAdmin("cron-scheduler", `⏰ Scheduled: ${sched.title}`, "info", { agent: sched.agentId });
-      }
+      if (error) console.error(`Cron insert error for ${sched.agentId}:`, error.message);
     }
 
     // Clean old fire keys every hour
@@ -2139,864 +1793,7 @@ function startRealtimeListeners() {
     .subscribe();
 }
 
-// ============================================================
-// SELF-TASKING LOOP — Agent reviews its own work and spawns follow-ups
-// ============================================================
-async function runSelfTaskingReview() {
-  console.log("🧠 [SelfTask] Running self-review — checking recent completed tasks...");
-  try {
-    // Look at tasks completed in the last 6 hours
-    const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
-    const { data: doneTasks, error } = await workerSupabase
-      .from("agent_tasks")
-      .select("id, title, assigned_to, result, updated_at")
-      .eq("status", "done")
-      .gte("updated_at", since)
-      .order("updated_at", { ascending: false })
-      .limit(10);
-
-    // Also fetch failed tasks to include in review
-    const { data: failedTasks } = await workerSupabase
-      .from("agent_tasks")
-      .select("id, title, assigned_to, result, updated_at")
-      .eq("status", "failed")
-      .gte("updated_at", since)
-      .order("updated_at", { ascending: false })
-      .limit(5);
-
-    if (error || !doneTasks || doneTasks.length === 0) {
-      console.log("🧠 [SelfTask] No recent completed tasks — skipping self-review.");
-      return;
-    }
-
-    // Auto-create remediation tasks for repeated failures
-    if (failedTasks && failedTasks.length >= 2) {
-      const failuresByAgent = failedTasks.reduce((acc, t) => {
-        acc[t.assigned_to] = (acc[t.assigned_to] || 0) + 1;
-        return acc;
-      }, {});
-      for (const [agent, count] of Object.entries(failuresByAgent)) {
-        if (count >= 2) {
-          const failureSummary = failedTasks
-            .filter(t => t.assigned_to === agent)
-            .map(t => `- "${t.title}": ${(t.result || "").slice(0, 100)}`)
-            .join("\n");
-          await workerSupabase.from("agent_tasks").insert([{
-            title: `[AutoFix] Investigate repeated failures for ${agent}`,
-            description: `The agent ${agent} failed ${count} times in the last 6 hours:\n${failureSummary}\n\nInvestigate root cause and propose a fix.`,
-            assigned_to: "tech-lead-agent",
-            priority: "high",
-            status: "pending",
-            created_by: "self-tasking-loop",
-          }]);
-          console.log(`🧠 [SelfTask] Created remediation task for ${agent} (${count} failures)`);
-          await notifyTelegram(`⚠️ *Remediation Task Created*\nAgent *${agent}* failed ${count} times in 6 hours.\nCreated investigation task for tech-lead-agent.\n\n${failureSummary.slice(0, 300)}`);
-        }
-      }
-    }
-
-    // Check if we already ran a self-review recently (avoid double-fire)
-    const { data: recentReview } = await workerSupabase
-      .from("agent_tasks")
-      .select("id")
-      .eq("assigned_to", "planner-agent")
-      .eq("created_by", "self-tasking-loop")
-      .gte("created_at", since)
-      .limit(1);
-
-    if (recentReview && recentReview.length > 0) {
-      console.log("🧠 [SelfTask] Self-review already scheduled recently — skipping.");
-      return;
-    }
-
-    const summary = doneTasks
-      .map((t) => `- [${t.assigned_to}] "${t.title}" → ${(t.result || "").slice(0, 120)}`)
-      .join("\n");
-
-    const failedSummary = failedTasks && failedTasks.length > 0
-      ? "\n\nFailed tasks (needs attention):\n" + failedTasks
-          .map((t) => `- [${t.assigned_to}] "${t.title}" ❌ ${(t.result || "").slice(0, 100)}`)
-          .join("\n")
-      : "";
-
-    // Fetch real user analytics from DB
-    const { data: newLeads } = await workerSupabase
-      .from("crm_leads")
-      .select("name, source, notes, created_at")
-      .gte("created_at", since)
-      .order("created_at", { ascending: false })
-      .limit(10);
-
-    const { data: recentBookings } = await workerSupabase
-      .from("bookings")
-      .select("service_name, status, created_at")
-      .gte("created_at", since)
-      .limit(10);
-
-    const analyticsContext = [
-      newLeads?.length ? `New leads (${newLeads.length}): ${newLeads.map(l => l.source).join(', ')}` : null,
-      recentBookings?.length ? `Bookings (${recentBookings.length}): ${recentBookings.map(b => b.status).join(', ')}` : null,
-    ].filter(Boolean).join('\n');
-
-    console.log(`🧠 [SelfTask] Found ${doneTasks.length} completed tasks — spawning planner review`);
-
-    await workerSupabase.from("agent_tasks").insert([{
-      title: "Self-Review: Analyze recent work and create follow-up tasks",
-      description: `Review the following recently completed tasks and decide what follow-up actions are needed. For each important finding, create a new task by inserting into agent_tasks.\n\nRecent completed work:\n${summary}${failedSummary}${analyticsContext ? `\n\nUser activity (last 6h):\n${analyticsContext}` : ''}\n\nFocus on: missed opportunities, pending follow-ups, patterns that need attention, and proactive outreach.`,
-      assigned_to: "planner-agent",
-      priority: "medium",
-      status: "pending",
-      created_by: "self-tasking-loop",
-    }]);
-
-    console.log("🧠 [SelfTask] Planner review task created ✅");
-  } catch (err) {
-    console.warn("🧠 [SelfTask] Error:", err.message);
-  }
-}
-
-// ============================================================
-// AUTO-RECOVERY — Resets tasks stuck in-progress > 45 min
-// ============================================================
-async function autoRecoverStuckTasks() {
-  try {
-    const cutoff = new Date(Date.now() - 45 * 60 * 1000).toISOString();
-    const { data: stuck } = await workerSupabase
-      .from("agent_tasks")
-      .select("id, title, assigned_to")
-      .eq("status", "in_progress")
-      .lt("updated_at", cutoff)
-      .limit(3);
-
-    for (const task of stuck || []) {
-      await workerSupabase.from("agent_tasks").update({
-        status: "pending",
-        result: `Auto-recovered: was stuck in-progress > 45 min. Will retry.`,
-        updated_at: new Date().toISOString(),
-      }).eq("id", task.id);
-      console.log(`🔧 [AutoRecover] Reset stuck task: "${task.title}" (${task.assigned_to})`);
-      await notifyTelegram(`🔧 *Auto-Recovered Task*\nTask *"${task.title}"* was stuck in-progress for >45 min.\nAgent: ${task.assigned_to || "unknown"}\nStatus reset to pending for retry.`);
-    }
-  } catch (err) {
-    console.warn("🔧 [AutoRecover] Error:", err.message);
-  }
-}
-
-// ============================================================
-// REFLECTION CYCLE — Learns from past tasks, improves system prompt
-// ============================================================
-async function runReflectionCycle() {
-  console.log("🪞 [Reflect] Running reflection cycle...");
-  try {
-    const geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!geminiKey) return;
-
-    const { data: recentTasks } = await workerSupabase
-      .from("agent_tasks")
-      .select("title, status, result, assigned_to")
-      .in("status", ["done", "failed"])
-      .order("updated_at", { ascending: false })
-      .limit(20);
-
-    if (!recentTasks || recentTasks.length < 5) {
-      console.log("🪞 [Reflect] Not enough tasks yet — skipping.");
-      return;
-    }
-
-    const taskSummary = recentTasks
-      .map(t => `[${t.status}] ${t.assigned_to}: "${t.title}" → ${(t.result || "").slice(0, 80)}`)
-      .join("\n");
-
-    const reflectPrompt = `You are analyzing an AI agent worker system's recent task history to extract improvement lessons.
-
-Task history:
-${taskSummary}
-
-Return a JSON array of up to 3 specific, actionable lessons. Format:
-[{"lesson": "...", "applies_to": "agent-name or all", "priority": "high|medium|low"}]
-
-Only return the JSON array, no other text.`;
-
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: reflectPrompt }] }] }),
-      }
-    );
-
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return;
-
-    const newLessons = JSON.parse(jsonMatch[0]);
-
-    // Load existing learnings
-    const { data: existing } = await workerSupabase
-      .from("company_knowledge")
-      .select("value")
-      .eq("key", "WORKER_LEARNINGS")
-      .single();
-
-    const allLessons = [...(existing?.value?.lessons || []), ...newLessons].slice(-50);
-
-    await workerSupabase.from("company_knowledge").upsert(
-      { key: "WORKER_LEARNINGS", value: { lessons: allLessons, updated_at: new Date().toISOString() } },
-      { onConflict: "key" }
-    );
-
-    console.log(`🪞 [Reflect] Saved ${newLessons.length} new lessons (total: ${allLessons.length})`);
-    const lessonSnippet = newLessons.map((l, i) => `${i + 1}. ${l.lesson}`).join("\n");
-    await notifyTelegram(`🪞 *Reflection Cycle Complete*\n+${newLessons.length} new lessons (${allLessons.length} total)\n\n${lessonSnippet}`);
-
-    // Every 10 learnings — distill into system prompt addendum
-    if (allLessons.length > 0 && allLessons.length % 10 === 0) {
-      const distillPrompt = `Distill these ${allLessons.length} agent lessons into 3 core operating principles (max 2 sentences each):
-${JSON.stringify(allLessons, null, 2)}
-Return plain text, one principle per line.`;
-
-      const distillRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: distillPrompt }] }] }),
-        }
-      );
-      const distillData = await distillRes.json();
-      const principles = distillData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-      if (principles) {
-        const { data: cfg } = await workerSupabase
-          .from("company_knowledge")
-          .select("value")
-          .eq("key", "WORKER_CONFIG")
-          .single();
-
-        const updatedConfig = { ...(cfg?.value || {}), systemPromptAddendum: principles };
-        await workerSupabase.from("company_knowledge").upsert(
-          { key: "WORKER_CONFIG", value: updatedConfig },
-          { onConflict: "key" }
-        );
-        console.log("🪞 [Reflect] Updated WORKER_CONFIG systemPromptAddendum with distilled principles ✅");
-        await notifyTelegram(`🧠 *System Prompt Evolved*\nReached ${allLessons.length} lessons — distilled new core principles:\n\n${principles.slice(0, 400)}`);
-      }
-    }
-  } catch (err) {
-    console.warn("🪞 [Reflect] Error:", err.message);
-  }
-}
-
-function startSelfTaskingLoop() {
-  console.log("🧠 Self-Tasking Loop started (every 4 hours)");
-  // Run once 10 min after startup (let the main loop settle first)
-  setTimeout(() => runSelfTaskingReview(), 10 * 60 * 1000);
-  // Then every 4 hours
-  setInterval(() => runSelfTaskingReview(), 4 * 60 * 60 * 1000);
-  // Reflection cycle every 8 hours
-  setTimeout(() => runReflectionCycle(), 30 * 60 * 1000); // first run 30 min after startup
-  setInterval(() => runReflectionCycle(), 8 * 60 * 60 * 1000);
-}
-
-// ============================================================
-// HEARTBEAT — writes timestamp to Supabase every 2 min
-// so the admin dashboard can show "Worker Online/Offline"
-// ============================================================
-async function startHeartbeat() {
-  const beat = async () => {
-    await workerSupabase
-      .from("company_knowledge")
-      .upsert({ key: "WORKER_HEARTBEAT", value: new Date().toISOString() }, { onConflict: "key" });
-  };
-  await beat(); // immediate first beat
-  setInterval(beat, 2 * 60 * 1000);
-}
-
-// ============================================================
-// PHASE 1: CLOSED-LOOP VERIFICATION
-// ============================================================
-
-/**
- * Scans for tasks stuck in_progress for >30 minutes and auto-recovers them.
- * After 3 failures, escalates to human via Telegram.
- */
-async function autoRecoverStuckTasks() {
-  try {
-    const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-    const { data: stuckTasks } = await workerSupabase
-      .from("agent_tasks")
-      .select("id, title, assigned_to, retry_count")
-      .eq("status", "in_progress")
-      .lt("updated_at", cutoff);
-
-    if (!stuckTasks || stuckTasks.length === 0) return;
-
-    for (const t of stuckTasks) {
-      const newRetryCount = (t.retry_count || 0) + 1;
-      if (newRetryCount >= 3) {
-        await workerSupabase.from("agent_tasks")
-          .update({ status: "escalated", retry_count: newRetryCount, updated_at: new Date().toISOString() })
-          .eq("id", t.id);
-        await escalateToHuman(t, `Stuck in_progress and failed ${newRetryCount} times`);
-        await logToAdmin("system", `🆘 Escalated: "${t.title}" after ${newRetryCount} failures`, "error", { task_id: t.id });
-      } else {
-        await workerSupabase.from("agent_tasks")
-          .update({ status: "pending", retry_count: newRetryCount, updated_at: new Date().toISOString() })
-          .eq("id", t.id);
-        await logToAdmin("system", `🔄 Auto-recovered stuck task: "${t.title}" (retry ${newRetryCount})`, "warn", { task_id: t.id });
-        await notifyTelegram(`🔄 Auto-recovered stuck task: *${t.title}* (retry ${newRetryCount}/3)`);
-      }
-    }
-  } catch (err) {
-    console.warn("⚠️ autoRecoverStuckTasks error (non-fatal):", err.message);
-  }
-}
-
-/**
- * Generates 2-3 verifiable success criteria for a task using Gemini.
- * Stored as JSONB on the task row so the verifier knows what to check.
- */
-async function generateSuccessCriteria(task) {
-  try {
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) return null;
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Given this task, list exactly 2-3 short, verifiable success criteria (what observable outcome proves success?).
-Task: ${task.title}
-Description: ${task.description || ""}
-
-Return ONLY valid JSON: {"criteria": ["criterion 1", "criterion 2", "criterion 3"]}`
-            }]
-          }],
-          generationConfig: { temperature: 0.1 }
-        })
-      }
-    );
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
-  } catch (_) { /* non-fatal */ }
-  return null;
-}
-
-/**
- * Instead of marking a task "done", spawns a verification subtask.
- * Original task goes to "review" until verified.
- */
-async function spawnVerificationTask(originalTask, result) {
-  try {
-    const criteria = originalTask.success_criteria;
-    const criteriaText = criteria?.criteria
-      ? criteria.criteria.map((c, i) => `${i + 1}. ${c}`).join("\n")
-      : "Verify that the task was completed successfully based on the result.";
-
-    await workerSupabase.from("agent_tasks").update({
-      status: "review",
-      result,
-      updated_at: new Date().toISOString(),
-    }).eq("id", originalTask.id);
-
-    const { error } = await workerSupabase.from("agent_tasks").insert([{
-      title: `Verify: ${originalTask.title}`,
-      description: `Verify that the following task was completed successfully.\n\nOriginal Task: ${originalTask.title}\nAgent Result: ${(result || "").slice(0, 500)}\n\nSuccess Criteria:\n${criteriaText}\n\nUse read_table, read_knowledge, or analyze_business_metrics to independently confirm each criterion was met. Reply TASK_COMPLETED if all pass, or explain which criterion failed.`,
-      assigned_to: "tech-lead-agent",
-      priority: "high",
-      status: "pending",
-      task_type: "verification",
-      parent_task_id: originalTask.id,
-      created_by: "verification-system",
-    }]);
-
-    if (!error) {
-      await logToAdmin("verification-system", `🔍 Verification spawned for: "${originalTask.title}"`, "info", { task_id: originalTask.id });
-    }
-  } catch (err) {
-    // Fallback: if verification spawn fails, just mark done
-    console.warn("⚠️ spawnVerificationTask failed, marking done directly:", err.message);
-    await workerSupabase.from("agent_tasks")
-      .update({ status: "done", result, updated_at: new Date().toISOString() })
-      .eq("id", originalTask.id);
-  }
-}
-
-/**
- * Handles a verification task result.
- * On pass: marks parent task "verified".
- * On fail: spawns a remediation task.
- */
-async function handleVerificationResult(verificationTask, passed, verifierResult) {
-  if (!verificationTask.parent_task_id) return;
-
-  if (passed) {
-    await workerSupabase.from("agent_tasks").update({
-      status: "verified",
-      verified_at: new Date().toISOString(),
-      verification_result: verifierResult?.slice(0, 500),
-      updated_at: new Date().toISOString(),
-    }).eq("id", verificationTask.parent_task_id);
-
-    await logToAdmin("verification-system", `✅ Verified: "${verificationTask.title.replace("Verify: ", "")}"`, "info", { task_id: verificationTask.parent_task_id });
-    await notifyTelegram(`✅ *Verified:* ${verificationTask.title.replace("Verify: ", "")}`);
-
-    // Store memory for RAG
-    const { data: parentTask } = await workerSupabase.from("agent_tasks")
-      .select("*").eq("id", verificationTask.parent_task_id).single();
-    if (parentTask) await storeTaskMemory(parentTask, verifierResult || "");
-  } else {
-    // Spawn remediation
-    const { data: parentTask } = await workerSupabase.from("agent_tasks")
-      .select("*").eq("id", verificationTask.parent_task_id).single();
-
-    const currentRetry = (parentTask?.retry_count || 0) + 1;
-    await workerSupabase.from("agent_tasks")
-      .update({ retry_count: currentRetry, updated_at: new Date().toISOString() })
-      .eq("id", verificationTask.parent_task_id);
-
-    await workerSupabase.from("agent_tasks").insert([{
-      title: `Fix: ${(parentTask?.title || verificationTask.title.replace("Verify: ", ""))}`,
-      description: `The previous attempt failed verification. Retry with corrections.\n\nOriginal task: ${parentTask?.title}\nVerification failure: ${verifierResult?.slice(0, 400)}\n\nAddress the failure reason and complete the task correctly.`,
-      assigned_to: parentTask?.assigned_to || "tech-lead-agent",
-      priority: "high",
-      status: "pending",
-      task_type: "remediation",
-      parent_task_id: verificationTask.parent_task_id,
-      created_by: "verification-system",
-    }]);
-
-    await logToAdmin("verification-system", `🔧 Remediation spawned for: "${parentTask?.title}"`, "warn", { task_id: verificationTask.parent_task_id });
-    await notifyTelegram(`🔧 *Remediation needed:* ${parentTask?.title || "unknown task"}`);
-  }
-}
-
-// ============================================================
-// PHASE 2: BUSINESS KPI WATCHDOG
-// ============================================================
-
-const _kpiAlertCooldowns = {}; // in-memory cooldown guard
-
-/**
- * Captures today's KPI snapshot and checks against thresholds.
- * Runs every loop iteration but only writes to DB once per day.
- */
-async function captureKpiSnapshot() {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-
-    // Fast DB counts
-    const [leadsRes, bookingsRes, verifiedRes, newBizRes] = await Promise.all([
-      workerSupabase.from("crm_leads").select("id", { count: "exact", head: true })
-        .gte("created_at", `${today}T00:00:00Z`),
-      workerSupabase.from("bookings").select("id", { count: "exact", head: true })
-        .gte("created_at", `${today}T00:00:00Z`),
-      workerSupabase.from("service_providers").select("id", { count: "exact", head: true })
-        .eq("is_verified", true),
-      workerSupabase.from("service_providers").select("id", { count: "exact", head: true })
-        .gte("created_at", `${today}T00:00:00Z`),
-    ]);
-
-    const snapshot = {
-      snapshot_date: today,
-      leads_today: leadsRes.count || 0,
-      bookings_today: bookingsRes.count || 0,
-      verified_businesses: verifiedRes.count || 0,
-      new_businesses_today: newBizRes.count || 0,
-    };
-
-    await workerSupabase.from("kpi_snapshots").upsert(snapshot, { onConflict: "snapshot_date" });
-
-    // Load thresholds and check
-    const { data: thresholds } = await workerSupabase.from("kpi_thresholds").select("*");
-    if (!thresholds) return;
-
-    for (const threshold of thresholds) {
-      const value = snapshot[threshold.metric_name];
-      if (value === undefined) continue;
-
-      const isBreach = threshold.comparison === "less_than"
-        ? value < threshold.warning_threshold
-        : value > threshold.warning_threshold;
-
-      if (isBreach) await triggerKpiAlert(threshold.metric_name, value, threshold);
-    }
-  } catch (err) {
-    console.warn("⚠️ captureKpiSnapshot error (non-fatal):", err.message);
-  }
-}
-
-async function triggerKpiAlert(metric, value, threshold) {
-  const cooldownKey = `kpi_${metric}`;
-  const lastAlert = _kpiAlertCooldowns[cooldownKey];
-  if (lastAlert && (Date.now() - lastAlert) < 6 * 60 * 60 * 1000) return; // 6h cooldown
-  _kpiAlertCooldowns[cooldownKey] = Date.now();
-
-  const severity = value <= threshold.critical_threshold ? "🚨 CRITICAL" : "⚠️ WARNING";
-  await notifyTelegram(`${severity} KPI Alert\n*${metric}* is *${value}*\n(threshold: ${threshold.warning_threshold})\n${threshold.description || ""}`);
-
-  await workerSupabase.from("agent_tasks").insert([{
-    title: `KPI Alert: ${metric} is ${value} (below threshold ${threshold.warning_threshold})`,
-    description: `Business metric alert: ${threshold.description || metric}. Current value: ${value}. Warning threshold: ${threshold.warning_threshold}. Analyze the situation and take action to improve this metric.`,
-    assigned_to: "optimizer-agent",
-    priority: "high",
-    status: "pending",
-    created_by: "kpi-watchdog",
-  }]);
-
-  await logToAdmin("kpi-watchdog", `${severity}: ${metric} = ${value}`, "warn", { metric, value });
-}
-
-// ============================================================
-// PHASE 3: PER-AGENT MEMORY VIA RAG
-// ============================================================
-
-/**
- * Calls Gemini text-embedding-004 to get a 768-dim vector.
- */
-async function embedText(text) {
-  try {
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) return null;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "models/text-embedding-004",
-          content: { parts: [{ text: text.slice(0, 2000) }] }
-        })
-      }
-    );
-    const data = await res.json();
-    return data?.embedding?.values || null;
-  } catch (_) { return null; }
-}
-
-/**
- * Searches knowledge_base for past task experience relevant to the current task.
- * Returns a formatted context string, or empty string if nothing found.
- */
-async function retrieveRelevantMemory(task) {
-  try {
-    const query = `${task.title} ${task.description || ""}`.slice(0, 500);
-    if (query.length < 20) return "";
-
-    const embedding = await embedText(query);
-    if (!embedding) return "";
-
-    const { data } = await workerSupabase.rpc("match_knowledge", {
-      query_embedding: embedding,
-      match_threshold: 0.75,
-      match_count: 3,
-    });
-
-    if (!data || data.length === 0) return "";
-
-    const memories = data
-      .filter(d => d.category === "task_memory")
-      .map(d => `- ${d.content.slice(0, 200)}`)
-      .join("\n");
-
-    if (!memories) return "";
-    return `\n=== RELEVANT PAST EXPERIENCE ===\n${memories}\n=== END EXPERIENCE ===\n`;
-  } catch (_) { return ""; }
-}
-
-/**
- * Stores a completed (verified) task as a memory entry in knowledge_base.
- */
-async function storeTaskMemory(task, result) {
-  try {
-    const content = `Task: ${task.title}\nAgent: ${task.assigned_to}\nResult: ${(result || "").slice(0, 800)}`;
-    const embedding = await embedText(content);
-    if (!embedding) return;
-
-    const typeMap = { email: "email", lead: "crm", booking: "booking", enrich: "enrichment", verify: "verification", report: "report" };
-    const taskTypeTag = Object.entries(typeMap).find(([k]) => task.title.toLowerCase().includes(k))?.[1] || "general";
-
-    await workerSupabase.from("knowledge_base").insert({
-      content,
-      category: "task_memory",
-      embedding,
-      metadata: { agent_id: task.assigned_to, task_id: task.id, completed_at: new Date().toISOString() },
-      agent_id: task.assigned_to,
-      source_task_id: task.id,
-      task_type_tag: taskTypeTag,
-    });
-  } catch (_) { /* non-fatal */ }
-}
-
-// ============================================================
-// PHASE 4: INTELLIGENT HUMAN ESCALATION
-// ============================================================
-
-/**
- * Creates an escalation record and sends a rich Telegram message with commands.
- */
-async function escalateToHuman(task, reason) {
-  try {
-    // Check if escalation already open for this task
-    const { data: existing } = await workerSupabase.from("escalations")
-      .select("id").eq("task_id", task.id).eq("status", "open").limit(1);
-    if (existing && existing.length > 0) return;
-
-    const { data: esc } = await workerSupabase.from("escalations").insert([{
-      task_id: task.id,
-      agent_id: task.assigned_to || "unknown",
-      reason,
-      retry_count: task.retry_count || 0,
-    }]).select().single();
-
-    const taskId = task.id?.slice(0, 8) || "unknown";
-    const msg = `🆘 *ESCALATION REQUIRED*\n\nTask: *${task.title}*\nAgent: ${task.assigned_to}\nFailures: ${task.retry_count || 0}\nReason: ${reason}\n\nCommands:\n\`/approve ${taskId}\` — retry as-is\n\`/reject ${taskId}\` — mark failed\n\`/context ${taskId} <text>\` — add context and retry`;
-
-    await notifyTelegram(msg);
-    await logToAdmin("escalation-system", `🆘 Escalated: "${task.title}"`, "error", { task_id: task.id, reason });
-  } catch (err) {
-    console.warn("⚠️ escalateToHuman error (non-fatal):", err.message);
-  }
-}
-
-let _telegramUpdateOffset = null;
-
-/**
- * Polls Telegram for incoming commands (/approve, /reject, /context).
- * Non-blocking — uses short timeout. Persists offset to avoid re-processing.
- */
-async function pollTelegramCommands() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-
-  try {
-    // Load offset from memory on first run
-    if (_telegramUpdateOffset === null) {
-      const { data } = await workerSupabase.from("company_knowledge")
-        .select("value").eq("key", "TELEGRAM_UPDATE_OFFSET").single();
-      _telegramUpdateOffset = data?.value ? parseInt(data.value) + 1 : 0;
-    }
-
-    const res = await fetch(
-      `https://api.telegram.org/bot${token}/getUpdates?offset=${_telegramUpdateOffset}&timeout=1`,
-      { signal: AbortSignal.timeout(5000) }
-    );
-    const data = await res.json();
-    if (!data.ok || !data.result?.length) return;
-
-    for (const update of data.result) {
-      _telegramUpdateOffset = update.update_id + 1;
-      const text = (update.message?.text || "").trim();
-
-      if (text.startsWith("/approve ")) {
-        const taskIdPrefix = text.split(" ")[1];
-        await handleTelegramApprove(taskIdPrefix);
-      } else if (text.startsWith("/reject ")) {
-        const taskIdPrefix = text.split(" ")[1];
-        await handleTelegramReject(taskIdPrefix);
-      } else if (text.startsWith("/context ")) {
-        const parts = text.split(" ");
-        const taskIdPrefix = parts[1];
-        const ctx = parts.slice(2).join(" ");
-        await handleTelegramContext(taskIdPrefix, ctx);
-      }
-    }
-
-    // Persist offset
-    await workerSupabase.from("company_knowledge").upsert({
-      key: "TELEGRAM_UPDATE_OFFSET",
-      value: String(_telegramUpdateOffset),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "key" });
-  } catch (_) { /* non-fatal — Telegram may be unreachable */ }
-}
-
-async function handleTelegramApprove(taskIdPrefix) {
-  const { data: tasks } = await workerSupabase.from("agent_tasks")
-    .select("id, title").ilike("id::text", `${taskIdPrefix}%`).limit(1);
-  if (!tasks?.[0]) return;
-  const t = tasks[0];
-
-  await workerSupabase.from("agent_tasks")
-    .update({ status: "pending", retry_count: 0, updated_at: new Date().toISOString() }).eq("id", t.id);
-  await workerSupabase.from("escalations")
-    .update({ status: "resolved", human_response: "approved", resolved_at: new Date().toISOString() }).eq("task_id", t.id);
-  await notifyTelegram(`✅ Task approved and re-queued: *${t.title}*`);
-}
-
-async function handleTelegramReject(taskIdPrefix) {
-  const { data: tasks } = await workerSupabase.from("agent_tasks")
-    .select("id, title").ilike("id::text", `${taskIdPrefix}%`).limit(1);
-  if (!tasks?.[0]) return;
-  const t = tasks[0];
-
-  await workerSupabase.from("agent_tasks")
-    .update({ status: "failed", result: "Rejected by human via Telegram", updated_at: new Date().toISOString() }).eq("id", t.id);
-  await workerSupabase.from("escalations")
-    .update({ status: "resolved", human_response: "rejected", resolved_at: new Date().toISOString() }).eq("task_id", t.id);
-  await notifyTelegram(`🚫 Task rejected: *${t.title}*`);
-}
-
-async function handleTelegramContext(taskIdPrefix, context) {
-  const { data: tasks } = await workerSupabase.from("agent_tasks")
-    .select("id, title, description").ilike("id::text", `${taskIdPrefix}%`).limit(1);
-  if (!tasks?.[0]) return;
-  const t = tasks[0];
-
-  await workerSupabase.from("agent_tasks").update({
-    status: "pending",
-    retry_count: 0,
-    description: `${t.description || ""}\n\n[Human Context Added]: ${context}`,
-    updated_at: new Date().toISOString(),
-  }).eq("id", t.id);
-  await workerSupabase.from("escalations")
-    .update({ status: "resolved", human_response: `context: ${context}`, resolved_at: new Date().toISOString() }).eq("task_id", t.id);
-  await notifyTelegram(`💡 Context added and task re-queued: *${t.title}*`);
-}
-
-// ============================================================
-// PHASE 5: GOAL-ORIENTED PLANNING
-// ============================================================
-
-const GOAL_AGENT_MAP = {
-  verified_businesses: "crm-sales-agent",
-  leads_today: "crm-sales-agent",
-  bookings_today: "optimizer-agent",
-  new_businesses_today: "crm-sales-agent",
-};
-
-const GOAL_KEYWORDS = {
-  verified_businesses: ["verify", "verification", "onboard", "claim", "business"],
-  leads_today: ["lead", "crm", "outreach", "email", "prospect"],
-  bookings_today: ["booking", "reservation", "appointment", "schedule"],
-};
-
-/**
- * Reads business_goals, updates current_value from kpi_snapshots,
- * and spawns tasks for goals falling behind pace.
- */
-async function evaluateGoalProgress() {
-  try {
-    const { data: goals } = await workerSupabase.from("business_goals")
-      .select("*").eq("status", "active");
-    if (!goals?.length) return;
-
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: snapshot } = await workerSupabase.from("kpi_snapshots")
-      .select("*").eq("snapshot_date", today).single();
-
-    for (const goal of goals) {
-      const currentValue = snapshot?.[goal.target_metric] ?? goal.current_value;
-
-      await workerSupabase.from("business_goals").update({
-        current_value: currentValue,
-        last_evaluated_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("id", goal.id);
-
-      if (currentValue >= goal.target_value) {
-        await workerSupabase.from("business_goals")
-          .update({ status: "achieved", updated_at: new Date().toISOString() }).eq("id", goal.id);
-        await notifyTelegram(`🏆 Goal Achieved: *${goal.title}* (${currentValue}/${goal.target_value})`);
-        continue;
-      }
-
-      const progressPct = (currentValue / goal.target_value) * 100;
-      const isBelow50 = progressPct < 50;
-      const hasDeadline = !!goal.deadline;
-      const daysLeft = hasDeadline
-        ? Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24))
-        : null;
-      const isPressured = hasDeadline && daysLeft !== null && daysLeft < 30;
-
-      if (goal.auto_task_enabled && (isBelow50 || isPressured)) {
-        await spawnGoalAlignedTask(goal, currentValue, daysLeft);
-      }
-    }
-
-    await reprioritizeBacklog(goals);
-  } catch (err) {
-    console.warn("⚠️ evaluateGoalProgress error (non-fatal):", err.message);
-  }
-}
-
-async function spawnGoalAlignedTask(goal, currentValue, daysLeft) {
-  // 6h cooldown guard
-  const cooldownKey = `GOAL_TASK_COOLDOWN_${goal.id}`;
-  const { data: cooldown } = await workerSupabase.from("company_knowledge")
-    .select("updated_at").eq("key", cooldownKey).single();
-  if (cooldown?.updated_at) {
-    const age = Date.now() - new Date(cooldown.updated_at).getTime();
-    if (age < 6 * 60 * 60 * 1000) return;
-  }
-
-  const agent = GOAL_AGENT_MAP[goal.target_metric] || "optimizer-agent";
-  const deadlineNote = daysLeft !== null ? ` Deadline in ${daysLeft} days.` : "";
-
-  await workerSupabase.from("agent_tasks").insert([{
-    title: `Goal Push: ${goal.title} — ${currentValue}/${goal.target_value}`,
-    description: `Business goal "${goal.title}" is behind pace. Current: ${currentValue}, Target: ${goal.target_value}.${deadlineNote} Take targeted action to advance the metric "${goal.target_metric}". Focus on high-impact activities only.`,
-    assigned_to: agent,
-    priority: "high",
-    status: "pending",
-    created_by: "goal-planner",
-  }]);
-
-  await workerSupabase.from("company_knowledge").upsert({
-    key: cooldownKey, value: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "key" });
-
-  await logToAdmin("goal-planner", `🎯 Goal task spawned: ${goal.title}`, "info", { goal_id: goal.id, current: currentValue, target: goal.target_value });
-}
-
-async function reprioritizeBacklog(goals) {
-  try {
-    const { data: pendingTasks } = await workerSupabase.from("agent_tasks")
-      .select("id, title, description, priority").eq("status", "pending");
-    if (!pendingTasks?.length) return;
-
-    const behindGoals = goals.filter(g => (g.current_value / g.target_value) < 0.5);
-    if (!behindGoals.length) return;
-
-    const toUpgrade = [];
-    for (const task of pendingTasks) {
-      if (task.priority === "high") continue;
-      const text = `${task.title} ${task.description || ""}`.toLowerCase();
-      const aligns = behindGoals.some(goal => {
-        const keywords = GOAL_KEYWORDS[goal.target_metric] || [];
-        return keywords.some(kw => text.includes(kw));
-      });
-      if (aligns) toUpgrade.push(task.id);
-    }
-
-    if (toUpgrade.length > 0) {
-      await workerSupabase.from("agent_tasks")
-        .update({ priority: "high", updated_at: new Date().toISOString() })
-        .in("id", toUpgrade);
-      console.log(`🎯 Reprioritized ${toUpgrade.length} task(s) aligned to behind-pace goals`);
-    }
-  } catch (_) { /* non-fatal */ }
-}
-
-function startGoalPlanningLoop() {
-  console.log("🎯 Goal Planning Loop started (every 30 minutes)");
-  setTimeout(() => evaluateGoalProgress(), 5 * 60 * 1000); // 5 min after startup
-  setInterval(() => evaluateGoalProgress(), 30 * 60 * 1000);
-}
-
 // Start Main
 main().catch((err) => console.error("Fatal Error:", err));
 startCronScheduler();
 startRealtimeListeners();
-startSelfTaskingLoop();
-startHeartbeat();
-startGoalPlanningLoop();

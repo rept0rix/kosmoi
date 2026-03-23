@@ -25,20 +25,10 @@ Deno.serve(async (req: Request) => {
 
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
+        const supabaseKey = Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
         const geminiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
 
         const supabase = createClient(supabaseUrl, supabaseKey);
-
-        // Helper: write a signal into the nervous system
-        const sig = (eventType: string, entityType: string, entityId: string, data: Record<string, unknown> = {}) =>
-            supabase.rpc('write_signal', {
-                p_event_type: eventType,
-                p_entity_type: entityType,
-                p_entity_id: entityId,
-                p_source: 'sales-outreach',
-                p_data: data
-            }).catch(() => {});
 
         const body = await req.json();
         const { action, business_id } = body;
@@ -149,12 +139,6 @@ Deno.serve(async (req: Request) => {
                 })
                 .eq('id', sequence?.id);
 
-            await sig('outreach.first_sent', 'provider', business_id, {
-                business_name: business.business_name,
-                channel: business.email ? 'email' : 'none',
-                sequence_id: sequence?.id
-            });
-
             results.success = true;
             results.message = 'Outreach sent successfully';
             results.details = { sequence_id: sequence?.id };
@@ -214,20 +198,7 @@ Deno.serve(async (req: Request) => {
                     })
                     .eq('id', seq.id);
 
-                await sig('outreach.followup_sent', 'provider', business.id, {
-                    business_name: business.business_name,
-                    step: seq.step + 1,
-                    sequence_id: seq.id
-                });
-
                 processed++;
-            }
-
-            if (processed > 0) {
-                await sig('outreach.batch_followups', 'system', 'sales-outreach', {
-                    processed,
-                    total_due: (dueSequences || []).length
-                });
             }
 
             results.success = true;
@@ -243,7 +214,6 @@ Deno.serve(async (req: Request) => {
                 .from('outreach_messages')
                 .update({ opened_at: new Date().toISOString() })
                 .eq('id', message_id);
-            await sig('outreach.email_opened', 'message', message_id, {});
             results.success = true;
         }
 
@@ -256,7 +226,6 @@ Deno.serve(async (req: Request) => {
                 .from('outreach_messages')
                 .update({ clicked_at: new Date().toISOString() })
                 .eq('id', message_id);
-            await sig('outreach.email_clicked', 'message', message_id, {});
             results.success = true;
         }
 

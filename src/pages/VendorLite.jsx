@@ -87,6 +87,7 @@ export default function VendorLite() {
                 title: "Job Accepted! ✅",
                 description: `You confirmed the booking.`
             });
+            db.rpc('write_signal', { p_event_type: 'booking.confirmed', p_entity_id: id, p_metadata: {} }).catch(() => {});
         } catch (e) {
             toast({ title: "Error", description: "Failed to accept job", variant: "destructive" });
         }
@@ -100,6 +101,7 @@ export default function VendorLite() {
                 title: "Job Declined",
                 description: "Booking marked as cancelled."
             });
+            db.rpc('write_signal', { p_event_type: 'booking.cancelled_by_provider', p_entity_id: id, p_metadata: {} }).catch(() => {});
         } catch (e) {
             toast({ title: "Error", description: "Failed to reject job", variant: "destructive" });
         }
