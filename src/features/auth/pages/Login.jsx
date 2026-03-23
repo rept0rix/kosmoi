@@ -56,6 +56,9 @@ export default function Login() {
         );
         setVerifying(true);
 
+        // Wait for Supabase auth client to fully initialize (prevents AbortError race condition)
+        await new Promise((resolve) => setTimeout(resolve, 600));
+
         // 1. Try Manual Parse Immediately
         try {
           const hashParams = new URLSearchParams(location.hash.substring(1));
@@ -64,14 +67,32 @@ export default function Login() {
 
           if (accessToken && refreshToken) {
             console.log("🛠️ Found tokens in hash. Forcing session set...");
-            const { data, error } = await db.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
+            let sessionData = null;
+            let sessionError = null;
 
-            if (error) throw error;
+            // Retry up to 3 times if AbortError (lock contention)
+            for (let attempt = 0; attempt < 3; attempt++) {
+              try {
+                const { data, error } = await db.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                });
+                sessionData = data;
+                sessionError = error;
+                break; // Success, exit retry loop
+              } catch (retryErr) {
+                if (retryErr.name === "AbortError" && attempt < 2) {
+                  console.warn(`⏳ Auth lock contention (attempt ${attempt + 1}/3), retrying...`);
+                  await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+                } else {
+                  throw retryErr;
+                }
+              }
+            }
 
-            if (data?.session) {
+            if (sessionError) throw sessionError;
+
+            if (sessionData?.session) {
               console.log("✅ Manual Session Set Success! Redirecting...");
               // Notify global context
               checkAppState();

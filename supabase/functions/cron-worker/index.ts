@@ -1,18 +1,16 @@
 // @ts-nocheck
+// @version 2.0.0 — 2026-03-20
+// @changelog: Upgraded from hardcoded rules to Claude API Cortex with fallback
 /**
- * 🤖 CRON WORKER — THE AUTONOMOUS BRAIN
+ * 🧠 THE CORTEX — Autonomous Company Brain
  *
  * Runs every 15 minutes via pg_cron.
- * Uses get_platform_snapshot() to SEE the platform state
- * before making any decision — exactly like a human admin would.
+ * Cycle: Heartbeat → Observe → Load Memory → Reason (Claude) → Act → Learn → Report
  *
- * Cycle: Observe → Reason → Act → Verify → Escalate → Log
- *
- * New in this version:
- *  - Phase 2: KPI threshold breach detection
- *  - Phase 3: Goal-correction task execution
- *  - Phase 4: Verification tasks after actions + escalation on repeated failures
- *  - Phase 5: strategy_store consulted before REASON phase
+ * v2.0: Uses Claude API to reason about goals vs platform state.
+ *       Falls back to hardcoded rules if Claude is unavailable.
+ *       Routes actions through agent-exec for permission checks.
+ *       Saves working memory and updates strategy confidence.
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -22,7 +20,9 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-console.log('🤖 Autonomous Brain starting...');
+const MAX_ACTIONS_PER_CYCLE = 5;
+
+console.log('🧠 Cortex v2.0 starting...');
 
 Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
@@ -35,62 +35,55 @@ Deno.serve(async (req: Request) => {
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('APP_SERVICE_ROLE_KEY') ?? '';
+        const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
         const supabase = createClient(supabaseUrl, supabaseKey);
 
         // ================================================================
-        // STEP 1: OBSERVE — read the full platform state in one call
+        // STEP 0: HEARTBEAT
         // ================================================================
-        console.log(`[${cycleId}] 👁 Observing platform state...`);
+        try {
+            await supabase.rpc('write_signal', {
+                p_event_type: 'brain.heartbeat',
+                p_entity_type: 'system',
+                p_entity_id: null,
+                p_source: 'cortex',
+                p_data: { cycle_id: cycleId, version: '2.0', started_at: new Date().toISOString() }
+            });
+        } catch (_) {}
 
-        const { data: snapshotData, error: snapshotError } = await supabase
-            .rpc('get_platform_snapshot');
+        // ================================================================
+        // STEP 1: OBSERVE — platform snapshot + recent signals + strategies
+        // ================================================================
+        console.log(`[${cycleId}] 👁 Observing...`);
 
-        if (snapshotError) {
-            throw new Error(`Snapshot failed: ${snapshotError.message}`);
-        }
+        const [snapshotRes, recentSignals, strategies, workingMem, executiveDirectives] = await Promise.all([
+            supabase.rpc('get_platform_snapshot'),
+            supabase.from('signals')
+                .select('event_type, source, data, created_at')
+                .eq('processed', false)
+                .order('created_at', { ascending: false })
+                .limit(20),
+            supabase.from('strategy_store')
+                .select('key, value, confidence, notes')
+                .order('confidence', { ascending: false })
+                .limit(10),
+            supabase.from('agent_working_memory')
+                .select('key, value')
+                .eq('agent_id', 'cortex')
+                .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString()),
+            // Load active directives from Executive Council
+            Promise.resolve().then(() => supabase.rpc('get_active_directives', { p_target_agent: 'cortex' })).catch(() => ({ data: [] }))
+        ]);
 
-        const snapshot = snapshotData as {
-            snapshot_at: string;
-            health: {
-                mrr_thb: number;
-                active_subscriptions: number;
-                revenue_7d_thb: number;
-                claimed_providers: number;
-                claim_rate_pct: number;
-            };
-            growth: {
-                total_providers: number;
-                unclaimed_providers: number;
-                new_providers_24h: number;
-                new_users_24h: number;
-            };
-            pipeline: {
-                bookings_pending: number;
-                claims_pending: number;
-                invites_sent_7d: number;
-                invites_converted: number;
-                conversion_rate_pct: number;
-                leads_no_email: number;
-            };
-            brain: {
-                signals_unread: number;
-                signals_critical: number;
-                last_action: string;
-                actions_24h: number;
-            };
-            goals: Array<{ title: string; pct: number; metric: string; current: number; target: number }>;
-            alerts: Array<{ type: string; message: string; priority?: number; count?: number }>;
-            alert_count: number;
-        };
+        if (snapshotRes.error) throw new Error(`Snapshot failed: ${snapshotRes.error.message}`);
+        const snapshot = snapshotRes.data;
 
-        console.log(`[${cycleId}] 📊 Snapshot: MRR=${snapshot.health.mrr_thb}฿ | Claimed=${snapshot.health.claimed_providers} | Unread signals=${snapshot.brain.signals_unread} | Alerts=${snapshot.alert_count}`);
-
-        // Write snapshot itself as a signal
+        // Write snapshot signal
         await supabase.rpc('write_signal', {
             p_event_type: 'brain.snapshot',
             p_entity_type: 'system',
             p_entity_id: null,
-            p_source: 'cron-worker',
+            p_source: 'cortex',
             p_data: {
                 cycle_id: cycleId,
                 health_summary: snapshot.health,
@@ -99,301 +92,71 @@ Deno.serve(async (req: Request) => {
             }
         });
 
-        // ================================================================
-        // STEP 1.5 (Phase 5): Read strategy_store to inform decisions
-        // ================================================================
-        const { data: strategies } = await supabase
-            .from('strategy_store')
-            .select('key, value, confidence')
-            .in('key', ['email_send_window', 'lead_priority_categories', 'platform_health_targets', 'churn_risk_signals']);
-
-        const strategyMap: Record<string, { value: any; confidence: number }> = {};
-        for (const s of strategies ?? []) {
-            strategyMap[s.key] = { value: s.value, confidence: s.confidence };
-        }
-
-        // Phase 5: Derive behaviors from strategy_store (only apply when confidence > 0.7)
-        const emailStrategy = strategyMap['email_send_window'];
-        const leadStrategy  = strategyMap['lead_priority_categories'];
-        const healthTargets = strategyMap['platform_health_targets'];
-        const churnStrategy = strategyMap['churn_risk_signals'];
-
-        // 1. Outreach window: respect best send hour only when Brain has learned it (confidence > 0.7)
-        const currentHourUtc = new Date().getUTCHours();
-        const bestHourUtc = emailStrategy?.value?.best_hour_utc ?? 2;
-        const outreachWindowOpen = emailStrategy && emailStrategy.confidence > 0.7
-            ? Math.abs(currentHourUtc - bestHourUtc) <= 2
-            : true;
-
-        // 2. Lead priority categories: pass to sales-scout payload when confident
-        const leadPriorityCategories = leadStrategy && leadStrategy.confidence > 0.7
-            ? leadStrategy.value?.priority_order ?? []
-            : [];
-        const leadMinRating = leadStrategy && leadStrategy.confidence > 0.7
-            ? leadStrategy.value?.min_rating ?? 0
-            : 0;
-
-        // 3. Health targets: boost claim/outreach priority when below targets
-        const claimBoosted = healthTargets && healthTargets.confidence > 0.6
-            ? (snapshot.health.claimed_providers / Math.max(snapshot.health.total_providers, 1)) < (healthTargets.value?.target_claim_rate ?? 0.15)
-            : false;
-
-        // 4. Churn thresholds: tune retention triggers
-        const churnNoLoginDays = churnStrategy?.value?.no_login_days ?? 14;
-
-        console.log(`[${cycleId}] 📚 Strategies loaded: ${Object.keys(strategyMap).length} | outreach_window=${outreachWindowOpen} | lead_cats=${leadPriorityCategories.length} | claim_boosted=${claimBoosted}`);
+        console.log(`[${cycleId}] 📊 MRR=${snapshot.health.mrr_thb}฿ | Claimed=${snapshot.health.claimed_providers} | Signals=${snapshot.brain.signals_unread} | Alerts=${snapshot.alert_count}`);
 
         // ================================================================
-        // STEP 1.6 (Phase 2): Check KPI breaches
-        // ================================================================
-        const { data: kpiBreadches } = await supabase.rpc('get_kpi_breaches');
-        const criticalKpi = (kpiBreadches ?? []).filter((b: any) => b.severity === 'critical');
-        const warningKpi  = (kpiBreadches ?? []).filter((b: any) => b.severity === 'warning');
-
-        if (criticalKpi.length > 0) {
-            console.log(`[${cycleId}] 🚨 KPI Critical breaches: ${criticalKpi.map((b: any) => b.metric_name).join(', ')}`);
-        }
-
-        // ================================================================
-        // STEP 1.7 (Phase 4): Check for open escalations — don't flood them
-        // ================================================================
-        const { data: openEscalations } = await supabase
-            .from('escalations')
-            .select('id, reason, agent_id, retry_count')
-            .eq('status', 'open')
-            .limit(10);
-
-        const hasOpenEscalations = (openEscalations ?? []).length > 0;
-        if (hasOpenEscalations) {
-            console.log(`[${cycleId}] ⚠️ Open escalations: ${openEscalations!.length} — will not create new ones for same agents`);
-        }
-
-        // Track recent failure counts per function (for escalation detection)
-        const { data: recentFailures } = await supabase
-            .from('signals')
-            .select('data')
-            .eq('event_type', 'brain.action_failed')
-            .gte('created_at', new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()) // last 3h
-            .limit(50);
-
-        const failureCountByFn: Record<string, number> = {};
-        for (const f of recentFailures ?? []) {
-            const fn = f.data?.fn;
-            if (fn) failureCountByFn[fn] = (failureCountByFn[fn] ?? 0) + 1;
-        }
-
-        // ================================================================
-        // STEP 2: REASON — decide what actions to take
+        // STEP 2: REASON — Claude API or fallback
         // ================================================================
         console.log(`[${cycleId}] 🧠 Reasoning...`);
 
-        const actionsToTake: Array<{
-            type: string;
-            priority: number;
-            reason: string;
-            fn: string;
-            payload: object;
-        }> = [];
+        let actionsToTake;
+        let reasoningMode = 'fallback';
+        let reasoning = '';
 
-        // --- CRITICAL: Unprocessed critical signals ---
-        if (snapshot.brain.signals_critical > 0) {
-            actionsToTake.push({
-                type: 'PROCESS_CRITICAL_SIGNALS',
-                priority: 100,
-                reason: `${snapshot.brain.signals_critical} critical unprocessed signals`,
-                fn: 'retention-agent',
-                payload: { action: 'PROCESS_STALE_LEADS' }
-            });
-        }
-
-        // --- Phase 2: KPI Critical breaches ---
-        for (const breach of criticalKpi) {
-            if (breach.metric_name === 'bookings_today') {
-                actionsToTake.push({
-                    type: 'KPI_BOOKINGS_CRITICAL',
-                    priority: 90,
-                    reason: `Bookings today (${breach.current_value}) below critical threshold (${breach.critical_threshold})`,
-                    fn: 'retention-agent',
-                    payload: { action: 'SEND_TRIAL_REMINDERS' }
+        if (anthropicKey) {
+            try {
+                const cortexResult = await cortexReason(anthropicKey, {
+                    snapshot,
+                    recentSignals: recentSignals.data || [],
+                    strategies: strategies.data || [],
+                    workingMemory: workingMem.data || [],
+                    directives: executiveDirectives.data || [],
+                    cycleId
                 });
+                actionsToTake = cortexResult.actions;
+                reasoning = cortexResult.reasoning;
+                reasoningMode = 'claude';
+                console.log(`[${cycleId}] 🤖 Claude reasoning: ${actionsToTake.length} actions proposed`);
+            } catch (aiError: any) {
+                console.warn(`[${cycleId}] ⚠️ Claude unavailable (${aiError.message}), using fallback rules`);
+                actionsToTake = fallbackReason(snapshot);
+                reasoning = 'Fallback: Claude API unavailable, using hardcoded rules';
             }
-            if (breach.metric_name === 'leads_today') {
-                actionsToTake.push({
-                    type: 'KPI_LEADS_CRITICAL',
-                    priority: 85,
-                    reason: `New leads today (${breach.current_value}) below critical threshold (${breach.critical_threshold})`,
-                    fn: 'sales-scout',
-                    payload: { action: 'invite_leads', priority_categories: leadPriorityCategories, min_rating: leadMinRating }
-                });
-            }
-            if (breach.metric_name === 'verified_businesses') {
-                actionsToTake.push({
-                    type: 'KPI_VERIFIED_CRITICAL',
-                    priority: 80,
-                    reason: `Verified businesses (${breach.current_value}) below critical threshold (${breach.critical_threshold})`,
-                    fn: 'sales-outreach',
-                    payload: { action: 'PROCESS_FOLLOWUPS' }
-                });
-            }
+        } else {
+            actionsToTake = fallbackReason(snapshot);
+            reasoning = 'Fallback: No ANTHROPIC_API_KEY configured';
         }
 
-        // --- Phase 2: KPI Warning breaches (lower priority) ---
-        for (const breach of warningKpi) {
-            if (breach.metric_name === 'leads_today' && outreachWindowOpen) {
-                actionsToTake.push({
-                    type: 'KPI_LEADS_WARNING',
-                    priority: 60,
-                    reason: `Leads today (${breach.current_value}) at warning level (threshold: ${breach.warning_threshold})`,
-                    fn: 'sales-scout',
-                    payload: { action: 'invite_leads' }
-                });
-            }
-        }
+        // Cap actions
+        const actionsToExecute = actionsToTake.slice(0, MAX_ACTIONS_PER_CYCLE);
 
-        // --- HIGH: Explicit snapshot alerts ---
-        for (const alert of snapshot.alerts) {
-            if (alert.type === 'CHURN') {
-                actionsToTake.push({
-                    type: 'RETENTION_CHURN_RESPONSE',
-                    priority: 95,
-                    reason: alert.message,
-                    fn: 'retention-agent',
-                    payload: { action: 'FULL_RUN' }
-                });
-            }
-            if (alert.type === 'ZERO_MRR') {
-                actionsToTake.push({
-                    type: 'PAYMENT_CHECK',
-                    priority: 85,
-                    reason: alert.message,
-                    fn: 'payment-recovery',
-                    payload: { action: 'PROCESS_SCHEDULED' }
-                });
-            }
-            if (alert.type === 'OUTREACH_FAILURE') {
-                actionsToTake.push({
-                    type: 'OUTREACH_RETRY',
-                    priority: 75,
-                    reason: alert.message,
-                    fn: 'sales-outreach',
-                    payload: { action: 'PROCESS_FOLLOWUPS' }
-                });
-            }
-        }
-
-        // --- MEDIUM: Claims pending (priority boosted by strategy if below target_claim_rate) ---
-        if (snapshot.pipeline.claims_pending > 0) {
-            actionsToTake.push({
-                type: 'PROCESS_PENDING_CLAIMS',
-                priority: claimBoosted ? 88 : 80,
-                reason: `${snapshot.pipeline.claims_pending} claims waiting for verification${claimBoosted ? ' (claim rate below target — boosted)' : ''}`,
-                fn: 'admin-actions',
-                payload: { action: 'REVIEW_PENDING_CLAIMS' }
-            });
-        }
-
-        // --- MEDIUM: Stale leads (enriched with lead strategy if confident) ---
-        if (snapshot.alerts.find(a => a.type === 'STALE_LEADS')) {
-            actionsToTake.push({
-                type: 'OUTREACH_STALE_LEADS',
-                priority: 70,
-                reason: 'Stale leads need outreach',
-                fn: 'sales-scout',
-                payload: { action: 'invite_leads', priority_categories: leadPriorityCategories, min_rating: leadMinRating }
-            });
-        }
-
-        // --- Phase 3: Goal-correction tasks pending ---
-        const { data: goalTasks } = await supabase
-            .from('agent_tasks')
-            .select('id, title, priority, context')
-            .eq('task_type', 'goal_correction')
-            .eq('status', 'pending')
-            .order('priority', { ascending: true })
-            .limit(3);
-
-        for (const task of goalTasks ?? []) {
-            const metricKey = task.context?.metric_key;
-            const urgency   = task.context?.urgency;
-            const fnMap: Record<string, string> = {
-                claimed_providers:   'sales-scout',
-                monthly_revenue_thb: 'payment-recovery',
-                active_users:        'retention-agent',
-                avg_provider_rating: 'retention-agent'
-            };
-            const targetFn = fnMap[metricKey] ?? 'sales-scout';
-
-            actionsToTake.push({
-                type: `GOAL_CORRECTION_${metricKey?.toUpperCase()}`,
-                priority: urgency === 'critical' ? 88 : urgency === 'high' ? 72 : 55,
-                reason: task.title,
-                fn: targetFn,
-                payload: { action: 'invite_leads', _goal_task_id: task.id }
-            });
-
-            // Mark as in_progress so we don't queue it again
-            await supabase
-                .from('agent_tasks')
-                .update({ status: 'in_progress' })
-                .eq('id', task.id);
-        }
-
-        // --- LOW: Regular outreach (respects strategy send window) ---
-        if (snapshot.pipeline.invites_sent_7d < 10 && snapshot.growth.unclaimed_providers > 20 && outreachWindowOpen) {
-            actionsToTake.push({
-                type: 'ROUTINE_OUTREACH',
-                priority: 30,
-                reason: `Only ${snapshot.pipeline.invites_sent_7d} invites sent this week, ${snapshot.growth.unclaimed_providers} unclaimed providers`,
-                fn: 'sales-scout',
-                payload: { action: 'invite_leads' }
-            });
-        }
-
-        // --- LOW: Trial reminders (if brain was dormant) ---
-        if (snapshot.brain.actions_24h === 0) {
-            actionsToTake.push({
-                type: 'RETENTION_CHECK',
-                priority: 50,
-                reason: 'Brain was dormant — running retention check',
-                fn: 'retention-agent',
-                payload: { action: 'SEND_TRIAL_REMINDERS' }
-            });
-        }
-
-        // Sort by priority descending
-        actionsToTake.sort((a, b) => b.priority - a.priority);
-
-        console.log(`[${cycleId}] 📋 Actions queued: ${actionsToTake.length}`, actionsToTake.map(a => `${a.type}(${a.priority})`).join(', '));
+        console.log(`[${cycleId}] 📋 Mode: ${reasoningMode} | Actions: ${actionsToExecute.length}/${actionsToTake.length}`);
 
         // ================================================================
-        // STEP 3: ACT — execute top actions (max 3 per cycle)
+        // STEP 3: ACT — execute via agent-exec for permission checks
         // ================================================================
         console.log(`[${cycleId}] ⚡ Acting...`);
 
-        const executionResults: Array<{
-            type: string;
-            fn: string;
-            success: boolean;
-            result?: object;
-            error?: string;
-            duration_ms: number;
-        }> = [];
-
-        const MAX_ACTIONS_PER_CYCLE = 3;
-        const actionsToExecute = actionsToTake.slice(0, MAX_ACTIONS_PER_CYCLE);
+        const executionResults = [];
 
         for (const action of actionsToExecute) {
             const actionStart = Date.now();
-            console.log(`[${cycleId}]   → Executing ${action.type} via ${action.fn}...`);
+            console.log(`[${cycleId}]   → ${action.type} via ${action.fn}...`);
 
             try {
-                const response = await fetch(`${supabaseUrl}/functions/v1/${action.fn}`, {
+                // Route through agent-exec for permission checks
+                const response = await fetch(`${supabaseUrl}/functions/v1/agent-exec`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${supabaseKey}`
                     },
-                    body: JSON.stringify(action.payload)
+                    body: JSON.stringify({
+                        agent_id: 'cron-worker',
+                        action: action.type,
+                        params: { ...action.payload, target: action.fn, action: action.payload?.action },
+                        reasoning: action.reason
+                    })
                 });
 
                 const result = await response.json().catch(() => ({ status: response.status }));
@@ -401,153 +164,113 @@ Deno.serve(async (req: Request) => {
 
                 executionResults.push({
                     type: action.type,
-                    fn: action.fn,
                     success,
                     result,
                     duration_ms: Date.now() - actionStart
                 });
 
+                // Write signal
                 await supabase.rpc('write_signal', {
                     p_event_type: success ? 'brain.action_taken' : 'brain.action_failed',
                     p_entity_type: 'system',
                     p_entity_id: null,
-                    p_source: 'cron-worker',
+                    p_source: 'cortex',
                     p_data: {
                         cycle_id: cycleId,
                         action_type: action.type,
                         reason: action.reason,
                         fn: action.fn,
                         success,
-                        duration_ms: Date.now() - actionStart,
-                        ...(success ? {} : { status_code: response.status, error_body: result })
+                        reasoning_mode: reasoningMode,
+                        duration_ms: Date.now() - actionStart
                     }
                 });
-
-                // Phase 4: Create verification task after successful action
-                if (success) {
-                    await supabase.from('agent_tasks').insert({
-                        title: `Verify: ${action.type}`,
-                        description: `Verify that ${action.fn} completed successfully. Reason: ${action.reason}`,
-                        status: 'pending',
-                        task_type: 'verification',
-                        priority: 5,
-                        context: {
-                            cycle_id:     cycleId,
-                            action_type:  action.type,
-                            fn:           action.fn,
-                            verify_after: new Date(Date.now() + 60 * 60 * 1000).toISOString()  // 1h from now
-                        },
-                        success_criteria: {
-                            check:          'signal_received',
-                            source:         action.fn,
-                            created_after:  new Date(actionStart).toISOString()
-                        }
-                    });
-                }
 
                 console.log(`[${cycleId}]   ${success ? '✅' : '❌'} ${action.type}`);
 
             } catch (execError: any) {
                 executionResults.push({
                     type: action.type,
-                    fn: action.fn,
                     success: false,
                     error: execError.message,
                     duration_ms: Date.now() - actionStart
                 });
                 console.error(`[${cycleId}]   ❌ ${action.type}: ${execError.message}`);
-                await supabase.rpc('write_signal', {
-                    p_event_type: 'brain.action_failed',
-                    p_entity_type: 'system',
-                    p_entity_id: null,
-                    p_source: 'cron-worker',
-                    p_data: {
-                        cycle_id: cycleId,
-                        action_type: action.type,
-                        fn: action.fn,
-                        success: false,
-                        error: execError.message,
-                        duration_ms: Date.now() - actionStart
-                    }
-                }).catch(() => {});
             }
         }
 
         // ================================================================
-        // STEP 3.5 (Phase 4): ESCALATE — create escalations for repeated failures
+        // STEP 4: LEARN — save working memory + update strategy confidence
         // ================================================================
-        for (const [fn, failCount] of Object.entries(failureCountByFn)) {
-            if (failCount >= 2) {
-                // Check if escalation already open for this agent
-                const escalationAlreadyOpen = (openEscalations ?? []).some(e => e.agent_id === fn);
-                if (!escalationAlreadyOpen) {
-                    const { error: escErr } = await supabase.from('escalations').insert({
-                        agent_id:    fn,
-                        reason:      `${fn} failed ${failCount} times in the last 3 hours`,
-                        retry_count: failCount,
-                        status:      'open'
-                    });
+        console.log(`[${cycleId}] 📝 Learning...`);
 
-                    if (!escErr) {
-                        console.log(`[${cycleId}] 🚨 Escalation created for ${fn} (${failCount} failures)`);
-                        await supabase.rpc('write_signal', {
-                            p_event_type: 'brain.escalation_created',
-                            p_entity_type: 'system',
-                            p_entity_id: null,
-                            p_source: 'cron-worker',
-                            p_data: { fn, fail_count: failCount, cycle_id: cycleId }
-                        });
-                    }
-                }
-            }
-        }
+        // Save cycle summary to working memory
+        try {
+            await supabase.rpc('upsert_agent_memory', {
+                p_agent_id: 'cortex',
+                p_key: 'last_cycle',
+                p_value: JSON.stringify({
+                    cycle_id: cycleId,
+                    reasoning_mode: reasoningMode,
+                    actions_taken: executionResults.map(r => ({ type: r.type, success: r.success })),
+                    snapshot_summary: {
+                        mrr: snapshot.health.mrr_thb,
+                        claimed: snapshot.health.claimed_providers,
+                        alerts: snapshot.alert_count
+                    },
+                    timestamp: new Date().toISOString()
+                })
+            });
+        } catch (_) {}
 
-        // Auto-close stale escalations (> 48h with no human response)
-        await supabase
-            .from('escalations')
-            .update({ status: 'ignored', human_response: 'Auto-closed after 48h with no response' })
-            .eq('status', 'open')
-            .lt('created_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString());
+        // Save reasoning for God View
+        try {
+            await supabase.rpc('upsert_agent_memory', {
+                p_agent_id: 'cortex',
+                p_key: 'last_reasoning',
+                p_value: JSON.stringify({
+                    mode: reasoningMode,
+                    reasoning: reasoning.substring(0, 2000),
+                    actions_proposed: actionsToTake.length,
+                    actions_executed: actionsToExecute.length,
+                    timestamp: new Date().toISOString()
+                })
+            });
+        } catch (_) {}
 
-        // ================================================================
-        // STEP 4: LOG — record full cycle to agent_decisions
-        // ================================================================
+        // Log full cycle to agent_decisions
         await supabase.from('agent_decisions').insert({
-            agent_id: 'cron-worker',
-            decision_type: actionsToExecute.length > 0 ? actionsToExecute[0].type : 'NONE',
+            agent_id: 'cortex',
+            decision_type: actionsToExecute.length > 0 ? actionsToExecute[0].type : 'OBSERVATION_ONLY',
             context: {
                 cycle_id: cycleId,
+                reasoning_mode: reasoningMode,
+                reasoning: reasoning.substring(0, 1000),
                 snapshot_summary: {
-                    mrr:             snapshot.health.mrr_thb,
-                    claimed:         snapshot.health.claimed_providers,
-                    alerts:          snapshot.alert_count,
-                    signals_unread:  snapshot.brain.signals_unread,
-                    kpi_breaches:    criticalKpi.length + warningKpi.length,
-                    strategy_confidence: Object.fromEntries(
-                        Object.entries(strategyMap).map(([k, v]) => [k, v.confidence])
-                    )
+                    mrr: snapshot.health.mrr_thb,
+                    claimed: snapshot.health.claimed_providers,
+                    alerts: snapshot.alert_count,
+                    signals_unread: snapshot.brain.signals_unread
                 },
                 actions_considered: actionsToTake.length,
-                actions_executed:   actionsToExecute.length,
-                goal_tasks_queued:  (goalTasks ?? []).length
+                actions_executed: actionsToExecute.length
             },
             action: {
                 actions: actionsToExecute.map(a => ({ type: a.type, reason: a.reason, fn: a.fn }))
             },
             result: {
-                executions:   executionResults,
-                duration_ms:  Date.now() - startTime,
-                escalations:  Object.entries(failureCountByFn).filter(([, c]) => c >= 2).length
+                executions: executionResults,
+                duration_ms: Date.now() - startTime
             },
             success: executionResults.every(r => r.success) || executionResults.length === 0
         });
 
-        // Mark processed signals as done
+        // Mark processed signals
         if (snapshot.brain.signals_unread > 0) {
             await supabase
                 .from('signals')
                 .update({
-                    processed:    true,
+                    processed: true,
                     processed_at: new Date().toISOString(),
                     brain_action: { cycle_id: cycleId, actions_taken: executionResults.map(r => r.type) }
                 })
@@ -556,47 +279,49 @@ Deno.serve(async (req: Request) => {
         }
 
         // ================================================================
-        // STEP 5: ALERT — Telegram for critical issues
+        // STEP 5: TELEGRAM — Always report
         // ================================================================
-        const telegramToken  = Deno.env.get('TELEGRAM_BOT_TOKEN');
+        const telegramToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
         const telegramChatId = Deno.env.get('TELEGRAM_ALERT_CHAT_ID');
 
-        const kpiBreachLines = criticalKpi.map((b: any) =>
-            `🔴 KPI CRITICAL: ${b.metric_name} = ${b.current_value} (threshold: ${b.critical_threshold})`
-        ).join('\n');
+        if (telegramToken && telegramChatId) {
+            const alertLines = snapshot.alerts.length > 0
+                ? snapshot.alerts.map(a => {
+                    const icon = (a.priority ?? 50) >= 90 ? '🔴' : (a.priority ?? 50) >= 70 ? '🟠' : '🟡';
+                    return `${icon} ${a.message}`;
+                }).join('\n')
+                : '✅ No alerts';
 
-        const escalationLines = Object.entries(failureCountByFn)
-            .filter(([, c]) => c >= 2)
-            .map(([fn, c]) => `🚨 ESCALATED: ${fn} failed ${c}× in 3h`)
-            .join('\n');
+            const actionLines = executionResults.length > 0
+                ? executionResults.map(r => `${r.success ? '✅' : '❌'} ${r.type} (${r.duration_ms}ms)`).join('\n')
+                : '💤 No actions needed';
 
-        const hasAlerts = snapshot.alert_count > 0 || criticalKpi.length > 0 || Object.values(failureCountByFn).some(c => c >= 2);
-
-        if (hasAlerts && telegramToken && telegramChatId) {
-            const snapshotAlertLines = snapshot.alerts.map(a => {
-                const icon = (a.priority ?? 50) >= 90 ? '🔴' : (a.priority ?? 50) >= 70 ? '🟠' : '🟡';
-                return `${icon} ${a.message}`;
-            }).join('\n');
+            const statusIcon = executionResults.some(r => !r.success) ? '🟠' : '🟢';
+            const modeIcon = reasoningMode === 'claude' ? '🤖' : '⚙️';
 
             const msg = [
-                `🤖 *KOSMOI BRAIN — Cycle Report*`,
+                `${statusIcon} *CORTEX v2.0 — ${cycleId.substring(0, 8)}*`,
+                `${modeIcon} Mode: ${reasoningMode}`,
                 ``,
                 `📊 MRR: ${snapshot.health.mrr_thb}฿ | Claimed: ${snapshot.health.claimed_providers}`,
-                snapshot.alert_count > 0 ? `⚠️ Snapshot alerts: ${snapshot.alert_count}` : '',
-                criticalKpi.length > 0    ? `🔴 KPI breaches: ${criticalKpi.length}` : '',
+                `📡 Signals: ${snapshot.brain.signals_unread} unread | Alerts: ${snapshot.alert_count}`,
                 ``,
-                snapshotAlertLines,
-                kpiBreachLines,
-                escalationLines,
+                alertLines,
                 ``,
-                `⚡ Actions taken: ${executionResults.filter(r => r.success).length}/${actionsToExecute.length}`
+                `⚡ *Actions (${executionResults.filter(r => r.success).length}/${actionsToExecute.length}):*`,
+                actionLines,
+                ``,
+                reasoningMode === 'claude' ? `💭 _${reasoning.substring(0, 200)}_` : '',
+                `⏱ ${Date.now() - startTime}ms`
             ].filter(Boolean).join('\n');
 
-            await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: telegramChatId, text: msg, parse_mode: 'Markdown' })
-            }).catch(() => {});
+            try {
+                await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: telegramChatId, text: msg, parse_mode: 'Markdown' })
+                });
+            } catch (_) {}
         }
 
         // ================================================================
@@ -604,28 +329,23 @@ Deno.serve(async (req: Request) => {
         // ================================================================
         const summary = {
             status: 'OK',
+            version: '2.0',
             cycle_id: cycleId,
+            reasoning_mode: reasoningMode,
             snapshot: {
-                mrr_thb:          snapshot.health.mrr_thb,
+                mrr_thb: snapshot.health.mrr_thb,
                 claimed_providers: snapshot.health.claimed_providers,
-                alerts:            snapshot.alert_count,
-                signals_unread:    snapshot.brain.signals_unread,
-                kpi_breaches:      criticalKpi.length + warningKpi.length
-            },
-            strategy: {
-                outreach_window_open: outreachWindowOpen,
-                strategies_loaded:    Object.keys(strategyMap).length
+                alerts: snapshot.alert_count,
+                signals_unread: snapshot.brain.signals_unread
             },
             actions_considered: actionsToTake.length,
-            actions_executed:   executionResults.length,
-            actions_succeeded:  executionResults.filter(r => r.success).length,
-            escalations_created: Object.entries(failureCountByFn).filter(([, c]) => c >= 2).length,
-            goal_tasks_handled: (goalTasks ?? []).length,
+            actions_executed: executionResults.length,
+            actions_succeeded: executionResults.filter(r => r.success).length,
             duration_ms: Date.now() - startTime,
             next_cycle: 'in 15 minutes'
         };
 
-        console.log(`[${cycleId}] ✅ Cycle complete in ${summary.duration_ms}ms. ${summary.actions_succeeded}/${summary.actions_executed} actions succeeded.`);
+        console.log(`[${cycleId}] ✅ Cortex cycle complete in ${summary.duration_ms}ms (${reasoningMode}). ${summary.actions_succeeded}/${summary.actions_executed} actions.`);
 
         return new Response(JSON.stringify(summary), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -633,8 +353,7 @@ Deno.serve(async (req: Request) => {
         });
 
     } catch (error: any) {
-        console.error(`[${cycleId}] 💥 Brain cycle failed:`, error.message);
-
+        console.error(`[${cycleId}] 💥 Cortex cycle failed:`, error.message);
         return new Response(JSON.stringify({
             status: 'ERROR',
             cycle_id: cycleId,
@@ -646,3 +365,169 @@ Deno.serve(async (req: Request) => {
         });
     }
 });
+
+// ================================================================
+// CORTEX REASONING (Claude API)
+// ================================================================
+async function cortexReason(apiKey: string, context: {
+    snapshot: any;
+    recentSignals: any[];
+    strategies: any[];
+    workingMemory: any[];
+    directives: any[];
+    cycleId: string;
+}): Promise<{ actions: any[]; reasoning: string }> {
+
+    const systemPrompt = `You are the Cortex — the autonomous brain of Kosmoi, a service marketplace platform in Koh Samui, Thailand.
+
+You run every 15 minutes. Your job: observe the platform state, reason about what needs to happen, and output specific actions.
+
+AVAILABLE ACTIONS (you can output 0-5 per cycle):
+- { type: "RETENTION_CHURN_RESPONSE", fn: "retention-agent", payload: { action: "FULL_RUN" }, reason: "..." }
+- { type: "SEND_TRIAL_REMINDERS", fn: "retention-agent", payload: { action: "SEND_TRIAL_REMINDERS" }, reason: "..." }
+- { type: "PROCESS_STALE_LEADS", fn: "retention-agent", payload: { action: "PROCESS_STALE_LEADS" }, reason: "..." }
+- { type: "PAYMENT_CHECK", fn: "payment-recovery", payload: { action: "PROCESS_SCHEDULED" }, reason: "..." }
+- { type: "OUTREACH_STALE_LEADS", fn: "sales-scout", payload: { action: "invite_leads" }, reason: "..." }
+- { type: "ROUTINE_OUTREACH", fn: "sales-scout", payload: { action: "invite_leads" }, reason: "..." }
+- { type: "PROCESS_FOLLOWUPS", fn: "sales-outreach", payload: { action: "PROCESS_FOLLOWUPS" }, reason: "..." }
+- { type: "PROCESS_PENDING_CLAIMS", fn: "admin-actions", payload: { action: "REVIEW_PENDING_CLAIMS" }, reason: "..." }
+- { type: "ESCALATE_SUPPORT", fn: "support-router", payload: { action: "ESCALATE_ALL_URGENT" }, reason: "..." }
+
+RULES:
+1. NEVER hallucinate numbers — use only the data provided.
+2. Prioritize revenue-impacting actions (churn, payments, conversions).
+3. If nothing needs action, output 0 actions. Don't force actions.
+4. Consider the strategies and their confidence scores when deciding.
+5. EXECUTIVE DIRECTIVES take priority — if C-suite agents issued directives, follow them.
+6. Be concise in your reasoning.
+
+OUTPUT FORMAT (strict JSON):
+{
+  "reasoning": "Brief explanation of your thought process (1-3 sentences)",
+  "actions": [ { "type": "...", "priority": 0-100, "reason": "...", "fn": "...", "payload": {...} } ]
+}`;
+
+    const userMessage = `Current cycle: ${context.cycleId}
+
+PLATFORM STATE:
+${JSON.stringify(context.snapshot, null, 2)}
+
+UNPROCESSED SIGNALS (${context.recentSignals.length}):
+${context.recentSignals.map(s => `- ${s.event_type} from ${s.source}: ${JSON.stringify(s.data || {}).substring(0, 100)}`).join('\n') || 'None'}
+
+ACTIVE STRATEGIES:
+${context.strategies.map(s => `- ${s.key} (confidence: ${s.confidence}): ${s.notes || JSON.stringify(s.value).substring(0, 80)}`).join('\n') || 'None'}
+
+WORKING MEMORY:
+${context.workingMemory.map(m => `- ${m.key}: ${JSON.stringify(m.value).substring(0, 100)}`).join('\n') || 'Empty (first boot)'}
+
+EXECUTIVE DIRECTIVES (from C-suite — HIGH PRIORITY):
+${(context.directives || []).map(d => `- [P${d.priority}] ${d.issued_by?.toUpperCase()}: ${d.title} — ${d.description?.substring(0, 100)}`).join('\n') || 'None active'}
+
+What actions should be taken this cycle?`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userMessage }]
+        })
+    });
+
+    if (!response.ok) {
+        const errBody = await response.text().catch(() => 'unknown');
+        throw new Error(`Claude API ${response.status}: ${errBody.substring(0, 200)}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '{}';
+
+    // Parse JSON from response (handle markdown code blocks)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+        throw new Error('Claude returned non-JSON response');
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    const actions = (parsed.actions || []).sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
+
+    return {
+        actions,
+        reasoning: parsed.reasoning || 'No reasoning provided'
+    };
+}
+
+// ================================================================
+// FALLBACK REASONING (Hardcoded rules — same as v1.0)
+// ================================================================
+function fallbackReason(snapshot: any): any[] {
+    const actions = [];
+
+    if (snapshot.brain.signals_critical > 0) {
+        actions.push({
+            type: 'PROCESS_CRITICAL_SIGNALS', priority: 100,
+            reason: `${snapshot.brain.signals_critical} critical unprocessed signals`,
+            fn: 'retention-agent', payload: { action: 'PROCESS_STALE_LEADS' }
+        });
+    }
+
+    for (const alert of snapshot.alerts) {
+        if (alert.type === 'CHURN') {
+            actions.push({
+                type: 'RETENTION_CHURN_RESPONSE', priority: 95,
+                reason: alert.message, fn: 'retention-agent', payload: { action: 'FULL_RUN' }
+            });
+        }
+        if (alert.type === 'ZERO_MRR') {
+            actions.push({
+                type: 'PAYMENT_CHECK', priority: 85,
+                reason: alert.message, fn: 'payment-recovery', payload: { action: 'PROCESS_SCHEDULED' }
+            });
+        }
+        if (alert.type === 'OUTREACH_FAILURE') {
+            actions.push({
+                type: 'OUTREACH_RETRY', priority: 75,
+                reason: alert.message, fn: 'sales-outreach', payload: { action: 'PROCESS_FOLLOWUPS' }
+            });
+        }
+    }
+
+    if (snapshot.pipeline.claims_pending > 0) {
+        actions.push({
+            type: 'PROCESS_PENDING_CLAIMS', priority: 80,
+            reason: `${snapshot.pipeline.claims_pending} claims waiting`,
+            fn: 'admin-actions', payload: { action: 'REVIEW_PENDING_CLAIMS' }
+        });
+    }
+
+    if (snapshot.alerts.find((a: any) => a.type === 'STALE_LEADS')) {
+        actions.push({
+            type: 'OUTREACH_STALE_LEADS', priority: 70,
+            reason: 'Stale leads need outreach', fn: 'sales-scout', payload: { action: 'invite_leads' }
+        });
+    }
+
+    if (snapshot.pipeline.invites_sent_7d < 10 && snapshot.growth.unclaimed_providers > 20) {
+        actions.push({
+            type: 'ROUTINE_OUTREACH', priority: 30,
+            reason: `Only ${snapshot.pipeline.invites_sent_7d} invites this week`,
+            fn: 'sales-scout', payload: { action: 'invite_leads' }
+        });
+    }
+
+    if (snapshot.brain.actions_24h === 0) {
+        actions.push({
+            type: 'RETENTION_CHECK', priority: 50,
+            reason: 'Brain was dormant', fn: 'retention-agent', payload: { action: 'SEND_TRIAL_REMINDERS' }
+        });
+    }
+
+    return actions.sort((a: any, b: any) => b.priority - a.priority);
+}

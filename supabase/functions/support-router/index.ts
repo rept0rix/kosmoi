@@ -63,6 +63,16 @@ Deno.serve(async (req: Request) => {
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
+        // Non-fatal signal writer — nervous system integration
+        const sig = (eventType: string, entityId: string | null, data: object) =>
+            supabase.rpc('write_signal', {
+                p_event_type: eventType,
+                p_entity_type: 'support',
+                p_entity_id: entityId,
+                p_source: 'support-router',
+                p_data: data
+            }).catch(() => {});
+
         const body = await req.json();
         const { action, user_id, message, email, name } = body;
 
@@ -165,6 +175,21 @@ Deno.serve(async (req: Request) => {
                     .eq('id', ticket?.id);
             }
 
+            // Write signal for nervous system
+            if (faqMatch) {
+                await sig('support.auto_resolved', ticket?.id, {
+                    email, priority, matched_faq: faqMatch.keywords[0]
+                });
+            } else if (results.escalated) {
+                await sig('support.escalated', ticket?.id, {
+                    email, priority, reason: isUrgent ? 'urgent_keywords' : 'negative_sentiment'
+                });
+            } else {
+                await sig('support.ticket_created', ticket?.id, {
+                    email, priority
+                });
+            }
+
             results.success = true;
             results.message = faqMatch
                 ? 'Auto-response sent'
@@ -234,6 +259,8 @@ Deno.serve(async (req: Request) => {
                     escalated++;
                 }
             }
+
+            await sig('support.batch_escalated', null, { count: escalated });
 
             results.success = true;
             results.message = `Escalated ${escalated} tickets`;
