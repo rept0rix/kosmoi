@@ -66,6 +66,15 @@ serve(async (req: Request) => {
             }
         }).catch(() => {}); // non-fatal
 
+        // Trigger support-agent immediately (fire-and-forget, non-blocking)
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        fetch(`${supabaseUrl}/functions/v1/support-agent`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'PROCESS_UNREAD' }),
+        }).catch(() => {}); // non-fatal — cron-worker will retry if this fails
+
         return new Response(JSON.stringify({ message: "Email processed successfully" }), {
             status: 200,
             headers: { "Content-Type": "application/json" },

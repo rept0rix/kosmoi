@@ -272,12 +272,12 @@ BEGIN
 END;
 $$;
 
--- Add goal_correction to the task_type constraint if not already there
+-- Add goal_correction + pm_recommendation to the task_type constraint
 ALTER TABLE public.agent_tasks
   DROP CONSTRAINT IF EXISTS agent_tasks_task_type_check;
 ALTER TABLE public.agent_tasks
   ADD CONSTRAINT agent_tasks_task_type_check
-  CHECK (task_type IN ('primary', 'verification', 'remediation', 'goal_correction'));
+  CHECK (task_type IN ('primary', 'verification', 'remediation', 'goal_correction', 'pm_recommendation'));
 
 -- ============================================================
 -- PHASE 5: STRATEGY LEARNING — update_strategy_confidence()
@@ -429,3 +429,14 @@ SELECT cron.schedule(
 ) WHERE NOT EXISTS (
     SELECT 1 FROM cron.job WHERE jobname = 'strategy-weekly-learning'
 );
+
+-- ============================================================
+-- SUPPORT AGENT: extend inbound_emails for AI processing
+-- ============================================================
+ALTER TABLE public.inbound_emails
+  ADD COLUMN IF NOT EXISTS processed_at    TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS processing_notes TEXT;
+
+-- Ensure processed_status has a consistent default
+ALTER TABLE public.inbound_emails
+  ALTER COLUMN processed_status SET DEFAULT 'unread';

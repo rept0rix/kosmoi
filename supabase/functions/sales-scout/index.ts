@@ -309,7 +309,8 @@ serve(async (req: Request) => {
 
             console.log(`💌 Target: ${targetLead.business_name}`);
 
-            const recipientEmail = TEST_EMAIL || 'admin@kosmoi.com';
+            // Use the real business email when available; fall back to TEST_EMAIL only if missing
+            const recipientEmail = targetLead.email || TEST_EMAIL;
 
             // 2. INSERT INVITATION (Sending State)
             const { data: invite, error: dbError } = await supabaseClient
@@ -323,7 +324,8 @@ serve(async (req: Request) => {
                         target_email: recipientEmail,
                         real_business_email: targetLead.email || 'unknown',
                         sender: 'sales-scout-cloud',
-                        stage: 'sending'
+                        stage: 'sending',
+                        using_real_email: !!targetLead.email
                     }
                 })
                 .select()

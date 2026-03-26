@@ -8,7 +8,7 @@ import {
   Target, TrendingUp, AlertTriangle, BookOpen,
   CheckCircle, Wifi, WifiOff, Activity,
   ChevronRight, Users, ShoppingCart, Building2, RefreshCw,
-  Zap, Brain, Radio, Shield
+  Zap, Brain, Radio, Shield, Mail, Bot, BarChart3, Bell
 } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 
@@ -633,6 +633,146 @@ function StrategyPanel() {
   );
 }
 
+// ── Autonomous Agents Panel ──────────────────────────────────────────────────
+
+const AGENTS = [
+  {
+    id: 'onboarding-agent',
+    label: 'Onboarding',
+    desc: 'Welcome email when business claims profile',
+    icon: Mail,
+    color: 'emerald',
+    triggerSignal: 'claim.payment_completed',
+    successSignal: 'onboarding.welcome_sent',
+    failSignal: 'onboarding.no_email',
+  },
+  {
+    id: 'support-agent',
+    label: 'Support',
+    desc: 'AI auto-reply to inbound customer emails',
+    icon: Bot,
+    color: 'blue',
+    triggerSignal: 'email.inbound_received',
+    successSignal: 'support.reply_sent',
+    failSignal: 'support.reply_failed',
+  },
+  {
+    id: 'pm-agent',
+    label: 'PM Agent',
+    desc: 'Weekly signal/KPI analysis → product backlog',
+    icon: BarChart3,
+    color: 'purple',
+    triggerSignal: null,
+    successSignal: 'pm.weekly_analysis_complete',
+    failSignal: null,
+  },
+  {
+    id: 'daily-briefing',
+    label: 'Daily Briefing',
+    desc: 'Morning Telegram summary to founder 07:00 UTC',
+    icon: Bell,
+    color: 'amber',
+    triggerSignal: null,
+    successSignal: 'brain.snapshot',
+    failSignal: null,
+  },
+];
+
+const COLOR_MAP = {
+  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400', dot: 'bg-emerald-500' },
+  blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400',    dot: 'bg-blue-500' },
+  purple:  { bg: 'bg-purple-500/10',  border: 'border-purple-500/20',  icon: 'text-purple-400',  dot: 'bg-purple-500' },
+  amber:   { bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   icon: 'text-amber-400',   dot: 'bg-amber-500' },
+};
+
+function AutonomousAgentsPanel() {
+  const [agentData, setAgentData] = useState({});
+
+  useEffect(() => {
+    const load = async () => {
+      // Fetch last signal for each agent's success/fail event
+      const allEvents = AGENTS.flatMap(a =>
+        [a.successSignal, a.failSignal].filter(Boolean)
+      );
+
+      const { data } = await realSupabase
+        .from('signals')
+        .select('event_type, source, created_at, data')
+        .in('event_type', allEvents)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // Index latest signal per event_type
+      const byEvent = {};
+      for (const row of data ?? []) {
+        if (!byEvent[row.event_type]) byEvent[row.event_type] = row;
+      }
+      setAgentData(byEvent);
+    };
+
+    load();
+
+    const sub = realSupabase
+      .channel('autonomy:agent_signals')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, load)
+      .subscribe();
+
+    return () => sub.unsubscribe();
+  }, []);
+
+  return (
+    <Card className="bg-slate-900/40 border-white/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Radio className="w-4 h-4 text-violet-400" />
+          Autonomous Agents
+          <span className="ml-auto text-[10px] text-slate-600 font-mono font-normal">running 24/7</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {AGENTS.map(agent => {
+            const c = COLOR_MAP[agent.color];
+            const Icon = agent.icon;
+            const lastSuccess = agent.successSignal ? agentData[agent.successSignal] : null;
+            const lastFail    = agent.failSignal    ? agentData[agent.failSignal]    : null;
+            const lastRun     = lastSuccess || lastFail;
+            const isOk        = !!lastSuccess && (!lastFail || new Date(lastSuccess.created_at) > new Date(lastFail.created_at));
+
+            return (
+              <motion.div
+                key={agent.id}
+                layout
+                className={`rounded-xl border p-4 ${c.bg} ${c.border}`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Icon className={`w-4 h-4 ${c.icon}`} />
+                    <span className="text-xs font-bold text-slate-200 font-mono">{agent.label}</span>
+                  </div>
+                  <span className={`w-2 h-2 rounded-full mt-1 ${lastRun ? (isOk ? c.dot + ' shadow-[0_0_6px_rgba(16,185,129,0.5)]' : 'bg-red-500') : 'bg-slate-700'}`} />
+                </div>
+                <p className="text-[10px] text-slate-500 font-mono mb-3 leading-relaxed">{agent.desc}</p>
+                {lastRun ? (
+                  <div className="text-[10px] font-mono text-slate-600">
+                    <span className={isOk ? 'text-emerald-600' : 'text-red-500'}>
+                      {isOk ? '✓ last run' : '✗ last run'}
+                    </span>
+                    {' '}
+                    <span>{formatDistanceToNow(new Date(lastRun.created_at), { addSuffix: true })}</span>
+                  </div>
+                ) : (
+                  <div className="text-[10px] font-mono text-slate-700">Never run yet</div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main AutonomyDashboard ──────────────────────────────────────────────────
 
 export function AutonomyDashboard() {
@@ -642,6 +782,7 @@ export function AutonomyDashboard() {
         <WorkerStatusPanel />
         <KpiTodayPanel />
       </div>
+      <AutonomousAgentsPanel />
       <BrainTimeline />
       <GoalsPanel />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

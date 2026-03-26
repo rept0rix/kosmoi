@@ -25,6 +25,7 @@ import {
   ListTodo,
   Settings,
   Terminal,
+  Brain,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/api/supabaseClient";
@@ -285,6 +286,13 @@ const CommandCenter = () => {
                   icon={Network}
                   to="/admin/studio"
                   colorClass="amber"
+                />
+                <QuickActionCard
+                  title="Autonomous Brain"
+                  description="Live view: signals, decisions, agents, goals."
+                  icon={Brain}
+                  to="/admin/autonomy"
+                  colorClass="violet"
                 />
                 <QuickActionCard
                   title="Graph View"
