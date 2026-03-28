@@ -61,33 +61,17 @@ export const AdminService = {
    */
   getMapLocations: async () => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const { data, error } = await supabase
+        .from("service_providers")
+        .select("id, business_name, current_lat, current_lng, email, category")
+        .order("created_at", { ascending: false });
 
-      // Fetch ONLY what is needed for the map
-      // Fixed column names to match DB schema: current_lat, current_lng
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/service_providers?select=id,business_name,current_lat,current_lng,email,category&order=created_at.desc`,
-        {
-          headers: {
-            apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      if (error) throw error;
 
-      if (!response.ok) throw new Error(`Map fetch failed: ${response.status}`);
-
-      const data = await response.json();
-
-      // Map to expected format for LiveMap
-      return data.map((item) => ({
+      return (data || []).map((item) => ({
         ...item,
-        current_lat: item.latitude,
-        current_lng: item.longitude,
         contact_email: item.email,
-        is_online: false, // Default to false since column doesn't exist
+        is_online: false,
       }));
     } catch (e) {
       console.error("AdminService map error:", e);
@@ -100,43 +84,29 @@ export const AdminService = {
    */
   getBusinessesPage: async (page = 1, limit = 50, filters = {}) => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const offset = (page - 1) * limit;
 
-      let query = `${supabaseUrl}/rest/v1/service_providers?select=*&order=created_at.desc&limit=${limit}&offset=${offset}`;
+      let query = supabase
+        .from("service_providers")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
 
-      // Apply Filters
       if (filters.search) {
-        query += `&business_name=ilike.*${encodeURIComponent(filters.search)}*`;
+        query = query.ilike("business_name", `%${filters.search}%`);
       }
       if (filters.category && filters.category !== "all") {
-        query += `&category=eq.${encodeURIComponent(filters.category)}`;
+        query = query.eq("category", filters.category);
       }
       if (filters.status && filters.status !== "all") {
-        query += `&status=eq.${encodeURIComponent(filters.status)}`;
+        query = query.eq("status", filters.status);
       }
 
-      // Fetch full data but paginated
-      const response = await fetch(query, {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          "Content-Type": "application/json",
-          Prefer: "count=exact",
-        },
-      });
+      const { data, count, error } = await query;
 
-      if (!response.ok)
-        throw new Error(`List fetch failed: ${response.status}`);
+      if (error) throw error;
 
-      const data = await response.json();
-
-      // Extract total count from Content-Range header (format: 0-49/5800)
-      const contentRange = response.headers.get("content-range");
-      const total = contentRange ? parseInt(contentRange.split("/")[1]) : 0;
-
-      return { data, total };
+      return { data: data || [], total: count ?? 0 };
     } catch (e) {
       console.error("AdminService page error:", e);
       throw e;
